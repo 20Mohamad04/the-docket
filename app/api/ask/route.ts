@@ -6,10 +6,28 @@ export async function POST(req: Request) {
     
     const systemPrompt = {
       role: "system",
-      content: "You are Ask Docket, an AI assistant inside a task management app. The user will give you instructions. You must output STRICT JSON with two keys: 'reply' (a short string to show the user) and 'action' (an object containing the task details). Valid action types: { type: 'add_task', title: string, category: string, priority: string }. Categories: Study, Trading & Investing, Business, Career, Health, Admin & Housing, Faith. Priorities: Medium, High, Urgent. If the user is just chatting, set action to null. Example: User says 'add a task to buy groceries', you reply: {\"reply\":\"Okay, I added that to your list.\",\"action\":{\"type\":\"add_task\",\"title\":\"Buy Groceries\",\"category\":\"Admin & Housing\",\"priority\":\"Medium\"}}"
+      content: `You are Ask Docket, an AI assistant inside a task management app.
+      You MUST output ONLY a valid JSON object. 
+      The JSON object MUST have exactly two keys: "reply" and "action".
+      
+      "reply" must be a short, friendly string.
+      "action" must be an object containing the task details, OR null if the user is just chatting.
+      
+      If the user wants to add a task, "action" MUST be formatted exactly like this:
+      {"type": "add_task", "title": "User's Task", "category": "Category", "priority": "Priority"}
+      
+      Valid Categories: "Study", "Trading & Investing", "Business", "Career", "Health", "Admin & Housing", "Faith".
+      Valid Priorities: "Medium", "High", "Urgent".
+      
+      Example 1:
+      User: "Add a task to buy groceries"
+      Output: {"reply": "Okay, I added that to your list!", "action": {"type": "add_task", "title": "Buy Groceries", "category": "Admin & Housing", "priority": "Medium"}}
+      
+      Example 2:
+      User: "Hello"
+      Output: {"reply": "Hi there! How can I help you manage your tasks today?", "action": null}`
     };
 
-    // Call Groq API
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -17,16 +35,15 @@ export async function POST(req: Request) {
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: "llama3-8b-8192", // Fast, smart open-source model
+        model: "llama3-70b-8192", // Upgraded to the much smarter 70B model!
         messages: [systemPrompt, ...messages],
-        response_format: { type: "json_object" } // Forces strict JSON
+        response_format: { type: "json_object" }
       })
     });
 
     const data = await groqRes.json();
     const content = data.choices[0].message.content;
 
-    // Parse the AI's JSON response
     try {
       const parsed = JSON.parse(content);
       return NextResponse.json(parsed);
