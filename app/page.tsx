@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback, createContext, useContext } from "react";
 
-type Category = "study"|"trading"|"business"|"career"|"health"|"admin"|"faith";
+type Category = "study"|"legal"|"trading"|"finance"|"business"|"career"|"health"|"driving"|"admin"|"property"|"content"|"personal"|"family"|"faith"|"fitness"|"nutrition"|"mental"|"travel"|"technology"|"creative"|"social"|"volunteering"|"language"|"reading"|"music"|"sports"|"cooking"|"shopping"|"events"|"medical"|"insurance"|"tax"|"debt"|"savings"|"investment"|"side_hustle"|"networking"|"interview"|"project"|"research"|"writing"|"design"|"marketing"|"sales"|"customer"|"hr"|"legal_work"|"compliance"|"environment"|"community"|"charity"|"education"|"childcare"|"pets"|"home"|"vehicle"|"utilities"|"subscriptions"|"other";
 type Priority = "urgent"|"high"|"medium";
 type TaskType = "milestone"|"ongoing";
 type View = "daily"|"all"|"week"|"archive";
@@ -230,19 +230,141 @@ const DAY_LABELS_LANG:Record<Lang,Record<string,string>> = {
   ur:{mon:"پیر",tue:"منگل",wed:"بدھ",thu:"جمعرات",fri:"جمعہ",sat:"ہفتہ",sun:"اتوار"},
 };
 const CATS:Record<string,{label:string}> = {
-  study:{label:"Study"},trading:{label:"Trading & Investing"},
-  business:{label:"Business"},career:{label:"Career"},
-  health:{label:"Health & Fitness"},admin:{label:"Admin & Housing"},
-  faith:{label:"Faith"},
+  // Life & Wellbeing
+  health:      {label:"Health & Fitness"},
+  fitness:     {label:"Fitness & Exercise"},
+  nutrition:   {label:"Nutrition & Diet"},
+  mental:      {label:"Mental Health"},
+  medical:     {label:"Medical & Appointments"},
+  // Faith & Personal
+  faith:       {label:"Faith & Spirituality"},
+  personal:    {label:"Personal Development"},
+  reading:     {label:"Reading & Books"},
+  music:       {label:"Music"},
+  creative:    {label:"Creative & Arts"},
+  language:    {label:"Language Learning"},
+  // Study & Knowledge
+  study:       {label:"Study"},
+  research:    {label:"Research"},
+  writing:     {label:"Writing"},
+  education:   {label:"Education"},
+  // Career & Work
+  career:      {label:"Career"},
+  interview:   {label:"Interviews & Applications"},
+  networking:  {label:"Networking"},
+  project:     {label:"Projects"},
+  hr:          {label:"HR & People"},
+  // Business
+  business:    {label:"Business"},
+  side_hustle: {label:"Side Hustle"},
+  marketing:   {label:"Marketing"},
+  sales:       {label:"Sales"},
+  design:      {label:"Design"},
+  content:     {label:"Content Creation"},
+  customer:    {label:"Customer Service"},
+  // Finance
+  finance:     {label:"Finance"},
+  trading:     {label:"Trading & Investing"},
+  savings:     {label:"Savings & Goals"},
+  investment:  {label:"Investments"},
+  debt:        {label:"Debt & Loans"},
+  tax:         {label:"Tax & Accounting"},
+  insurance:   {label:"Insurance"},
+  subscriptions:{label:"Subscriptions"},
+  // Legal
+  legal:       {label:"Legal"},
+  legal_work:  {label:"Legal Work"},
+  compliance:  {label:"Compliance"},
+  // Home & Life Admin
+  admin:       {label:"Admin & Housing"},
+  home:        {label:"Home & DIY"},
+  property:    {label:"Property"},
+  utilities:   {label:"Utilities & Bills"},
+  vehicle:     {label:"Vehicle & Transport"},
+  driving:     {label:"Driving"},
+  shopping:    {label:"Shopping & Errands"},
+  // Family & Social
+  family:      {label:"Family"},
+  childcare:   {label:"Childcare"},
+  pets:        {label:"Pets"},
+  social:      {label:"Social Life"},
+  events:      {label:"Events & Occasions"},
+  // Technology
+  technology:  {label:"Technology & Tech"},
+  // Travel
+  travel:      {label:"Travel & Holidays"},
+  // Community
+  volunteering:{label:"Volunteering"},
+  charity:     {label:"Charity & Giving"},
+  community:   {label:"Community"},
+  environment: {label:"Environment"},
+  // Sports
+  sports:      {label:"Sports"},
+  cooking:     {label:"Cooking & Recipes"},
+  // Other
+  other:       {label:"Other"},
 };
+
 const CAT_STYLES:Record<string,{bg:string;color:string}> = {
-  study:   {bg:"#ECE9FA",color:"#5a4fae"},
-  trading: {bg:"#DCEEE3",color:"#2f6b4f"},
-  business:{bg:"#F6E9D3",color:"#9c6a1f"},
-  career:  {bg:"#F4DFDA",color:"#a5382f"},
-  health:  {bg:"#E4E9F9",color:"#3D52A0"},
-  admin:   {bg:"#DCEEF0",color:"#3d7a8a"},
-  faith:   {bg:"#DCF0E6",color:"#1f7a52"},
+  health:      {bg:"#E4E9F9",color:"#3D52A0"},
+  fitness:     {bg:"#DCE8FA",color:"#2a4a8a"},
+  nutrition:   {bg:"#E0F5DC",color:"#2d7a25"},
+  mental:      {bg:"#F0E8FA",color:"#6a3a9a"},
+  medical:     {bg:"#FAE8E8",color:"#9a2a2a"},
+  faith:       {bg:"#DCF0E6",color:"#1f7a52"},
+  personal:    {bg:"#E0EEF5",color:"#2f5f8a"},
+  reading:     {bg:"#FFF8DC",color:"#8a6a10"},
+  music:       {bg:"#F5E0FA",color:"#8a2a9a"},
+  creative:    {bg:"#FFE4F0",color:"#a53070"},
+  language:    {bg:"#E4FAF5",color:"#1a7a6a"},
+  study:       {bg:"#ECE9FA",color:"#5a4fae"},
+  research:    {bg:"#E8E4FA",color:"#4a3a9e"},
+  writing:     {bg:"#FAF0E4",color:"#8a5a1a"},
+  education:   {bg:"#E4ECFA",color:"#2a3a9e"},
+  career:      {bg:"#F4DFDA",color:"#a5382f"},
+  interview:   {bg:"#FAE0DC",color:"#9a2f25"},
+  networking:  {bg:"#FAE8DC",color:"#9a4a1a"},
+  project:     {bg:"#DCEAF4",color:"#2a5a8a"},
+  hr:          {bg:"#F5DCFA",color:"#8a2a9a"},
+  business:    {bg:"#F6E9D3",color:"#9c6a1f"},
+  side_hustle: {bg:"#FAF0DC",color:"#8a6a10"},
+  marketing:   {bg:"#FAE4DC",color:"#9a3a1a"},
+  sales:       {bg:"#FAEADC",color:"#9a5a1a"},
+  design:      {bg:"#FFE8F5",color:"#9a2070"},
+  content:     {bg:"#FFE4F0",color:"#a53070"},
+  customer:    {bg:"#DCFAF0",color:"#1a8a5a"},
+  finance:     {bg:"#D6EEE0",color:"#1f6b45"},
+  trading:     {bg:"#DCEEE3",color:"#2f6b4f"},
+  savings:     {bg:"#DCF0DC",color:"#2a7a2a"},
+  investment:  {bg:"#D8EED8",color:"#257a25"},
+  debt:        {bg:"#FAE0E0",color:"#9a2a2a"},
+  tax:         {bg:"#F5E8DC",color:"#8a5a1a"},
+  insurance:   {bg:"#DCF0FA",color:"#1a5a8a"},
+  subscriptions:{bg:"#F0DCFA",color:"#7a1a9a"},
+  legal:       {bg:"#EDE0F5",color:"#7a3a9e"},
+  legal_work:  {bg:"#E8DCF5",color:"#6a2a9e"},
+  compliance:  {bg:"#F5E0E0",color:"#9a2a3a"},
+  admin:       {bg:"#DCEEF0",color:"#3d7a8a"},
+  home:        {bg:"#E8F0DC",color:"#4a6a2a"},
+  property:    {bg:"#E8F0E0",color:"#4a6e2f"},
+  utilities:   {bg:"#DCF0F5",color:"#1a6a7a"},
+  vehicle:     {bg:"#F5F0DC",color:"#7a6a1a"},
+  driving:     {bg:"#FFF0D9",color:"#9c6010"},
+  shopping:    {bg:"#FAE8F5",color:"#9a2a7a"},
+  family:      {bg:"#FFF0E4",color:"#9c5030"},
+  childcare:   {bg:"#FAF0E8",color:"#9a5a2a"},
+  pets:        {bg:"#F0FAE4",color:"#5a8a2a"},
+  social:      {bg:"#FAE8EC",color:"#9a2a4a"},
+  events:      {bg:"#F5E0FA",color:"#8a1a9a"},
+  technology:  {bg:"#DCE8F5",color:"#2a4a8a"},
+  travel:      {bg:"#DCF5FA",color:"#1a6a7a"},
+  volunteering:{bg:"#E4FAE8",color:"#2a8a3a"},
+  charity:     {bg:"#FAE4E8",color:"#9a2a3a"},
+  community:   {bg:"#E8FAE4",color:"#3a8a2a"},
+  environment: {bg:"#DCF5DC",color:"#2a7a2a"},
+  sports:      {bg:"#DCE4FA",color:"#2a3a9a"},
+  cooking:     {bg:"#FAF0DC",color:"#9a6a1a"},
+  other:       {bg:"#F0F0F0",color:"#6a6a6a"},
 };
 
 const STORAGE_TASKS="docket-tasks-v2";
@@ -374,7 +496,72 @@ function useInputStyle():React.CSSProperties{
     background:C.surface2,color:C.navy,outline:"none",fontFamily:"inherit"};
 }
 
-// ── Task Modal ───────────────────────────────────────────────────────────────
+// ── Searchable Category Picker ────────────────────────────────────────────────
+function CategoryPicker({value,onChange}:{value:string;onChange:(v:Category)=>void}){
+  const{dark}=useApp();
+  const C=getC(dark);
+  const inputStyle=useInputStyle();
+  const[search,setSearch]=useState("");
+  const[open,setOpen]=useState(false);
+  const filtered=Object.entries(CATS).filter(([,v])=>
+    v.label.toLowerCase().includes(search.toLowerCase())
+  );
+  const selected=CATS[value];
+  const s=CAT_STYLES[value]??{bg:"#F0F0F0",color:"#6a6a6a"};
+  return(
+    <div style={{position:"relative"}}>
+      <div onClick={()=>setOpen(o=>!o)}
+        style={{...inputStyle,display:"flex",alignItems:"center",gap:8,cursor:"pointer",userSelect:"none"}}>
+        {selected&&<span style={{background:s.bg,color:s.color,padding:"2px 8px",
+          borderRadius:6,fontSize:11,fontWeight:600,flexShrink:0}}>{selected.label}</span>}
+        <span style={{color:C.muted,fontSize:12,flex:1}}>
+          {open?"Type to search…":"Click to change category"}
+        </span>
+        <span style={{color:C.muted2,fontSize:12}}>{open?"▲":"▼"}</span>
+      </div>
+      {open&&(
+        <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,
+          background:C.surface,border:`1.5px solid ${C.primary}`,borderRadius:9,
+          boxShadow:"0 8px 24px rgba(35,42,77,0.18)",zIndex:999,overflow:"hidden"}}>
+          <div style={{padding:"8px 10px",borderBottom:`1px solid ${C.border}`}}>
+            <input
+              autoFocus
+              value={search}
+              onChange={e=>setSearch(e.target.value)}
+              placeholder="Search categories…"
+              style={{width:"100%",border:"none",outline:"none",fontSize:13,
+                background:"transparent",color:C.navy,fontFamily:"inherit"}}/>
+          </div>
+          <div style={{maxHeight:220,overflowY:"auto"}}>
+            {filtered.length===0&&(
+              <div style={{padding:"12px 14px",fontSize:12,color:C.muted2,textAlign:"center"}}>
+                No categories found
+              </div>
+            )}
+            {filtered.map(([k,v])=>{
+              const st=CAT_STYLES[k]??{bg:"#F0F0F0",color:"#6a6a6a"};
+              return(
+                <div key={k} onClick={()=>{onChange(k as Category);setOpen(false);setSearch("");}}
+                  style={{display:"flex",alignItems:"center",gap:8,padding:"9px 12px",
+                    cursor:"pointer",background:k===value?C.surface2:"transparent",
+                    transition:"background 0.1s"}}
+                  onMouseEnter={e=>(e.currentTarget.style.background=C.surface2)}
+                  onMouseLeave={e=>(e.currentTarget.style.background=k===value?C.surface2:"transparent")}>
+                  <span style={{background:st.bg,color:st.color,padding:"2px 8px",
+                    borderRadius:6,fontSize:11,fontWeight:600,minWidth:60,textAlign:"center"}}>
+                    {v.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Task Modal ────────────────────────────────────────────────────────────────
 function TaskModal({initial,onClose,onSave}:{
   initial?:Partial<Task>;onClose:()=>void;
   onSave:(t:Omit<Task,"id"|"done"|"deleted"|"checklist">)=>void;
@@ -396,14 +583,13 @@ function TaskModal({initial,onClose,onSave}:{
       <div style={{marginBottom:14}}>
         <FieldLabel>Task</FieldLabel>
         <input value={title} onChange={e=>setTitle(e.target.value)}
-          placeholder="e.g. Revise Land Law" style={inputStyle}/>
+          placeholder="" style={inputStyle}/>
+      </div>
+      <div style={{marginBottom:14}}>
+        <FieldLabel>Category</FieldLabel>
+        <CategoryPicker value={category} onChange={setCategory}/>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-        <div><FieldLabel>Category</FieldLabel>
-          <select value={category} onChange={e=>setCategory(e.target.value as Category)} style={inputStyle}>
-            {Object.entries(CATS).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
-          </select>
-        </div>
         <div><FieldLabel>Priority</FieldLabel>
           <select value={priority} onChange={e=>setPriority(e.target.value as Priority)} style={inputStyle}>
             <option value="urgent">Urgent</option>
@@ -411,14 +597,14 @@ function TaskModal({initial,onClose,onSave}:{
             <option value="medium">Medium</option>
           </select>
         </div>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
         <div><FieldLabel>Nature</FieldLabel>
           <select value={type} onChange={e=>setType(e.target.value as TaskType)} style={inputStyle}>
             <option value="milestone">Completable</option>
             <option value="ongoing">Ongoing</option>
           </select>
         </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
         <div><FieldLabel>Recurring</FieldLabel>
           <select value={recurring} onChange={e=>setRecurring(e.target.value)} style={inputStyle}>
             <option value="">One-off</option>
@@ -707,7 +893,7 @@ ACTIONS available (only include actions when you have enough info):
 - Delete task: {"type":"remove_task","id": NUMBER}
 - Update task: {"type":"update_task","id": NUMBER,"changes":{}}
 
-Categories: study, trading, business, career, health, admin, faith
+Categories: study, legal, legal_work, compliance, trading, finance, savings, investment, debt, tax, insurance, subscriptions, business, side_hustle, marketing, sales, design, content, customer, career, interview, networking, project, hr, health, fitness, nutrition, mental, medical, driving, vehicle, admin, home, property, utilities, shopping, family, childcare, pets, social, events, technology, travel, volunteering, charity, community, environment, sports, cooking, reading, music, creative, language, writing, research, education, personal, faith, other
 Priorities: urgent, high, medium
 Task types: milestone (has a clear end), ongoing (no fixed finish)
 
@@ -856,8 +1042,12 @@ export default function Home(){
   useEffect(()=>{
     if(isLoaded) localStorage.setItem("docket-prayer-enabled", prayerEnabled?"true":"false");
   },[prayerEnabled,isLoaded]);
-  useEffect(()=>{ localStorage.setItem("docket-dark",dark?"true":"false");
+  useEffect(()=>{
+    localStorage.setItem("docket-dark",dark?"true":"false");
     document.body.classList.toggle("dark",dark);
+    document.documentElement.style.background = dark?"#0f1019":"#EDE8F5";
+    document.body.style.background = dark?"#0f1019":"#EDE8F5";
+    document.body.style.minHeight = "100%";
   },[dark]);
   useEffect(()=>{ localStorage.setItem("docket-lang",lang); },[lang]);
 
