@@ -537,7 +537,7 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
                 onKeyDown={e=>{if(e.key==="Enter"&&stepInput.trim()){onAddStep(stepInput.trim());setStepInput("");}}}
                 placeholder="Add a step"
                 style={{flex:1,padding:"6px 9px",border:`1.5px solid ${C.border}`,
-                  borderRadius:7,fontSize:11.5,background:"white",fontFamily:"inherit"}}/>
+                  borderRadius:7,fontSize:11.5,background:C.surface,fontFamily:"inherit"}}/>
               <button onClick={()=>{if(stepInput.trim()){onAddStep(stepInput.trim());setStepInput("");}}}
                 style={{background:C.navy,color:"white",border:"none",
                   padding:"0 11px",borderRadius:7,fontSize:11.5,fontWeight:600,cursor:"pointer"}}>
@@ -856,7 +856,9 @@ export default function Home(){
   useEffect(()=>{
     if(isLoaded) localStorage.setItem("docket-prayer-enabled", prayerEnabled?"true":"false");
   },[prayerEnabled,isLoaded]);
-  useEffect(()=>{ localStorage.setItem("docket-dark",dark?"true":"false"); },[dark]);
+  useEffect(()=>{ localStorage.setItem("docket-dark",dark?"true":"false");
+    document.body.classList.toggle("dark",dark);
+  },[dark]);
   useEffect(()=>{ localStorage.setItem("docket-lang",lang); },[lang]);
 
   // Prayer names to update
@@ -996,13 +998,17 @@ export default function Home(){
   return(
     <AppCtx.Provider value={{dark,lang,t,dir}}>
     <div style={{minHeight:"100vh",background:C.bg,position:"relative",
-      fontFamily:"'Inter',sans-serif",color:C.navy,direction:dir}}>
+      fontFamily:"'Inter',sans-serif",color:C.navy,direction:dir,
+      backgroundAttachment:"fixed",
+      backgroundImage:dark
+        ?"radial-gradient(ellipse at top left, rgba(112,145,230,0.12), transparent 50%), radial-gradient(ellipse at bottom right, rgba(61,82,160,0.08), transparent 50%)"
+        :"radial-gradient(ellipse at top left, rgba(112,145,230,0.25), transparent 50%), radial-gradient(ellipse at bottom right, rgba(61,82,160,0.12), transparent 50%)"}}>
 
-      {/* Blobs */}
-      <div style={{position:"fixed",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:0}}>
+      {/* Blobs — light mode only */}
+      {!dark&&<div style={{position:"fixed",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:0}}>
         <div className="blob blob-1"/><div className="blob blob-2"/>
         <div className="blob blob-3"/><div className="blob blob-4"/>
-      </div>
+      </div>}
 
       <Drawer isOpen={isDrawerOpen} onClose={()=>setIsDrawerOpen(false)}
         currentView={currentView} setView={setCurrentView}/>
@@ -1011,7 +1017,7 @@ export default function Home(){
       <nav style={{position:"relative",zIndex:10,display:"flex",justifyContent:"space-between",
         alignItems:"center",padding:"20px 20px 12px"}}>
         <button onClick={()=>setIsDrawerOpen(true)}
-          style={{width:44,height:44,borderRadius:12,background:"white",
+          style={{width:44,height:44,borderRadius:12,background:C.surface,
             border:`1px solid ${C.border}`,boxShadow:"0 6px 18px rgba(35,42,77,0.1)",
             display:"flex",alignItems:"center",justifyContent:"center",
             fontSize:18,color:C.navy,cursor:"pointer"}}>☰</button>
@@ -1019,7 +1025,7 @@ export default function Home(){
           fontSize:17,color:C.navy}}>{t("appName")}</span>
         <div style={{display:"flex",gap:8}}>
           <button onClick={()=>setShowSettings(s=>!s)}
-            style={{width:44,height:44,borderRadius:12,background:"white",
+            style={{width:44,height:44,borderRadius:12,background:C.surface,
               border:`1px solid ${C.border}`,boxShadow:"0 6px 18px rgba(35,42,77,0.1)",
               display:"flex",alignItems:"center",justifyContent:"center",
               fontSize:17,cursor:"pointer"}} title="Settings">⚙️</button>
@@ -1055,7 +1061,7 @@ export default function Home(){
                 style={{width:48,height:26,borderRadius:13,border:"none",cursor:"pointer",
                   background:dark?C.sage:C.border,position:"relative",transition:"background 0.2s",flexShrink:0}}>
                 <span style={{position:"absolute",top:3,left:dark?24:3,width:20,height:20,
-                  borderRadius:"50%",background:"white",transition:"left 0.2s",
+                  borderRadius:"50%",background:"#fff",transition:"left 0.2s",
                   boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}/>
               </button>
             </div>
@@ -1094,7 +1100,7 @@ export default function Home(){
                   position:"relative",transition:"background 0.2s",flexShrink:0}}>
                 <span style={{position:"absolute",top:3,
                   left:prayerEnabled?24:3,width:20,height:20,borderRadius:"50%",
-                  background:"white",transition:"left 0.2s",
+                  background:"#fff",transition:"left 0.2s",
                   boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}/>
               </button>
             </div>
@@ -1112,7 +1118,7 @@ export default function Home(){
                   position:"relative",transition:"background 0.2s",flexShrink:0}}>
                 <span style={{position:"absolute",top:3,
                   left:notifEnabled?24:3,width:20,height:20,borderRadius:"50%",
-                  background:"white",transition:"left 0.2s",
+                  background:"#fff",transition:"left 0.2s",
                   boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}/>
               </button>
             </div>
@@ -1127,7 +1133,7 @@ export default function Home(){
         {(examTask||interviewTask)&&(
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
             {examTask&&(
-              <div style={{background:"white",border:`1px solid ${C.border}`,borderRadius:12,
+              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,
                 padding:"10px 15px",display:"flex",alignItems:"center",gap:9}}>
                 <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:17,
                   color:(daysUntil(examTask.date)??1)<0?C.urgent:C.primary}}>
@@ -1137,7 +1143,7 @@ export default function Home(){
               </div>
             )}
             {interviewTask&&(
-              <div style={{background:"white",border:`1px solid ${C.border}`,borderRadius:12,
+              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,
                 padding:"10px 15px",display:"flex",alignItems:"center",gap:9}}>
                 <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:17,
                   color:(daysUntil(interviewTask.date)??1)<0?C.urgent:C.primary}}>
