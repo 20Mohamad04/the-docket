@@ -330,6 +330,8 @@ function CatPill({category,done}:{category:string;done?:boolean}){
 }
 
 function Checkbox({checked,onClick,small}:{checked:boolean;onClick:()=>void;small?:boolean}){
+  const{dark}=useApp();
+  const C=getC(dark);
   const sz=small?16:20;
   return(
     <button onClick={onClick} style={{width:sz,height:sz,borderRadius:small?5:6,
@@ -342,6 +344,8 @@ function Checkbox({checked,onClick,small}:{checked:boolean;onClick:()=>void;smal
 }
 
 function Modal({children,onClose}:{children:React.ReactNode;onClose:()=>void}){
+  const{dark}=useApp();
+  const C=getC(dark);
   return(
     <div onClick={e=>{if(e.target===e.currentTarget)onClose();}}
       style={{position:"fixed",inset:0,background:"rgba(35,42,77,0.35)",
@@ -357,12 +361,18 @@ function Modal({children,onClose}:{children:React.ReactNode;onClose:()=>void}){
 }
 
 function FieldLabel({children}:{children:React.ReactNode}){
+  const{dark}=useApp();
+  const C=getC(dark);
   return<label style={{display:"block",fontSize:11,fontWeight:600,
     color:C.muted,marginBottom:6,letterSpacing:0.3}}>{children}</label>;
 }
-const inputStyle:React.CSSProperties={width:"100%",padding:"10px 12px",
-  border:`1.5px solid ${C.border}`,borderRadius:9,fontSize:13,
-  background:C.surface2,color:C.navy,outline:"none",fontFamily:"inherit"};
+function useInputStyle():React.CSSProperties{
+  const{dark}=useApp();
+  const C=getC(dark);
+  return{width:"100%",padding:"10px 12px",
+    border:`1.5px solid ${C.border}`,borderRadius:9,fontSize:13,
+    background:C.surface2,color:C.navy,outline:"none",fontFamily:"inherit"};
+}
 
 // ── Task Modal ───────────────────────────────────────────────────────────────
 function TaskModal({initial,onClose,onSave}:{
@@ -371,6 +381,7 @@ function TaskModal({initial,onClose,onSave}:{
 }){
   const{t,dark}=useApp();
   const C=getC(dark);
+  const inputStyle=useInputStyle();
   const[title,setTitle]=useState(initial?.title??"");
   const[category,setCategory]=useState<Category>(initial?.category??"study");
   const[priority,setPriority]=useState<Priority>(initial?.priority??"medium");
@@ -628,6 +639,8 @@ function TimelineRow({item,onCheck}:{
   item:{time:string;label:string;category:string;done:boolean;streak:number;conflict:boolean;};
   onCheck:()=>void;
 }){
+  const{dark}=useApp();
+  const C=getC(dark);
   return(
     <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",
       borderBottom:`1px solid ${C.border}`}}>
