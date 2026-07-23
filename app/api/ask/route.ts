@@ -17,8 +17,9 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         model: "llama3-70b-8192",
-        temperature: 0.2,
+        temperature: 0.1,
         max_tokens: 1024,
+        response_format: { type: "json_object" },
         messages: [
           { role: "system", content: system },
           ...messages,

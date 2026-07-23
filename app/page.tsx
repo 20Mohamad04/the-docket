@@ -461,13 +461,30 @@ function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAc
   const[input,setInput]=useState("");
   const[loading,setLoading]=useState(false);
 
-  const systemPrompt=`You are the editing assistant inside "The Docket". Today is ${todayISO()}.
-Tasks: ${JSON.stringify(tasks)}
-Routines: ${JSON.stringify(routines)}
-Valid categories: study,trading,business,career,health,admin,faith. Valid priorities: urgent,high,medium. Task type: milestone or ongoing.
-Keep replies short. When Mo says he finished something, use complete_task and reply "Okay, I'll mark it as complete."
-Respond ONLY with raw JSON (no markdown):
-{"actions":[{"type":"add_task","task":{"title":"","category":"","priority":"medium","type":"milestone","date":"","time":"","recurring":"","notes":""}},{"type":"remove_task","id":0},{"type":"update_task","id":0,"changes":{}},{"type":"complete_task","id":0},{"type":"reopen_task","id":0},{"type":"add_step","task_id":0,"text":""},{"type":"toggle_step","task_id":0,"step_id":0},{"type":"remove_step","task_id":0,"step_id":0}],"reply":""}`;
+  const systemPrompt=`You are an assistant for a task management app called The Docket. You MUST respond with ONLY a valid JSON object — no extra text, no markdown, no explanation outside the JSON.
+
+The JSON must have exactly this structure:
+{"actions": [...], "reply": "short confirmation message"}
+
+Available action types:
+- Add a task: {"type":"add_task","task":{"title":"TITLE","category":"CATEGORY","priority":"PRIORITY","type":"TYPE","date":"","time":"","recurring":"","notes":""}}
+- Complete a task: {"type":"complete_task","id": TASK_ID}
+- Delete a task: {"type":"remove_task","id": TASK_ID}
+- Update a task: {"type":"update_task","id": TASK_ID,"changes":{"title":"NEW TITLE"}}
+
+Valid categories (use exact lowercase): study, trading, business, career, health, admin, faith
+Valid priorities (use exact lowercase): urgent, high, medium
+Valid types (use exact lowercase): milestone, ongoing
+
+Current tasks in the app:
+${JSON.stringify(tasks.filter(t=>!t.deleted).map(t=>({id:t.id,title:t.title,category:t.category,priority:t.priority,type:t.type,done:t.done})))}
+
+Rules:
+- If the user says they finished or completed something, use complete_task with the matching task id
+- If the user wants to add something new, use add_task
+- Keep the reply short and friendly, e.g. "Done — I've added that task." or "Marked as complete."
+- If nothing matches, return {"actions":[],"reply":"your response here"}
+- ALWAYS return valid JSON. Never return plain text.`;
 
   async function send(){
     if(!input.trim()||loading)return;
