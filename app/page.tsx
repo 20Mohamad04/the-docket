@@ -461,21 +461,46 @@ function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAc
   const[input,setInput]=useState("");
   const[loading,setLoading]=useState(false);
 
-  const taskList=tasks.filter(t=>!t.deleted).map(t=>({id:t.id,title:t.title,done:t.done}));
-  const systemPrompt=`You are a task assistant for The Docket app. Respond with ONLY a JSON object, no other text.
+  const taskList=tasks.filter(t=>!t.deleted).map(t=>({id:t.id,title:t.title,done:t.done,type:t.type,category:t.category}));
+  const systemPrompt=`You are Docket, a smart personal assistant inside a task management app. You help Mo — a law student, paralegal, and entrepreneur in Liverpool — manage his tasks and routine intelligently.
 
-JSON format: {"actions": [...], "reply": "short message"}
+You MUST always respond with a valid JSON object in this exact format:
+{"actions": [...], "reply": "your message to Mo"}
 
-To add a task: {"type":"add_task","task":{"title":"TITLE","category":"study","priority":"medium","type":"milestone","date":"","time":"","recurring":"","notes":""}}
-To complete a task: {"type":"complete_task","id": ID}
-To delete a task: {"type":"remove_task","id": ID}
+CONVERSATION RULES — follow these strictly:
+1. When Mo mentions adding something, ALWAYS ask at least one clarifying question before acting — unless the answer is completely obvious from context.
+2. Ask ONE question at a time. Never bombard with multiple questions at once.
+3. Key questions to ask depending on context:
+   - Is this a one-off task (completable) or an ongoing project with no end date?
+   - What category does it fall under? (study, trading, business, career, health, admin, faith)
+   - How urgent is it? (urgent, high, medium)
+   - Does it need a specific time or deadline?
+   - Should it repeat daily or weekly?
+4. Once you have enough information, create the task with the right fields filled in.
+5. When Mo says he finished/completed/done with something, use complete_task immediately — no questions needed.
+6. Be friendly, brief, and natural. Talk like a helpful assistant, not a robot.
+7. If Mo's message is casual or unclear, ask for clarification rather than guessing.
+
+ACTIONS available (only include actions when you have enough info):
+- Add task: {"type":"add_task","task":{"title":"","category":"study","priority":"medium","type":"milestone","date":"","time":"","recurring":"","notes":""}}
+- Complete task: {"type":"complete_task","id": NUMBER}
+- Delete task: {"type":"remove_task","id": NUMBER}
+- Update task: {"type":"update_task","id": NUMBER,"changes":{}}
 
 Categories: study, trading, business, career, health, admin, faith
 Priorities: urgent, high, medium
+Task types: milestone (has a clear end), ongoing (no fixed finish)
 
-Current tasks: ${JSON.stringify(taskList)}
+Mo's current tasks: ${JSON.stringify(taskList)}
 
-If nothing to do: {"actions":[],"reply":"your message"}`;
+EXAMPLES of good behaviour:
+- Mo: "add gym" → reply: "Sure! Is this a one-off session or a recurring daily habit?" → actions: []
+- Mo: "daily habit" → reply: "Got it — what time do you usually go? And should I mark it as high intensity?" → actions: []
+- Mo: "7am, yes" → reply: "Added gym as a daily routine at 7am." → actions: [{add_task...}]
+- Mo: "I finished the Cheshire Oak interview" → reply: "Great work! I'll mark that as complete." → actions: [{complete_task...}]
+
+If you truly have no actions to take: {"actions":[],"reply":"your conversational reply"}
+NEVER return plain text. ALWAYS return valid JSON.`;
 
   async function send(){
     if(!input.trim()||loading)return;
@@ -578,6 +603,9 @@ export default function Home(){
   const[tasks,setTasks]=useState<Task[]>([]);
   const[routines,setRoutines]=useState<Routine[]>([]);
   const[notifEnabled,setNotifEnabled]=useState(false);
+  const[prayerEnabled,setPrayerEnabled]=useState(false);
+  const[prayerStatus,setPrayerStatus]=useState<"idle"|"loading"|"done"|"error">("idle");
+  const[showSettings,setShowSettings]=useState(false);
 
   useEffect(()=>{
     const t=localStorage.getItem(STORAGE_TASKS);
@@ -588,6 +616,53 @@ export default function Home(){
   },[]);
   useEffect(()=>{if(isLoaded)localStorage.setItem(STORAGE_TASKS,JSON.stringify(tasks));},[tasks,isLoaded]);
   useEffect(()=>{if(isLoaded)localStorage.setItem(STORAGE_ROUTINES,JSON.stringify(routines));},[routines,isLoaded]);
+
+  // Load prayer setting from storage
+  useEffect(()=>{
+    const saved=localStorage.getItem("docket-prayer-enabled");
+    if(saved==="true") setPrayerEnabled(true);
+  },[]);
+  useEffect(()=>{
+    if(isLoaded) localStorage.setItem("docket-prayer-enabled", prayerEnabled?"true":"false");
+  },[prayerEnabled,isLoaded]);
+
+  // Prayer names to update
+  const PRAYER_NAMES=["Fajr","Dhuhr","Asr","Maghrib","Isha"];
+
+  async function fetchAndApplyPrayerTimes(){
+    setPrayerStatus("loading");
+    try{
+      const pos = await new Promise<GeolocationPosition>((resolve,reject)=>
+        navigator.geolocation.getCurrentPosition(resolve,reject,{timeout:8000})
+      );
+      const{latitude,longitude}=pos.coords;
+      const res=await fetch(
+        `https://api.aladhan.com/v1/timings/${todayISO()}?latitude=${latitude}&longitude=${longitude}&method=2`
+      );
+      const data=await res.json();
+      if(data.code!==200) throw new Error("Aladhan API error");
+      const timings=data.data.timings;
+      // Map prayer name → Aladhan key
+      const map:Record<string,string>={Fajr:"Fajr",Dhuhr:"Dhuhr",Asr:"Asr",Maghrib:"Maghrib",Isha:"Isha"};
+      setRoutines(prev=>prev.map(r=>{
+        if(!PRAYER_NAMES.includes(r.label)) return r;
+        const key=map[r.label];
+        const rawTime=timings[key]; // format "HH:MM"
+        if(!rawTime) return r;
+        return{...r, time:rawTime.slice(0,5)};
+      }));
+      setPrayerStatus("done");
+    }catch(e){
+      console.error("Prayer times fetch failed:",e);
+      setPrayerStatus("error");
+    }
+  }
+
+  async function togglePrayer(){
+    const next=!prayerEnabled;
+    setPrayerEnabled(next);
+    if(next) await fetchAndApplyPrayerTimes();
+  }
 
   const addTask=useCallback((data:Omit<Task,"id"|"done"|"deleted"|"checklist">)=>{
     setTasks(p=>[...p,{id:Date.now(),...data,done:false,deleted:false,checklist:[]}]);
@@ -708,16 +783,78 @@ export default function Home(){
             fontSize:18,color:C.navy,cursor:"pointer"}}>☰</button>
         <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
           fontSize:17,color:C.navy}}>The Docket</span>
-        <button onClick={toggleNotifications}
-          style={{width:44,height:44,borderRadius:12,
-            border:`1px solid ${notifEnabled?C.sage:C.border}`,
-            background:notifEnabled?C.sage:"white",
-            boxShadow:"0 6px 18px rgba(35,42,77,0.1)",
-            display:"flex",alignItems:"center",justifyContent:"center",
-            fontSize:17,cursor:"pointer"}}>
-          {notifEnabled?"🔔":"🔕"}
-        </button>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={()=>setShowSettings(s=>!s)}
+            style={{width:44,height:44,borderRadius:12,background:"white",
+              border:`1px solid ${C.border}`,boxShadow:"0 6px 18px rgba(35,42,77,0.1)",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:17,cursor:"pointer"}} title="Settings">⚙️</button>
+          <button onClick={toggleNotifications}
+            style={{width:44,height:44,borderRadius:12,
+              border:`1px solid ${notifEnabled?C.sage:C.border}`,
+              background:notifEnabled?C.sage:"white",
+              boxShadow:"0 6px 18px rgba(35,42,77,0.1)",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:17,cursor:"pointer"}}>
+            {notifEnabled?"🔔":"🔕"}
+          </button>
+        </div>
       </nav>
+
+      {/* Settings Panel */}
+      {showSettings&&(
+        <div style={{position:"relative",zIndex:10,maxWidth:1100,margin:"0 auto",
+          padding:"0 20px 16px"}}>
+          <div style={{background:"white",border:`1px solid ${C.border}`,borderRadius:14,
+            padding:"18px 20px"}}>
+            <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
+              fontSize:16,color:C.navy,marginBottom:14}}>Settings</p>
+
+            {/* Prayer times toggle */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+              padding:"12px 0",borderBottom:`1px solid ${C.border}`}}>
+              <div>
+                <p style={{fontWeight:600,fontSize:14,color:C.navy}}>Accurate prayer times</p>
+                <p style={{fontSize:12,color:C.muted,marginTop:2}}>
+                  Uses your location to fetch real prayer times from Aladhan API
+                </p>
+                {prayerStatus==="loading"&&<p style={{fontSize:11,color:C.accent,marginTop:4}}>📍 Fetching your location…</p>}
+                {prayerStatus==="done"&&<p style={{fontSize:11,color:C.sage,marginTop:4}}>✓ Prayer times updated for today</p>}
+                {prayerStatus==="error"&&<p style={{fontSize:11,color:C.urgent,marginTop:4}}>⚠ Could not get location — check browser permissions</p>}
+              </div>
+              <button onClick={togglePrayer}
+                style={{width:48,height:26,borderRadius:13,border:"none",cursor:"pointer",
+                  background:prayerEnabled?C.sage:C.border,
+                  position:"relative",transition:"background 0.2s",flexShrink:0}}>
+                <span style={{position:"absolute",top:3,
+                  left:prayerEnabled?24:3,width:20,height:20,borderRadius:"50%",
+                  background:"white",transition:"left 0.2s",
+                  boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}/>
+              </button>
+            </div>
+
+            {/* Notifications toggle */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+              padding:"12px 0"}}>
+              <div>
+                <p style={{fontWeight:600,fontSize:14,color:C.navy}}>Notifications</p>
+                <p style={{fontSize:12,color:C.muted,marginTop:2}}>
+                  Browser alerts when a scheduled item is due (tab must stay open)
+                </p>
+              </div>
+              <button onClick={toggleNotifications}
+                style={{width:48,height:26,borderRadius:13,border:"none",cursor:"pointer",
+                  background:notifEnabled?C.sage:C.border,
+                  position:"relative",transition:"background 0.2s",flexShrink:0}}>
+                <span style={{position:"absolute",top:3,
+                  left:notifEnabled?24:3,width:20,height:20,borderRadius:"50%",
+                  background:"white",transition:"left 0.2s",
+                  boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}/>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <main style={{position:"relative",zIndex:10,maxWidth:1100,margin:"0 auto",padding:"0 20px 100px"}}>
