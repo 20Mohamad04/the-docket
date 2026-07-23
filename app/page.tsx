@@ -1,11 +1,12 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, createContext, useContext } from "react";
 
 type Category = "study"|"trading"|"business"|"career"|"health"|"admin"|"faith";
 type Priority = "urgent"|"high"|"medium";
 type TaskType = "milestone"|"ongoing";
 type View = "daily"|"all"|"week"|"archive";
 type Filter = "all"|"ongoing"|"milestone"|"done"|Category;
+type Lang = "en"|"ar"|"fr"|"tr"|"ur";
 
 interface Step { id:number; text:string; done:boolean; }
 interface Task {
@@ -19,10 +20,214 @@ interface Routine {
   notes:string; completions:Record<string,boolean>;
 }
 
+// ── Translations ──────────────────────────────────────────────────────────────
+const T:Record<Lang,Record<string,string>> = {
+  en:{
+    appName:"The Docket", daily:"Daily Routine", allTasks:"All Tasks",
+    week:"Week", archive:"Finished & Deleted", settings:"Settings",
+    newTask:"New Task", save:"Save Task", cancel:"Cancel", addStep:"Add",
+    prayerSetting:"Accurate prayer times",
+    prayerDesc:"Uses your location to fetch real prayer times",
+    prayerLoading:"📍 Fetching your location…",
+    prayerDone:"✓ Prayer times updated for today",
+    prayerError:"⚠ Could not get location — check browser permissions",
+    notifSetting:"Notifications",
+    notifDesc:"Browser alerts when a scheduled item is due",
+    darkMode:"Dark mode",
+    darkDesc:"Switch to a dark colour scheme",
+    language:"Language",
+    languageDesc:"Change the app display language",
+    nothingToday:"Nothing scheduled today.",
+    nothingHere:"Nothing here.",
+    allOpen:"All Open", ongoing:"Ongoing", completable:"Completable",
+    category:"Category", show:"Show", overdue:"OVERDUE",
+    urgent:"urgent", high:"high", medium:"medium",
+    chatPlaceholder:"e.g. add a task to revise Land Law",
+    chatWelcome:"Tell me what to add, remove, or change — I'll ask questions to get it right.",
+    send:"Send", working:"Working on it…",
+    steps:"Steps", taskTitle:"Task", notes:"Notes",
+    dueDate:"Due / target date", nature:"Nature", recurring:"Recurring",
+    oneOff:"One-off", daily2:"Daily", weekly:"Weekly",
+    milestone:"Completable", ongoing2:"Ongoing",
+    finishedDeleted:"Finished & Deleted", restore:"↺",
+    landLawExam:"Land Law exam", cheshireOak:"Cheshire Oak",
+    ongoingProjects:"Ongoing projects", completableOpen:"Completable, still open",
+    prayerPlaceholder:"⚠ Prayer times are placeholders — enable accurate times in Settings ⚙️",
+    weekView:"Week View",
+  },
+  ar:{
+    appName:"الدفتر", daily:"الروتين اليومي", allTasks:"جميع المهام",
+    week:"الأسبوع", archive:"المنجزة والمحذوفة", settings:"الإعدادات",
+    newTask:"مهمة جديدة", save:"حفظ", cancel:"إلغاء", addStep:"إضافة",
+    prayerSetting:"أوقات الصلاة الدقيقة",
+    prayerDesc:"يستخدم موقعك لجلب أوقات الصلاة الحقيقية",
+    prayerLoading:"📍 جاري تحديد موقعك…",
+    prayerDone:"✓ تم تحديث أوقات الصلاة لهذا اليوم",
+    prayerError:"⚠ تعذّر الحصول على الموقع — تحقق من إذن الموقع",
+    notifSetting:"الإشعارات",
+    notifDesc:"تنبيهات المتصفح عند موعد عنصر مجدول",
+    darkMode:"الوضع الداكن",
+    darkDesc:"التبديل إلى نظام ألوان داكن",
+    language:"اللغة",
+    languageDesc:"تغيير لغة العرض",
+    nothingToday:"لا شيء مجدول اليوم.",
+    nothingHere:"لا يوجد شيء هنا.",
+    allOpen:"الكل المفتوح", ongoing:"جارٍ", completable:"قابل للإنجاز",
+    category:"الفئة", show:"عرض", overdue:"متأخر",
+    urgent:"عاجل", high:"مرتفع", medium:"متوسط",
+    chatPlaceholder:"مثال: أضف مهمة لمراجعة القانون",
+    chatWelcome:"أخبرني بما تريد إضافته أو تغييره — سأسألك لأفهم أكثر.",
+    send:"إرسال", working:"جاري المعالجة…",
+    steps:"الخطوات", taskTitle:"المهمة", notes:"ملاحظات",
+    dueDate:"تاريخ الاستحقاق", nature:"الطبيعة", recurring:"متكرر",
+    oneOff:"مرة واحدة", daily2:"يومياً", weekly:"أسبوعياً",
+    milestone:"قابل للإنجاز", ongoing2:"مستمر",
+    finishedDeleted:"المنجزة والمحذوفة", restore:"↺",
+    landLawExam:"امتحان قانون الأراضي", cheshireOak:"مقابلة تشيشاير أوك",
+    ongoingProjects:"مشاريع جارية", completableOpen:"مهام قابلة للإنجاز",
+    prayerPlaceholder:"⚠ أوقات الصلاة تقريبية — فعّل الأوقات الدقيقة من الإعدادات ⚙️",
+    weekView:"عرض الأسبوع",
+  },
+  fr:{
+    appName:"The Docket", daily:"Routine Quotidienne", allTasks:"Toutes les Tâches",
+    week:"Semaine", archive:"Terminées & Supprimées", settings:"Paramètres",
+    newTask:"Nouvelle Tâche", save:"Enregistrer", cancel:"Annuler", addStep:"Ajouter",
+    prayerSetting:"Heures de prière précises",
+    prayerDesc:"Utilise votre position pour les heures de prière",
+    prayerLoading:"📍 Localisation en cours…",
+    prayerDone:"✓ Heures de prière mises à jour",
+    prayerError:"⚠ Impossible d'obtenir la localisation",
+    notifSetting:"Notifications",
+    notifDesc:"Alertes navigateur pour les éléments planifiés",
+    darkMode:"Mode sombre",
+    darkDesc:"Passer à un thème sombre",
+    language:"Langue",
+    languageDesc:"Changer la langue d'affichage",
+    nothingToday:"Rien de planifié aujourd'hui.",
+    nothingHere:"Rien ici.",
+    allOpen:"Tout ouvert", ongoing:"En cours", completable:"Réalisable",
+    category:"Catégorie", show:"Afficher", overdue:"EN RETARD",
+    urgent:"urgent", high:"élevé", medium:"moyen",
+    chatPlaceholder:"ex. ajouter une tâche pour réviser",
+    chatWelcome:"Dites-moi ce que vous voulez ajouter ou modifier.",
+    send:"Envoyer", working:"En cours…",
+    steps:"Étapes", taskTitle:"Tâche", notes:"Notes",
+    dueDate:"Date limite", nature:"Nature", recurring:"Récurrent",
+    oneOff:"Ponctuel", daily2:"Quotidien", weekly:"Hebdomadaire",
+    milestone:"Réalisable", ongoing2:"Continu",
+    finishedDeleted:"Terminées & Supprimées", restore:"↺",
+    landLawExam:"Examen droit foncier", cheshireOak:"Entretien Cheshire Oak",
+    ongoingProjects:"Projets en cours", completableOpen:"Tâches réalisables",
+    prayerPlaceholder:"⚠ Heures de prière approximatives — activez-les dans Paramètres ⚙️",
+    weekView:"Vue Semaine",
+  },
+  tr:{
+    appName:"The Docket", daily:"Günlük Rutin", allTasks:"Tüm Görevler",
+    week:"Hafta", archive:"Tamamlanan & Silinenler", settings:"Ayarlar",
+    newTask:"Yeni Görev", save:"Kaydet", cancel:"İptal", addStep:"Ekle",
+    prayerSetting:"Doğru namaz vakitleri",
+    prayerDesc:"Gerçek namaz vakitleri için konumunuzu kullanır",
+    prayerLoading:"📍 Konumunuz alınıyor…",
+    prayerDone:"✓ Namaz vakitleri güncellendi",
+    prayerError:"⚠ Konum alınamadı — izinleri kontrol edin",
+    notifSetting:"Bildirimler",
+    notifDesc:"Zamanlanmış öğeler için tarayıcı uyarıları",
+    darkMode:"Karanlık mod",
+    darkDesc:"Koyu renk şemasına geç",
+    language:"Dil",
+    languageDesc:"Uygulama dilini değiştir",
+    nothingToday:"Bugün planlanmış bir şey yok.",
+    nothingHere:"Burada bir şey yok.",
+    allOpen:"Tümü Açık", ongoing:"Devam Eden", completable:"Tamamlanabilir",
+    category:"Kategori", show:"Göster", overdue:"GECİKMİŞ",
+    urgent:"acil", high:"yüksek", medium:"orta",
+    chatPlaceholder:"örn. revizyon için görev ekle",
+    chatWelcome:"Ne eklemek veya değiştirmek istediğinizi söyleyin.",
+    send:"Gönder", working:"İşleniyor…",
+    steps:"Adımlar", taskTitle:"Görev", notes:"Notlar",
+    dueDate:"Son tarih", nature:"Tür", recurring:"Tekrar",
+    oneOff:"Tek seferlik", daily2:"Günlük", weekly:"Haftalık",
+    milestone:"Tamamlanabilir", ongoing2:"Süregelen",
+    finishedDeleted:"Tamamlanan & Silinenler", restore:"↺",
+    landLawExam:"Arazi Hukuku sınavı", cheshireOak:"Cheshire Oak görüşmesi",
+    ongoingProjects:"Devam eden projeler", completableOpen:"Tamamlanabilir görevler",
+    prayerPlaceholder:"⚠ Namaz vakitleri tahmini — Ayarlar'dan doğru vakitleri etkinleştirin ⚙️",
+    weekView:"Haftalık Görünüm",
+  },
+  ur:{
+    appName:"The Docket", daily:"روزانہ معمول", allTasks:"تمام کام",
+    week:"ہفتہ", archive:"مکمل اور حذف", settings:"ترتیبات",
+    newTask:"نیا کام", save:"محفوظ", cancel:"منسوخ", addStep:"شامل",
+    prayerSetting:"درست اوقات نماز",
+    prayerDesc:"آپ کے مقام سے نماز کے اوقات لیتا ہے",
+    prayerLoading:"📍 مقام حاصل ہو رہا ہے…",
+    prayerDone:"✓ نماز کے اوقات آج کے لیے اپ ڈیٹ ہو گئے",
+    prayerError:"⚠ مقام نہیں مل سکا — اجازت چیک کریں",
+    notifSetting:"اطلاعات",
+    notifDesc:"مقررہ وقت پر براؤزر الرٹ",
+    darkMode:"تاریک موڈ",
+    darkDesc:"تاریک رنگ سکیم پر جائیں",
+    language:"زبان",
+    languageDesc:"ایپ کی زبان تبدیل کریں",
+    nothingToday:"آج کچھ شیڈول نہیں۔",
+    nothingHere:"یہاں کچھ نہیں۔",
+    allOpen:"سب کھلے", ongoing:"جاری", completable:"مکمل ہونے والا",
+    category:"زمرہ", show:"دکھائیں", overdue:"تاخیر",
+    urgent:"فوری", high:"اہم", medium:"معمولی",
+    chatPlaceholder:"مثال: نظر ثانی کے لیے کام شامل کریں",
+    chatWelcome:"بتائیں کیا شامل یا تبدیل کرنا ہے۔",
+    send:"بھیجیں", working:"کام جاری…",
+    steps:"مراحل", taskTitle:"کام", notes:"نوٹس",
+    dueDate:"آخری تاریخ", nature:"نوعیت", recurring:"دہرائیں",
+    oneOff:"ایک بار", daily2:"روزانہ", weekly:"ہفتہ وار",
+    milestone:"مکمل ہونے والا", ongoing2:"جاری",
+    finishedDeleted:"مکمل اور حذف", restore:"↺",
+    landLawExam:"لینڈ لاء امتحان", cheshireOak:"چیشائر اوک انٹرویو",
+    ongoingProjects:"جاری منصوبے", completableOpen:"مکمل ہونے والے کام",
+    prayerPlaceholder:"⚠ اوقات نماز تخمینی ہیں — ترتیبات میں درست اوقات فعال کریں ⚙️",
+    weekView:"ہفتہ وار نظارہ",
+  },
+};
+
+const LANG_LABELS:Record<Lang,string> = {
+  en:"English", ar:"العربية", fr:"Français", tr:"Türkçe", ur:"اردو"
+};
+const RTL_LANGS:Lang[] = ["ar","ur"];
+
+// ── Theme colours (light + dark) ──────────────────────────────────────────────
+function getC(dark:boolean){
+  return dark ? {
+    navy:"#E8EAF6", primary:"#7C9CE8", accent:"#7091E6",
+    accent2:"#8697C4", border:"#2a2d3e", muted:"#9099b8",
+    muted2:"#5a6080", urgent:"#E87070", urgentSoft:"#3a1f1f",
+    sage:"#5DBB8A", sageSoft:"#1a2e24", surface:"#1a1c2a",
+    surface2:"#13141f", bg:"#0f1019",
+  } : {
+    navy:"#232A4D", primary:"#3D52A0", accent:"#7091E6",
+    accent2:"#8697C4", border:"#DCD9EE", muted:"#6b7094",
+    muted2:"#9a9dbb", urgent:"#C0503C", urgentSoft:"#F4DFDA",
+    sage:"#3E7C5D", sageSoft:"#DCEEE3", surface:"#FFFFFF",
+    surface2:"#F6F4FB", bg:"#EDE8F5",
+  };
+}
+
+// ── App context for theme + language ─────────────────────────────────────────
+const AppCtx = createContext<{dark:boolean;lang:Lang;t:(k:string)=>string;dir:"ltr"|"rtl"}>({
+  dark:false, lang:"en", t:(k)=>k, dir:"ltr"
+});
+function useApp(){ return useContext(AppCtx); }
+
 const DAYS = ["mon","tue","wed","thu","fri","sat","sun"];
 const DAY_LABELS:Record<string,string> = {
   mon:"Monday",tue:"Tuesday",wed:"Wednesday",thu:"Thursday",
   fri:"Friday",sat:"Saturday",sun:"Sunday",
+};
+const DAY_LABELS_LANG:Record<Lang,Record<string,string>> = {
+  en:DAY_LABELS,
+  ar:{mon:"الاثنين",tue:"الثلاثاء",wed:"الأربعاء",thu:"الخميس",fri:"الجمعة",sat:"السبت",sun:"الأحد"},
+  fr:{mon:"Lundi",tue:"Mardi",wed:"Mercredi",thu:"Jeudi",fri:"Vendredi",sat:"Samedi",sun:"Dimanche"},
+  tr:{mon:"Pazartesi",tue:"Salı",wed:"Çarşamba",thu:"Perşembe",fri:"Cuma",sat:"Cumartesi",sun:"Pazar"},
+  ur:{mon:"پیر",tue:"منگل",wed:"بدھ",thu:"جمعرات",fri:"جمعہ",sat:"ہفتہ",sun:"اتوار"},
 };
 const CATS:Record<string,{label:string}> = {
   study:{label:"Study"},trading:{label:"Trading & Investing"},
@@ -38,14 +243,6 @@ const CAT_STYLES:Record<string,{bg:string;color:string}> = {
   health:  {bg:"#E4E9F9",color:"#3D52A0"},
   admin:   {bg:"#DCEEF0",color:"#3d7a8a"},
   faith:   {bg:"#DCF0E6",color:"#1f7a52"},
-};
-
-const C = {
-  navy:"#232A4D", primary:"#3D52A0", accent:"#7091E6",
-  accent2:"#8697C4", border:"#DCD9EE", muted:"#6b7094",
-  muted2:"#9a9dbb", urgent:"#C0503C", urgentSoft:"#F4DFDA",
-  sage:"#3E7C5D", sageSoft:"#DCEEE3", surface:"#FFFFFF",
-  surface2:"#F6F4FB", bg:"#EDE8F5",
 };
 
 const STORAGE_TASKS="docket-tasks-v2";
@@ -150,7 +347,7 @@ function Modal({children,onClose}:{children:React.ReactNode;onClose:()=>void}){
       style={{position:"fixed",inset:0,background:"rgba(35,42,77,0.35)",
         backdropFilter:"blur(2px)",display:"flex",alignItems:"center",
         justifyContent:"center",zIndex:50,padding:20}}>
-      <div style={{background:"white",borderRadius:18,padding:28,width:"100%",
+      <div style={{background:C.surface,borderRadius:18,padding:28,width:"100%",
         maxWidth:440,boxShadow:"0 30px 80px rgba(35,42,77,0.25)",
         maxHeight:"90vh",overflowY:"auto"}}>
         {children}
@@ -172,6 +369,8 @@ function TaskModal({initial,onClose,onSave}:{
   initial?:Partial<Task>;onClose:()=>void;
   onSave:(t:Omit<Task,"id"|"done"|"deleted"|"checklist">)=>void;
 }){
+  const{t,dark}=useApp();
+  const C=getC(dark);
   const[title,setTitle]=useState(initial?.title??"");
   const[category,setCategory]=useState<Category>(initial?.category??"study");
   const[priority,setPriority]=useState<Priority>(initial?.priority??"medium");
@@ -248,6 +447,8 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
   onAddStep:(t:string)=>void;onToggleStep:(id:number)=>void;
   onRemoveStep:(id:number)=>void;isArchive?:boolean;onRestore?:()=>void;
 }){
+  const{dark}=useApp();
+  const C=getC(dark);
   const[expanded,setExpanded]=useState(false);
   const[stepInput,setStepInput]=useState("");
   const d=task.date?daysUntil(task.date):null;
@@ -255,7 +456,7 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
   const cl=task.checklist??[];
   const clDone=cl.filter(s=>s.done).length;
   return(
-    <div style={{background:"white",border:`1px solid ${overdue&&!task.done?C.urgent:C.border}`,
+    <div style={{background:C.surface,border:`1px solid ${overdue&&!task.done?C.urgent:C.border}`,
       borderRadius:14,padding:"15px 17px",marginBottom:9,
       display:"flex",gap:13,transition:"box-shadow 0.15s"}}>
       {isArchive
@@ -343,20 +544,22 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
 function Drawer({isOpen,onClose,currentView,setView}:{
   isOpen:boolean;onClose:()=>void;currentView:View;setView:(v:View)=>void;
 }){
+  const{t,dark}=useApp();
+  const C=getC(dark);
   const items:{key:View;label:string}[]=[
-    {key:"daily",label:"Daily Routine"},{key:"all",label:"All Tasks"},{key:"week",label:"Week"},
+    {key:"daily",label:t("daily")},{key:"all",label:t("allTasks")},{key:"week",label:t("week")},
   ];
   return(
     <>
       {isOpen&&<div onClick={onClose} style={{position:"fixed",inset:0,
         background:"rgba(35,42,77,0.3)",backdropFilter:"blur(2px)",zIndex:70}}/>}
       <aside style={{position:"fixed",top:0,left:0,bottom:0,width:250,
-        background:"white",boxShadow:"8px 0 30px rgba(35,42,77,0.2)",
+        background:C.surface,boxShadow:"8px 0 30px rgba(35,42,77,0.2)",
         padding:"24px 16px",zIndex:71,
         transform:isOpen?"translateX(0)":"translateX(-100%)",
         transition:"transform 0.2s ease",display:"flex",flexDirection:"column",gap:4}}>
         <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-          fontSize:19,color:C.navy,marginBottom:18,padding:"0 8px"}}>The Docket</p>
+          fontSize:19,color:C.navy,marginBottom:18,padding:"0 8px"}}>{t("appName")}</p>
         {items.map(it=>(
           <button key={it.key} onClick={()=>{setView(it.key);onClose();}}
             style={{textAlign:"left",padding:"12px 12px",borderRadius:10,
@@ -372,7 +575,7 @@ function Drawer({isOpen,onClose,currentView,setView}:{
               borderRadius:10,fontSize:14,fontWeight:600,border:"none",cursor:"pointer",
               background:currentView==="archive"?C.navy:C.surface2,
               color:currentView==="archive"?"white":C.muted}}>
-            Finished &amp; Deleted
+            {t("archive")}
           </button>
         </div>
       </aside>
@@ -382,6 +585,8 @@ function Drawer({isOpen,onClose,currentView,setView}:{
 
 // ── All Tasks Sidebar ────────────────────────────────────────────────────────
 function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFilter:(f:Filter)=>void;}){
+  const{t,dark}=useApp();
+  const C=getC(dark);
   const open=tasks.filter(t=>!t.done&&!t.deleted);
   const archived=tasks.filter(t=>t.done||t.deleted);
   function Btn({f,label,count}:{f:Filter;label:string;count:number}){
@@ -399,7 +604,7 @@ function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFil
     );
   }
   return(
-    <div style={{background:"white",borderRadius:14,border:`1px solid ${C.border}`,
+    <div style={{background:C.surface,borderRadius:14,border:`1px solid ${C.border}`,
       padding:10,height:"fit-content"}}>
       <p style={{fontSize:10,fontWeight:700,letterSpacing:1.5,color:C.muted2,
         textTransform:"uppercase",padding:"6px 10px 6px"}}>Show</p>
@@ -454,9 +659,11 @@ function TimelineRow({item,onCheck}:{
 
 // ── Chatbot ──────────────────────────────────────────────────────────────────
 function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;}){
+  const{t,dark}=useApp();
+  const C=getC(dark);
   const[open,setOpen]=useState(false);
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string}[]>([
-    {role:"assistant",content:"Tell me what to add, remove, or change — tasks, steps, or routine slots."},
+    {role:"assistant",content:t("chatWelcome")},
   ]);
   const[input,setInput]=useState("");
   const[loading,setLoading]=useState(false);
@@ -547,7 +754,7 @@ NEVER return plain text. ALWAYS return valid JSON.`;
           boxShadow:"0 10px 30px rgba(112,145,230,0.4)",zIndex:40}}>✦</button>
       {open&&(
         <div style={{position:"fixed",bottom:20,right:20,zIndex:60}}>
-          <div style={{background:"white",borderRadius:18,width:380,height:560,
+          <div style={{background:C.surface,borderRadius:18,width:380,height:560,
             boxShadow:"0 30px 80px rgba(35,42,77,0.3)",
             display:"flex",flexDirection:"column",overflow:"hidden"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
@@ -606,6 +813,13 @@ export default function Home(){
   const[prayerEnabled,setPrayerEnabled]=useState(false);
   const[prayerStatus,setPrayerStatus]=useState<"idle"|"loading"|"done"|"error">("idle");
   const[showSettings,setShowSettings]=useState(false);
+  const[dark,setDark]=useState(false);
+  const[lang,setLang]=useState<Lang>("en");
+
+  const C=getC(dark);
+  const dir:("ltr"|"rtl")=RTL_LANGS.includes(lang)?"rtl":"ltr";
+  const t=(k:string)=>T[lang]?.[k]??T.en[k]??k;
+  const dayLabels=DAY_LABELS_LANG[lang]??DAY_LABELS;
 
   useEffect(()=>{
     const t=localStorage.getItem(STORAGE_TASKS);
@@ -621,10 +835,16 @@ export default function Home(){
   useEffect(()=>{
     const saved=localStorage.getItem("docket-prayer-enabled");
     if(saved==="true") setPrayerEnabled(true);
+    const savedDark=localStorage.getItem("docket-dark");
+    if(savedDark==="true") setDark(true);
+    const savedLang=localStorage.getItem("docket-lang") as Lang;
+    if(savedLang && T[savedLang]) setLang(savedLang);
   },[]);
   useEffect(()=>{
     if(isLoaded) localStorage.setItem("docket-prayer-enabled", prayerEnabled?"true":"false");
   },[prayerEnabled,isLoaded]);
+  useEffect(()=>{ localStorage.setItem("docket-dark",dark?"true":"false"); },[dark]);
+  useEffect(()=>{ localStorage.setItem("docket-lang",lang); },[lang]);
 
   // Prayer names to update
   const PRAYER_NAMES=["Fajr","Dhuhr","Asr","Maghrib","Isha"];
@@ -761,8 +981,9 @@ export default function Home(){
   const interviewTask=tasks.find(t=>!t.deleted&&t.title.toLowerCase().includes("cheshire oak"));
 
   return(
+    <AppCtx.Provider value={{dark,lang,t,dir}}>
     <div style={{minHeight:"100vh",background:C.bg,position:"relative",
-      fontFamily:"'Inter',sans-serif",color:C.navy}}>
+      fontFamily:"'Inter',sans-serif",color:C.navy,direction:dir}}>
 
       {/* Blobs */}
       <div style={{position:"fixed",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:0}}>
@@ -782,7 +1003,7 @@ export default function Home(){
             display:"flex",alignItems:"center",justifyContent:"center",
             fontSize:18,color:C.navy,cursor:"pointer"}}>☰</button>
         <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-          fontSize:17,color:C.navy}}>The Docket</span>
+          fontSize:17,color:C.navy}}>{t("appName")}</span>
         <div style={{display:"flex",gap:8}}>
           <button onClick={()=>setShowSettings(s=>!s)}
             style={{width:44,height:44,borderRadius:12,background:"white",
@@ -805,22 +1026,54 @@ export default function Home(){
       {showSettings&&(
         <div style={{position:"relative",zIndex:10,maxWidth:1100,margin:"0 auto",
           padding:"0 20px 16px"}}>
-          <div style={{background:"white",border:`1px solid ${C.border}`,borderRadius:14,
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,
             padding:"18px 20px"}}>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-              fontSize:16,color:C.navy,marginBottom:14}}>Settings</p>
+              fontSize:16,color:C.navy,marginBottom:14}}>{t("settings")}</p>
+
+            {/* Dark mode */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+              padding:"12px 0",borderBottom:`1px solid ${C.border}`}}>
+              <div>
+                <p style={{fontWeight:600,fontSize:14,color:C.navy}}>{t("darkMode")}</p>
+                <p style={{fontSize:12,color:C.muted,marginTop:2}}>{t("darkDesc")}</p>
+              </div>
+              <button onClick={()=>setDark(d=>!d)}
+                style={{width:48,height:26,borderRadius:13,border:"none",cursor:"pointer",
+                  background:dark?C.sage:C.border,position:"relative",transition:"background 0.2s",flexShrink:0}}>
+                <span style={{position:"absolute",top:3,left:dark?24:3,width:20,height:20,
+                  borderRadius:"50%",background:"white",transition:"left 0.2s",
+                  boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}/>
+              </button>
+            </div>
+
+            {/* Language */}
+            <div style={{padding:"12px 0",borderBottom:`1px solid ${C.border}`}}>
+              <p style={{fontWeight:600,fontSize:14,color:C.navy}}>{t("language")}</p>
+              <p style={{fontSize:12,color:C.muted,marginTop:2,marginBottom:10}}>{t("languageDesc")}</p>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                {(Object.entries(LANG_LABELS) as [Lang,string][]).map(([code,label])=>(
+                  <button key={code} onClick={()=>setLang(code)}
+                    style={{padding:"7px 14px",borderRadius:8,border:`1.5px solid ${lang===code?C.primary:C.border}`,
+                      background:lang===code?C.primary:"transparent",
+                      color:lang===code?"white":C.muted,
+                      fontSize:13,fontWeight:600,cursor:"pointer",
+                      fontFamily:code==="ar"||code==="ur"?"'Segoe UI',sans-serif":"inherit"}}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Prayer times toggle */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
               padding:"12px 0",borderBottom:`1px solid ${C.border}`}}>
               <div>
-                <p style={{fontWeight:600,fontSize:14,color:C.navy}}>Accurate prayer times</p>
-                <p style={{fontSize:12,color:C.muted,marginTop:2}}>
-                  Uses your location to fetch real prayer times from Aladhan API
-                </p>
-                {prayerStatus==="loading"&&<p style={{fontSize:11,color:C.accent,marginTop:4}}>📍 Fetching your location…</p>}
-                {prayerStatus==="done"&&<p style={{fontSize:11,color:C.sage,marginTop:4}}>✓ Prayer times updated for today</p>}
-                {prayerStatus==="error"&&<p style={{fontSize:11,color:C.urgent,marginTop:4}}>⚠ Could not get location — check browser permissions</p>}
+                <p style={{fontWeight:600,fontSize:14,color:C.navy}}>{t("prayerSetting")}</p>
+                <p style={{fontSize:12,color:C.muted,marginTop:2}}>{t("prayerDesc")}</p>
+                {prayerStatus==="loading"&&<p style={{fontSize:11,color:C.accent,marginTop:4}}>{t("prayerLoading")}</p>}
+                {prayerStatus==="done"&&<p style={{fontSize:11,color:C.sage,marginTop:4}}>{t("prayerDone")}</p>}
+                {prayerStatus==="error"&&<p style={{fontSize:11,color:C.urgent,marginTop:4}}>{t("prayerError")}</p>}
               </div>
               <button onClick={togglePrayer}
                 style={{width:48,height:26,borderRadius:13,border:"none",cursor:"pointer",
@@ -837,10 +1090,8 @@ export default function Home(){
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
               padding:"12px 0"}}>
               <div>
-                <p style={{fontWeight:600,fontSize:14,color:C.navy}}>Notifications</p>
-                <p style={{fontSize:12,color:C.muted,marginTop:2}}>
-                  Browser alerts when a scheduled item is due (tab must stay open)
-                </p>
+                <p style={{fontWeight:600,fontSize:14,color:C.navy}}>{t("notifSetting")}</p>
+                <p style={{fontSize:12,color:C.muted,marginTop:2}}>{t("notifDesc")}</p>
               </div>
               <button onClick={toggleNotifications}
                 style={{width:48,height:26,borderRadius:13,border:"none",cursor:"pointer",
@@ -889,14 +1140,14 @@ export default function Home(){
         {currentView==="daily"&&(
           <div>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-              fontSize:26,color:C.navy,marginBottom:4}}>Daily Routine</p>
+              fontSize:26,color:C.navy,marginBottom:4}}>{t("daily")}</p>
             <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,
               color:C.muted,marginBottom:20}}>
-              {new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+              {new Date().toLocaleDateString(lang==="ar"?"ar-SA":lang==="fr"?"fr-FR":lang==="tr"?"tr-TR":lang==="ur"?"ur-PK":"en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
             </p>
-            <div style={{background:"#E4E9F9",color:C.primary,fontSize:12,
+            <div style={{background:dark?"#1a2535":"#E4E9F9",color:C.primary,fontSize:12,
               padding:"11px 15px",borderRadius:10,marginBottom:16,lineHeight:1.5}}>
-              ⚠ Prayer times are placeholders — update them to match your local timetable.
+              {prayerEnabled?t("prayerDone"):t("prayerPlaceholder")}
             </div>
             {/* Overdue + ongoing chips */}
             {(()=>{
@@ -911,7 +1162,7 @@ export default function Home(){
                   ◆ {t.title}</span>)}
               </div>):null;
             })()}
-            <div style={{background:"white",border:`1px solid ${C.border}`,
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,
               borderRadius:14,padding:"4px 20px"}}>
               {todayItems.length?todayItems.map((it,i)=>(
                 <TimelineRow key={i} item={it} onCheck={()=>{
@@ -930,7 +1181,7 @@ export default function Home(){
             <div style={{display:"flex",justifyContent:"space-between",
               alignItems:"center",marginBottom:20}}>
               <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-                fontSize:26,color:C.navy}}>All Tasks</p>
+                fontSize:26,color:C.navy}}>{t("allTasks")}</p>
               <button onClick={()=>setIsAddingTask(true)}
                 style={{background:C.navy,color:"white",fontSize:13,fontWeight:600,
                   padding:"11px 20px",borderRadius:10,border:"none",cursor:"pointer"}}>
@@ -961,7 +1212,7 @@ export default function Home(){
         {currentView==="week"&&(
           <div>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-              fontSize:26,color:C.navy,marginBottom:20}}>Week View</p>
+              fontSize:26,color:C.navy,marginBottom:20}}>{t("week")}</p>
             {/* Day chips */}
             <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:8,marginBottom:20}}>
               {weekDates.map(day=>{
@@ -988,7 +1239,7 @@ export default function Home(){
               })}
             </div>
             {/* Day detail */}
-            <div style={{background:"white",border:`1px solid ${C.border}`,
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,
               borderRadius:14,padding:"18px 20px"}}>
               <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
                 fontSize:18,color:C.navy,marginBottom:12}}>
@@ -1013,7 +1264,7 @@ export default function Home(){
         {currentView==="archive"&&(
           <div>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-              fontSize:26,color:C.navy,marginBottom:20}}>Finished &amp; Deleted</p>
+              fontSize:26,color:C.navy,marginBottom:20}}>{t("archive")}</p>
             {tasks.filter(t=>t.done||t.deleted).length===0
               ?<p style={{textAlign:"center",color:C.muted2,padding:"48px 0",
                   fontFamily:"'Space Grotesk',sans-serif",fontWeight:600}}>No archived tasks yet.</p>
@@ -1040,5 +1291,6 @@ export default function Home(){
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
         onSave={data=>{updateTask(editingTask.id,data);setEditingTask(null);}}/>}
     </div>
+    </AppCtx.Provider>
   );
 }
