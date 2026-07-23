@@ -17,15 +17,7 @@ export async function POST(req: Request) {
       {"type": "add_task", "title": "User's Task", "category": "Category", "priority": "Priority"}
       
       Valid Categories: "Study", "Trading & Investing", "Business", "Career", "Health", "Admin & Housing", "Faith".
-      Valid Priorities: "Medium", "High", "Urgent".
-      
-      Example 1:
-      User: "Add a task to buy groceries"
-      Output: {"reply": "Okay, I added that to your list!", "action": {"type": "add_task", "title": "Buy Groceries", "category": "Admin & Housing", "priority": "Medium"}}
-      
-      Example 2:
-      User: "Hello"
-      Output: {"reply": "Hi there! How can I help you manage your tasks today?", "action": null}`
+      Valid Priorities: "Medium", "High", "Urgent".`
     };
 
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -35,13 +27,23 @@ export async function POST(req: Request) {
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: "llama3-70b-8192", // Upgraded to the much smarter 70B model!
+        model: "llama3-70b-8192",
         messages: [systemPrompt, ...messages],
         response_format: { type: "json_object" }
       })
     });
 
     const data = await groqRes.json();
+
+    // NEW: If Groq returns an error (like invalid API key), we catch it here!
+    if (!data.choices || data.choices.length === 0) {
+      console.error("Groq API Error:", data);
+      return NextResponse.json({ 
+        reply: `Server Error: ${JSON.stringify(data.error || data)}`, 
+        action: null 
+      });
+    }
+
     const content = data.choices[0].message.content;
 
     try {
@@ -52,7 +54,7 @@ export async function POST(req: Request) {
     }
 
   } catch (error) {
-    console.error(error);
+    console.error("Route Error:", error);
     return NextResponse.json({ error: "Failed to connect to AI" }, { status: 500 });
   }
 }
