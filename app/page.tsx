@@ -499,9 +499,24 @@ Rules:
         body:JSON.stringify({system:systemPrompt,messages:newMsgs.slice(-20)})});
       const data=await res.json();
       const raw=(data.content??data.reply??"{}").replace(/^```json\s*/i,"").replace(/^```/,"").replace(/```$/,"").trim();
-      const parsed=JSON.parse(raw);
-      onAction(parsed.actions??[]);
-      setMessages([...newMsgs,{role:"assistant",content:parsed.reply??"Done."}]);
+      console.log("Groq raw response:", raw);
+      let parsed:any={};
+      try{ parsed=JSON.parse(raw); }catch(e){ console.error("JSON parse failed:",raw); }
+      console.log("Parsed actions:", parsed.actions);
+      // Handle both {actions:[...]} and flat {type:"add_task",...} responses
+      let actions=[];
+      if(Array.isArray(parsed.actions)&&parsed.actions.length>0){
+        actions=parsed.actions;
+      } else if(parsed.type){
+        // Groq returned a single action object directly
+        actions=[parsed];
+      } else if(parsed.action&&parsed.action.type){
+        // Groq wrapped it in an "action" key
+        actions=[parsed.action];
+      }
+      console.log("Actions to apply:", actions);
+      onAction(actions);
+      setMessages([...newMsgs,{role:"assistant",content:parsed.reply??parsed.message??"Done."}]);
     }catch{
       setMessages([...newMsgs,{role:"assistant",content:"Something went wrong — try rephrasing."}]);
     }finally{setLoading(false);}
