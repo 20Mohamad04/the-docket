@@ -6,7 +6,8 @@ export async function POST(req: Request) {
 
     const groqKey = process.env.GROQ_API_KEY;
     if (!groqKey) {
-      return NextResponse.json({ error: "GROQ_API_KEY is not set." }, { status: 500 });
+      console.error("Missing GROQ_API_KEY");
+      return NextResponse.json({ content: '{"actions":[],"reply":"Server config error: no API key."}' }, { status: 500 });
     }
 
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -16,10 +17,9 @@ export async function POST(req: Request) {
         Authorization: `Bearer ${groqKey}`,
       },
       body: JSON.stringify({
-        model: "llama3-70b-8192",
+        model: "llama3-8b-8192",
         temperature: 0.1,
-        max_tokens: 1024,
-        response_format: { type: "json_object" },
+        max_tokens: 512,
         messages: [
           { role: "system", content: system },
           ...messages,
@@ -28,20 +28,25 @@ export async function POST(req: Request) {
     });
 
     const data = await groqRes.json();
+    console.log("Groq status:", groqRes.status);
+    console.log("Groq response:", JSON.stringify(data).slice(0, 500));
 
-    if (!data.choices || data.choices.length === 0) {
-      console.error("Groq API Error:", data);
-      return NextResponse.json(
-        { error: JSON.stringify(data.error || data) },
-        { status: 500 }
-      );
+    if (!groqRes.ok || !data.choices || data.choices.length === 0) {
+      console.error("Groq error:", data);
+      // Return a fallback so the frontend doesn't break
+      return NextResponse.json({
+        content: `{"actions":[],"reply":"Groq error: ${data.error?.message ?? "unknown error"}"}`
+      });
     }
 
     const content = data.choices[0].message.content;
+    console.log("Groq content:", content);
     return NextResponse.json({ content });
 
   } catch (error) {
-    console.error("Route Error:", error);
-    return NextResponse.json({ error: "Failed to connect to AI" }, { status: 500 });
+    console.error("Route error:", error);
+    return NextResponse.json({
+      content: '{"actions":[],"reply":"Server error — please try again."}'
+    });
   }
 }
