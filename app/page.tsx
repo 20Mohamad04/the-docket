@@ -951,7 +951,6 @@ NEVER add anything without explicit confirmation. NEVER return plain text.`;
     }finally{setLoading(false);}
   }
 
-  return(
   return(<>
       <button onClick={()=>setOpen(o=>!o)}
         style={{position:"fixed",bottom:28,right:92,width:52,height:52,
