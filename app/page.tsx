@@ -862,51 +862,68 @@ function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAc
   const C=getC(dark);
   const[open,setOpen]=useState(false);
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string}[]>([
-    {role:"assistant",content:t("chatWelcome")},
+    {role:"assistant",content:"Hi! I'm your Docket assistant. Tell me what you need — I'll find the best slot in your schedule and confirm before adding anything."},
   ]);
   const[input,setInput]=useState("");
   const[loading,setLoading]=useState(false);
 
-  const taskList=tasks.filter(t=>!t.deleted).map(t=>({id:t.id,title:t.title,done:t.done,type:t.type,category:t.category}));
-  const systemPrompt=`You are Docket, a smart personal assistant inside a task management app. You help Mo — a law student, paralegal, and entrepreneur in Liverpool — manage his tasks and routine intelligently.
+  const scheduleContext=()=>{
+    const occ:Record<string,string[]>={};
+    DAYS.forEach(d=>{
+      const slots=routines
+        .filter(r=>(r.days??[]).includes(d)&&r.time)
+        .sort((a,b)=>(a.time||"").localeCompare(b.time||""))
+        .map(r=>`${r.time} ${r.label} (${r.duration}min)`);
+      if(slots.length) occ[d]=slots;
+    });
+    return occ;
+  };
 
-You MUST always respond with a valid JSON object in this exact format:
-{"actions": [...], "reply": "your message to Mo"}
+  const systemPrompt=`You are Docket, an intelligent personal scheduling assistant — a smart secretary for the user.
 
-CONVERSATION RULES — follow these strictly:
-1. When Mo mentions adding something, ALWAYS ask at least one clarifying question before acting — unless the answer is completely obvious from context.
-2. Ask ONE question at a time. Never bombard with multiple questions at once.
-3. Key questions to ask depending on context:
-   - Is this a one-off task (completable) or an ongoing project with no end date?
-   - What category does it fall under? (study, trading, business, career, health, admin, faith)
-   - How urgent is it? (urgent, high, medium)
-   - Does it need a specific time or deadline?
-   - Should it repeat daily or weekly?
-4. Once you have enough information, create the task with the right fields filled in.
-5. When Mo says he finished/completed/done with something, use complete_task immediately — no questions needed.
-6. Be friendly, brief, and natural. Talk like a helpful assistant, not a robot.
-7. If Mo's message is casual or unclear, ask for clarification rather than guessing.
+Today is ${todayISO()} (${new Date().toLocaleDateString("en-GB",{weekday:"long"})}).
 
-ACTIONS available (only include actions when you have enough info):
-- Add task: {"type":"add_task","task":{"title":"","category":"study","priority":"medium","type":"milestone","date":"","time":"","recurring":"","notes":""}}
-- Complete task: {"type":"complete_task","id": NUMBER}
-- Delete task: {"type":"remove_task","id": NUMBER}
-- Update task: {"type":"update_task","id": NUMBER,"changes":{}}
+CURRENT SCHEDULE (occupied time slots per day):
+${JSON.stringify(scheduleContext(),null,2)}
 
-Categories: study, legal, legal_work, compliance, trading, finance, savings, investment, debt, tax, insurance, subscriptions, business, side_hustle, marketing, sales, design, content, customer, career, interview, networking, project, hr, health, fitness, nutrition, mental, medical, driving, vehicle, admin, home, property, utilities, shopping, family, childcare, pets, social, events, technology, travel, volunteering, charity, community, environment, sports, cooking, reading, music, creative, language, writing, research, education, personal, faith, other
-Priorities: urgent, high, medium
-Task types: milestone (has a clear end), ongoing (no fixed finish)
+CURRENT ACTIVE TASKS:
+${JSON.stringify(tasks.filter(t=>!t.deleted&&!t.done).map(t=>({id:t.id,title:t.title,type:t.type,category:t.category,date:t.date,time:t.time})))}
 
-Mo's current tasks: ${JSON.stringify(taskList)}
+CURRENT ROUTINES:
+${JSON.stringify(routines.map(r=>({id:r.id,label:r.label,days:r.days,time:r.time,duration:r.duration})))}
 
-EXAMPLES of good behaviour:
-- Mo: "add gym" → reply: "Sure! Is this a one-off session or a recurring daily habit?" → actions: []
-- Mo: "daily habit" → reply: "Got it — what time do you usually go? And should I mark it as high intensity?" → actions: []
-- Mo: "7am, yes" → reply: "Added gym as a daily routine at 7am." → actions: [{add_task...}]
-- Mo: "I finished the Cheshire Oak interview" → reply: "Great work! I'll mark that as complete." → actions: [{complete_task...}]
+You MUST respond with ONLY valid JSON: {"actions":[...],"reply":"message"}
 
-If you truly have no actions to take: {"actions":[],"reply":"your conversational reply"}
-NEVER return plain text. ALWAYS return valid JSON.`;
+AVAILABLE ACTIONS:
+- Add recurring routine (appears in Daily Routine + Week): {"type":"add_routine","routine":{"label":"","category":"study","days":["mon","wed","fri"],"time":"16:00","duration":60,"intensity":"normal"}}
+- Add one-off task with date (appears in Week view): {"type":"add_task","task":{"title":"","category":"study","priority":"medium","type":"milestone","date":"YYYY-MM-DD","time":"HH:MM","recurring":"","notes":""}}
+- Complete task: {"type":"complete_task","id":NUMBER}
+- Delete task: {"type":"remove_task","id":NUMBER}  
+- Update task: {"type":"update_task","id":NUMBER,"changes":{}}
+- Update routine: {"type":"update_routine","id":NUMBER,"changes":{}}
+- Remove routine: {"type":"remove_routine","id":NUMBER}
+- Mark routine done today: {"type":"mark_routine_done","routine_id":NUMBER,"date":"YYYY-MM-DD"}
+
+Days: mon, tue, wed, thu, fri, sat, sun
+Categories: study, legal, trading, finance, business, career, health, fitness, driving, admin, property, content, personal, family, faith, technology, travel, sports, other
+
+SECRETARY RULES:
+1. IDENTIFY TYPE FIRST: Is it recurring (add_routine) or a one-off event (add_task with date)? Recurring = shows in Daily Routine every week. One-off = shows in Week view on that specific day.
+2. ESTIMATE DURATION: Reason about realistic time needed. Quick check = 15min. Study session = 60-90min. Interview prep = 45min. Always tell the user your estimate.
+3. FIND FREE SLOTS: Study the schedule above carefully. Find days/times with no existing entries. Never double-book. If Monday is busy, suggest Tuesday.
+4. SUGGEST SPECIFICALLY: Say exactly what you propose — "I suggest adding this Wednesday and Friday at 3pm for 60 minutes" — not vague questions.
+5. CONFIRM BEFORE ACTING: ALWAYS wait for user to say yes/ok/sure before returning any add_routine or add_task actions. Return empty actions [] until confirmed.
+6. ONE THING AT A TIME: Ask only one question per message.
+7. COMPLETING: If user says done/finished/completed → complete_task immediately, no confirmation needed.
+8. BE CONCISE: Short, friendly, direct messages. Like a smart human assistant.
+
+EXAMPLE FLOW:
+User: "add third year prep to my routine"
+Reply: "Sure. I estimate third year prep sessions need about 90 minutes. Looking at your schedule, Monday, Wednesday and Friday at 16:00 look free. Want me to add it there?" Actions: []
+User: "yes"
+Reply: "Done — third year prep added Mon/Wed/Fri at 16:00." Actions: [add_routine...]
+
+NEVER add anything without explicit confirmation. NEVER return plain text.`;
 
   async function send(){
     if(!input.trim()||loading)return;
@@ -921,22 +938,12 @@ NEVER return plain text. ALWAYS return valid JSON.`;
         body:JSON.stringify({system:systemPrompt,messages:newMsgs.slice(-20)})});
       const data=await res.json();
       const raw=(data.content??data.reply??"{}").replace(/^```json\s*/i,"").replace(/^```/,"").replace(/```$/,"").trim();
-      console.log("Groq raw response:", raw);
       let parsed:any={};
-      try{ parsed=JSON.parse(raw); }catch(e){ console.error("JSON parse failed:",raw); }
-      console.log("Parsed actions:", parsed.actions);
-      // Handle both {actions:[...]} and flat {type:"add_task",...} responses
-      let actions=[];
-      if(Array.isArray(parsed.actions)&&parsed.actions.length>0){
-        actions=parsed.actions;
-      } else if(parsed.type){
-        // Groq returned a single action object directly
-        actions=[parsed];
-      } else if(parsed.action&&parsed.action.type){
-        // Groq wrapped it in an "action" key
-        actions=[parsed.action];
-      }
-      console.log("Actions to apply:", actions);
+      try{ parsed=JSON.parse(raw); }catch(e){ console.error("Parse failed:",raw); }
+      let actions:any[]=[];
+      if(Array.isArray(parsed.actions)&&parsed.actions.length>0) actions=parsed.actions;
+      else if(parsed.type) actions=[parsed];
+      else if(parsed.action?.type) actions=[parsed.action];
       onAction(actions);
       setMessages([...newMsgs,{role:"assistant",content:parsed.reply??parsed.message??"Done."}]);
     }catch{
@@ -945,7 +952,7 @@ NEVER return plain text. ALWAYS return valid JSON.`;
   }
 
   return(
-    <>
+  return(<>
       <button onClick={()=>setOpen(o=>!o)}
         style={{position:"fixed",bottom:28,right:92,width:52,height:52,
           borderRadius:"50%",background:C.accent,color:"white",border:"none",
@@ -1127,8 +1134,32 @@ export default function Home(){
       else if(a.type==="add_step")addStep(a.task_id,a.text??"Step");
       else if(a.type==="toggle_step")toggleStep(a.task_id,a.step_id);
       else if(a.type==="remove_step")removeStep(a.task_id,a.step_id);
+      else if(a.type==="add_routine"){
+        const r=a.routine??{};
+        const days=Array.isArray(r.days)?r.days.filter((d:string)=>DAYS.includes(d)):DAYS;
+        setRoutines(prev=>[...prev,{
+          id:Math.max(0,...prev.map((x:Routine)=>x.id))+1,
+          label:r.label??"New routine",
+          category:r.category??"health",
+          days,
+          time:r.time??"09:00",
+          duration:r.duration??60,
+          intensity:r.intensity??"normal",
+          notes:r.notes??"",
+          completions:{},
+        }]);
+      }
+      else if(a.type==="update_routine"){
+        setRoutines(prev=>prev.map((r:Routine)=>r.id===a.id?{...r,...(a.changes??{})}:r));
+      }
+      else if(a.type==="remove_routine"){
+        setRoutines(prev=>prev.filter((r:Routine)=>r.id!==a.id));
+      }
+      else if(a.type==="mark_routine_done"){
+        setRoutines(prev=>prev.map((r:Routine)=>r.id===a.routine_id?{...r,completions:{...r.completions,[a.date]:true}}:r));
+      }
     });
-  },[addTask,deleteTask,updateTask,addStep,toggleStep,removeStep]);
+  },[addTask,deleteTask,updateTask,addStep,toggleStep,removeStep,setRoutines]);
 
   async function toggleNotifications(){
     if(typeof Notification==="undefined"){alert("Not available here — try opening in a real browser tab.");return;}
