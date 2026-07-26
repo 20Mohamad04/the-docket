@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, createContext, useContext } fr
 type Category = "study"|"legal"|"trading"|"finance"|"business"|"career"|"health"|"driving"|"admin"|"property"|"content"|"personal"|"family"|"faith"|"fitness"|"nutrition"|"mental"|"travel"|"technology"|"creative"|"social"|"volunteering"|"language"|"reading"|"music"|"sports"|"cooking"|"shopping"|"events"|"medical"|"insurance"|"tax"|"debt"|"savings"|"investment"|"side_hustle"|"networking"|"interview"|"project"|"research"|"writing"|"design"|"marketing"|"sales"|"customer"|"hr"|"legal_work"|"compliance"|"environment"|"community"|"charity"|"education"|"childcare"|"pets"|"home"|"vehicle"|"utilities"|"subscriptions"|"other";
 type Priority = "urgent"|"high"|"medium";
 type TaskType = "milestone"|"ongoing";
-type View = "daily"|"all"|"week"|"archive";
+type View = "daily"|"all"|"calendar"|"archive";
 type Filter = "all"|"ongoing"|"milestone"|"done"|Category;
 type Lang = "en"|"ar"|"fr"|"tr"|"ur";
 
@@ -197,17 +197,19 @@ const RTL_LANGS:Lang[] = ["ar","ur"];
 // ── Theme colours (light + dark) ──────────────────────────────────────────────
 function getC(dark:boolean){
   return dark ? {
-    navy:"#E8EAF6", primary:"#7C9CE8", accent:"#7091E6",
-    accent2:"#8697C4", border:"#2a2d3e", muted:"#9099b8",
-    muted2:"#5a6080", urgent:"#E87070", urgentSoft:"#3a1f1f",
-    sage:"#5DBB8A", sageSoft:"#1a2e24", surface:"#1a1c2a",
-    surface2:"#13141f", bg:"#0f1019",
+    navy:"#ECF0FF", primary:"#7C9CF0", accent:"#8BA8FF",
+    accent2:"#9AADF0", border:"rgba(255,255,255,0.07)", muted:"#8A96C0",
+    muted2:"#505878", urgent:"#FF6B6B", urgentSoft:"rgba(255,107,107,0.12)",
+    sage:"#4CC38A", sageSoft:"rgba(76,195,138,0.12)", surface:"rgba(255,255,255,0.05)",
+    surface2:"rgba(255,255,255,0.025)", bg:"#080A14",
+    gold:"#D4A843",
   } : {
-    navy:"#232A4D", primary:"#3D52A0", accent:"#7091E6",
-    accent2:"#8697C4", border:"#DCD9EE", muted:"#6b7094",
-    muted2:"#9a9dbb", urgent:"#C0503C", urgentSoft:"#F4DFDA",
-    sage:"#3E7C5D", sageSoft:"#DCEEE3", surface:"#FFFFFF",
-    surface2:"#F6F4FB", bg:"#EDE8F5",
+    navy:"#181D3B", primary:"#4C5FD5", accent:"#6677E8",
+    accent2:"#8892D8", border:"rgba(76,95,213,0.13)", muted:"#6B7299",
+    muted2:"#A8AFCC", urgent:"#D94F3D", urgentSoft:"#FDECEA",
+    sage:"#2E8B57", sageSoft:"#E0F5EB", surface:"rgba(255,255,255,0.78)",
+    surface2:"rgba(255,255,255,0.42)", bg:"#E9E6F4",
+    gold:"#C9A84C",
   };
 }
 
@@ -229,80 +231,66 @@ const DAY_LABELS_LANG:Record<Lang,Record<string,string>> = {
   tr:{mon:"Pazartesi",tue:"Salı",wed:"Çarşamba",thu:"Perşembe",fri:"Cuma",sat:"Cumartesi",sun:"Pazar"},
   ur:{mon:"پیر",tue:"منگل",wed:"بدھ",thu:"جمعرات",fri:"جمعہ",sat:"ہفتہ",sun:"اتوار"},
 };
-const CATS:Record<string,{label:string}> = {
-  // Life & Wellbeing
-  health:      {label:"Health & Fitness"},
-  fitness:     {label:"Fitness & Exercise"},
-  nutrition:   {label:"Nutrition & Diet"},
-  mental:      {label:"Mental Health"},
-  medical:     {label:"Medical & Appointments"},
-  // Faith & Personal
-  faith:       {label:"Faith & Spirituality"},
-  personal:    {label:"Personal Development"},
-  reading:     {label:"Reading & Books"},
-  music:       {label:"Music"},
-  creative:    {label:"Creative & Arts"},
-  language:    {label:"Language Learning"},
-  // Study & Knowledge
-  study:       {label:"Study"},
-  research:    {label:"Research"},
-  writing:     {label:"Writing"},
-  education:   {label:"Education"},
-  // Career & Work
-  career:      {label:"Career"},
-  interview:   {label:"Interviews & Applications"},
-  networking:  {label:"Networking"},
-  project:     {label:"Projects"},
-  hr:          {label:"HR & People"},
-  // Business
-  business:    {label:"Business"},
-  side_hustle: {label:"Side Hustle"},
-  marketing:   {label:"Marketing"},
-  sales:       {label:"Sales"},
-  design:      {label:"Design"},
-  content:     {label:"Content Creation"},
-  customer:    {label:"Customer Service"},
-  // Finance
-  finance:     {label:"Finance"},
-  trading:     {label:"Trading & Investing"},
-  savings:     {label:"Savings & Goals"},
-  investment:  {label:"Investments"},
-  debt:        {label:"Debt & Loans"},
-  tax:         {label:"Tax & Accounting"},
-  insurance:   {label:"Insurance"},
-  subscriptions:{label:"Subscriptions"},
-  // Legal
-  legal:       {label:"Legal"},
-  legal_work:  {label:"Legal Work"},
-  compliance:  {label:"Compliance"},
-  // Home & Life Admin
-  admin:       {label:"Admin & Housing"},
-  home:        {label:"Home & DIY"},
-  property:    {label:"Property"},
-  utilities:   {label:"Utilities & Bills"},
-  vehicle:     {label:"Vehicle & Transport"},
-  driving:     {label:"Driving"},
-  shopping:    {label:"Shopping & Errands"},
-  // Family & Social
-  family:      {label:"Family"},
-  childcare:   {label:"Childcare"},
-  pets:        {label:"Pets"},
-  social:      {label:"Social Life"},
-  events:      {label:"Events & Occasions"},
-  // Technology
-  technology:  {label:"Technology & Tech"},
-  // Travel
-  travel:      {label:"Travel & Holidays"},
-  // Community
-  volunteering:{label:"Volunteering"},
-  charity:     {label:"Charity & Giving"},
-  community:   {label:"Community"},
-  environment: {label:"Environment"},
-  // Sports
-  sports:      {label:"Sports"},
-  cooking:     {label:"Cooking & Recipes"},
-  // Other
-  other:       {label:"Other"},
+const CATS:Record<string,{label:string;icon:string}> = {
+  health:      {label:"Health & Fitness",    icon:"ti-heart-rate-monitor"},
+  fitness:     {label:"Fitness & Exercise",  icon:"ti-run"},
+  nutrition:   {label:"Nutrition & Diet",    icon:"ti-apple"},
+  mental:      {label:"Mental Health",       icon:"ti-brain"},
+  medical:     {label:"Medical",             icon:"ti-stethoscope"},
+  faith:       {label:"Faith & Spirituality",icon:"ti-moon-stars"},
+  personal:    {label:"Personal Dev",        icon:"ti-seeding"},
+  reading:     {label:"Reading & Books",     icon:"ti-book"},
+  music:       {label:"Music",               icon:"ti-music"},
+  creative:    {label:"Creative & Arts",     icon:"ti-palette"},
+  language:    {label:"Language Learning",   icon:"ti-language"},
+  study:       {label:"Study",               icon:"ti-school"},
+  research:    {label:"Research",            icon:"ti-microscope"},
+  writing:     {label:"Writing",             icon:"ti-pencil"},
+  education:   {label:"Education",           icon:"ti-certificate"},
+  career:      {label:"Career",              icon:"ti-briefcase"},
+  interview:   {label:"Interviews",          icon:"ti-users"},
+  networking:  {label:"Networking",          icon:"ti-network"},
+  project:     {label:"Projects",            icon:"ti-layout-kanban"},
+  hr:          {label:"HR & People",         icon:"ti-user-check"},
+  business:    {label:"Business",            icon:"ti-building"},
+  side_hustle: {label:"Side Hustle",         icon:"ti-bolt"},
+  marketing:   {label:"Marketing",           icon:"ti-speakerphone"},
+  sales:       {label:"Sales",               icon:"ti-target"},
+  design:      {label:"Design",              icon:"ti-brush"},
+  content:     {label:"Content Creation",    icon:"ti-device-mobile"},
+  customer:    {label:"Customer Service",    icon:"ti-headset"},
+  finance:     {label:"Finance",             icon:"ti-coin"},
+  trading:     {label:"Trading & Investing", icon:"ti-chart-line"},
+  savings:     {label:"Savings & Goals",     icon:"ti-piggy-bank"},
+  investment:  {label:"Investments",         icon:"ti-trending-up"},
+  debt:        {label:"Debt & Loans",        icon:"ti-credit-card"},
+  tax:         {label:"Tax & Accounting",    icon:"ti-receipt"},
+  insurance:   {label:"Insurance",           icon:"ti-shield"},
+  subscriptions:{label:"Subscriptions",      icon:"ti-repeat"},
+  legal:       {label:"Legal",               icon:"ti-scale"},
+  legal_work:  {label:"Legal Work",          icon:"ti-file-text"},
+  compliance:  {label:"Compliance",          icon:"ti-checkbox"},
+  admin:       {label:"Admin & Housing",     icon:"ti-home"},
+  home:        {label:"Home & DIY",          icon:"ti-tool"},
+  property:    {label:"Property",            icon:"ti-building-estate"},
+  utilities:   {label:"Utilities & Bills",   icon:"ti-bulb"},
+  vehicle:     {label:"Vehicle",             icon:"ti-car"},
+  driving:     {label:"Driving",             icon:"ti-steering-wheel"},
+  shopping:    {label:"Shopping & Errands",  icon:"ti-shopping-cart"},
+  family:      {label:"Family",              icon:"ti-users-group"},
+  childcare:   {label:"Childcare",           icon:"ti-baby-carriage"},
+  pets:        {label:"Pets",                icon:"ti-paw"},
+  social:      {label:"Social Life",         icon:"ti-confetti"},
+  events:      {label:"Events",              icon:"ti-calendar-event"},
+  technology:  {label:"Technology",          icon:"ti-cpu"},
+  travel:      {label:"Travel & Holidays",   icon:"ti-plane"},
+  volunteering:{label:"Volunteering",        icon:"ti-hand-helping"},
+  charity:     {label:"Charity & Giving",    icon:"ti-heart"},
+  community:   {label:"Community",           icon:"ti-topology-star"},
+  environment: {label:"Environment",         icon:"ti-leaf"},
+  sports:      {label:"Sports",              icon:"ti-ball-football"},
+  cooking:     {label:"Cooking & Recipes",   icon:"ti-chef-hat"},
+  other:       {label:"Other",               icon:"ti-dots-circle-horizontal"},
 };
 
 const CAT_STYLES:Record<string,{bg:string;color:string}> = {
@@ -441,12 +429,17 @@ function defaultRoutines():Routine[]{
 // ── Shared small components ──────────────────────────────────────────────────
 
 function CatPill({category,done}:{category:string;done?:boolean}){
-  const s=CAT_STYLES[category]??CAT_STYLES.study;
+  const s=CAT_STYLES[category]??{bg:"#F0F0F0",color:"#6a6a6a"};
+  const cat=CATS[category];
+  const label=cat?.label??category;
+  const icon=cat?.icon??"ti-dots-circle-horizontal";
   return(
-    <span style={{background:s.bg,color:s.color,padding:"5px 12px",borderRadius:8,
-      fontSize:12.5,fontWeight:600,lineHeight:1.3,display:"inline-block",
+    <span style={{background:s.bg,color:s.color,padding:"4px 11px 4px 8px",borderRadius:50,
+      fontSize:11.5,fontWeight:700,lineHeight:1.3,display:"inline-flex",
+      alignItems:"center",gap:5,letterSpacing:"-0.1px",
       textDecoration:done?"line-through":"none",opacity:done?0.55:1}}>
-      {CATS[category]?.label??category}
+      <i className={`ti ${icon}`} style={{fontSize:13}} aria-hidden="true"/>
+      {label}
     </span>
   );
 }
@@ -473,9 +466,7 @@ function Modal({children,onClose}:{children:React.ReactNode;onClose:()=>void}){
       style={{position:"fixed",inset:0,background:"rgba(35,42,77,0.35)",
         backdropFilter:"blur(2px)",display:"flex",alignItems:"center",
         justifyContent:"center",zIndex:50,padding:20}}>
-      <div style={{background:C.surface,borderRadius:18,padding:28,width:"100%",
-        maxWidth:440,boxShadow:"0 30px 80px rgba(35,42,77,0.25)",
-        maxHeight:"90vh",overflowY:"auto"}}>
+      <div className="glass" style={{borderRadius:22,padding:30,width:"100%",maxWidth:460,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 30px 80px rgba(0,0,0,0.35)"}}>
         {children}
       </div>
     </div>
@@ -497,60 +488,82 @@ function useInputStyle():React.CSSProperties{
 }
 
 // ── Searchable Category Picker ────────────────────────────────────────────────
-function CategoryPicker({value,onChange}:{value:string;onChange:(v:Category)=>void}){
+function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
   const{dark}=useApp();
   const C=getC(dark);
-  const inputStyle=useInputStyle();
   const[search,setSearch]=useState("");
   const[open,setOpen]=useState(false);
-  const filtered=Object.entries(CATS).filter(([,v])=>
-    v.label.toLowerCase().includes(search.toLowerCase())
+  const[customMode,setCustomMode]=useState(false);
+  const[customVal,setCustomVal]=useState("");
+  const filtered=Object.entries(CATS).filter(([k,v])=>
+    v.label.toLowerCase().includes(search.toLowerCase())||
+    k.toLowerCase().includes(search.toLowerCase())
   );
   const selected=CATS[value];
   const s=CAT_STYLES[value]??{bg:"#F0F0F0",color:"#6a6a6a"};
+  const displayLabel=selected?`${selected.icon} ${selected.label}`:value||"Select category";
   return(
     <div style={{position:"relative"}}>
-      <div onClick={()=>setOpen(o=>!o)}
-        style={{...inputStyle,display:"flex",alignItems:"center",gap:8,cursor:"pointer",userSelect:"none"}}>
-        {selected&&<span style={{background:s.bg,color:s.color,padding:"2px 8px",
-          borderRadius:6,fontSize:11,fontWeight:600,flexShrink:0}}>{selected.label}</span>}
-        <span style={{color:C.muted,fontSize:12,flex:1}}>
-          {open?"Type to search…":"Click to change category"}
+      <div onClick={()=>{setOpen(o=>!o);setCustomMode(false);}}
+        style={{width:"100%",padding:"10px 12px",border:`1.5px solid ${open?C.primary:C.border}`,
+          borderRadius:9,background:C.surface2,display:"flex",
+          alignItems:"center",gap:8,cursor:"pointer",userSelect:"none",
+          boxShadow:open?"0 0 0 3px rgba(61,82,160,0.12)":"none",
+          transition:"all 0.15s"}}>
+        <span style={{background:s.bg,color:s.color,padding:"3px 10px 3px 8px",
+          borderRadius:50,fontSize:11.5,fontWeight:700,flexShrink:0,display:"flex",alignItems:"center",gap:5}}>
+          {selected&&<i className={`ti ${selected.icon}`} style={{fontSize:13}} aria-hidden="true"/>}
+          {selected?selected.label:value||"Category"}
         </span>
-        <span style={{color:C.muted2,fontSize:12}}>{open?"▲":"▼"}</span>
+        <span style={{color:C.muted2,fontSize:12,flex:1}}>{open?"Search or type custom…":"Click to change"}</span>
+        <span style={{color:C.muted2,fontSize:11}}>{open?"▲":"▼"}</span>
       </div>
       {open&&(
         <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,
           background:C.surface,border:`1.5px solid ${C.primary}`,borderRadius:9,
-          boxShadow:"0 8px 24px rgba(35,42,77,0.18)",zIndex:999,overflow:"hidden"}}>
-          <div style={{padding:"8px 10px",borderBottom:`1px solid ${C.border}`}}>
-            <input
-              autoFocus
-              value={search}
-              onChange={e=>setSearch(e.target.value)}
+          boxShadow:"0 8px 30px rgba(35,42,77,0.2)",zIndex:999,overflow:"hidden"}}>
+          <div style={{padding:"8px 10px",borderBottom:`1px solid ${C.border}`,display:"flex",gap:6}}>
+            <input autoFocus value={search}
+              onChange={e=>{setSearch(e.target.value);setCustomMode(false);}}
               placeholder="Search categories…"
-              style={{width:"100%",border:"none",outline:"none",fontSize:13,
+              style={{flex:1,border:"none",outline:"none",fontSize:13,
                 background:"transparent",color:C.navy,fontFamily:"inherit"}}/>
+            <button onClick={()=>{setCustomMode(true);setSearch("");}}
+              style={{fontSize:10,fontWeight:700,color:C.primary,background:"#E4E9F9",
+                border:"none",borderRadius:6,padding:"3px 8px",cursor:"pointer",flexShrink:0}}>
+              + CUSTOM
+            </button>
           </div>
-          <div style={{maxHeight:220,overflowY:"auto"}}>
-            {filtered.length===0&&(
+          {customMode&&(
+            <div style={{padding:"10px 12px",borderBottom:`1px solid ${C.border}`,display:"flex",gap:6}}>
+              <input autoFocus value={customVal} onChange={e=>setCustomVal(e.target.value)}
+                placeholder="Type your own category…"
+                onKeyDown={e=>{if(e.key==="Enter"&&customVal.trim()){onChange(customVal.trim());setOpen(false);setCustomVal("");setCustomMode(false);}}}
+                style={{flex:1,border:`1.5px solid ${C.primary}`,borderRadius:7,padding:"7px 9px",
+                  outline:"none",fontSize:13,background:C.surface,color:C.navy,fontFamily:"inherit"}}/>
+              <button onClick={()=>{if(customVal.trim()){onChange(customVal.trim());setOpen(false);setCustomVal("");setCustomMode(false);}}}
+                style={{background:C.primary,color:"white",border:"none",borderRadius:7,
+                  padding:"0 12px",fontSize:12,fontWeight:700,cursor:"pointer"}}>Add</button>
+            </div>
+          )}
+          <div style={{maxHeight:240,overflowY:"auto"}}>
+            {filtered.length===0&&!customMode&&(
               <div style={{padding:"12px 14px",fontSize:12,color:C.muted2,textAlign:"center"}}>
-                No categories found
+                No match — click + CUSTOM to add your own
               </div>
             )}
             {filtered.map(([k,v])=>{
               const st=CAT_STYLES[k]??{bg:"#F0F0F0",color:"#6a6a6a"};
               return(
-                <div key={k} onClick={()=>{onChange(k as Category);setOpen(false);setSearch("");}}
-                  style={{display:"flex",alignItems:"center",gap:8,padding:"9px 12px",
+                <div key={k} onClick={()=>{onChange(k);setOpen(false);setSearch("");}}
+                  style={{display:"flex",alignItems:"center",gap:10,padding:"9px 14px",
                     cursor:"pointer",background:k===value?C.surface2:"transparent",
                     transition:"background 0.1s"}}
                   onMouseEnter={e=>(e.currentTarget.style.background=C.surface2)}
                   onMouseLeave={e=>(e.currentTarget.style.background=k===value?C.surface2:"transparent")}>
-                  <span style={{background:st.bg,color:st.color,padding:"2px 8px",
-                    borderRadius:6,fontSize:11,fontWeight:600,minWidth:60,textAlign:"center"}}>
-                    {v.label}
-                  </span>
+                  <i className={`ti ${v.icon}`} style={{fontSize:16,width:22,textAlign:"center",flexShrink:0,color:st.color}} aria-hidden="true"/>
+                  <span style={{background:st.bg,color:st.color,padding:"3px 10px",
+                    borderRadius:6,fontSize:12,fontWeight:600}}>{v.label}</span>
                 </div>
               );
             })}
@@ -629,8 +642,10 @@ function TaskModal({initial,onClose,onSave}:{
           color:C.muted,background:"none",cursor:"pointer"}}>Cancel</button>
         <button onClick={()=>{if(!title.trim())return;
           onSave({title,category,priority,type,date,time:"",recurring,notes});onClose();}}
-          style={{padding:"10px 18px",borderRadius:9,background:C.navy,
-            color:"white",border:"none",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+          className="pill-btn" style={{padding:"12px 24px",
+            background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
+            color:"white",border:"none",fontSize:13,
+            boxShadow:"0 6px 20px rgba(76,95,213,0.5)"}}>
           {initial?.id?"Save Changes":"Save Task"}
         </button>
       </div>
@@ -653,9 +668,10 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
   const cl=task.checklist??[];
   const clDone=cl.filter(s=>s.done).length;
   return(
-    <div style={{background:C.surface,border:`1px solid ${overdue&&!task.done?C.urgent:C.border}`,
-      borderRadius:14,padding:"15px 17px",marginBottom:9,
-      display:"flex",gap:13,transition:"box-shadow 0.15s"}}>
+    <div className="glass" style={{border:`1px solid ${overdue&&!task.done?C.urgent+"44":C.border}`,
+      borderRadius:18,padding:"18px 20px",marginBottom:12,
+      display:"flex",gap:14,transition:"all 0.2s",
+      boxShadow:overdue&&!task.done?`0 4px 20px rgba(217,79,61,0.15)`:undefined}}>
       {isArchive
         ?<button onClick={onRestore} style={{background:"none",border:"none",
             color:C.muted2,cursor:"pointer",fontSize:18,marginTop:2,flexShrink:0}}>↺</button>
@@ -744,14 +760,14 @@ function Drawer({isOpen,onClose,currentView,setView}:{
   const{t,dark}=useApp();
   const C=getC(dark);
   const items:{key:View;label:string}[]=[
-    {key:"daily",label:t("daily")},{key:"all",label:t("allTasks")},{key:"week",label:t("week")},
+    {key:"daily",label:"Daily Routine"},{key:"all",label:"All Tasks"},{key:"calendar",label:"Calendar"},
   ];
   return(
     <>
       {isOpen&&<div onClick={onClose} style={{position:"fixed",inset:0,
         background:"rgba(35,42,77,0.3)",backdropFilter:"blur(2px)",zIndex:70}}/>}
       <aside style={{position:"fixed",top:0,left:0,bottom:0,width:250,
-        background:C.surface,boxShadow:"8px 0 30px rgba(35,42,77,0.2)",
+        background:C.surface,backdropFilter:"blur(20px)",boxShadow:"8px 0 40px rgba(0,0,0,0.3)",
         padding:"24px 16px",zIndex:71,
         transform:isOpen?"translateX(0)":"translateX(-100%)",
         transition:"transform 0.2s ease",display:"flex",flexDirection:"column",gap:4}}>
@@ -793,16 +809,16 @@ function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFil
         justifyContent:"space-between",alignItems:"center",
         padding:"10px 12px",borderRadius:8,fontSize:13.5,fontWeight:600,
         border:"none",cursor:"pointer",
-        background:active?C.primary:"transparent",
-        color:active?"white":C.muted,marginBottom:2}}>
+        background:active?"linear-gradient(135deg,#4C5FD5 0%,#2A3699 100%)":"transparent",
+        color:active?"white":C.muted,marginBottom:3,
+        boxShadow:active?"0 4px 14px rgba(76,95,213,0.4)":"none",borderRadius:10}}>
         <span>{label}</span>
         <span style={{fontFamily:"monospace",fontSize:11,opacity:0.75}}>{count}</span>
       </button>
     );
   }
   return(
-    <div style={{background:C.surface,borderRadius:14,border:`1px solid ${C.border}`,
-      padding:10,height:"fit-content"}}>
+    <div className="glass" style={{borderRadius:18,padding:12,height:"fit-content"}}>
       <p style={{fontSize:10,fontWeight:700,letterSpacing:1.5,color:C.muted2,
         textTransform:"uppercase",padding:"6px 10px 6px"}}>Show</p>
       <Btn f="all" label="All Open" count={open.length}/>
@@ -917,6 +933,7 @@ REMOVE STEP: {"type":"remove_step","task_id":NUMBER,"step_id":NUMBER}
 UPDATE ROUTINE (change time, days, label, duration): {"type":"update_routine","id":NUMBER,"changes":{"time":"07:30","days":["mon","tue","wed"],"duration":45}}
 REMOVE ROUTINE: {"type":"remove_routine","id":NUMBER}
 MARK ROUTINE DONE TODAY: {"type":"mark_routine_done","routine_id":NUMBER,"date":"${todayISO()}"}
+UNDO LAST ACTION: {"type":"undo"}
 
 Multiple actions can be combined in one response: {"actions":[action1, action2, ...],"reply":"..."}
 
@@ -951,6 +968,8 @@ CONVERSATION STYLE:
 - For simple changes (completing a task, updating a time the user just specified), just do it — no need to confirm trivial edits
 - Never ask more than one question at a time
 - If the user's request is vague, make your best intelligent guess and tell them what you assumed
+
+UNDO: If user says "undo", "revert", "go back", "undo that" → use {"type":"undo"} immediately.
 
 COMPLETION & STATUS:
 - "I finished X", "done with X", "completed X", "X is done" → complete_task immediately, no confirmation
@@ -1011,15 +1030,14 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
 
   return(<>
       <button onClick={()=>setOpen(o=>!o)}
-        style={{position:"fixed",bottom:28,right:92,width:52,height:52,
-          borderRadius:"50%",background:C.accent,color:"white",border:"none",
-          fontSize:20,fontWeight:700,cursor:"pointer",
-          boxShadow:"0 10px 30px rgba(112,145,230,0.4)",zIndex:40}}>✦</button>
+        className="pill-btn" style={{position:"fixed",bottom:30,right:102,width:60,height:60,
+          color:"white",fontSize:22,fontWeight:800,
+          background:"linear-gradient(145deg,#B8A8FF 0%,#8670E8 40%,#4C5FD5 100%)",
+          boxShadow:"0 12px 36px rgba(76,95,213,0.7), 0 4px 10px rgba(0,0,0,0.3)",
+          zIndex:40}}>✦</button>
       {open&&(
         <div style={{position:"fixed",bottom:20,right:20,zIndex:60}}>
-          <div style={{background:C.surface,borderRadius:18,width:380,height:560,
-            boxShadow:"0 30px 80px rgba(35,42,77,0.3)",
-            display:"flex",flexDirection:"column",overflow:"hidden"}}>
+          <div className="glass" style={{borderRadius:24,width:400,height:590,display:"flex",flexDirection:"column",overflow:"hidden",boxShadow:"0 32px 80px rgba(0,0,0,0.35)"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
               padding:"16px 18px",borderBottom:`1px solid ${C.border}`}}>
               <div>
@@ -1050,14 +1068,284 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   borderRadius:10,fontSize:12.5,background:C.surface2,
                   fontFamily:"inherit",outline:"none"}}/>
               <button onClick={send} disabled={loading}
-                style={{background:C.navy,color:"white",border:"none",
+                style={{backgroundImage:"linear-gradient(135deg,#3D52A0 0%,#232A4D 100%)",
+                  color:"white",border:"none",
                   padding:"0 16px",borderRadius:10,fontWeight:600,
-                  fontSize:12.5,cursor:"pointer",opacity:loading?0.5:1}}>Send</button>
+                  fontSize:12.5,cursor:"pointer",opacity:loading?0.5:1,
+                  boxShadow:"0 3px 10px rgba(35,42,77,0.3)"}}>Send</button>
             </div>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+// ── Calendar View ────────────────────────────────────────────────────────────
+const HOLIDAYS:Record<string,{name:string;type:"public"|"religious"|"awareness"|"cultural"}[]> = {
+  "01-01":[{name:"New Year's Day",type:"public"}],
+  "01-15":[{name:"Martin Luther King Jr. Day",type:"public"}],
+  "01-27":[{name:"Holocaust Memorial Day",type:"awareness"}],
+  "02-14":[{name:"Valentine's Day",type:"cultural"}],
+  "03-08":[{name:"International Women's Day",type:"awareness"}],
+  "03-17":[{name:"St Patrick's Day",type:"cultural"}],
+  "03-21":[{name:"World Down Syndrome Day",type:"awareness"},{name:"Nowruz (Persian New Year)",type:"cultural"}],
+  "03-22":[{name:"World Water Day",type:"awareness"}],
+  "04-01":[{name:"April Fool's Day",type:"cultural"}],
+  "04-07":[{name:"World Health Day",type:"awareness"}],
+  "04-22":[{name:"Earth Day",type:"awareness"}],
+  "05-01":[{name:"International Labour Day",type:"public"}],
+  "05-04":[{name:"Star Wars Day",type:"cultural"}],
+  "05-15":[{name:"International Day of Families",type:"awareness"}],
+  "06-01":[{name:"World Children's Day",type:"awareness"}],
+  "06-05":[{name:"World Environment Day",type:"awareness"}],
+  "06-21":[{name:"World Music Day",type:"cultural"}],
+  "07-04":[{name:"US Independence Day",type:"public"}],
+  "08-12":[{name:"International Youth Day",type:"awareness"}],
+  "09-21":[{name:"International Day of Peace",type:"awareness"}],
+  "10-01":[{name:"International Day of Older Persons",type:"awareness"}],
+  "10-05":[{name:"World Teachers' Day",type:"awareness"}],
+  "10-10":[{name:"World Mental Health Day",type:"awareness"}],
+  "10-16":[{name:"World Food Day",type:"awareness"}],
+  "10-31":[{name:"Halloween",type:"cultural"}],
+  "11-05":[{name:"Guy Fawkes Night (UK)",type:"cultural"}],
+  "11-11":[{name:"Remembrance Day",type:"public"}],
+  "12-01":[{name:"World AIDS Day",type:"awareness"}],
+  "12-10":[{name:"Human Rights Day",type:"awareness"}],
+  "12-25":[{name:"Christmas Day",type:"public"}],
+  "12-26":[{name:"Boxing Day (UK)",type:"public"}],
+  "12-31":[{name:"New Year's Eve",type:"cultural"}],
+};
+// UK Bank Holidays 2026
+const UK_BANK_2026:string[]=["2026-01-01","2026-04-03","2026-04-06","2026-05-04","2026-05-25","2026-08-31","2026-12-25","2026-12-28"];
+// Islamic dates vary yearly — approximate 2026 dates
+const ISLAMIC_2026:Record<string,string>={
+  "2026-01-20":"Ramadan begins (approx)",
+  "2026-02-18":"Eid al-Fitr (approx)",
+  "2026-04-26":"Eid al-Adha (approx)",
+  "2026-05-16":"Islamic New Year (approx)",
+  "2026-07-25":"Day of Arafah (approx)",
+};
+
+const TYPE_STYLE:Record<string,{bg:string;color:string;icon:string}>={
+  public:    {bg:"#E4E9F9",color:"#3D52A0",icon:"🏛️"},
+  religious: {bg:"#DCF0E6",color:"#1f7a52",icon:"🕌"},
+  awareness: {bg:"#F6E9D3",color:"#9c6a1f",icon:"🎗️"},
+  cultural:  {bg:"#FFE4F0",color:"#a53070",icon:"🎉"},
+  islamic:   {bg:"#DCF0E6",color:"#1f7a52",icon:"☪️"},
+  bank:      {bg:"#EDE0F5",color:"#7a3a9e",icon:"🏦"},
+};
+
+function CalendarView({tasks,routines,dark,C}:{tasks:Task[];routines:Routine[];dark:boolean;C:ReturnType<typeof getC>}){
+  const now=new Date();
+  const[viewMonth,setViewMonth]=useState(now.getMonth());
+  const[viewYear,setViewYear]=useState(now.getFullYear());
+  const[selectedDay,setSelectedDay]=useState<string|null>(null);
+
+  const firstDay=new Date(viewYear,viewMonth,1);
+  const daysInMonth=new Date(viewYear,viewMonth+1,0).getDate();
+  const startDow=(firstDay.getDay()+6)%7; // 0=Mon
+
+  const monthISO=`${viewYear}-${String(viewMonth+1).padStart(2,"0")}`;
+
+  function getDayData(day:number){
+    const iso=`${monthISO}-${String(day).padStart(2,"0")}`;
+    const mmdd=iso.slice(5);
+    const events:{name:string;type:string}[]=[];
+    if(UK_BANK_2026.includes(iso)) events.push({name:"UK Bank Holiday",type:"bank"});
+    if(ISLAMIC_2026[iso]) events.push({name:ISLAMIC_2026[iso],type:"islamic"});
+    (HOLIDAYS[mmdd]||[]).forEach(h=>events.push({name:h.name,type:h.type}));
+    const dayTasks=tasks.filter(t=>t.date===iso&&!t.deleted);
+    const dayKey=["sun","mon","tue","wed","thu","fri","sat"][new Date(iso+"T12:00:00").getDay()];
+    const dayRoutines=routines.filter(r=>(r.days??[]).includes(dayKey));
+    return{iso,events,tasks:dayTasks,routineCount:dayRoutines.length};
+  }
+
+  const MONTH_NAMES=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const DOW=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+  const selData=selectedDay?getDayData(parseInt(selectedDay)):null;
+
+  return(
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:22,color:C.navy}}>
+          Calendar
+        </p>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <button onClick={()=>{if(viewMonth===0){setViewMonth(11);setViewYear(y=>y-1);}else setViewMonth(m=>m-1);}}
+            style={{width:32,height:32,borderRadius:8,border:`1px solid ${C.border}`,
+              background:C.surface,cursor:"pointer",fontSize:16,color:C.navy,
+              backgroundImage:`linear-gradient(135deg,${C.surface},${C.surface2})`,
+              boxShadow:"0 2px 6px rgba(35,42,77,0.08)"}}>‹</button>
+          <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:15,color:C.navy,minWidth:130,textAlign:"center"}}>
+            {MONTH_NAMES[viewMonth]} {viewYear}
+          </span>
+          <button onClick={()=>{if(viewMonth===11){setViewMonth(0);setViewYear(y=>y+1);}else setViewMonth(m=>m+1);}}
+            style={{width:32,height:32,borderRadius:8,border:`1px solid ${C.border}`,
+              background:C.surface,cursor:"pointer",fontSize:16,color:C.navy,
+              backgroundImage:`linear-gradient(135deg,${C.surface},${C.surface2})`,
+              boxShadow:"0 2px 6px rgba(35,42,77,0.08)"}}>›</button>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
+        {Object.entries(TYPE_STYLE).map(([k,v])=>(
+          <span key={k} style={{background:v.bg,color:v.color,fontSize:10,fontWeight:600,
+            padding:"3px 8px",borderRadius:6}}>{v.icon} {k.charAt(0).toUpperCase()+k.slice(1)}</span>
+        ))}
+      </div>
+
+      {/* Calendar grid */}
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,overflow:"hidden"}}>
+        {/* Day headers */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",borderBottom:`1px solid ${C.border}`}}>
+          {DOW.map(d=>(
+            <div key={d} style={{padding:"8px 4px",textAlign:"center",fontSize:10.5,
+              fontWeight:700,color:C.muted,background:C.surface2}}>{d}</div>
+          ))}
+        </div>
+        {/* Days */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)"}}>
+          {Array.from({length:startDow}).map((_,i)=>(
+            <div key={`empty-${i}`} style={{minHeight:70,borderRight:`1px solid ${C.border}`,
+              borderBottom:`1px solid ${C.border}`,background:C.surface2,opacity:0.4}}/>
+          ))}
+          {Array.from({length:daysInMonth}).map((_,i)=>{
+            const day=i+1;
+            const{iso,events,tasks:dt,routineCount}=getDayData(day);
+            const isToday=iso===todayISO();
+            const isSelected=selectedDay===String(day);
+            const hasTasks=dt.length>0;
+            const hasEvents=events.length>0;
+            return(
+              <div key={day} onClick={()=>setSelectedDay(isSelected?null:String(day))}
+                style={{minHeight:70,borderRight:`1px solid ${C.border}`,
+                  borderBottom:`1px solid ${C.border}`,padding:"6px 6px 4px",
+                  cursor:"pointer",position:"relative",transition:"background 0.1s",
+                  background:isSelected?C.surface2:isToday?`${C.primary}18`:C.surface}}
+                onMouseEnter={e=>(e.currentTarget.style.background=C.surface2)}
+                onMouseLeave={e=>(e.currentTarget.style.background=isSelected?C.surface2:isToday?`${C.primary}18`:C.surface)}>
+                <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:isToday?700:500,
+                  fontSize:13,color:isToday?C.primary:C.navy,
+                  background:isToday?"transparent":"none"}}>
+                  {day}
+                </span>
+                <div style={{marginTop:2,display:"flex",flexDirection:"column",gap:1}}>
+                  {events.slice(0,2).map((ev,ei)=>{
+                    const st=TYPE_STYLE[ev.type]??TYPE_STYLE.cultural;
+                    return(
+                      <div key={ei} style={{background:st.bg,color:st.color,fontSize:8.5,
+                        fontWeight:600,padding:"1px 4px",borderRadius:3,
+                        whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                        {st.icon} {ev.name}
+                      </div>
+                    );
+                  })}
+                  {events.length>2&&<div style={{fontSize:8,color:C.muted}}>+{events.length-2} more</div>}
+                </div>
+                {(hasTasks||routineCount>0)&&(
+                  <div style={{position:"absolute",bottom:4,right:5,display:"flex",gap:2}}>
+                    {hasTasks&&<span style={{width:6,height:6,borderRadius:"50%",background:C.urgent}}/>}
+                    {routineCount>0&&<span style={{width:6,height:6,borderRadius:"50%",background:C.sage}}/>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Selected day detail */}
+      {selData&&(
+        <div style={{marginTop:14,background:C.surface,border:`1px solid ${C.border}`,
+          borderRadius:14,padding:"16px 18px"}}>
+          <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:15,
+            color:C.navy,marginBottom:10}}>
+            {new Date(selData.iso+"T12:00:00").toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}
+          </p>
+          {selData.events.length>0&&(
+            <div style={{marginBottom:10}}>
+              {selData.events.map((ev,i)=>{
+                const st=TYPE_STYLE[ev.type]??TYPE_STYLE.cultural;
+                return(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:8,
+                    padding:"6px 0",borderBottom:i<selData.events.length-1?`1px solid ${C.border}`:"none"}}>
+                    <span style={{fontSize:16}}>{st.icon}</span>
+                    <span style={{fontSize:13,fontWeight:600,color:C.navy}}>{ev.name}</span>
+                    <span style={{background:st.bg,color:st.color,fontSize:10,fontWeight:600,
+                      padding:"2px 7px",borderRadius:5,marginLeft:"auto"}}>{ev.type}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {selData.tasks.length>0&&(
+            <div>
+              <p style={{fontSize:10,fontWeight:700,color:C.muted2,letterSpacing:1,
+                textTransform:"uppercase",marginBottom:6}}>Tasks this day</p>
+              {selData.tasks.map(t=>(
+                <div key={t.id} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 0"}}>
+                  <CatPill category={t.category}/>
+                  <span style={{fontSize:13,color:C.navy,fontWeight:500}}>{t.title}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {selData.events.length===0&&selData.tasks.length===0&&(
+            <p style={{fontSize:13,color:C.muted2}}>No events or tasks on this day.</p>
+          )}
+        </div>
+      )}
+
+      {/* Dot legend */}
+      <div style={{display:"flex",gap:14,marginTop:10,fontSize:10.5,color:C.muted}}>
+        <span><span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:C.urgent,marginRight:4,verticalAlign:"middle"}}/>Has task</span>
+        <span><span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:C.sage,marginRight:4,verticalAlign:"middle"}}/>Has routine</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Live Clock — signature element ───────────────────────────────────────────
+function LiveClock({dark,C}:{dark:boolean;C:ReturnType<typeof getC>}){
+  const[time,setTime]=useState(new Date());
+  useEffect(()=>{
+    const id=setInterval(()=>setTime(new Date()),1000);
+    return()=>clearInterval(id);
+  },[]);
+  const hh=String(time.getHours()).padStart(2,"0");
+  const mm=String(time.getMinutes()).padStart(2,"0");
+  const ss=String(time.getSeconds()).padStart(2,"0");
+  return(
+    <div className="glass" style={{borderRadius:20,padding:"20px 24px",marginBottom:18,
+      background:dark?"rgba(0,0,0,0.1)":"rgba(255,255,255,0.05)",
+      display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <div>
+        <p style={{fontFamily:"'IBM Plex Mono',monospace",fontWeight:500,
+          fontSize:42,color:C.primary,letterSpacing:"-1px",lineHeight:1}}>
+          {hh}<span style={{opacity:0.5,animation:"pulse 1s infinite"}}>:</span>{mm}
+          <span style={{fontSize:24,color:C.muted,marginLeft:6}}>{ss}</span>
+        </p>
+        <p style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:13,fontWeight:500,
+          color:C.muted,marginTop:4}}>
+          {time.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+        </p>
+      </div>
+      <div style={{textAlign:"right"}}>
+        <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,
+          color:C.muted2,letterSpacing:"2px",textTransform:"uppercase"}}>Week</p>
+        <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:28,
+          color:C.navy,lineHeight:1,marginTop:2}}>
+          {String(Math.ceil((time.getDate()+new Date(time.getFullYear(),time.getMonth(),1).getDay())/7))}
+        </p>
+        <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,
+          color:C.muted2,letterSpacing:"1px",textTransform:"uppercase",marginTop:2}}>
+          of {time.toLocaleDateString("en-GB",{month:"short"})}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -1074,6 +1362,7 @@ export default function Home(){
   const[routines,setRoutines]=useState<Routine[]>([]);
   const[notifEnabled,setNotifEnabled]=useState(false);
   const[prayerEnabled,setPrayerEnabled]=useState(false);
+  const[undoStack,setUndoStack]=useState<{tasks:Task[];routines:Routine[]}[]>([]);
   const[prayerStatus,setPrayerStatus]=useState<"idle"|"loading"|"done"|"error">("idle");
   const[showSettings,setShowSettings]=useState(false);
   const[dark,setDark]=useState(false);
@@ -1085,6 +1374,14 @@ export default function Home(){
   const dayLabels=DAY_LABELS_LANG[lang]??DAY_LABELS;
 
   useEffect(()=>{
+    // Load Tabler Icons CSS
+    if(!document.querySelector('[data-tabler-css]')){
+      const link=document.createElement('link');
+      link.rel='stylesheet';
+      link.href='https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css';
+      link.setAttribute('data-tabler-css','1');
+      document.head.appendChild(link);
+    }
     const t=localStorage.getItem(STORAGE_TASKS);
     const r=localStorage.getItem(STORAGE_ROUTINES);
     setTasks(t?JSON.parse(t):defaultTasks());
@@ -1109,8 +1406,8 @@ export default function Home(){
   useEffect(()=>{
     localStorage.setItem("docket-dark",dark?"true":"false");
     document.body.classList.toggle("dark",dark);
-    document.documentElement.style.background = dark?"#0f1019":"#EDE8F5";
-    document.body.style.background = dark?"#0f1019":"#EDE8F5";
+    document.documentElement.style.background = dark?"#080A14":"#E9E6F4";
+    document.body.style.background = dark?"#080A14":"#E9E6F4";
     document.body.style.minHeight = "100%";
   },[dark]);
   useEffect(()=>{ localStorage.setItem("docket-lang",lang); },[lang]);
@@ -1181,8 +1478,22 @@ export default function Home(){
     setRoutines(p=>p.map(r=>r.id!==routineId?r:{...r,completions:{...r.completions,[dateISO]:!r.completions?.[dateISO]}}));
   },[]);
 
+  const undoLast=useCallback(()=>{
+    setUndoStack(stack=>{
+      if(!stack.length) return stack;
+      const prev=stack[stack.length-1];
+      setTasks(prev.tasks);
+      setRoutines(prev.routines);
+      return stack.slice(0,-1);
+    });
+  },[]);
+
   const handleAiActions=useCallback((actions:any[])=>{
+    if(actions.length>0){
+      setUndoStack(s=>[...s.slice(-9),{tasks:[...tasks],routines:[...routines]}]);
+    }
     actions.forEach(a=>{
+      if(a.type==="undo"){undoLast();return;}
       if(a.type==="add_task")addTask({title:a.task?.title??"Untitled",category:a.task?.category??"study",priority:a.task?.priority??"medium",type:a.task?.type??"milestone",date:a.task?.date??"",time:a.task?.time??"",recurring:a.task?.recurring??"",notes:a.task?.notes??""});
       else if(a.type==="remove_task")deleteTask(a.id);
       else if(a.type==="update_task")updateTask(a.id,a.changes??{});
@@ -1216,7 +1527,7 @@ export default function Home(){
         setRoutines(prev=>prev.map((r:Routine)=>r.id===a.routine_id?{...r,completions:{...r.completions,[a.date]:true}}:r));
       }
     });
-  },[addTask,deleteTask,updateTask,addStep,toggleStep,removeStep,setRoutines]);
+  },[addTask,deleteTask,updateTask,addStep,toggleStep,removeStep,setRoutines,tasks,routines,undoLast]);
 
   async function toggleNotifications(){
     if(typeof Notification==="undefined"){alert("Not available here — try opening in a real browser tab.");return;}
@@ -1282,38 +1593,51 @@ export default function Home(){
         ?"radial-gradient(ellipse at top left, rgba(112,145,230,0.12), transparent 50%), radial-gradient(ellipse at bottom right, rgba(61,82,160,0.08), transparent 50%)"
         :"radial-gradient(ellipse at top left, rgba(112,145,230,0.25), transparent 50%), radial-gradient(ellipse at bottom right, rgba(61,82,160,0.12), transparent 50%)"}}>
 
-      {/* Blobs — light mode only */}
-      {!dark&&<div style={{position:"fixed",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:0}}>
-        <div className="blob blob-1"/><div className="blob blob-2"/>
-        <div className="blob blob-3"/><div className="blob blob-4"/>
-      </div>}
+      {/* 3D animated background */}
+      <div className="bg-canvas">
+        <div className="geo-layer">
+          <div className="geo-ring geo-ring-1"/>
+          <div className="geo-ring geo-ring-2"/>
+          <div className="geo-ring geo-ring-3"/>
+          <div className="geo-ring geo-ring-4"/>
+          <div className="geo-ring geo-ring-5"/>
+        </div>
+        <div className="orb orb-1"/>
+        <div className="orb orb-2"/>
+        <div className="orb orb-3"/>
+      </div>
 
       <Drawer isOpen={isDrawerOpen} onClose={()=>setIsDrawerOpen(false)}
         currentView={currentView} setView={setCurrentView}/>
 
       {/* Nav */}
       <nav style={{position:"relative",zIndex:10,display:"flex",justifyContent:"space-between",
-        alignItems:"center",padding:"20px 20px 12px"}}>
-        <button onClick={()=>setIsDrawerOpen(true)}
-          style={{width:44,height:44,borderRadius:12,background:C.surface,
-            border:`1px solid ${C.border}`,boxShadow:"0 6px 18px rgba(35,42,77,0.1)",
-            display:"flex",alignItems:"center",justifyContent:"center",
-            fontSize:18,color:C.navy,cursor:"pointer"}}>☰</button>
-        <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-          fontSize:17,color:C.navy}}>{t("appName")}</span>
+        alignItems:"center",padding:"22px 22px 14px"}}>
+        <button onClick={()=>setIsDrawerOpen(true)} className="sq-btn"
+          style={{width:52,height:52,fontSize:22,color:"white",
+            background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
+            boxShadow:"0 8px 28px rgba(76,95,213,0.6), 0 3px 8px rgba(0,0,0,0.25)"}}>☰</button>
+        <div style={{textAlign:"center"}}>
+          <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
+            fontSize:18,color:C.navy,letterSpacing:"-0.5px"}}>{t("appName")}</p>
+          <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,
+            color:C.muted,letterSpacing:"2px",textTransform:"uppercase",marginTop:2}}>
+            {new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
+          </p>
+        </div>
         <div style={{display:"flex",gap:8}}>
-          <button onClick={()=>setShowSettings(s=>!s)}
-            style={{width:44,height:44,borderRadius:12,background:C.surface,
-              border:`1px solid ${C.border}`,boxShadow:"0 6px 18px rgba(35,42,77,0.1)",
-              display:"flex",alignItems:"center",justifyContent:"center",
-              fontSize:17,cursor:"pointer"}} title="Settings">⚙️</button>
-          <button onClick={toggleNotifications}
-            style={{width:44,height:44,borderRadius:12,
-              border:`1px solid ${notifEnabled?C.sage:C.border}`,
-              background:notifEnabled?C.sage:"white",
-              boxShadow:"0 6px 18px rgba(35,42,77,0.1)",
-              display:"flex",alignItems:"center",justifyContent:"center",
-              fontSize:17,cursor:"pointer"}}>
+          <button onClick={()=>setShowSettings(s=>!s)} className="sq-btn"
+            style={{width:52,height:52,fontSize:22,cursor:"pointer",
+              background:"linear-gradient(145deg,#E8C84C 0%,#C9A84C 45%,#8A6820 100%)",
+              boxShadow:"0 8px 28px rgba(201,168,76,0.55), 0 3px 8px rgba(0,0,0,0.25)"}} title="Settings">⚙️</button>
+          <button onClick={toggleNotifications} className="sq-btn"
+            style={{width:52,height:52,fontSize:22,cursor:"pointer",
+              background:notifEnabled
+                ?"linear-gradient(145deg,#5DE8A0 0%,#2E8B57 45%,#1A5235 100%)"
+                :"linear-gradient(145deg,#C4A8FF 0%,#8670E8 45%,#4A2A9E 100%)",
+              boxShadow:notifEnabled
+                ?"0 8px 28px rgba(46,139,87,0.6), 0 3px 8px rgba(0,0,0,0.25)"
+                :"0 8px 28px rgba(134,112,232,0.6), 0 3px 8px rgba(0,0,0,0.25)"}}>
             {notifEnabled?"🔔":"🔕"}
           </button>
         </div>
@@ -1323,8 +1647,7 @@ export default function Home(){
       {showSettings&&(
         <div style={{position:"relative",zIndex:10,maxWidth:1100,margin:"0 auto",
           padding:"0 20px 16px"}}>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,
-            padding:"18px 20px"}}>
+          <div className="glass" style={{borderRadius:20,padding:"24px 26px"}}>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
               fontSize:16,color:C.navy,marginBottom:14}}>{t("settings")}</p>
 
@@ -1411,23 +1734,27 @@ export default function Home(){
         {(examTask||interviewTask)&&(
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
             {examTask&&(
-              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,
-                padding:"10px 15px",display:"flex",alignItems:"center",gap:9}}>
-                <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:17,
+              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,
+                padding:"12px 18px",display:"flex",alignItems:"center",gap:10,
+                backdropFilter:"blur(12px)",
+                boxShadow:"0 4px 16px rgba(35,42,77,0.12)"}}>
+                <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:20,
                   color:(daysUntil(examTask.date)??1)<0?C.urgent:C.primary}}>
                   {daysUntil(examTask.date)===null?"—":daysUntil(examTask.date)===0?"Today":`${daysUntil(examTask.date)}d`}
                 </span>
-                <span style={{fontSize:11,color:C.muted,fontWeight:500}}>Land Law exam</span>
+                <span style={{fontSize:11,color:C.navy,fontWeight:600}}>Land Law exam</span>
               </div>
             )}
             {interviewTask&&(
-              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,
-                padding:"10px 15px",display:"flex",alignItems:"center",gap:9}}>
-                <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:17,
+              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,
+                padding:"12px 18px",display:"flex",alignItems:"center",gap:10,
+                backdropFilter:"blur(12px)",
+                boxShadow:"0 4px 16px rgba(35,42,77,0.12)"}}>
+                <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:20,
                   color:(daysUntil(interviewTask.date)??1)<0?C.urgent:C.primary}}>
                   {daysUntil(interviewTask.date)===null?"—":daysUntil(interviewTask.date)===0?"Today":`${daysUntil(interviewTask.date)}d`}
                 </span>
-                <span style={{fontSize:11,color:C.muted,fontWeight:500}}>Cheshire Oak</span>
+                <span style={{fontSize:11,color:C.navy,fontWeight:600}}>Cheshire Oak</span>
               </div>
             )}
           </div>
@@ -1437,37 +1764,66 @@ export default function Home(){
         {currentView==="daily"&&(
           <div>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-              fontSize:26,color:C.navy,marginBottom:4}}>{t("daily")}</p>
-            <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,
-              color:C.muted,marginBottom:20}}>
-              {new Date().toLocaleDateString(lang==="ar"?"ar-SA":lang==="fr"?"fr-FR":lang==="tr"?"tr-TR":lang==="ur"?"ur-PK":"en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+              fontSize:24,color:C.navy,marginBottom:10,letterSpacing:"-0.5px"}}>Daily Routine</p>
+            <LiveClock dark={dark} C={C}/>
+            {/* Week day picker */}
+            <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:6,marginBottom:12}}>
+              {weekDates.map(day=>{
+                const active=selectedWeekDay===day.key;
+                const isToday=day.key===todayDayKey();
+                const highOnDay=routines.filter(r=>r.intensity==="high"&&(r.days??[]).includes(day.key));
+                const hasConflict=highOnDay.length>1;
+                return(
+                  <button key={day.key} onClick={()=>setSelectedWeekDay(day.key)}
+                    style={{position:"relative",flexShrink:0,width:50,paddingTop:8,paddingBottom:8,
+                      borderRadius:10,textAlign:"center",cursor:"pointer",transition:"all 0.15s",
+                      border:`1.5px solid ${active?C.navy:isToday?C.primary:C.border}`,
+                      background:active?C.navy:C.surface,
+                      backgroundImage:active?"linear-gradient(135deg,#3D52A0 0%,#232A4D 100%)":"none",
+                      boxShadow:active?"0 4px 14px rgba(35,42,77,0.35)":"none"}}>
+                    <p style={{fontSize:9,fontWeight:700,textTransform:"uppercase",
+                      letterSpacing:0.5,color:active?"rgba(255,255,255,0.75)":C.muted}}>
+                      {(DAY_LABELS[day.key]||day.key).slice(0,3)}
+                    </p>
+                    <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
+                      fontSize:15,marginTop:1,color:active?"white":C.navy}}>{day.dayNum}</p>
+                    {isToday&&!active&&<div style={{width:4,height:4,borderRadius:"50%",
+                      background:C.primary,margin:"2px auto 0"}}/>}
+                    {hasConflict&&<span style={{position:"absolute",top:4,right:5,
+                      width:5,height:5,borderRadius:"50%",background:C.urgent}}/>}
+                  </button>
+                );
+              })}
+            </div>
+            <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,
+              color:C.muted,marginBottom:10}}>
+              {selDay?.label||new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}
             </p>
             <div style={{background:dark?"#1a2535":"#E4E9F9",color:C.primary,fontSize:12,
-              padding:"11px 15px",borderRadius:10,marginBottom:16,lineHeight:1.5}}>
+              padding:"10px 14px",borderRadius:10,marginBottom:14,lineHeight:1.5}}>
               {prayerEnabled?t("prayerDone"):t("prayerPlaceholder")}
             </div>
-            {/* Overdue + ongoing chips */}
             {(()=>{
               const ov=tasks.filter(t=>!t.done&&!t.deleted&&t.date&&(daysUntil(t.date)??0)<0);
               const og=tasks.filter(t=>t.type==="ongoing"&&!t.done&&!t.deleted);
-              return(ov.length||og.length)?(<div style={{display:"flex",flexWrap:"wrap",gap:7,marginBottom:16}}>
-                {ov.map(t=><span key={t.id} style={{fontSize:11.5,fontWeight:600,
-                  padding:"6px 11px",borderRadius:20,background:C.urgentSoft,color:C.urgent}}>
+              return(ov.length||og.length)?(<div style={{display:"flex",flexWrap:"wrap",gap:7,marginBottom:14}}>
+                {ov.map(t=><span key={t.id} style={{fontSize:11,fontWeight:600,
+                  padding:"5px 10px",borderRadius:20,background:C.urgentSoft,color:C.urgent}}>
                   ⚠ {t.title}</span>)}
-                {og.slice(0,4).map(t=><span key={t.id} style={{fontSize:11.5,fontWeight:600,
-                  padding:"6px 11px",borderRadius:20,background:"#E4E9F9",color:C.primary}}>
+                {og.slice(0,3).map(t=><span key={t.id} style={{fontSize:11,fontWeight:600,
+                  padding:"5px 10px",borderRadius:20,background:"#E4E9F9",color:C.primary}}>
                   ◆ {t.title}</span>)}
               </div>):null;
             })()}
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,
-              borderRadius:14,padding:"4px 20px"}}>
-              {todayItems.length?todayItems.map((it,i)=>(
+            <div className="glass" style={{borderRadius:20,padding:"4px 24px"}}>
+              {selectedDayItems.length?selectedDayItems.map((it,i)=>(
                 <TimelineRow key={i} item={it} onCheck={()=>{
-                  if(it.routineId)toggleRoutineDate(it.routineId,todayISO());
+                  const dayDate=selDay?.date??todayISO();
+                  if(it.routineId)toggleRoutineDate(it.routineId,dayDate);
                   else if(it.taskId)toggleTask(it.taskId);
                 }}/>
               )):<p style={{textAlign:"center",color:C.muted2,padding:"40px 0",
-                fontFamily:"'Space Grotesk',sans-serif",fontWeight:600}}>Nothing scheduled today.</p>}
+                fontFamily:"'Space Grotesk',sans-serif",fontWeight:600}}>Nothing scheduled.</p>}
             </div>
           </div>
         )}
@@ -1478,10 +1834,13 @@ export default function Home(){
             <div style={{display:"flex",justifyContent:"space-between",
               alignItems:"center",marginBottom:20}}>
               <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-                fontSize:26,color:C.navy}}>{t("allTasks")}</p>
+                fontSize:26,color:C.navy,letterSpacing:"-0.5px"}}>{t("allTasks")}</p>
               <button onClick={()=>setIsAddingTask(true)}
-                style={{background:C.navy,color:"white",fontSize:13,fontWeight:600,
-                  padding:"11px 20px",borderRadius:10,border:"none",cursor:"pointer"}}>
+                className="pill-btn" style={{
+                  background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
+                  color:"white",fontSize:14,fontWeight:700,
+                  padding:"12px 24px",border:"none",cursor:"pointer",
+                  boxShadow:"0 6px 20px rgba(76,95,213,0.5)"}}>
                 + New Task
               </button>
             </div>
@@ -1505,59 +1864,12 @@ export default function Home(){
           </div>
         )}
 
-        {/* ── WEEK ──────────────────────────────────────────────────────── */}
-        {currentView==="week"&&(
-          <div>
-            <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-              fontSize:26,color:C.navy,marginBottom:20}}>{t("week")}</p>
-            {/* Day chips */}
-            <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:8,marginBottom:20}}>
-              {weekDates.map(day=>{
-                const highOnDay=routines.filter(r=>r.intensity==="high"&&(r.days??[]).includes(day.key));
-                const hasConflict=highOnDay.length>1;
-                const active=selectedWeekDay===day.key;
-                const isToday=day.key===todayDayKey();
-                return(
-                  <button key={day.key} onClick={()=>setSelectedWeekDay(day.key)}
-                    style={{position:"relative",flexShrink:0,width:58,paddingTop:10,paddingBottom:10,
-                      borderRadius:12,textAlign:"center",cursor:"pointer",
-                      border:`1.5px solid ${active?C.navy:isToday?C.primary:C.border}`,
-                      background:active?C.navy:"white"}}>
-                    <p style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",
-                      letterSpacing:0.5,color:active?"white":C.muted}}>
-                      {DAY_LABELS[day.key].slice(0,3)}
-                    </p>
-                    <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-                      fontSize:17,marginTop:2,color:active?"white":C.navy}}>{day.dayNum}</p>
-                    {hasConflict&&<span style={{position:"absolute",top:6,right:8,
-                      width:6,height:6,borderRadius:"50%",background:C.urgent}}/>}
-                  </button>
-                );
-              })}
-            </div>
-            {/* Day detail */}
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,
-              borderRadius:14,padding:"18px 20px"}}>
-              <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-                fontSize:18,color:C.navy,marginBottom:12}}>
-                {DAY_LABELS[selectedWeekDay]}{" "}
-                <span style={{fontSize:14,color:C.muted,fontWeight:400,fontFamily:"inherit"}}>
-                  {selDay?.label}
-                </span>
-              </p>
-              {selectedDayItems.length?selectedDayItems.map((it,i)=>(
-                <TimelineRow key={i} item={it} onCheck={()=>{
-                  const dayDate=selDay?.date??todayISO();
-                  if(it.routineId)toggleRoutineDate(it.routineId,dayDate);
-                  else if(it.taskId)toggleTask(it.taskId);
-                }}/>
-              )):<p style={{textAlign:"center",color:C.muted2,padding:"32px 0",
-                fontFamily:"'Space Grotesk',sans-serif",fontWeight:600}}>Nothing scheduled.</p>}
-            </div>
-          </div>
+        {/* ── CALENDAR ────────────────────────────────────────────────── */}
+        {currentView==="calendar"&&(
+          <CalendarView tasks={tasks} routines={routines} dark={dark} C={C}/>
         )}
 
-        {/* ── ARCHIVE ────────────────────────────────────────────────────── */}
+                {/* ── ARCHIVE ────────────────────────────────────────────────────── */}
         {currentView==="archive"&&(
           <div>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
@@ -1577,10 +1889,11 @@ export default function Home(){
 
       {/* FAB */}
       <button onClick={()=>setIsAddingTask(true)}
-        style={{position:"fixed",bottom:28,right:28,width:52,height:52,
-          borderRadius:"50%",background:C.navy,color:"white",border:"none",
-          fontSize:24,cursor:"pointer",
-          boxShadow:"0 10px 30px rgba(35,42,77,0.35)",zIndex:40}}>+</button>
+        className="pill-btn" style={{position:"fixed",bottom:30,right:30,width:60,height:60,
+          color:"white",fontSize:30,
+          background:"linear-gradient(145deg,#8BAAFF 0%,#4C5FD5 40%,#1A2566 100%)",
+          boxShadow:"0 12px 36px rgba(76,95,213,0.7), 0 4px 10px rgba(0,0,0,0.3)",
+          zIndex:40}}>+</button>
 
       <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions}/>
 
