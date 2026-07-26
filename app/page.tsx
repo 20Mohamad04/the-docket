@@ -793,6 +793,7 @@ function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFil
       <Btn f="all" label="All Open" count={open.length}/>
       <Btn f="ongoing" label="Ongoing" count={open.filter(t=>t.type==="ongoing").length}/>
       <Btn f="milestone" label="Completable" count={open.filter(t=>t.type==="milestone").length}/>
+      <Btn f="done" label="Finished & Deleted" count={archived.length}/>
       <div style={{height:1,background:C.border,margin:"6px 4px"}}/>
       <p style={{fontSize:10,fontWeight:700,letterSpacing:1.5,color:C.muted2,
         textTransform:"uppercase",padding:"6px 10px 6px"}}>Category</p>
@@ -813,7 +814,6 @@ function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFil
         {showAllCats?`Show less`:`View ${hiddenCount} more categories`}
       </button>
       <div style={{height:1,background:C.border,margin:"6px 4px"}}/>
-      <Btn f="done" label="Finished & Deleted" count={archived.length}/>
     </div>
   );
 }
@@ -1676,6 +1676,8 @@ export default function Home(){
     const t=localStorage.getItem(STORAGE_TASKS);
     const r=localStorage.getItem(STORAGE_ROUTINES);
     const visited=localStorage.getItem("docket-onboarded");
+    const savedNotif=localStorage.getItem("docket-notif");
+    if(savedNotif==="true") setNotifEnabled(true);
     setTasks(t?JSON.parse(t):defaultTasks());
     setRoutines(r?JSON.parse(r):defaultRoutines());
     setIsLoaded(true);
@@ -1823,22 +1825,15 @@ export default function Home(){
   },[addTask,deleteTask,updateTask,addStep,toggleStep,removeStep,setRoutines,tasks,routines,undoLast]);
 
   async function toggleNotifications(){
-    // Toggle off
-    if(notifEnabled){ setNotifEnabled(false); return; }
-    // Try to get browser permission, but don't block the toggle if unavailable
-    if(typeof Notification!=="undefined" && Notification.permission!=="granted"){
-      try{
-        const perm=await Notification.requestPermission();
-        if(perm==="granted"){
-          new Notification("The Docket",{body:"Notifications are on — I'll alert you when items are due."});
-        }
-      }catch(e){
-        // Permission API not available in this browser — still enable the toggle
-        console.log("Notification permission not available");
-      }
+    const next=!notifEnabled;
+    setNotifEnabled(next);
+    localStorage.setItem("docket-notif",next?"true":"false");
+    if(next && typeof Notification!=="undefined" && Notification.permission!=="granted"){
+      try{ await Notification.requestPermission(); }catch(e){}
     }
-    // Always enable the toggle regardless of permission result
-    setNotifEnabled(true);
+    if(next && typeof Notification!=="undefined" && Notification.permission==="granted"){
+      try{ new Notification("The Docket",{body:"Notifications are on!"}); }catch(e){}
+    }
   }
 
   // Computed
