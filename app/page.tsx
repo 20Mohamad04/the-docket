@@ -1921,12 +1921,12 @@ export default function Home(){
       </div>
 
       <Drawer isOpen={isDrawerOpen} onClose={()=>setIsDrawerOpen(false)}
-        currentView={currentView} setView={setCurrentView}/>
+        currentView={currentView} setView={(v)=>{setCurrentView(v);setShowSettings(false);}}/>
 
       {/* Nav */}
       <nav style={{position:"relative",zIndex:10,display:"flex",justifyContent:"space-between",
         alignItems:"center",padding:"22px 22px 14px"}}>
-        <button onClick={()=>setIsDrawerOpen(true)} className="sq-btn"
+        <button onClick={()=>{setIsDrawerOpen(true);setShowSettings(false);}} className="sq-btn"
           style={{width:52,height:52,color:"white",
             background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
             boxShadow:"0 8px 28px rgba(76,95,213,0.6), 0 3px 8px rgba(0,0,0,0.25)"}}>
@@ -1975,11 +1975,13 @@ export default function Home(){
                 <p style={{fontSize:12,color:C.muted,marginTop:2}}>{t("darkDesc")}</p>
               </div>
               <button onClick={()=>setDark(d=>!d)}
-                style={{width:48,height:26,borderRadius:13,border:"none",cursor:"pointer",
-                  background:dark?C.sage:C.border,position:"relative",transition:"background 0.2s",flexShrink:0}}>
-                <span style={{position:"absolute",top:3,left:dark?24:3,width:20,height:20,
-                  borderRadius:"50%",background:"#fff",transition:"left 0.2s",
-                  boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}/>
+                style={{width:52,height:28,borderRadius:14,border:"none",cursor:"pointer",
+                  background:dark?"linear-gradient(135deg,#5DE8A0,#2E8B57)":C.border,
+                  position:"relative",transition:"all 0.25s",flexShrink:0,
+                  boxShadow:dark?"0 4px 12px rgba(46,139,87,0.4)":"none"}}>
+                <span style={{position:"absolute",top:4,left:dark?26:4,width:20,height:20,
+                  borderRadius:"50%",background:"white",transition:"left 0.25s",
+                  boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}/>
               </button>
             </div>
 
@@ -2012,13 +2014,14 @@ export default function Home(){
                 {prayerStatus==="error"&&<p style={{fontSize:11,color:C.urgent,marginTop:4}}>{t("prayerError")}</p>}
               </div>
               <button onClick={togglePrayer}
-                style={{width:48,height:26,borderRadius:13,border:"none",cursor:"pointer",
-                  background:prayerEnabled?C.sage:C.border,
-                  position:"relative",transition:"background 0.2s",flexShrink:0}}>
-                <span style={{position:"absolute",top:3,
-                  left:prayerEnabled?24:3,width:20,height:20,borderRadius:"50%",
-                  background:"#fff",transition:"left 0.2s",
-                  boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}/>
+                style={{width:52,height:28,borderRadius:14,border:"none",cursor:"pointer",
+                  background:prayerEnabled?"linear-gradient(135deg,#5DE8A0,#2E8B57)":C.border,
+                  position:"relative",transition:"all 0.25s",flexShrink:0,
+                  boxShadow:prayerEnabled?"0 4px 12px rgba(46,139,87,0.4)":"none"}}>
+                <span style={{position:"absolute",top:4,
+                  left:prayerEnabled?26:4,width:20,height:20,borderRadius:"50%",
+                  background:"white",transition:"left 0.25s",
+                  boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}/>
               </button>
             </div>
 
@@ -2047,7 +2050,8 @@ export default function Home(){
       )}
 
       {/* Content */}
-      <main style={{position:"relative",zIndex:10,maxWidth:1100,margin:"0 auto",padding:"0 20px 100px"}}>
+      <main onClick={()=>{if(showSettings)setShowSettings(false);}}
+        style={{position:"relative",zIndex:10,maxWidth:1100,margin:"0 auto",padding:"0 20px 100px"}}>
 
         {/* Countdown chips */}
         {(examTask||interviewTask)&&(
