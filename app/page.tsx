@@ -717,42 +717,153 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
 }
 
 // ── Drawer ───────────────────────────────────────────────────────────────────
-function Drawer({isOpen,onClose,currentView,setView}:{
+function InfoModal({modal,onClose,dark}:{modal:string;onClose:()=>void;dark:boolean}){
+  const C=getC(dark);
+  const content:Record<string,{title:string;icon:string;body:string}>={
+    login:{title:"Login / Register",icon:"ti-user-circle",body:"Account creation and login is coming soon. Currently you're using The Docket as a guest — your data is saved on this device. Create an account to sync across devices and unlock Pro features."},
+    subscription:{title:"Subscription — The Docket Pro",icon:"ti-crown",body:"The Docket Pro — £4.99/month\n\n✓ Unlimited AI assistant requests\n✓ Sync across all your devices\n✓ Auto prayer times (no setup needed)\n✓ Advanced analytics & insights\n✓ Priority support\n✓ Early access to new features\n\n7-day free trial · Cancel anytime · No hidden fees\n\nSubscription management coming soon."},
+    widgets:{title:"Widgets & Shortcuts",icon:"ti-layout-grid",body:"Home screen widgets and quick-action shortcuts are coming in a future update. You'll be able to see today's routine, upcoming tasks, and prayer times directly from your home screen without opening the app."},
+    siri:{title:"Siri & Shortcuts",icon:"ti-microphone",body:"Siri integration and custom Shortcuts support are planned for a future release. You'll be able to add tasks, check your schedule, and mark items complete using just your voice."},
+    help:{title:"Help & Feedback",icon:"ti-help-circle",body:"Need help or have a suggestion?\n\n• Use the AI assistant (✦ button) to manage your tasks and routine\n• Tap ⚙️ Settings to customise the app\n• Enable accurate prayer times in Settings using your location\n\nTo send feedback, please email: support@thedocket.app\n\nWe read every message and use your feedback to improve The Docket."},
+    privacy:{title:"Privacy & Permissions",icon:"ti-shield-lock",body:"Your privacy matters.\n\nData storage: All your tasks and routines are stored locally on your device. Nothing is sent to our servers unless you create an account.\n\nLocation: Used only to fetch accurate prayer times via the Aladhan API. Never stored or shared.\n\nNotifications: Used only to alert you when scheduled items are due. Never used for marketing.\n\nAI assistant: Messages are processed by Anthropic (Claude) or Groq (Llama). No personal data is retained beyond the current session."},
+    terms:{title:"Terms & Conditions",icon:"ti-file-description",body:"By using The Docket, you agree to the following:\n\n1. The app is provided as-is without warranty.\n2. You are responsible for the accuracy of your own data.\n3. Pro subscriptions are billed monthly and can be cancelled at any time.\n4. Refunds are available within 7 days of initial purchase.\n5. We reserve the right to update these terms with reasonable notice.\n6. The AI assistant is a productivity tool and does not constitute professional advice.\n\nFull terms: thedocket.app/terms"},
+  };
+  const item=content[modal];
+  if(!item) return null;
+  return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
+      background:"rgba(0,0,0,0.5)",backdropFilter:"blur(4px)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()}
+        style={{background:dark?"#1A1D2E":"#FFFFFF",borderRadius:22,
+          width:"100%",maxWidth:480,maxHeight:"80vh",overflowY:"auto",
+          boxShadow:"0 32px 80px rgba(0,0,0,0.4)",
+          border:`1px solid ${C.border}`}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,padding:"22px 24px 16px",
+          borderBottom:`1px solid ${C.border}`}}>
+          <div style={{width:40,height:40,borderRadius:11,flexShrink:0,
+            background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <i className={`ti ${item.icon}`} style={{fontSize:20,color:"white"}} aria-hidden="true"/>
+          </div>
+          <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
+            fontSize:17,color:C.navy,flex:1}}>{item.title}</p>
+          <button onClick={onClose} style={{background:"none",border:"none",
+            cursor:"pointer",color:C.muted,fontSize:20,display:"flex",alignItems:"center"}}>
+            <i className="ti ti-x" style={{fontSize:18}} aria-hidden="true"/>
+          </button>
+        </div>
+        <div style={{padding:"20px 24px"}}>
+          {item.body.split("\n").map((line,i)=>(
+            <p key={i} style={{fontSize:13.5,color:line.startsWith("✓")?C.sage:C.muted,
+              lineHeight:1.7,marginBottom:line===""?8:4,fontWeight:line.startsWith("✓")?600:400}}>
+              {line||" "}
+            </p>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Drawer({isOpen,onClose,currentView,setView,onOpenModal}:{
   isOpen:boolean;onClose:()=>void;currentView:View;setView:(v:View)=>void;
+  onOpenModal:(m:string)=>void;
 }){
   const{t,dark}=useApp();
   const C=getC(dark);
-  const items:{key:View;label:string}[]=[
-    {key:"daily",label:"Daily Routine"},{key:"all",label:"All Tasks"},{key:"calendar",label:"Calendar"},
+  const navItems:{key:View;label:string;icon:string}[]=[
+    {key:"daily",label:"Daily Routine",icon:"ti-calendar-week"},
+    {key:"all",label:"All Tasks",icon:"ti-checkbox"},
+    {key:"calendar",label:"Calendar",icon:"ti-calendar"},
+    {key:"archive",label:"Finished & Deleted",icon:"ti-archive"},
   ];
+  const accountItems:{label:string;icon:string;modal:string}[]=[
+    {label:"Login / Register",icon:"ti-user-circle",modal:"login"},
+    {label:"Subscription",icon:"ti-crown",modal:"subscription"},
+  ];
+  const supportItems:{label:string;icon:string;modal:string}[]=[
+    {label:"Widgets & Shortcuts",icon:"ti-layout-grid",modal:"widgets"},
+    {label:"Siri & Shortcuts",icon:"ti-microphone",modal:"siri"},
+    {label:"Help & Feedback",icon:"ti-help-circle",modal:"help"},
+    {label:"Privacy & Permissions",icon:"ti-shield-lock",modal:"privacy"},
+    {label:"Terms & Conditions",icon:"ti-file-description",modal:"terms"},
+  ];
+  function NavBtn({item}:{item:{key:View;label:string;icon:string}}){
+    const active=currentView===item.key;
+    return(
+      <button onClick={()=>{setView(item.key);onClose();}}
+        style={{display:"flex",alignItems:"center",gap:10,width:"100%",
+          textAlign:"left",padding:"11px 12px",borderRadius:10,
+          fontSize:13.5,fontWeight:600,border:"none",cursor:"pointer",marginBottom:2,
+          background:active?"linear-gradient(135deg,#4C5FD5,#2A3699)":"transparent",
+          color:active?"white":C.muted,
+          boxShadow:active?"0 4px 14px rgba(76,95,213,0.35)":"none"}}>
+        <i className={`ti ${item.icon}`} style={{fontSize:17,flexShrink:0,
+          color:active?"rgba(255,255,255,0.8)":C.muted2}} aria-hidden="true"/>
+        {item.label}
+      </button>
+    );
+  }
+  function ActionBtn({label,icon,modal}:{label:string;icon:string;modal:string}){
+    return(
+      <button onClick={()=>{onOpenModal(modal);onClose();}}
+        style={{display:"flex",alignItems:"center",gap:10,width:"100%",
+          textAlign:"left",padding:"10px 12px",borderRadius:10,
+          fontSize:13,fontWeight:500,border:"none",cursor:"pointer",
+          background:"transparent",color:C.muted,marginBottom:1,transition:"all 0.12s"}}
+        onMouseEnter={e=>{e.currentTarget.style.background=C.surface2;e.currentTarget.style.color=C.navy;}}
+        onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.muted;}}>
+        <i className={`ti ${icon}`} style={{fontSize:16,flexShrink:0,color:C.muted2}} aria-hidden="true"/>
+        {label}
+      </button>
+    );
+  }
   return(
     <>
       {isOpen&&<div onClick={onClose} style={{position:"fixed",inset:0,
-        background:"rgba(35,42,77,0.3)",backdropFilter:"blur(2px)",zIndex:70}}/>}
-      <aside style={{position:"fixed",top:0,left:0,bottom:0,width:250,
-        background:C.surface,backdropFilter:"blur(20px)",boxShadow:"8px 0 40px rgba(0,0,0,0.3)",
-        padding:"24px 16px",zIndex:71,
+        background:"rgba(0,0,0,0.45)",backdropFilter:"blur(4px)",zIndex:70}}/>}
+      <aside style={{position:"fixed",top:0,left:0,bottom:0,width:264,
+        background:dark?"#16192A":"#FFFFFF",
+        boxShadow:"8px 0 40px rgba(0,0,0,0.3)",zIndex:71,overflowY:"auto",
         transform:isOpen?"translateX(0)":"translateX(-100%)",
-        transition:"transform 0.2s ease",display:"flex",flexDirection:"column",gap:4}}>
-        <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-          fontSize:19,color:C.navy,marginBottom:18,padding:"0 8px"}}>{t("appName")}</p>
-        {items.map(it=>(
-          <button key={it.key} onClick={()=>{setView(it.key);onClose();}}
-            style={{textAlign:"left",padding:"12px 12px",borderRadius:10,
-              fontSize:14,fontWeight:600,border:"none",cursor:"pointer",
-              background:currentView===it.key?C.navy:C.surface2,
-              color:currentView===it.key?"white":C.muted}}>
-            {it.label}
-          </button>
-        ))}
-        <div style={{marginTop:"auto"}}>
-          <button onClick={()=>{setView("archive");onClose();}}
-            style={{width:"100%",textAlign:"left",padding:"12px 12px",
-              borderRadius:10,fontSize:14,fontWeight:600,border:"none",cursor:"pointer",
-              background:currentView==="archive"?C.navy:C.surface2,
-              color:currentView==="archive"?"white":C.muted}}>
-            {t("archive")}
-          </button>
+        transition:"transform 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+        display:"flex",flexDirection:"column"}}>
+        <div style={{padding:"26px 20px 16px",borderBottom:`1px solid ${C.border}`}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:36,height:36,borderRadius:10,flexShrink:0,
+              background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <i className="ti ti-check" style={{fontSize:18,color:"white"}} aria-hidden="true"/>
+            </div>
+            <div>
+              <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
+                fontSize:15,color:C.navy,letterSpacing:"-0.3px"}}>The Docket</p>
+              <p style={{fontSize:10,color:C.muted,letterSpacing:"1px",textTransform:"uppercase"}}>
+                Personal Planner
+              </p>
+            </div>
+          </div>
+        </div>
+        <div style={{padding:"10px 12px 6px"}}>
+          <p style={{fontSize:9,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
+            textTransform:"uppercase",padding:"4px 12px 6px"}}>Navigation</p>
+          {navItems.map(item=><NavBtn key={item.key} item={item}/>)}
+        </div>
+        <div style={{height:1,background:C.border,margin:"4px 16px"}}/>
+        <div style={{padding:"6px 12px"}}>
+          <p style={{fontSize:9,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
+            textTransform:"uppercase",padding:"4px 12px 6px"}}>Account</p>
+          {accountItems.map(item=><ActionBtn key={item.label} {...item}/>)}
+        </div>
+        <div style={{height:1,background:C.border,margin:"4px 16px"}}/>
+        <div style={{padding:"6px 12px"}}>
+          <p style={{fontSize:9,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
+            textTransform:"uppercase",padding:"4px 12px 6px"}}>Support</p>
+          {supportItems.map(item=><ActionBtn key={item.label} {...item}/>)}
+        </div>
+        <div style={{marginTop:"auto",padding:"14px 20px",borderTop:`1px solid ${C.border}`}}>
+          <p style={{fontSize:10,color:C.muted2,textAlign:"center"}}>The Docket v1.0 · Made with ♥</p>
         </div>
       </aside>
     </>
@@ -1020,46 +1131,80 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           <i className="ti ti-sparkles" style={{fontSize:24,color:"white"}} aria-hidden="true"/>
         </button>
       {open&&(
-        <div style={{position:"fixed",bottom:20,right:20,zIndex:60}}>
-          <div className="glass" style={{borderRadius:24,width:400,height:590,display:"flex",flexDirection:"column",overflow:"hidden",boxShadow:"0 32px 80px rgba(0,0,0,0.35)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
-              padding:"16px 18px",borderBottom:`1px solid ${C.border}`}}>
-              <div>
-                <h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:16,
-                  fontWeight:700,color:C.navy}}>Ask Docket</h3>
-                <p style={{fontSize:10.5,color:C.muted,marginTop:2}}>Add, remove or change tasks</p>
-              </div>
-              <button onClick={()=>setOpen(false)}
-                style={{background:"none",border:"none",fontSize:17,color:C.muted,cursor:"pointer"}}>✕</button>
-            </div>
-            <div style={{flex:1,overflowY:"auto",padding:"14px 16px",
-              display:"flex",flexDirection:"column",gap:9}}>
-              {messages.map((m,i)=>(
-                <div key={i} style={{maxWidth:"85%",padding:"9px 12px",borderRadius:12,
-                  fontSize:12.5,lineHeight:1.45,
-                  alignSelf:m.role==="user"?"flex-end":"flex-start",
-                  background:m.role==="user"?C.navy:C.surface2,
-                  color:m.role==="user"?"white":C.navy}}>
-                  {m.content}
+        <>
+          {/* Click-outside backdrop */}
+          <div onClick={()=>setOpen(false)}
+            style={{position:"fixed",inset:0,zIndex:58,background:"transparent"}}/>
+          <div style={{position:"fixed",bottom:20,right:20,zIndex:60}}>
+            <div style={{borderRadius:24,width:400,height:590,display:"flex",flexDirection:"column",
+              overflow:"hidden",
+              background:dark?"#1A1D2E":"#FFFFFF",
+              border:`1px solid ${C.border}`,
+              boxShadow:"0 32px 80px rgba(0,0,0,0.45), 0 8px 24px rgba(0,0,0,0.25)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+                padding:"16px 18px",borderBottom:`1px solid ${C.border}`,
+                background:dark?"#1E2235":"#F8F7FE"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{width:36,height:36,borderRadius:10,flexShrink:0,
+                    background:"linear-gradient(145deg,#8670E8,#4C5FD5)",
+                    display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <i className="ti ti-sparkles" style={{fontSize:17,color:"white"}} aria-hidden="true"/>
+                  </div>
+                  <div>
+                    <h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:15,
+                      fontWeight:700,color:C.navy}}>Ask Docket</h3>
+                    <p style={{fontSize:10,color:C.muted,marginTop:1}}>Your AI scheduling assistant</p>
+                  </div>
                 </div>
-              ))}
-            </div>
-            <div style={{display:"flex",gap:8,padding:12,borderTop:`1px solid ${C.border}`}}>
-              <input value={input} onChange={e=>setInput(e.target.value)}
-                onKeyDown={e=>e.key==="Enter"&&send()}
-                placeholder="e.g. move Fajr to 4:20am"
-                style={{flex:1,padding:"10px 12px",border:`1.5px solid ${C.border}`,
-                  borderRadius:10,fontSize:12.5,background:C.surface2,
-                  fontFamily:"inherit",outline:"none"}}/>
-              <button onClick={send} disabled={loading}
-                style={{backgroundImage:"linear-gradient(135deg,#3D52A0 0%,#232A4D 100%)",
-                  color:"white",border:"none",
-                  padding:"0 16px",borderRadius:10,fontWeight:600,
-                  fontSize:12.5,cursor:"pointer",opacity:loading?0.5:1,
-                  boxShadow:"0 3px 10px rgba(35,42,77,0.3)"}}>Send</button>
+                <button onClick={()=>setOpen(false)}
+                  style={{background:"none",border:"none",fontSize:17,color:C.muted,
+                    cursor:"pointer",width:28,height:28,borderRadius:8,
+                    display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <i className="ti ti-x" style={{fontSize:16}} aria-hidden="true"/>
+                </button>
+              </div>
+              <div style={{flex:1,overflowY:"auto",padding:"14px 16px",
+                display:"flex",flexDirection:"column",gap:9,
+                background:dark?"#1A1D2E":"#FAFAFE"}}>
+                {messages.map((m,i)=>(
+                  <div key={i} style={{maxWidth:"85%",padding:"10px 14px",borderRadius:14,
+                    fontSize:13,lineHeight:1.5,
+                    alignSelf:m.role==="user"?"flex-end":"flex-start",
+                    background:m.role==="user"
+                      ?"linear-gradient(135deg,#6677E8,#4C5FD5)"
+                      :dark?"#252840":"#FFFFFF",
+                    color:m.role==="user"?"white":C.navy,
+                    boxShadow:m.role==="user"
+                      ?"0 4px 14px rgba(76,95,213,0.35)"
+                      :"0 2px 8px rgba(0,0,0,0.08)",
+                    borderBottomRightRadius:m.role==="user"?4:14,
+                    borderBottomLeftRadius:m.role==="assistant"?4:14}}>
+                    {m.content}
+                  </div>
+                ))}
+              </div>
+              <div style={{display:"flex",gap:8,padding:"12px 14px",
+                borderTop:`1px solid ${C.border}`,
+                background:dark?"#1E2235":"#F8F7FE"}}>
+                <input value={input} onChange={e=>setInput(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&send()}
+                  placeholder="e.g. add gym Monday at 7am"
+                  style={{flex:1,padding:"11px 14px",
+                    border:`1.5px solid ${C.border}`,
+                    borderRadius:12,fontSize:13,
+                    background:dark?"#1A1D2E":"#FFFFFF",
+                    color:C.navy,
+                    fontFamily:"inherit",outline:"none"}}/>
+                <button onClick={send} disabled={loading} className="pill-btn"
+                  style={{background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+                    color:"white",border:"none",
+                    padding:"0 18px",fontWeight:700,
+                    fontSize:13,cursor:"pointer",opacity:loading?0.5:1,
+                    boxShadow:"0 4px 14px rgba(76,95,213,0.4)"}}>Send</button>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );
@@ -1654,6 +1799,7 @@ export default function Home(){
   const[dark,setDark]=useState(false);
   const[lang,setLang]=useState<Lang>("en");
   const[onboarding,setOnboarding]=useState(false);
+  const[activeModal,setActiveModal]=useState<string|null>(null);
   const[obStep,setObStep]=useState(0);
   const[obName,setObName]=useState("");
   const[obGoals,setObGoals]=useState<string[]>([]);
@@ -1921,7 +2067,8 @@ export default function Home(){
       </div>
 
       <Drawer isOpen={isDrawerOpen} onClose={()=>setIsDrawerOpen(false)}
-        currentView={currentView} setView={(v)=>{setCurrentView(v);setShowSettings(false);}}/>
+        currentView={currentView} setView={(v)=>{setCurrentView(v);setShowSettings(false);}}
+        onOpenModal={setActiveModal}/>
 
       {/* Nav */}
       <nav style={{position:"relative",zIndex:10,display:"flex",justifyContent:"space-between",
@@ -2226,6 +2373,7 @@ export default function Home(){
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
         onSave={data=>{updateTask(editingTask.id,data);setEditingTask(null);}}/>}
     </div>
+      {activeModal&&<InfoModal modal={activeModal} onClose={()=>setActiveModal(null)} dark={dark}/>}
     </AppCtx.Provider>
   );
 }
