@@ -994,10 +994,12 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
   return(<>
       <button onClick={()=>setOpen(o=>!o)}
         className="pill-btn" style={{position:"fixed",bottom:30,right:102,width:60,height:60,
-          color:"white",fontSize:22,fontWeight:800,
+          color:"white",
           background:"linear-gradient(145deg,#B8A8FF 0%,#8670E8 40%,#4C5FD5 100%)",
           boxShadow:"0 12px 36px rgba(76,95,213,0.7), 0 4px 10px rgba(0,0,0,0.3)",
-          zIndex:40}}>✦</button>
+          zIndex:40}}>
+          <i className="ti ti-sparkles" style={{fontSize:24,color:"white"}} aria-hidden="true"/>
+        </button>
       {open&&(
         <div style={{position:"fixed",bottom:20,right:20,zIndex:60}}>
           <div className="glass" style={{borderRadius:24,width:400,height:590,display:"flex",flexDirection:"column",overflow:"hidden",boxShadow:"0 32px 80px rgba(0,0,0,0.35)"}}>
@@ -1457,8 +1459,86 @@ function OnboardingScreen({onComplete,dark}:{onComplete:(name:string,goals:strin
       </button>
     </div>,
 
-    // Step 3: AI intro
+    // Step 3: Account choice
     <div key="3" style={{textAlign:"center",padding:"0 8px"}}>
+      <div style={{width:64,height:64,borderRadius:20,margin:"0 auto 24px",
+        background:"linear-gradient(145deg,#FFD580 0%,#E8A020 45%,#B06800 100%)",
+        display:"flex",alignItems:"center",justifyContent:"center",
+        boxShadow:"0 12px 36px rgba(232,160,32,0.5)"}}>
+        <i className="ti ti-crown" style={{fontSize:30,color:"white"}} aria-hidden="true"/>
+      </div>
+      <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:26,fontWeight:800,
+        color:C.navy,letterSpacing:"-0.5px",marginBottom:8}}>How do you want to start?</h2>
+      <p style={{fontSize:14,color:C.muted,marginBottom:28}}>
+        Start free or unlock the full Docket experience.
+      </p>
+
+      {/* Guest option */}
+      <button onClick={next}
+        style={{width:"100%",padding:"18px 20px",borderRadius:16,cursor:"pointer",
+          border:`2px solid ${C.border}`,background:C.surface2,
+          marginBottom:12,textAlign:"left",transition:"all 0.15s"}}
+        onMouseEnter={e=>e.currentTarget.style.borderColor=C.primary}
+        onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <div style={{width:44,height:44,borderRadius:12,background:C.surface,
+            display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
+            border:`1px solid ${C.border}`}}>
+            <i className="ti ti-user" style={{fontSize:22,color:C.muted}} aria-hidden="true"/>
+          </div>
+          <div style={{textAlign:"left"}}>
+            <p style={{fontWeight:700,fontSize:15,color:C.navy,marginBottom:2}}>Continue as guest</p>
+            <p style={{fontSize:12,color:C.muted,lineHeight:1.4}}>
+              Free · Data stays on this device · No account needed
+            </p>
+          </div>
+        </div>
+        <div style={{marginTop:12,display:"flex",gap:6,flexWrap:"wrap"}}>
+          {["Daily routine","Task manager","Week view","Calendar","AI assistant (limited)"].map(f=>(
+            <span key={f} style={{fontSize:10,fontWeight:600,padding:"3px 9px",borderRadius:50,
+              background:C.surface2,border:`1px solid ${C.border}`,color:C.muted}}>{f}</span>
+          ))}
+        </div>
+      </button>
+
+      {/* Pro option */}
+      <button onClick={next}
+        style={{width:"100%",padding:"18px 20px",borderRadius:16,cursor:"pointer",
+          border:"2px solid #4C5FD5",
+          background:"linear-gradient(135deg,rgba(76,95,213,0.08),rgba(134,112,232,0.05))",
+          marginBottom:8,textAlign:"left",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:0,right:0,background:"linear-gradient(135deg,#4C5FD5,#8670E8)",
+          padding:"4px 12px",borderRadius:"0 14px 0 10px",
+          fontSize:10,fontWeight:700,color:"white",letterSpacing:"0.5px"}}>MOST POPULAR</div>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <div style={{width:44,height:44,borderRadius:12,
+            background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+            display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
+            boxShadow:"0 4px 14px rgba(76,95,213,0.4)"}}>
+            <i className="ti ti-crown" style={{fontSize:22,color:"white"}} aria-hidden="true"/>
+          </div>
+          <div style={{textAlign:"left"}}>
+            <p style={{fontWeight:700,fontSize:15,color:C.primary,marginBottom:2}}>The Docket Pro — £4.99/mo</p>
+            <p style={{fontSize:12,color:C.muted,lineHeight:1.4}}>
+              Unlimited AI · Cloud sync · All devices · Priority support
+            </p>
+          </div>
+        </div>
+        <div style={{marginTop:12,display:"flex",gap:6,flexWrap:"wrap"}}>
+          {["Everything in free","Unlimited AI requests","Sync across devices","Prayer time auto-update","Advanced analytics","Priority support"].map(f=>(
+            <span key={f} style={{fontSize:10,fontWeight:600,padding:"3px 9px",borderRadius:50,
+              background:"rgba(76,95,213,0.1)",border:"1px solid rgba(76,95,213,0.2)",
+              color:C.primary}}>{f}</span>
+          ))}
+        </div>
+      </button>
+      <p style={{fontSize:11,color:C.muted2,marginTop:8}}>
+        7-day free trial · Cancel anytime · No hidden fees
+      </p>
+    </div>,
+
+    // Step 4: AI intro
+    <div key="4" style={{textAlign:"center",padding:"0 8px"}}>
       <div style={{width:64,height:64,borderRadius:20,margin:"0 auto 24px",
         background:"linear-gradient(145deg,#C4A8FF 0%,#8670E8 45%,#4A2A9E 100%)",
         display:"flex",alignItems:"center",justifyContent:"center",
@@ -1823,9 +1903,10 @@ export default function Home(){
       <nav style={{position:"relative",zIndex:10,display:"flex",justifyContent:"space-between",
         alignItems:"center",padding:"22px 22px 14px"}}>
         <button onClick={()=>setIsDrawerOpen(true)} className="sq-btn"
-          style={{width:52,height:52,fontSize:22,color:"white",
+          style={{width:52,height:52,color:"white",
             background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
-            boxShadow:"0 8px 28px rgba(76,95,213,0.6), 0 3px 8px rgba(0,0,0,0.25)"}}>☰</button>
+            boxShadow:"0 8px 28px rgba(76,95,213,0.6), 0 3px 8px rgba(0,0,0,0.25)"}}>
+          <i className="ti ti-layout-sidebar" style={{fontSize:22,color:"white"}} aria-hidden="true"/></button>
         <div style={{textAlign:"center"}}>
           <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
             fontSize:18,color:C.navy,letterSpacing:"-0.5px"}}>{t("appName")}</p>
@@ -1837,17 +1918,19 @@ export default function Home(){
         <div style={{display:"flex",gap:8}}>
           <button onClick={()=>setShowSettings(s=>!s)} className="sq-btn"
             style={{width:52,height:52,fontSize:22,cursor:"pointer",
-              background:"linear-gradient(145deg,#E8C84C 0%,#C9A84C 45%,#8A6820 100%)",
-              boxShadow:"0 8px 28px rgba(201,168,76,0.55), 0 3px 8px rgba(0,0,0,0.25)"}} title="Settings">⚙️</button>
+              background:"linear-gradient(145deg,#9B7FE8 0%,#6B4FD8 45%,#3A1A9E 100%)",
+              boxShadow:"0 8px 28px rgba(107,79,216,0.55), 0 3px 8px rgba(0,0,0,0.25)"}} title="Settings">
+            <i className="ti ti-adjustments-horizontal" style={{fontSize:22,color:"white"}} aria-hidden="true"/></button>
           <button onClick={toggleNotifications} className="sq-btn"
-            style={{width:52,height:52,fontSize:22,cursor:"pointer",
+            style={{width:52,height:52,cursor:"pointer",
               background:notifEnabled
                 ?"linear-gradient(145deg,#5DE8A0 0%,#2E8B57 45%,#1A5235 100%)"
-                :"linear-gradient(145deg,#C4A8FF 0%,#8670E8 45%,#4A2A9E 100%)",
+                :"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
               boxShadow:notifEnabled
-                ?"0 8px 28px rgba(46,139,87,0.6), 0 3px 8px rgba(0,0,0,0.25)"
-                :"0 8px 28px rgba(134,112,232,0.6), 0 3px 8px rgba(0,0,0,0.25)"}}>
-            {notifEnabled?"🔔":"🔕"}
+                ?"0 8px 28px rgba(46,139,87,0.55), 0 3px 8px rgba(0,0,0,0.25)"
+                :"0 8px 28px rgba(76,95,213,0.55), 0 3px 8px rgba(0,0,0,0.25)"}}>
+            <i className={`ti ${notifEnabled?"ti-bell-ringing":"ti-bell-off"}`}
+              style={{fontSize:22,color:"white"}} aria-hidden="true"/>
           </button>
         </div>
       </nav>
@@ -1923,13 +2006,16 @@ export default function Home(){
                 <p style={{fontSize:12,color:C.muted,marginTop:2}}>{t("notifDesc")}</p>
               </div>
               <button onClick={toggleNotifications}
-                style={{width:48,height:26,borderRadius:13,border:"none",cursor:"pointer",
-                  background:notifEnabled?C.sage:C.border,
-                  position:"relative",transition:"background 0.2s",flexShrink:0}}>
-                <span style={{position:"absolute",top:3,
-                  left:notifEnabled?24:3,width:20,height:20,borderRadius:"50%",
-                  background:"#fff",transition:"left 0.2s",
-                  boxShadow:"0 1px 4px rgba(0,0,0,0.2)"}}/>
+                style={{width:52,height:28,borderRadius:14,border:"none",cursor:"pointer",
+                  background:notifEnabled
+                    ?"linear-gradient(135deg,#5DE8A0,#2E8B57)"
+                    :C.border,
+                  position:"relative",transition:"all 0.25s",flexShrink:0,
+                  boxShadow:notifEnabled?"0 4px 12px rgba(46,139,87,0.4)":"none"}}>
+                <span style={{position:"absolute",top:4,
+                  left:notifEnabled?26:4,width:20,height:20,borderRadius:"50%",
+                  background:"white",transition:"left 0.25s",
+                  boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}/>
               </button>
             </div>
           </div>
@@ -2099,10 +2185,12 @@ export default function Home(){
       {/* FAB */}
       <button onClick={()=>setIsAddingTask(true)}
         className="pill-btn" style={{position:"fixed",bottom:30,right:30,width:60,height:60,
-          color:"white",fontSize:30,
+          color:"white",
           background:"linear-gradient(145deg,#8BAAFF 0%,#4C5FD5 40%,#1A2566 100%)",
           boxShadow:"0 12px 36px rgba(76,95,213,0.7), 0 4px 10px rgba(0,0,0,0.3)",
-          zIndex:40}}>+</button>
+          zIndex:40}}>
+          <i className="ti ti-plus" style={{fontSize:28,color:"white"}} aria-hidden="true"/>
+        </button>
 
       <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions}/>
 
