@@ -386,45 +386,8 @@ function computeStreak(r:Routine){
   return streak;
 }
 
-function defaultTasks():Task[]{
-  const mon=nextWeekday(1);
-  return [
-    {id:1,title:"Work on ISA agent build with ChatGPT",category:"business",priority:"medium",type:"ongoing",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]},
-    {id:2,title:'Check Trading 212 portfolio ("Halal Made Simple")',category:"trading",priority:"medium",type:"ongoing",date:todayISO(),time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]},
-    {id:3,title:"Revise Land Law for exam",category:"study",priority:"urgent",type:"milestone",date:"2026-07-29",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]},
-    {id:4,title:"Prepare for motorbike theory test",category:"health",priority:"medium",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]},
-    {id:5,title:"Cheshire Oak coach interview",category:"career",priority:"urgent",type:"milestone",date:mon,time:"12:30",recurring:"",notes:"12:30pm — prep beforehand.",done:false,deleted:false,checklist:[]},
-    {id:6,title:"CPS Paralegal Assistant interview (async)",category:"career",priority:"high",type:"milestone",date:"",time:"",recurring:"",notes:"Not live — complete before deadline.",done:false,deleted:false,checklist:[]},
-    {id:7,title:"Contact Universal Credit re: rent/housing issue",category:"admin",priority:"urgent",type:"milestone",date:todayISO(),time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]},
-    {id:8,title:"Sort out ongoing car issue",category:"admin",priority:"high",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]},
-    {id:9,title:"Submit fee waiver application",category:"admin",priority:"high",type:"milestone",date:"",time:"",recurring:"",notes:"Add deadline once confirmed.",done:false,deleted:false,checklist:[]},
-    {id:10,title:"Contact water utility about the bill",category:"admin",priority:"high",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]},
-    {id:11,title:"Integrate Facebook liked-reels tool into Claude workflow",category:"business",priority:"medium",type:"ongoing",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]},
-  ];
-}
-function defaultRoutines():Routine[]{
-  return [
-    {id:1,label:"Fajr",category:"faith",days:[...DAYS],time:"04:30",duration:15,intensity:"normal",notes:"",completions:{}},
-    {id:2,label:"Gym session",category:"health",days:DAYS.filter(d=>d!=="sun"),time:"07:00",duration:60,intensity:"high",notes:"",completions:{}},
-    {id:3,label:"Breakfast",category:"health",days:[...DAYS],time:"07:30",duration:20,intensity:"normal",notes:"",completions:{}},
-    {id:4,label:"Trading 212 check-in",category:"trading",days:[...DAYS],time:"08:00",duration:15,intensity:"normal",notes:"",completions:{}},
-    {id:5,label:"Develop Claude / AI tools account",category:"business",days:[...DAYS],time:"09:00",duration:45,intensity:"normal",notes:"",completions:{}},
-    {id:6,label:"Work on AI investment agent",category:"trading",days:[...DAYS],time:"10:00",duration:60,intensity:"normal",notes:"",completions:{}},
-    {id:7,label:"Work on vending company",category:"business",days:[...DAYS],time:"11:15",duration:45,intensity:"normal",notes:"",completions:{}},
-    {id:8,label:"Dhuhr",category:"faith",days:[...DAYS],time:"13:15",duration:15,intensity:"normal",notes:"",completions:{}},
-    {id:9,label:"Lunch",category:"health",days:[...DAYS],time:"13:30",duration:30,intensity:"normal",notes:"",completions:{}},
-    {id:10,label:"Revise Land Law",category:"study",days:[...DAYS],time:"15:00",duration:90,intensity:"normal",notes:"",completions:{}},
-    {id:11,label:"Asr",category:"faith",days:[...DAYS],time:"17:00",duration:15,intensity:"normal",notes:"",completions:{}},
-    {id:12,label:"Work on Broasted",category:"business",days:[...DAYS],time:"18:00",duration:60,intensity:"normal",notes:"",completions:{}},
-    {id:13,label:"Football",category:"health",days:["sun"],time:"18:00",duration:90,intensity:"high",notes:"",completions:{}},
-    {id:14,label:"Work on clothing company",category:"business",days:[...DAYS],time:"19:15",duration:45,intensity:"normal",notes:"",completions:{}},
-    {id:15,label:"Maghrib",category:"faith",days:[...DAYS],time:"21:15",duration:15,intensity:"normal",notes:"",completions:{}},
-    {id:16,label:"Dinner",category:"health",days:[...DAYS],time:"21:30",duration:30,intensity:"normal",notes:"",completions:{}},
-    {id:17,label:"Isha",category:"faith",days:[...DAYS],time:"23:00",duration:15,intensity:"normal",notes:"",completions:{}},
-    {id:18,label:"Read Quran",category:"faith",days:[...DAYS],time:"",duration:20,intensity:"normal",notes:"",completions:{}},
-    {id:19,label:"Publish content on Underdeen Instagram",category:"faith",days:["sun"],time:"20:00",duration:30,intensity:"normal",notes:"",completions:{}},
-  ];
-}
+function defaultTasks():Task[]{ return []; }
+function defaultRoutines():Routine[]{ return []; }
 
 // ── Shared small components ──────────────────────────────────────────────────
 
@@ -1349,6 +1312,230 @@ function LiveClock({dark,C}:{dark:boolean;C:ReturnType<typeof getC>}){
   );
 }
 
+// ── Premium Onboarding Screen ─────────────────────────────────────────────────
+const OB_GOALS=[
+  {id:"work",icon:"ti-briefcase",label:"Work & Career"},
+  {id:"study",icon:"ti-school",label:"Study & Learning"},
+  {id:"health",icon:"ti-heart-rate-monitor",label:"Health & Fitness"},
+  {id:"faith",icon:"ti-moon-stars",label:"Faith & Spirituality"},
+  {id:"business",icon:"ti-building",label:"Business & Side Hustles"},
+  {id:"finance",icon:"ti-chart-line",label:"Finance & Investing"},
+  {id:"family",icon:"ti-users-group",label:"Family & Personal"},
+  {id:"travel",icon:"ti-plane",label:"Travel & Lifestyle"},
+];
+
+function OnboardingScreen({onComplete,dark}:{onComplete:(name:string,goals:string[])=>void;dark:boolean}){
+  const C=getC(dark);
+  const[step,setStep]=useState(0);
+  const[name,setName]=useState("");
+  const[goals,setGoals]=useState<string[]>([]);
+  const[animating,setAnimating]=useState(false);
+
+  function next(){
+    setAnimating(true);
+    setTimeout(()=>{setStep(s=>s+1);setAnimating(false);},350);
+  }
+  function finish(){
+    setAnimating(true);
+    setTimeout(()=>onComplete(name,goals),600);
+  }
+  function toggleGoal(id:string){
+    setGoals(g=>g.includes(id)?g.filter(x=>x!==id):[...g,id]);
+  }
+
+  const steps=[
+    // Step 0: Welcome
+    <div key="0" style={{textAlign:"center",padding:"0 8px"}}>
+      <div style={{width:80,height:80,borderRadius:24,margin:"0 auto 28px",
+        background:"linear-gradient(145deg,#8BA8FF 0%,#4C5FD5 45%,#1A2566 100%)",
+        display:"flex",alignItems:"center",justifyContent:"center",
+        boxShadow:"0 16px 48px rgba(76,95,213,0.5)"}}>
+        <i className="ti ti-check" style={{fontSize:40,color:"white"}} aria-hidden="true"/>
+      </div>
+      <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:32,fontWeight:800,
+        color:C.navy,letterSpacing:"-1px",marginBottom:12,lineHeight:1.1}}>
+        Welcome to<br/>The Docket
+      </h1>
+      <p style={{fontSize:15,color:C.muted,lineHeight:1.6,marginBottom:36,maxWidth:280,margin:"0 auto 36px"}}>
+        Your intelligent personal planner. Built to keep you focused, on time, and in control of everything that matters.
+      </p>
+      <button className="pill-btn" onClick={next}
+        style={{background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
+          color:"white",padding:"16px 48px",fontSize:16,fontWeight:700,
+          boxShadow:"0 8px 28px rgba(76,95,213,0.5)"}}>
+        Get started
+      </button>
+      <p style={{fontSize:11,color:C.muted2,marginTop:20,letterSpacing:"0.5px"}}>
+        No account needed · Works offline · Your data stays private
+      </p>
+    </div>,
+
+    // Step 1: Name
+    <div key="1" style={{textAlign:"center",padding:"0 8px"}}>
+      <div style={{width:64,height:64,borderRadius:20,margin:"0 auto 24px",
+        background:"linear-gradient(145deg,#E8C84C 0%,#C9A84C 45%,#8A6820 100%)",
+        display:"flex",alignItems:"center",justifyContent:"center",
+        boxShadow:"0 12px 36px rgba(201,168,76,0.45)"}}>
+        <i className="ti ti-user" style={{fontSize:30,color:"white"}} aria-hidden="true"/>
+      </div>
+      <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:26,fontWeight:800,
+        color:C.navy,letterSpacing:"-0.5px",marginBottom:8}}>What's your name?</h2>
+      <p style={{fontSize:14,color:C.muted,marginBottom:28}}>
+        Your Docket assistant will use this to personalise your experience.
+      </p>
+      <input
+        autoFocus
+        value={name}
+        onChange={e=>setName(e.target.value)}
+        onKeyDown={e=>e.key==="Enter"&&name.trim()&&next()}
+        placeholder="Your first name"
+        style={{width:"100%",padding:"16px 20px",borderRadius:14,
+          border:`2px solid ${name?C.primary:C.border}`,
+          fontSize:18,fontWeight:600,textAlign:"center",
+          background:C.surface2,color:C.navy,outline:"none",
+          fontFamily:"'Space Grotesk',sans-serif",
+          transition:"border-color 0.2s",marginBottom:24}}
+      />
+      <button className="pill-btn" onClick={next} disabled={!name.trim()}
+        style={{background:name.trim()
+          ?"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)"
+          :C.border,
+          color:"white",padding:"14px 40px",fontSize:15,fontWeight:700,
+          boxShadow:name.trim()?"0 8px 28px rgba(76,95,213,0.45)":"none",
+          opacity:name.trim()?1:0.6,
+          cursor:name.trim()?"pointer":"not-allowed"}}>
+        Continue
+      </button>
+    </div>,
+
+    // Step 2: Goals
+    <div key="2" style={{textAlign:"center",padding:"0 8px"}}>
+      <div style={{width:64,height:64,borderRadius:20,margin:"0 auto 24px",
+        background:"linear-gradient(145deg,#5DE8A0 0%,#2E8B57 45%,#1A5235 100%)",
+        display:"flex",alignItems:"center",justifyContent:"center",
+        boxShadow:"0 12px 36px rgba(46,139,87,0.45)"}}>
+        <i className="ti ti-target" style={{fontSize:30,color:"white"}} aria-hidden="true"/>
+      </div>
+      <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:26,fontWeight:800,
+        color:C.navy,letterSpacing:"-0.5px",marginBottom:8}}>
+        What do you want to track?
+      </h2>
+      <p style={{fontSize:14,color:C.muted,marginBottom:24}}>
+        Pick everything that matters to you. Your Docket will be built around these.
+      </p>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:28}}>
+        {OB_GOALS.map(g=>{
+          const active=goals.includes(g.id);
+          return(
+            <button key={g.id} onClick={()=>toggleGoal(g.id)}
+              style={{padding:"14px 12px",borderRadius:14,cursor:"pointer",
+                border:`2px solid ${active?C.primary:C.border}`,
+                background:active?"linear-gradient(135deg,rgba(76,95,213,0.12),rgba(76,95,213,0.06))":C.surface2,
+                display:"flex",alignItems:"center",gap:10,transition:"all 0.15s",
+                boxShadow:active?"0 4px 16px rgba(76,95,213,0.2)":"none"}}>
+              <div style={{width:36,height:36,borderRadius:10,flexShrink:0,
+                background:active?"linear-gradient(135deg,#4C5FD5,#2A3699)":C.surface,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                boxShadow:active?"0 4px 12px rgba(76,95,213,0.4)":"none"}}>
+                <i className={`ti ${g.icon}`} style={{fontSize:18,color:active?"white":C.muted}} aria-hidden="true"/>
+              </div>
+              <span style={{fontSize:13,fontWeight:600,color:active?C.primary:C.navy,
+                textAlign:"left",lineHeight:1.2}}>{g.label}</span>
+            </button>
+          );
+        })}
+      </div>
+      <button className="pill-btn" onClick={next} disabled={goals.length===0}
+        style={{background:goals.length>0
+          ?"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)"
+          :C.border,
+          color:"white",padding:"14px 40px",fontSize:15,fontWeight:700,
+          boxShadow:goals.length>0?"0 8px 28px rgba(76,95,213,0.45)":"none",
+          opacity:goals.length>0?1:0.6,
+          cursor:goals.length>0?"pointer":"not-allowed"}}>
+        {goals.length===0?"Pick at least one":goals.length===1?"Continue with 1 focus":`Continue with ${goals.length} focuses`}
+      </button>
+    </div>,
+
+    // Step 3: AI intro
+    <div key="3" style={{textAlign:"center",padding:"0 8px"}}>
+      <div style={{width:64,height:64,borderRadius:20,margin:"0 auto 24px",
+        background:"linear-gradient(145deg,#C4A8FF 0%,#8670E8 45%,#4A2A9E 100%)",
+        display:"flex",alignItems:"center",justifyContent:"center",
+        boxShadow:"0 12px 36px rgba(134,112,232,0.5)"}}>
+        <i className="ti ti-sparkles" style={{fontSize:30,color:"white"}} aria-hidden="true"/>
+      </div>
+      <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:26,fontWeight:800,
+        color:C.navy,letterSpacing:"-0.5px",marginBottom:12}}>
+        Meet your AI assistant
+      </h2>
+      <p style={{fontSize:14,color:C.muted,lineHeight:1.7,marginBottom:28,maxWidth:300,margin:"0 auto 28px"}}>
+        Just talk to it naturally. It can add tasks, schedule your week, find free slots, break projects into steps, and remind you what needs doing — all in one message.
+      </p>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:28,textAlign:"left"}}>
+        {[
+          {icon:"ti-calendar-plus",text:"\"Add gym to my Monday and Wednesday routine at 7am\""},
+          {icon:"ti-check",text:"\"I finished the project — mark it as done\""},
+          {icon:"ti-clock",text:"\"What's on my schedule tomorrow?\""},
+          {icon:"ti-brain",text:"\"I'm overwhelmed — help me prioritise\""},
+        ].map((ex,i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:12,
+            padding:"12px 14px",borderRadius:12,
+            background:C.surface2,border:`1px solid ${C.border}`}}>
+            <i className={`ti ${ex.icon}`} style={{fontSize:18,color:C.primary,flexShrink:0}} aria-hidden="true"/>
+            <span style={{fontSize:12,color:C.muted,fontStyle:"italic",lineHeight:1.4}}>{ex.text}</span>
+          </div>
+        ))}
+      </div>
+      <button className="pill-btn" onClick={finish}
+        style={{background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
+          color:"white",padding:"16px 48px",fontSize:16,fontWeight:700,
+          boxShadow:"0 8px 28px rgba(76,95,213,0.5)"}}>
+        Open my Docket ✦
+      </button>
+    </div>,
+  ];
+
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:200,display:"flex",
+      alignItems:"center",justifyContent:"center",padding:20}}>
+      {/* Background */}
+      <div style={{position:"absolute",inset:0,
+        background:dark?"rgba(8,10,20,0.92)":"rgba(237,232,245,0.92)",
+        backdropFilter:"blur(20px)"}}/>
+
+      {/* Card */}
+      <div className="glass" style={{position:"relative",width:"100%",maxWidth:420,
+        borderRadius:28,padding:"40px 32px",
+        boxShadow:"0 40px 120px rgba(0,0,0,0.3)",
+        opacity:animating?0:1,transform:animating?"translateY(12px)":"translateY(0)",
+        transition:"opacity 0.35s ease, transform 0.35s ease"}}>
+
+        {/* Progress dots */}
+        <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:36}}>
+          {steps.map((_,i)=>(
+            <div key={i} style={{height:4,borderRadius:2,transition:"all 0.3s",
+              width:i===step?28:8,
+              background:i<=step?C.primary:C.border}}/>
+          ))}
+        </div>
+
+        {/* Step content */}
+        {steps[step]}
+
+        {/* Skip for first step only */}
+        {step===0&&(
+          <button onClick={finish}
+            style={{display:"block",margin:"16px auto 0",background:"none",border:"none",
+              fontSize:12,color:C.muted2,cursor:"pointer",textDecoration:"underline"}}>
+            Skip setup
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Page ────────────────────────────────────────────────────────────────
 export default function Home(){
   const[isDrawerOpen,setIsDrawerOpen]=useState(false);
@@ -1367,6 +1554,11 @@ export default function Home(){
   const[showSettings,setShowSettings]=useState(false);
   const[dark,setDark]=useState(false);
   const[lang,setLang]=useState<Lang>("en");
+  const[onboarding,setOnboarding]=useState(false);
+  const[obStep,setObStep]=useState(0);
+  const[obName,setObName]=useState("");
+  const[obGoals,setObGoals]=useState<string[]>([]);
+  const[obComplete,setObComplete]=useState(false);
 
   const C=getC(dark);
   const dir:("ltr"|"rtl")=RTL_LANGS.includes(lang)?"rtl":"ltr";
@@ -1384,9 +1576,11 @@ export default function Home(){
     }
     const t=localStorage.getItem(STORAGE_TASKS);
     const r=localStorage.getItem(STORAGE_ROUTINES);
+    const visited=localStorage.getItem("docket-onboarded");
     setTasks(t?JSON.parse(t):defaultTasks());
     setRoutines(r?JSON.parse(r):defaultRoutines());
     setIsLoaded(true);
+    if(!visited) setOnboarding(true);
   },[]);
   useEffect(()=>{if(isLoaded)localStorage.setItem(STORAGE_TASKS,JSON.stringify(tasks));},[tasks,isLoaded]);
   useEffect(()=>{if(isLoaded)localStorage.setItem(STORAGE_ROUTINES,JSON.stringify(routines));},[routines,isLoaded]);
@@ -1584,8 +1778,23 @@ export default function Home(){
   const examTask=tasks.find(t=>!t.deleted&&t.title.toLowerCase().includes("land law"));
   const interviewTask=tasks.find(t=>!t.deleted&&t.title.toLowerCase().includes("cheshire oak"));
 
+  function completeOnboarding(name:string, goals:string[]){
+    localStorage.setItem("docket-onboarded","true");
+    localStorage.setItem("docket-user-name",name);
+    const welcomeTasks:Task[]=[];
+    if(goals.includes("health")) welcomeTasks.push({id:Date.now()+1,title:"Start a daily exercise habit",category:"fitness",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
+    if(goals.includes("study")) welcomeTasks.push({id:Date.now()+2,title:"Set a daily study goal",category:"study",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
+    if(goals.includes("finance")) welcomeTasks.push({id:Date.now()+3,title:"Review my finances this week",category:"finance",priority:"medium",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]});
+    if(goals.includes("faith")) welcomeTasks.push({id:Date.now()+4,title:"Establish a daily prayer routine",category:"faith",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
+    if(goals.includes("business")) welcomeTasks.push({id:Date.now()+5,title:"Define my top business priority this week",category:"business",priority:"high",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]});
+    if(goals.includes("work")) welcomeTasks.push({id:Date.now()+6,title:"Set this week's career goal",category:"career",priority:"medium",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]});
+    if(welcomeTasks.length>0) setTasks(welcomeTasks);
+    setOnboarding(false);
+  }
+
   return(
     <AppCtx.Provider value={{dark,lang,t,dir}}>
+    {onboarding&&<OnboardingScreen onComplete={completeOnboarding} dark={dark}/>}
     <div style={{minHeight:"100vh",background:C.bg,position:"relative",
       fontFamily:"'Inter',sans-serif",color:C.navy,direction:dir,
       backgroundAttachment:"fixed",
