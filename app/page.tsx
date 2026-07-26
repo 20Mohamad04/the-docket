@@ -807,11 +807,11 @@ function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFil
     return(
       <button onClick={()=>setFilter(f)} style={{width:"100%",display:"flex",
         justifyContent:"space-between",alignItems:"center",
-        padding:"10px 12px",borderRadius:8,fontSize:13.5,fontWeight:600,
+        padding:"10px 12px",borderRadius:10,fontSize:13.5,fontWeight:600,
         border:"none",cursor:"pointer",
         background:active?"linear-gradient(135deg,#4C5FD5 0%,#2A3699 100%)":"transparent",
         color:active?"white":C.muted,marginBottom:3,
-        boxShadow:active?"0 4px 14px rgba(76,95,213,0.4)":"none",borderRadius:10}}>
+        boxShadow:active?"0 4px 14px rgba(76,95,213,0.4)":"none"}}>
         <span>{label}</span>
         <span style={{fontFamily:"monospace",fontSize:11,opacity:0.75}}>{count}</span>
       </button>
