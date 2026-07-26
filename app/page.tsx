@@ -763,8 +763,14 @@ function Drawer({isOpen,onClose,currentView,setView}:{
 function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFilter:(f:Filter)=>void;}){
   const{t,dark}=useApp();
   const C=getC(dark);
+  const[showAllCats,setShowAllCats]=useState(false);
   const open=tasks.filter(t=>!t.done&&!t.deleted);
   const archived=tasks.filter(t=>t.done||t.deleted);
+  const CAT_LIMIT=6;
+  const catEntries=Object.entries(CATS);
+  const visibleCats=showAllCats?catEntries:catEntries.slice(0,CAT_LIMIT);
+  const hiddenCount=catEntries.length-CAT_LIMIT;
+
   function Btn({f,label,count}:{f:Filter;label:string;count:number}){
     const active=filter===f;
     return(
@@ -790,9 +796,22 @@ function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFil
       <div style={{height:1,background:C.border,margin:"6px 4px"}}/>
       <p style={{fontSize:10,fontWeight:700,letterSpacing:1.5,color:C.muted2,
         textTransform:"uppercase",padding:"6px 10px 6px"}}>Category</p>
-      {Object.entries(CATS).map(([k,v])=>(
+      {visibleCats.map(([k,v])=>(
         <Btn key={k} f={k as Filter} label={v.label} count={open.filter(t=>t.category===k).length}/>
       ))}
+      {/* View more / less toggle */}
+      <button onClick={()=>setShowAllCats(s=>!s)}
+        style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",
+          gap:6,padding:"8px 12px",borderRadius:10,fontSize:12,fontWeight:600,
+          border:`1px dashed ${C.border}`,background:"transparent",
+          color:C.primary,cursor:"pointer",marginTop:4,marginBottom:4,
+          transition:"all 0.15s"}}
+        onMouseEnter={e=>(e.currentTarget.style.background=C.surface2)}
+        onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
+        <i className={`ti ${showAllCats?"ti-chevron-up":"ti-chevron-down"}`}
+          style={{fontSize:13}} aria-hidden="true"/>
+        {showAllCats?`Show less`:`View ${hiddenCount} more categories`}
+      </button>
       <div style={{height:1,background:C.border,margin:"6px 4px"}}/>
       <Btn f="done" label="Finished & Deleted" count={archived.length}/>
     </div>
@@ -1804,12 +1823,22 @@ export default function Home(){
   },[addTask,deleteTask,updateTask,addStep,toggleStep,removeStep,setRoutines,tasks,routines,undoLast]);
 
   async function toggleNotifications(){
-    if(typeof Notification==="undefined"){alert("Not available here — try opening in a real browser tab.");return;}
-    if(notifEnabled){setNotifEnabled(false);return;}
-    const perm=await Notification.requestPermission();
-    if(perm!=="granted"){alert("Permission not granted.");return;}
+    // Toggle off
+    if(notifEnabled){ setNotifEnabled(false); return; }
+    // Try to get browser permission, but don't block the toggle if unavailable
+    if(typeof Notification!=="undefined" && Notification.permission!=="granted"){
+      try{
+        const perm=await Notification.requestPermission();
+        if(perm==="granted"){
+          new Notification("The Docket",{body:"Notifications are on — I'll alert you when items are due."});
+        }
+      }catch(e){
+        // Permission API not available in this browser — still enable the toggle
+        console.log("Notification permission not available");
+      }
+    }
+    // Always enable the toggle regardless of permission result
     setNotifEnabled(true);
-    new Notification("The Docket",{body:"Notifications are on!"});
   }
 
   // Computed
