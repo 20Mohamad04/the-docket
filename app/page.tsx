@@ -719,25 +719,155 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
 // ── Drawer ───────────────────────────────────────────────────────────────────
 function InfoModal({modal,onClose,dark}:{modal:string;onClose:()=>void;dark:boolean}){
   const C=getC(dark);
-  const content:Record<string,{title:string;icon:string;body:string}>={
-    login:{title:"Login / Register",icon:"ti-user-circle",body:"Account creation and login is coming soon. Currently you're using The Docket as a guest — your data is saved on this device. Create an account to sync across devices and unlock Pro features."},
-    subscription:{title:"Subscription — The Docket Pro",icon:"ti-crown",body:"The Docket Pro — £4.99/month\n\n✓ Unlimited AI assistant requests\n✓ Sync across all your devices\n✓ Auto prayer times (no setup needed)\n✓ Advanced analytics & insights\n✓ Priority support\n✓ Early access to new features\n\n7-day free trial · Cancel anytime · No hidden fees\n\nSubscription management coming soon."},
-    widgets:{title:"Widgets & Shortcuts",icon:"ti-layout-grid",body:"Home screen widgets and quick-action shortcuts are coming in a future update. You'll be able to see today's routine, upcoming tasks, and prayer times directly from your home screen without opening the app."},
-    siri:{title:"Siri & Shortcuts",icon:"ti-microphone",body:"Siri integration and custom Shortcuts support are planned for a future release. You'll be able to add tasks, check your schedule, and mark items complete using just your voice."},
-    help:{title:"Help & Feedback",icon:"ti-help-circle",body:"Need help or have a suggestion?\n\n• Use the AI assistant (✦ button) to manage your tasks and routine\n• Tap ⚙️ Settings to customise the app\n• Enable accurate prayer times in Settings using your location\n\nTo send feedback, please email: support@thedocket.app\n\nWe read every message and use your feedback to improve The Docket."},
-    privacy:{title:"Privacy & Permissions",icon:"ti-shield-lock",body:"Your privacy matters.\n\nData storage: All your tasks and routines are stored locally on your device. Nothing is sent to our servers unless you create an account.\n\nLocation: Used only to fetch accurate prayer times via the Aladhan API. Never stored or shared.\n\nNotifications: Used only to alert you when scheduled items are due. Never used for marketing.\n\nAI assistant: Messages are processed by Anthropic (Claude) or Groq (Llama). No personal data is retained beyond the current session."},
-    terms:{title:"Terms & Conditions",icon:"ti-file-description",body:"By using The Docket, you agree to the following:\n\n1. The app is provided as-is without warranty.\n2. You are responsible for the accuracy of your own data.\n3. Pro subscriptions are billed monthly and can be cancelled at any time.\n4. Refunds are available within 7 days of initial purchase.\n5. We reserve the right to update these terms with reasonable notice.\n6. The AI assistant is a productivity tool and does not constitute professional advice.\n\nFull terms: thedocket.app/terms"},
+  const[authTab,setAuthTab]=useState<"login"|"register">("login");
+  const[email,setEmail]=useState("");
+  const[password,setPassword]=useState("");
+  const[name,setName]=useState("");
+  const[authStatus,setAuthStatus]=useState<"idle"|"loading"|"success"|"error">("idle");
+  const[authMsg,setAuthMsg]=useState("");
+
+  async function handleAuth(){
+    if(!email||!password){setAuthMsg("Please fill in all fields.");setAuthStatus("error");return;}
+    setAuthStatus("loading");setAuthMsg("");
+    try{
+      const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if(!supabaseUrl||!supabaseKey){
+        setAuthMsg("Supabase not configured yet. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to your Vercel environment variables.");
+        setAuthStatus("error");return;
+      }
+      const{createClient}=await import("@supabase/supabase-js");
+      const sb=createClient(supabaseUrl,supabaseKey);
+      if(authTab==="register"){
+        const{error}=await sb.auth.signUp({email,password,options:{data:{full_name:name}}});
+        if(error){setAuthMsg(error.message);setAuthStatus("error");return;}
+        setAuthMsg("✓ Account created! Check your email to confirm your address.");
+        setAuthStatus("success");
+      } else {
+        const{error}=await sb.auth.signInWithPassword({email,password});
+        if(error){setAuthMsg(error.message);setAuthStatus("error");return;}
+        setAuthMsg("✓ Logged in successfully! Your data will now sync across devices.");
+        setAuthStatus("success");
+      }
+    }catch(e:any){
+      setAuthMsg(e.message||"Something went wrong. Please try again.");
+      setAuthStatus("error");
+    }
+  }
+
+  // Static content for other modals
+  const staticContent:Record<string,{title:string;icon:string;body:string}>={
+    subscription:{title:"The Docket Pro",icon:"ti-crown",body:"£4.99/month · 7-day free trial\n\n✓ Unlimited AI assistant requests\n✓ Sync across all your devices\n✓ Auto prayer times (no setup needed)\n✓ Advanced analytics & insights\n✓ Priority support\n✓ Early access to new features\n\nCancel anytime · No hidden fees\n\nSubscription management will be available once you create an account."},
+    widgets:{title:"Widgets & Shortcuts",icon:"ti-layout-grid",body:"Home screen widgets are coming in a future update.\n\nYou'll be able to see:\n• Today's routine at a glance\n• Upcoming tasks and deadlines\n• Prayer times countdown\n• Quick-add task button\n\nDirectly from your home screen without opening the app."},
+    siri:{title:"Siri & Shortcuts",icon:"ti-microphone",body:"Siri integration is planned for a future release.\n\nYou'll be able to say:\n• 'Add a task to The Docket'\n• 'What's on my Docket today?'\n• 'Mark my gym session as done'\n\nAll hands-free using your voice."},
+    help:{title:"Help & Feedback",icon:"ti-help-circle",body:"Getting started:\n\n• Tap ✦ to open the AI assistant\n• Say what you need in plain English\n• Tap ⚙️ to access Settings\n• Enable prayer times for your location\n\nFor support or feedback:\nsupport@thedocket.app\n\nWe read every message."},
+    privacy:{title:"Privacy & Permissions",icon:"ti-shield-lock",body:"Your privacy matters to us.\n\nData storage: Tasks and routines stay on your device until you create an account.\n\nLocation: Used only for prayer times via Aladhan API. Never stored or shared.\n\nNotifications: Only for scheduled item reminders. Never for marketing.\n\nAI assistant: Processed by Anthropic or Groq. No conversation data is retained after your session ends."},
+    terms:{title:"Terms & Conditions",icon:"ti-file-description",body:"By using The Docket, you agree:\n\n1. The app is provided as-is without warranty\n2. You are responsible for the accuracy of your data\n3. Pro subscriptions are billed monthly\n4. Refunds available within 7 days of purchase\n5. We may update terms with reasonable notice\n6. The AI assistant is a productivity tool, not professional advice\n\nFull terms: thedocket.app/terms"},
   };
-  const item=content[modal];
+
+  const inp:React.CSSProperties={
+    width:"100%",padding:"13px 16px",borderRadius:12,
+    border:`1.5px solid ${C.border}`,fontSize:14,
+    background:dark?"#1A1D2E":"#F8F7FE",
+    color:C.navy,outline:"none",fontFamily:"inherit",
+    marginBottom:12,transition:"border-color 0.2s",
+  };
+
+  // Login/Register modal
+  if(modal==="login") return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
+      background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()}
+        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,
+          width:"100%",maxWidth:420,
+          boxShadow:"0 40px 100px rgba(0,0,0,0.45)",
+          border:`1px solid ${C.border}`}}>
+        {/* Header */}
+        <div style={{padding:"24px 24px 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:40,height:40,borderRadius:11,
+              background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <i className="ti ti-user-circle" style={{fontSize:20,color:"white"}} aria-hidden="true"/>
+            </div>
+            <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:18,color:C.navy}}>
+              {authTab==="login"?"Welcome back":"Create account"}
+            </p>
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}>
+            <i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/>
+          </button>
+        </div>
+        {/* Tabs */}
+        <div style={{display:"flex",margin:"20px 24px 0",background:C.surface2,
+          borderRadius:12,padding:4,gap:4}}>
+          {(["login","register"] as const).map(tab=>(
+            <button key={tab} onClick={()=>{setAuthTab(tab);setAuthMsg("");setAuthStatus("idle");}}
+              style={{flex:1,padding:"9px 0",borderRadius:9,fontSize:13,fontWeight:700,
+                border:"none",cursor:"pointer",transition:"all 0.15s",
+                background:authTab===tab?"linear-gradient(135deg,#4C5FD5,#2A3699)":"transparent",
+                color:authTab===tab?"white":C.muted,
+                boxShadow:authTab===tab?"0 4px 12px rgba(76,95,213,0.4)":"none"}}>
+              {tab==="login"?"Sign In":"Register"}
+            </button>
+          ))}
+        </div>
+        {/* Form */}
+        <div style={{padding:"20px 24px 24px"}}>
+          {authTab==="register"&&(
+            <input value={name} onChange={e=>setName(e.target.value)}
+              placeholder="Your name" style={inp}
+              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+              onBlur={e=>(e.target.style.borderColor=C.border)}/>
+          )}
+          <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+            placeholder="Email address" style={inp}
+            onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+            onBlur={e=>(e.target.style.borderColor=C.border)}/>
+          <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
+            placeholder="Password" style={{...inp,marginBottom:16}}
+            onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+            onBlur={e=>(e.target.style.borderColor=C.border)}
+            onKeyDown={e=>e.key==="Enter"&&handleAuth()}/>
+          {authMsg&&(
+            <div style={{padding:"10px 14px",borderRadius:10,marginBottom:14,fontSize:13,
+              background:authStatus==="success"?"rgba(46,139,87,0.1)":"rgba(217,79,61,0.1)",
+              color:authStatus==="success"?C.sage:C.urgent,
+              border:`1px solid ${authStatus==="success"?"rgba(46,139,87,0.2)":"rgba(217,79,61,0.2)"}`}}>
+              {authMsg}
+            </div>
+          )}
+          <button onClick={handleAuth} disabled={authStatus==="loading"} className="pill-btn"
+            style={{width:"100%",padding:"14px",fontSize:15,fontWeight:700,
+              background:authStatus==="success"
+                ?"linear-gradient(135deg,#2E8B57,#1A5235)"
+                :"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",
+              color:"white",border:"none",cursor:"pointer",opacity:authStatus==="loading"?0.7:1,
+              boxShadow:"0 6px 20px rgba(76,95,213,0.45)"}}>
+            {authStatus==="loading"?"Please wait…":authStatus==="success"?"✓ Done":authTab==="login"?"Sign In":"Create Account"}
+          </button>
+          <p style={{textAlign:"center",fontSize:11,color:C.muted2,marginTop:14,lineHeight:1.5}}>
+            {authTab==="login"
+              ?"Don't have an account? Switch to Register above."
+              :"By creating an account you agree to our Terms & Conditions."}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Generic info modals
+  const item=staticContent[modal];
   if(!item) return null;
   return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
-      background:"rgba(0,0,0,0.5)",backdropFilter:"blur(4px)",
+      background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
       <div onClick={e=>e.stopPropagation()}
-        style={{background:dark?"#1A1D2E":"#FFFFFF",borderRadius:22,
-          width:"100%",maxWidth:480,maxHeight:"80vh",overflowY:"auto",
-          boxShadow:"0 32px 80px rgba(0,0,0,0.4)",
+        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,
+          width:"100%",maxWidth:480,maxHeight:"82vh",overflowY:"auto",
+          boxShadow:"0 40px 100px rgba(0,0,0,0.45)",
           border:`1px solid ${C.border}`}}>
         <div style={{display:"flex",alignItems:"center",gap:12,padding:"22px 24px 16px",
           borderBottom:`1px solid ${C.border}`}}>
@@ -749,22 +879,37 @@ function InfoModal({modal,onClose,dark}:{modal:string;onClose:()=>void;dark:bool
           <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
             fontSize:17,color:C.navy,flex:1}}>{item.title}</p>
           <button onClick={onClose} style={{background:"none",border:"none",
-            cursor:"pointer",color:C.muted,fontSize:20,display:"flex",alignItems:"center"}}>
+            cursor:"pointer",color:C.muted}}>
             <i className="ti ti-x" style={{fontSize:18}} aria-hidden="true"/>
           </button>
         </div>
         <div style={{padding:"20px 24px"}}>
-          {item.body.split("\n").map((line,i)=>(
-            <p key={i} style={{fontSize:13.5,color:line.startsWith("✓")?C.sage:C.muted,
-              lineHeight:1.7,marginBottom:line===""?8:4,fontWeight:line.startsWith("✓")?600:400}}>
-              {line||" "}
-            </p>
-          ))}
+          {item.body.split("\n").map((line,i)=>{
+            const isCheck=line.startsWith("✓");
+            const isNum=/^\d\./.test(line);
+            const isBullet=line.startsWith("•");
+            return(
+              <div key={i} style={{display:"flex",gap:8,marginBottom:line===""?10:5}}>
+                {(isCheck||isNum||isBullet)&&(
+                  <span style={{color:isCheck?C.sage:C.primary,flexShrink:0,
+                    fontSize:13,fontWeight:700,marginTop:1}}>
+                    {isCheck?"✓":isNum?line[0]+".":"•"}
+                  </span>
+                )}
+                <p style={{fontSize:13.5,lineHeight:1.7,
+                  color:isCheck?C.sage:C.muted,
+                  fontWeight:isCheck?600:400,flex:1}}>
+                  {isCheck?line.slice(2):isNum?line.slice(3):isBullet?line.slice(2):line||" "}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
   );
 }
+
 
 function Drawer({isOpen,onClose,currentView,setView,onOpenModal}:{
   isOpen:boolean;onClose:()=>void;currentView:View;setView:(v:View)=>void;
