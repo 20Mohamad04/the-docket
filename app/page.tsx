@@ -717,45 +717,97 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
 }
 
 // ── Drawer ───────────────────────────────────────────────────────────────────
-function InfoModal({modal,onClose,dark}:{modal:string;onClose:()=>void;dark:boolean}){
+function InfoModal({modal,onClose,dark,user,onUserChange}:{
+  modal:string;onClose:()=>void;dark:boolean;
+  user:{name:string;email:string;avatar?:string}|null;
+  onUserChange:(u:{name:string;email:string;avatar?:string}|null)=>void;
+}){
   const C=getC(dark);
   const[authTab,setAuthTab]=useState<"login"|"register">("login");
   const[email,setEmail]=useState("");
   const[password,setPassword]=useState("");
   const[name,setName]=useState("");
-  const[authStatus,setAuthStatus]=useState<"idle"|"loading"|"success"|"error">("idle");
+  const[authStatus,setAuthStatus]=useState<"idle"|"loading"|"success"|"error"|"confirm">("idle");
   const[authMsg,setAuthMsg]=useState("");
+
+  function getSupabase(){
+    const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if(!url||!key) return null;
+    const{createClient}=require("@supabase/supabase-js");
+    return createClient(url,key);
+  }
 
   async function handleAuth(){
     if(!email||!password){setAuthMsg("Please fill in all fields.");setAuthStatus("error");return;}
     setAuthStatus("loading");setAuthMsg("");
+    const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if(!supabaseUrl||!supabaseKey){
+      setAuthMsg("Supabase environment variables not set. Add them in Vercel.");
+      setAuthStatus("error");return;
+    }
     try{
-      const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseKey=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      if(!supabaseUrl||!supabaseKey){
-        setAuthMsg("Supabase not configured yet. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to your Vercel environment variables.");
-        setAuthStatus("error");return;
-      }
       const{createClient}=await import("@supabase/supabase-js");
       const sb=createClient(supabaseUrl,supabaseKey);
       if(authTab==="register"){
-        const{error}=await sb.auth.signUp({email,password,options:{data:{full_name:name}}});
+        const{data,error}=await sb.auth.signUp({email,password,
+          options:{data:{full_name:name},emailRedirectTo:window.location.origin}});
         if(error){setAuthMsg(error.message);setAuthStatus("error");return;}
-        setAuthMsg("✓ Account created! Check your email to confirm your address.");
-        setAuthStatus("success");
+        setAuthStatus("confirm");
+        setAuthMsg("Account created! We sent a confirmation email to "+email+". Click the link in the email to verify your account, then come back and sign in.");
       } else {
-        const{error}=await sb.auth.signInWithPassword({email,password});
-        if(error){setAuthMsg(error.message);setAuthStatus("error");return;}
-        setAuthMsg("✓ Logged in successfully! Your data will now sync across devices.");
-        setAuthStatus("success");
+        const{data,error}=await sb.auth.signInWithPassword({email,password});
+        if(error){
+          if(error.message.includes("Email not confirmed")){
+            setAuthMsg("Please confirm your email first. Check your inbox for a verification link.");
+            setAuthStatus("confirm");
+          } else {
+            setAuthMsg(error.message);setAuthStatus("error");
+          }
+          return;
+        }
+        if(data.user){
+          const displayName=data.user.user_metadata?.full_name||data.user.email?.split("@")[0]||"User";
+          onUserChange({name:displayName,email:data.user.email||"",avatar:data.user.user_metadata?.avatar_url});
+          setAuthStatus("success");
+          setAuthMsg("Signed in as "+displayName+"!");
+          setTimeout(()=>onClose(),1500);
+        }
       }
-    }catch(e:any){
-      setAuthMsg(e.message||"Something went wrong. Please try again.");
-      setAuthStatus("error");
-    }
+    }catch(e:any){setAuthMsg(e.message||"Something went wrong.");setAuthStatus("error");}
   }
 
-  // Static content for other modals
+  async function handleOAuth(provider:"google"){
+    const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if(!supabaseUrl||!supabaseKey){setAuthMsg("Supabase not configured.");setAuthStatus("error");return;}
+    try{
+      const{createClient}=await import("@supabase/supabase-js");
+      const sb=createClient(supabaseUrl,supabaseKey);
+      await sb.auth.signInWithOAuth({provider,options:{redirectTo:window.location.origin}});
+    }catch(e:any){setAuthMsg(e.message);setAuthStatus("error");}
+  }
+
+  async function handleSignOut(){
+    const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if(supabaseUrl&&supabaseKey){
+      const{createClient}=await import("@supabase/supabase-js");
+      const sb=createClient(supabaseUrl,supabaseKey);
+      await sb.auth.signOut();
+    }
+    onUserChange(null);
+    onClose();
+  }
+
+  const inp:React.CSSProperties={
+    width:"100%",padding:"13px 16px",borderRadius:12,
+    border:`1.5px solid ${C.border}`,fontSize:14,
+    background:dark?"#1A1D2E":"#F8F7FE",
+    color:C.navy,outline:"none",fontFamily:"inherit",marginBottom:12,
+  };
+
   const staticContent:Record<string,{title:string;icon:string;body:string}>={
     subscription:{title:"The Docket Pro",icon:"ti-crown",body:"£4.99/month · 7-day free trial\n\n✓ Unlimited AI assistant requests\n✓ Sync across all your devices\n✓ Auto prayer times (no setup needed)\n✓ Advanced analytics & insights\n✓ Priority support\n✓ Early access to new features\n\nCancel anytime · No hidden fees\n\nSubscription management will be available once you create an account."},
     widgets:{title:"Widgets & Shortcuts",icon:"ti-layout-grid",body:"Home screen widgets are coming in a future update.\n\nYou'll be able to see:\n• Today's routine at a glance\n• Upcoming tasks and deadlines\n• Prayer times countdown\n• Quick-add task button\n\nDirectly from your home screen without opening the app."},
@@ -765,15 +817,56 @@ function InfoModal({modal,onClose,dark}:{modal:string;onClose:()=>void;dark:bool
     terms:{title:"Terms & Conditions",icon:"ti-file-description",body:"By using The Docket, you agree:\n\n1. The app is provided as-is without warranty\n2. You are responsible for the accuracy of your data\n3. Pro subscriptions are billed monthly\n4. Refunds available within 7 days of purchase\n5. We may update terms with reasonable notice\n6. The AI assistant is a productivity tool, not professional advice\n\nFull terms: thedocket.app/terms"},
   };
 
-  const inp:React.CSSProperties={
-    width:"100%",padding:"13px 16px",borderRadius:12,
-    border:`1.5px solid ${C.border}`,fontSize:14,
-    background:dark?"#1A1D2E":"#F8F7FE",
-    color:C.navy,outline:"none",fontFamily:"inherit",
-    marginBottom:12,transition:"border-color 0.2s",
-  };
+  // ── Logged in view ────────────────────────────────────────────────────────
+  if(modal==="login"&&user) return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
+      background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()}
+        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,
+          width:"100%",maxWidth:400,
+          boxShadow:"0 40px 100px rgba(0,0,0,0.45)",border:`1px solid ${C.border}`}}>
+        <div style={{padding:"28px 24px",textAlign:"center"}}>
+          {/* Avatar */}
+          <div style={{width:72,height:72,borderRadius:"50%",margin:"0 auto 16px",
+            background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            boxShadow:"0 8px 24px rgba(76,95,213,0.4)",overflow:"hidden"}}>
+            {user.avatar
+              ?<img src={user.avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              :<i className="ti ti-user" style={{fontSize:32,color:"white"}} aria-hidden="true"/>}
+          </div>
+          <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
+            fontSize:20,color:C.navy,marginBottom:4}}>{user.name}</p>
+          <p style={{fontSize:13,color:C.muted,marginBottom:6}}>{user.email}</p>
+          <span style={{background:"rgba(76,95,213,0.1)",color:C.primary,
+            padding:"4px 12px",borderRadius:50,fontSize:11,fontWeight:700}}>
+            ✓ Signed in
+          </span>
+          <div style={{height:1,background:C.border,margin:"20px 0"}}/>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <button onClick={()=>{onClose();}}
+              className="pill-btn"
+              style={{width:"100%",padding:"13px",fontSize:14,fontWeight:700,
+                background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+                color:"white",border:"none",
+                boxShadow:"0 4px 16px rgba(76,95,213,0.4)"}}>
+              Continue to my Docket
+            </button>
+            <button onClick={handleSignOut}
+              style={{width:"100%",padding:"13px",fontSize:14,fontWeight:600,
+                background:"transparent",color:C.urgent,
+                border:`1.5px solid ${C.urgent}33`,borderRadius:50,cursor:"pointer"}}>
+              <i className="ti ti-logout" style={{fontSize:14,marginRight:6}} aria-hidden="true"/>
+              Sign out
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
-  // Login/Register modal
+  // ── Login/Register form ───────────────────────────────────────────────────
   if(modal==="login") return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
       background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",
@@ -781,8 +874,7 @@ function InfoModal({modal,onClose,dark}:{modal:string;onClose:()=>void;dark:bool
       <div onClick={e=>e.stopPropagation()}
         style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,
           width:"100%",maxWidth:420,
-          boxShadow:"0 40px 100px rgba(0,0,0,0.45)",
-          border:`1px solid ${C.border}`}}>
+          boxShadow:"0 40px 100px rgba(0,0,0,0.45)",border:`1px solid ${C.border}`}}>
         {/* Header */}
         <div style={{padding:"24px 24px 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -792,15 +884,42 @@ function InfoModal({modal,onClose,dark}:{modal:string;onClose:()=>void;dark:bool
               <i className="ti ti-user-circle" style={{fontSize:20,color:"white"}} aria-hidden="true"/>
             </div>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:18,color:C.navy}}>
-              {authTab==="login"?"Welcome back":"Create account"}
+              {authTab==="login"?"Welcome back":"Join The Docket"}
             </p>
           </div>
           <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}>
             <i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/>
           </button>
         </div>
+
+        {/* OAuth buttons */}
+        <div style={{padding:"20px 24px 0",display:"flex",flexDirection:"column",gap:10}}>
+          <button onClick={()=>handleOAuth("google")}
+            style={{width:"100%",padding:"13px",borderRadius:12,cursor:"pointer",
+              border:`1.5px solid ${C.border}`,background:C.surface2,
+              display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+              fontSize:14,fontWeight:600,color:C.navy,transition:"all 0.15s"}}
+            onMouseEnter={e=>(e.currentTarget.style.borderColor="#4C5FD5")}
+            onMouseLeave={e=>(e.currentTarget.style.borderColor=C.border)}>
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div style={{display:"flex",alignItems:"center",gap:12,padding:"16px 24px 0"}}>
+          <div style={{flex:1,height:1,background:C.border}}/>
+          <span style={{fontSize:12,color:C.muted2,fontWeight:500}}>or continue with email</span>
+          <div style={{flex:1,height:1,background:C.border}}/>
+        </div>
+
         {/* Tabs */}
-        <div style={{display:"flex",margin:"20px 24px 0",background:C.surface2,
+        <div style={{display:"flex",margin:"14px 24px 0",background:C.surface2,
           borderRadius:12,padding:4,gap:4}}>
           {(["login","register"] as const).map(tab=>(
             <button key={tab} onClick={()=>{setAuthTab(tab);setAuthMsg("");setAuthStatus("idle");}}
@@ -813,11 +932,12 @@ function InfoModal({modal,onClose,dark}:{modal:string;onClose:()=>void;dark:bool
             </button>
           ))}
         </div>
+
         {/* Form */}
-        <div style={{padding:"20px 24px 24px"}}>
+        <div style={{padding:"16px 24px 24px"}}>
           {authTab==="register"&&(
             <input value={name} onChange={e=>setName(e.target.value)}
-              placeholder="Your name" style={inp}
+              placeholder="Your full name" style={inp}
               onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
               onBlur={e=>(e.target.style.borderColor=C.border)}/>
           )}
@@ -826,32 +946,58 @@ function InfoModal({modal,onClose,dark}:{modal:string;onClose:()=>void;dark:bool
             onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
             onBlur={e=>(e.target.style.borderColor=C.border)}/>
           <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
-            placeholder="Password" style={{...inp,marginBottom:16}}
+            placeholder={authTab==="login"?"Password":"Create a password (min. 6 characters)"}
+            style={{...inp,marginBottom:authMsg?12:16}}
             onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
             onBlur={e=>(e.target.style.borderColor=C.border)}
             onKeyDown={e=>e.key==="Enter"&&handleAuth()}/>
           {authMsg&&(
-            <div style={{padding:"10px 14px",borderRadius:10,marginBottom:14,fontSize:13,
-              background:authStatus==="success"?"rgba(46,139,87,0.1)":"rgba(217,79,61,0.1)",
-              color:authStatus==="success"?C.sage:C.urgent,
-              border:`1px solid ${authStatus==="success"?"rgba(46,139,87,0.2)":"rgba(217,79,61,0.2)"}`}}>
+            <div style={{padding:"12px 14px",borderRadius:12,marginBottom:14,fontSize:13,
+              lineHeight:1.5,
+              background:authStatus==="success"||authStatus==="confirm"?"rgba(46,139,87,0.1)":"rgba(217,79,61,0.1)",
+              color:authStatus==="success"||authStatus==="confirm"?C.sage:C.urgent,
+              border:`1px solid ${authStatus==="success"||authStatus==="confirm"?"rgba(46,139,87,0.25)":"rgba(217,79,61,0.25)"}`}}>
+              {authStatus==="confirm"&&<i className="ti ti-mail" style={{fontSize:16,marginRight:8}} aria-hidden="true"/>}
               {authMsg}
             </div>
           )}
-          <button onClick={handleAuth} disabled={authStatus==="loading"} className="pill-btn"
-            style={{width:"100%",padding:"14px",fontSize:15,fontWeight:700,
-              background:authStatus==="success"
-                ?"linear-gradient(135deg,#2E8B57,#1A5235)"
-                :"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",
-              color:"white",border:"none",cursor:"pointer",opacity:authStatus==="loading"?0.7:1,
-              boxShadow:"0 6px 20px rgba(76,95,213,0.45)"}}>
-            {authStatus==="loading"?"Please wait…":authStatus==="success"?"✓ Done":authTab==="login"?"Sign In":"Create Account"}
-          </button>
-          <p style={{textAlign:"center",fontSize:11,color:C.muted2,marginTop:14,lineHeight:1.5}}>
-            {authTab==="login"
-              ?"Don't have an account? Switch to Register above."
-              :"By creating an account you agree to our Terms & Conditions."}
-          </p>
+          {authStatus!=="confirm"&&(
+            <button onClick={handleAuth} disabled={authStatus==="loading"} className="pill-btn"
+              style={{width:"100%",padding:"14px",fontSize:15,fontWeight:700,
+                background:authStatus==="success"
+                  ?"linear-gradient(135deg,#2E8B57,#1A5235)"
+                  :"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",
+                color:"white",border:"none",cursor:"pointer",opacity:authStatus==="loading"?0.7:1,
+                boxShadow:"0 6px 20px rgba(76,95,213,0.45)"}}>
+              {authStatus==="loading"?"Please wait…":authStatus==="success"?"✓ Signed in!":authTab==="login"?"Sign In →":"Create Account →"}
+            </button>
+          )}
+          {authStatus==="confirm"&&(
+            <button onClick={()=>{setAuthTab("login");setAuthStatus("idle");setAuthMsg("");}}
+              className="pill-btn"
+              style={{width:"100%",padding:"14px",fontSize:15,fontWeight:700,
+                background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+                color:"white",border:"none",cursor:"pointer",
+                boxShadow:"0 6px 20px rgba(76,95,213,0.45)"}}>
+              Go to Sign In
+            </button>
+          )}
+          {authTab==="login"&&authStatus==="idle"&&(
+            <p style={{textAlign:"center",fontSize:11,color:C.muted2,marginTop:12}}>
+              Forgot your password? <span style={{color:C.primary,cursor:"pointer",fontWeight:600}}
+                onClick={async()=>{
+                  if(!email){setAuthMsg("Enter your email above first.");setAuthStatus("error");return;}
+                  const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
+                  const supabaseKey=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+                  if(!supabaseUrl||!supabaseKey) return;
+                  const{createClient}=await import("@supabase/supabase-js");
+                  const sb=createClient(supabaseUrl,supabaseKey);
+                  await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});
+                  setAuthMsg("Password reset email sent to "+email);
+                  setAuthStatus("confirm");
+                }}>Reset it</span>
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -891,14 +1037,12 @@ function InfoModal({modal,onClose,dark}:{modal:string;onClose:()=>void;dark:bool
             return(
               <div key={i} style={{display:"flex",gap:8,marginBottom:line===""?10:5}}>
                 {(isCheck||isNum||isBullet)&&(
-                  <span style={{color:isCheck?C.sage:C.primary,flexShrink:0,
-                    fontSize:13,fontWeight:700,marginTop:1}}>
+                  <span style={{color:isCheck?C.sage:C.primary,flexShrink:0,fontSize:13,fontWeight:700,marginTop:1}}>
                     {isCheck?"✓":isNum?line[0]+".":"•"}
                   </span>
                 )}
                 <p style={{fontSize:13.5,lineHeight:1.7,
-                  color:isCheck?C.sage:C.muted,
-                  fontWeight:isCheck?600:400,flex:1}}>
+                  color:isCheck?C.sage:C.muted,fontWeight:isCheck?600:400,flex:1}}>
                   {isCheck?line.slice(2):isNum?line.slice(3):isBullet?line.slice(2):line||" "}
                 </p>
               </div>
@@ -1945,6 +2089,9 @@ export default function Home(){
   const[lang,setLang]=useState<Lang>("en");
   const[onboarding,setOnboarding]=useState(false);
   const[activeModal,setActiveModal]=useState<string|null>(null);
+  const[user,setUser]=useState<{name:string;email:string;avatar?:string}|null>(null);
+  const[showWelcome,setShowWelcome]=useState(false);
+  const[welcomeMsg,setWelcomeMsg]=useState("");
   const[obStep,setObStep]=useState(0);
   const[obName,setObName]=useState("");
   const[obGoals,setObGoals]=useState<string[]>([]);
@@ -1969,6 +2116,37 @@ export default function Home(){
     const visited=localStorage.getItem("docket-onboarded");
     const savedNotif=localStorage.getItem("docket-notif");
     if(savedNotif==="true") setNotifEnabled(true);
+    // Check for existing Supabase session
+    const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if(supabaseUrl&&supabaseKey){
+      try{
+        const{createClient}=await import("@supabase/supabase-js");
+        const sb=createClient(supabaseUrl,supabaseKey);
+        const{data:{session}}=await sb.auth.getSession();
+        if(session?.user){
+          const u=session.user;
+          const displayName=u.user_metadata?.full_name||u.email?.split("@")[0]||"User";
+          setUser({name:displayName,email:u.email||"",avatar:u.user_metadata?.avatar_url});
+        }
+        // Listen for auth changes (email confirmation, OAuth redirect)
+        sb.auth.onAuthStateChange((event,session)=>{
+          if(session?.user){
+            const u=session.user;
+            const displayName=u.user_metadata?.full_name||u.email?.split("@")[0]||"User";
+            setUser({name:displayName,email:u.email||"",avatar:u.user_metadata?.avatar_url});
+            if(event==="SIGNED_IN"||event==="USER_UPDATED"){
+              const firstName=displayName.split(" ")[0];
+              setWelcomeMsg(firstName);
+              setShowWelcome(true);
+              setTimeout(()=>setShowWelcome(false),4000);
+            }
+          } else if(event==="SIGNED_OUT"){
+            setUser(null);
+          }
+        });
+      }catch(e){ console.log("Supabase session check failed",e); }
+    }
     setTasks(t?JSON.parse(t):defaultTasks());
     setRoutines(r?JSON.parse(r):defaultRoutines());
     setIsLoaded(true);
@@ -2190,6 +2368,22 @@ export default function Home(){
   return(
     <AppCtx.Provider value={{dark,lang,t,dir}}>
     {onboarding&&<OnboardingScreen onComplete={completeOnboarding} dark={dark}/>}
+    {/* Welcome toast animation */}
+    {showWelcome&&(
+      <div style={{position:"fixed",top:24,left:"50%",transform:"translateX(-50%)",
+        zIndex:300,animation:"slideDown 0.5s cubic-bezier(0.34,1.56,0.64,1)"}}>
+        <style>{`@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
+        <div style={{background:"linear-gradient(135deg,#4C5FD5,#2A3699)",
+          color:"white",padding:"14px 24px",borderRadius:50,
+          boxShadow:"0 8px 32px rgba(76,95,213,0.6)",
+          display:"flex",alignItems:"center",gap:10,
+          fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:15,
+          whiteSpace:"nowrap"}}>
+          <span style={{fontSize:20}}>👋</span>
+          Welcome back, {welcomeMsg}!
+        </div>
+      </div>
+    )}
     <div style={{minHeight:"100vh",background:C.bg,position:"relative",
       fontFamily:"'Inter',sans-serif",color:C.navy,direction:dir,
       backgroundAttachment:"fixed",
@@ -2228,7 +2422,7 @@ export default function Home(){
             fontSize:18,color:C.navy,letterSpacing:"-0.5px"}}>{t("appName")}</p>
           <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,
             color:C.muted,letterSpacing:"2px",textTransform:"uppercase",marginTop:2}}>
-            {new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
+            {user?`👤 ${user.name.split(" ")[0]}`:new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
           </p>
         </div>
         <div style={{display:"flex",gap:8}}>
@@ -2518,7 +2712,7 @@ export default function Home(){
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
         onSave={data=>{updateTask(editingTask.id,data);setEditingTask(null);}}/>}
     </div>
-      {activeModal&&<InfoModal modal={activeModal} onClose={()=>setActiveModal(null)} dark={dark}/>}
+      {activeModal&&<InfoModal modal={activeModal} onClose={()=>setActiveModal(null)} dark={dark} user={user} onUserChange={setUser}/>}
     </AppCtx.Provider>
   );
 }
