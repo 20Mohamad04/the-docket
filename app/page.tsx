@@ -2120,32 +2120,33 @@ export default function Home(){
     const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if(supabaseUrl&&supabaseKey){
-      try{
-        const{createClient}=await import("@supabase/supabase-js");
-        const sb=createClient(supabaseUrl,supabaseKey);
-        const{data:{session}}=await sb.auth.getSession();
-        if(session?.user){
-          const u=session.user;
-          const displayName=u.user_metadata?.full_name||u.email?.split("@")[0]||"User";
-          setUser({name:displayName,email:u.email||"",avatar:u.user_metadata?.avatar_url});
-        }
-        // Listen for auth changes (email confirmation, OAuth redirect)
-        sb.auth.onAuthStateChange((event,session)=>{
+      (async()=>{
+        try{
+          const{createClient}=await import("@supabase/supabase-js");
+          const sb=createClient(supabaseUrl,supabaseKey);
+          const{data:{session}}=await sb.auth.getSession();
           if(session?.user){
             const u=session.user;
             const displayName=u.user_metadata?.full_name||u.email?.split("@")[0]||"User";
             setUser({name:displayName,email:u.email||"",avatar:u.user_metadata?.avatar_url});
-            if(event==="SIGNED_IN"||event==="USER_UPDATED"){
-              const firstName=displayName.split(" ")[0];
-              setWelcomeMsg(firstName);
-              setShowWelcome(true);
-              setTimeout(()=>setShowWelcome(false),4000);
-            }
-          } else if(event==="SIGNED_OUT"){
-            setUser(null);
           }
-        });
-      }catch(e){ console.log("Supabase session check failed",e); }
+          sb.auth.onAuthStateChange((event,session)=>{
+            if(session?.user){
+              const u=session.user;
+              const displayName=u.user_metadata?.full_name||u.email?.split("@")[0]||"User";
+              setUser({name:displayName,email:u.email||"",avatar:u.user_metadata?.avatar_url});
+              if(event==="SIGNED_IN"||event==="USER_UPDATED"){
+                const firstName=displayName.split(" ")[0];
+                setWelcomeMsg(firstName);
+                setShowWelcome(true);
+                setTimeout(()=>setShowWelcome(false),4000);
+              }
+            } else if(event==="SIGNED_OUT"){
+              setUser(null);
+            }
+          });
+        }catch(e){ console.log("Supabase session check failed",e); }
+      })();
     }
     setTasks(t?JSON.parse(t):defaultTasks());
     setRoutines(r?JSON.parse(r):defaultRoutines());
