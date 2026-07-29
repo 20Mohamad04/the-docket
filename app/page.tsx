@@ -1105,59 +1105,76 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
       background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}>
       <div onClick={e=>e.stopPropagation()}
-        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:500,
+        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:480,
           maxHeight:"88vh",display:"flex",flexDirection:"column",
           boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,overflow:"hidden"}}>
-        <div style={{background:"linear-gradient(135deg,#4C5FD5,#6677E8,#8670E8)",padding:"24px 24px 20px",position:"relative",flexShrink:0}}>
-          <button onClick={onClose} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.15)",
-            border:"none",cursor:"pointer",width:32,height:32,borderRadius:8,color:"white",
+        {/* Compact hero */}
+        <div style={{background:"linear-gradient(135deg,#4C5FD5,#6677E8,#8670E8)",
+          padding:"16px 20px",position:"relative",flexShrink:0,
+          display:"flex",alignItems:"center",gap:14}}>
+          <button onClick={onClose} style={{position:"absolute",top:12,right:12,
+            background:"rgba(255,255,255,0.15)",border:"none",cursor:"pointer",
+            width:28,height:28,borderRadius:7,color:"white",
             display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <i className="ti ti-x" style={{fontSize:16}} aria-hidden="true"/></button>
-          <div style={{width:56,height:56,borderRadius:16,background:"rgba(255,255,255,0.2)",
-            display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16}}>
-            <i className="ti ti-crown" style={{fontSize:28,color:"#FFD700"}} aria-hidden="true"/></div>
-          <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:26,color:"white",marginBottom:6}}>The Docket Pro</p>
-          <p style={{fontSize:14,color:"rgba(255,255,255,0.8)",lineHeight:1.5,marginBottom:16}}>Everything you need, supercharged with AI.</p>
-          <div style={{display:"flex",alignItems:"baseline",gap:6}}>
-            <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:40,color:"white"}}>£4.99</span>
-            <span style={{fontSize:14,color:"rgba(255,255,255,0.7)"}}>/ month</span>
-            <span style={{marginLeft:8,background:"rgba(255,255,255,0.2)",color:"white",padding:"4px 10px",borderRadius:50,fontSize:11,fontWeight:700}}>7-day free trial</span>
+            <i className="ti ti-x" style={{fontSize:15}} aria-hidden="true"/></button>
+          <div style={{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,0.2)",
+            display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <i className="ti ti-crown" style={{fontSize:22,color:"#FFD700"}} aria-hidden="true"/></div>
+          <div>
+            <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:18,
+              color:"white",marginBottom:2}}>The Docket Pro</p>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
+                fontSize:22,color:"white"}}>£4.99</span>
+              <span style={{fontSize:12,color:"rgba(255,255,255,0.75)"}}>/ month</span>
+              <span style={{background:"rgba(255,255,255,0.2)",color:"white",
+                padding:"2px 8px",borderRadius:50,fontSize:10,fontWeight:700}}>7-day free trial</span>
+            </div>
           </div>
         </div>
-        <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
+        {/* Scrollable content */}
+        <div style={{flex:1,overflowY:"auto",padding:"16px 20px"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
             {[{icon:"ti-sparkles",title:"Unlimited AI",desc:"Ask anything, anytime"},{icon:"ti-devices",title:"All Devices",desc:"Sync everywhere"},
               {icon:"ti-moon-stars",title:"Auto Prayer",desc:"Always accurate"},{icon:"ti-chart-bar",title:"Analytics",desc:"Productivity insights"},
               {icon:"ti-headset",title:"Priority Support",desc:"24h response"},{icon:"ti-rocket",title:"Early Access",desc:"First to new features"}].map((f,i)=>(
-              <div key={i} style={{padding:"12px",borderRadius:12,background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",border:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:34,height:34,borderRadius:9,flexShrink:0,background:"rgba(76,95,213,0.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <i className={`ti ${f.icon}`} style={{fontSize:17,color:C.primary}} aria-hidden="true"/></div>
-                <div><p style={{fontSize:12,fontWeight:700,color:C.navy,marginBottom:1}}>{f.title}</p>
-                <p style={{fontSize:11,color:C.muted}}>{f.desc}</p></div>
+              <div key={i} style={{padding:"10px 12px",borderRadius:10,
+                background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",
+                border:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:30,height:30,borderRadius:8,flexShrink:0,
+                  background:"rgba(76,95,213,0.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <i className={`ti ${f.icon}`} style={{fontSize:15,color:C.primary}} aria-hidden="true"/></div>
+                <div><p style={{fontSize:11.5,fontWeight:700,color:C.navy,marginBottom:1}}>{f.title}</p>
+                <p style={{fontSize:10.5,color:C.muted}}>{f.desc}</p></div>
               </div>
             ))}
           </div>
-          <div style={{borderRadius:16,overflow:"hidden",border:`1px solid ${C.border}`,marginBottom:16}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",background:dark?"#1E2235":"#F4F2FC",padding:"10px 16px"}}>
-              <p style={{fontSize:11,fontWeight:700,color:C.muted2,textTransform:"uppercase"}}>Feature</p>
-              <p style={{fontSize:11,fontWeight:700,color:C.muted2,textTransform:"uppercase",textAlign:"center"}}>Free</p>
-              <p style={{fontSize:11,fontWeight:700,color:C.primary,textTransform:"uppercase",textAlign:"center"}}>Pro</p>
+          <div style={{borderRadius:12,overflow:"hidden",border:`1px solid ${C.border}`,marginBottom:14}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",
+              background:dark?"#1E2235":"#F4F2FC",padding:"8px 14px"}}>
+              <p style={{fontSize:10,fontWeight:700,color:C.muted2,textTransform:"uppercase"}}>Feature</p>
+              <p style={{fontSize:10,fontWeight:700,color:C.muted2,textTransform:"uppercase",textAlign:"center"}}>Free</p>
+              <p style={{fontSize:10,fontWeight:700,color:C.primary,textTransform:"uppercase",textAlign:"center"}}>Pro</p>
             </div>
             {[["Tasks & Routines","Unlimited","Unlimited"],["AI Requests","10/day","Unlimited"],
-              ["Device Sync","This device","All devices"],["Prayer Times","Manual","Auto"],["Support","Community","Priority 24h"]].map(([feat,free,pro],i)=>(
-              <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",padding:"10px 16px",borderTop:`1px solid ${C.border}`}}>
-                <p style={{fontSize:12,color:C.navy}}>{feat}</p>
-                <p style={{fontSize:12,color:C.muted,textAlign:"center"}}>{free}</p>
-                <p style={{fontSize:12,color:C.primary,fontWeight:700,textAlign:"center"}}>{pro}</p>
+              ["Device Sync","This device","All devices"],["Prayer Times","Manual","Auto"],
+              ["Support","Community","Priority 24h"]].map(([feat,free,pro],i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",
+                padding:"8px 14px",borderTop:`1px solid ${C.border}`}}>
+                <p style={{fontSize:11.5,color:C.navy}}>{feat}</p>
+                <p style={{fontSize:11.5,color:C.muted,textAlign:"center"}}>{free}</p>
+                <p style={{fontSize:11.5,color:C.primary,fontWeight:700,textAlign:"center"}}>{pro}</p>
               </div>
             ))}
           </div>
-          <button className="pill-btn" style={{width:"100%",padding:"16px",fontSize:16,fontWeight:800,
+          <button className="pill-btn" style={{width:"100%",padding:"13px",fontSize:14,fontWeight:800,
             background:"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",color:"white",border:"none",
-            boxShadow:"0 8px 28px rgba(76,95,213,0.5)"}}>
+            boxShadow:"0 6px 20px rgba(76,95,213,0.45)"}}>
             Start Free Trial — £4.99/mo after
           </button>
-          <p style={{textAlign:"center",fontSize:11,color:C.muted2,marginTop:12}}>Cancel anytime · No hidden fees · Secure payment via Stripe</p>
+          <p style={{textAlign:"center",fontSize:11,color:C.muted2,marginTop:10}}>
+            Cancel anytime · No hidden fees · Secure payment via Stripe
+          </p>
         </div>
       </div>
     </div>
