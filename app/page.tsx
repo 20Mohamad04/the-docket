@@ -1106,6 +1106,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
       display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}>
       <div onClick={e=>e.stopPropagation()}
         style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:520,
+          maxHeight:"88vh",overflowY:"auto",
           boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,overflow:"hidden"}}>
         <div style={{background:"linear-gradient(135deg,#4C5FD5,#6677E8,#8670E8)",padding:"32px 28px",position:"relative"}}>
           <button onClick={onClose} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.15)",
@@ -1164,8 +1165,8 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
 
   if(modal==="help") return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:500,maxHeight:"88vh",overflowY:"auto",boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`}}>
-        <div style={{padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.border}`}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:500,maxHeight:"88vh",boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        <div style={{padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{width:40,height:40,borderRadius:11,background:"linear-gradient(145deg,#6677E8,#4C5FD5)",display:"flex",alignItems:"center",justifyContent:"center"}}>
               <i className="ti ti-help-circle" style={{fontSize:20,color:"white"}} aria-hidden="true"/></div>
@@ -1174,7 +1175,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
           </div>
           <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}><i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/></button>
         </div>
-        <div style={{padding:"20px 24px"}}>
+        <div style={{padding:"20px 24px",overflowY:"auto",flex:1}}>
           {[{icon:"ti-sparkles",q:"How do I use the AI assistant?",a:"Tap the ✦ button bottom-right. Talk naturally — 'Add gym Monday at 7am', 'What's on tomorrow?'. It asks questions before making changes."},
             {icon:"ti-moon-stars",q:"How do prayer times work?",a:"Tap ⚙️ Settings and toggle on Accurate Prayer Times. The app fetches real times from the Aladhan API using your location."},
             {icon:"ti-bell",q:"Why aren't notifications working?",a:"Toggle notifications on in Settings. Your browser may also need permission — check browser settings and allow notifications for this site."},
@@ -1201,8 +1202,8 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
 
   if(modal==="privacy") return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:500,maxHeight:"88vh",overflowY:"auto",boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`}}>
-        <div style={{padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.border}`}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:500,maxHeight:"88vh",boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        <div style={{padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{width:40,height:40,borderRadius:11,background:"linear-gradient(145deg,#2E8B57,#1A5235)",display:"flex",alignItems:"center",justifyContent:"center"}}>
               <i className="ti ti-shield-lock" style={{fontSize:20,color:"white"}} aria-hidden="true"/></div>
@@ -1211,7 +1212,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
           </div>
           <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}><i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/></button>
         </div>
-        <div style={{padding:"20px 24px"}}>
+        <div style={{padding:"20px 24px",overflowY:"auto",flex:1}}>
           {[{icon:"ti-database",color:"#4C5FD5",title:"Data Storage",text:"Tasks stay on your device by default. With an account, data is encrypted on EU servers. We never sell your data."},
             {icon:"ti-map-pin",color:"#2E8B57",title:"Location",text:"Used only for prayer times via Aladhan API. Never stored or shared."},
             {icon:"ti-bell",color:"#C9A84C",title:"Notifications",text:"Only for scheduled reminders. Never marketing. Disable anytime in Settings."},
@@ -1235,8 +1236,8 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
 
   if(modal==="terms") return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:500,maxHeight:"88vh",overflowY:"auto",boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`}}>
-        <div style={{padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.border}`}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:500,maxHeight:"88vh",boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        <div style={{padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{width:40,height:40,borderRadius:11,background:"linear-gradient(145deg,#6677E8,#4C5FD5)",display:"flex",alignItems:"center",justifyContent:"center"}}>
               <i className="ti ti-file-description" style={{fontSize:20,color:"white"}} aria-hidden="true"/></div>
@@ -1245,7 +1246,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
           </div>
           <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}><i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/></button>
         </div>
-        <div style={{padding:"20px 24px"}}>
+        <div style={{padding:"20px 24px",overflowY:"auto",flex:1}}>
           {[{n:"1",t:"Acceptance",b:"By using The Docket, you agree to these terms."},
             {n:"2",t:"Use of Service",b:"The Docket is a personal productivity tool. Do not use it for unlawful purposes."},
             {n:"3",t:"Account Security",b:"You are responsible for your account. Notify us of any unauthorised access immediately."},
@@ -2291,7 +2292,7 @@ function OnboardingScreen({onComplete,dark}:{onComplete:(name:string,goals:strin
 
       {/* Card */}
       <div className="glass" style={{position:"relative",width:"100%",maxWidth:420,
-        borderRadius:28,padding:"40px 32px",
+        borderRadius:28,padding:"32px 24px",maxHeight:"92vh",overflowY:"auto",
         boxShadow:"0 40px 120px rgba(0,0,0,0.3)",
         opacity:animating?0:1,transform:animating?"translateY(12px)":"translateY(0)",
         transition:"opacity 0.35s ease, transform 0.35s ease"}}>
