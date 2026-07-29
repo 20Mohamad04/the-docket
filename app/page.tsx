@@ -1287,7 +1287,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
           <p style={{fontSize:13,color:C.muted,lineHeight:1.6,marginBottom:16}}>{modal==="widgets"?"Home screen widgets and quick actions are coming in a future update.":"Siri integration and voice commands are planned for a future release."}</p>
           <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
             {(modal==="widgets"?[{icon:"ti-home",text:"Home screen widget — today's routine at a glance"},{icon:"ti-bolt",text:"Quick add — new tasks without opening the app"},{icon:"ti-moon-stars",text:"Prayer times widget — always on your home screen"}]
-              :[{icon:"ti-microphone",text:""Hey Siri, add a task to The Docket""},{icon:"ti-microphone",text:""Hey Siri, what's on my Docket today?""},{icon:"ti-microphone",text:""Hey Siri, mark my gym session as done""}])
+              :[{icon:"ti-microphone",text:"'Hey Siri, add a task to The Docket'"},{icon:"ti-microphone",text:"'Hey Siri, what's on my Docket today?'"},{icon:"ti-microphone",text:"'Hey Siri, mark my gym session as done'"}])
               .map((item,i)=>(
               <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:12,background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",border:`1px solid ${C.border}`}}>
                 <i className={`ti ${item.icon}`} style={{fontSize:16,color:C.primary,flexShrink:0}} aria-hidden="true"/>
