@@ -1099,53 +1099,211 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
     </div>
   );
 
-  // Generic info modals
-  const item=staticContent[modal];
-  if(!item) return null;
-  return(
+  // Premium modals
+  if(modal==="subscription") return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
-      background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
-      display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}>
       <div onClick={e=>e.stopPropagation()}
-        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,
-          width:"100%",maxWidth:480,maxHeight:"82vh",overflowY:"auto",
-          boxShadow:"0 40px 100px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`}}>
-        <div style={{display:"flex",alignItems:"center",gap:12,padding:"22px 24px 16px",
-          borderBottom:`1px solid ${C.border}`}}>
-          <div style={{width:40,height:40,borderRadius:11,flexShrink:0,
-            background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:520,
+          boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,overflow:"hidden"}}>
+        <div style={{background:"linear-gradient(135deg,#4C5FD5,#6677E8,#8670E8)",padding:"32px 28px",position:"relative"}}>
+          <button onClick={onClose} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.15)",
+            border:"none",cursor:"pointer",width:32,height:32,borderRadius:8,color:"white",
             display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <i className={`ti ${item.icon}`} style={{fontSize:20,color:"white"}} aria-hidden="true"/>
+            <i className="ti ti-x" style={{fontSize:16}} aria-hidden="true"/></button>
+          <div style={{width:56,height:56,borderRadius:16,background:"rgba(255,255,255,0.2)",
+            display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16}}>
+            <i className="ti ti-crown" style={{fontSize:28,color:"#FFD700"}} aria-hidden="true"/></div>
+          <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:26,color:"white",marginBottom:6}}>The Docket Pro</p>
+          <p style={{fontSize:14,color:"rgba(255,255,255,0.8)",lineHeight:1.5,marginBottom:16}}>Everything you need, supercharged with AI.</p>
+          <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+            <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:40,color:"white"}}>£4.99</span>
+            <span style={{fontSize:14,color:"rgba(255,255,255,0.7)"}}>/ month</span>
+            <span style={{marginLeft:8,background:"rgba(255,255,255,0.2)",color:"white",padding:"4px 10px",borderRadius:50,fontSize:11,fontWeight:700}}>7-day free trial</span>
           </div>
-          <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-            fontSize:17,color:C.navy,flex:1}}>{item.title}</p>
-          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}>
-            <i className="ti ti-x" style={{fontSize:18}} aria-hidden="true"/>
-          </button>
         </div>
-        <div style={{padding:"20px 24px"}}>
-          {item.body.split("\n").map((line,i)=>{
-            const isCheck=line.startsWith("✓");
-            const isNum=/^\d\./.test(line);
-            const isBullet=line.startsWith("•");
-            return(
-              <div key={i} style={{display:"flex",gap:8,marginBottom:line===""?10:5}}>
-                {(isCheck||isNum||isBullet)&&(
-                  <span style={{color:isCheck?C.sage:C.primary,flexShrink:0,fontSize:13,fontWeight:700,marginTop:1}}>
-                    {isCheck?"✓":isNum?line[0]+".":"•"}
-                  </span>
-                )}
-                <p style={{fontSize:13.5,lineHeight:1.7,color:isCheck?C.sage:C.muted,
-                  fontWeight:isCheck?600:400,flex:1}}>
-                  {isCheck?line.slice(2):isNum?line.slice(3):isBullet?line.slice(2):line||" "}
-                </p>
+        <div style={{padding:"24px 28px"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:24}}>
+            {[{icon:"ti-sparkles",title:"Unlimited AI",desc:"Ask anything, anytime"},{icon:"ti-devices",title:"All Devices",desc:"Sync everywhere"},
+              {icon:"ti-moon-stars",title:"Auto Prayer",desc:"Always accurate"},{icon:"ti-chart-bar",title:"Analytics",desc:"Productivity insights"},
+              {icon:"ti-headset",title:"Priority Support",desc:"24h response"},{icon:"ti-rocket",title:"Early Access",desc:"First to new features"}].map((f,i)=>(
+              <div key={i} style={{padding:"14px",borderRadius:14,background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",border:`1px solid ${C.border}`}}>
+                <div style={{width:32,height:32,borderRadius:9,marginBottom:8,background:"rgba(76,95,213,0.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <i className={`ti ${f.icon}`} style={{fontSize:16,color:C.primary}} aria-hidden="true"/></div>
+                <p style={{fontSize:12,fontWeight:700,color:C.navy,marginBottom:2}}>{f.title}</p>
+                <p style={{fontSize:11,color:C.muted}}>{f.desc}</p>
               </div>
-            );
-          })}
+            ))}
+          </div>
+          <div style={{borderRadius:16,overflow:"hidden",border:`1px solid ${C.border}`,marginBottom:24}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",background:dark?"#1E2235":"#F4F2FC",padding:"10px 16px"}}>
+              <p style={{fontSize:11,fontWeight:700,color:C.muted2,textTransform:"uppercase"}}>Feature</p>
+              <p style={{fontSize:11,fontWeight:700,color:C.muted2,textTransform:"uppercase",textAlign:"center"}}>Free</p>
+              <p style={{fontSize:11,fontWeight:700,color:C.primary,textTransform:"uppercase",textAlign:"center"}}>Pro</p>
+            </div>
+            {[["Tasks & Routines","Unlimited","Unlimited"],["AI Requests","10/day","Unlimited"],
+              ["Device Sync","This device","All devices"],["Prayer Times","Manual","Auto"],["Support","Community","Priority 24h"]].map(([feat,free,pro],i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",padding:"10px 16px",borderTop:`1px solid ${C.border}`}}>
+                <p style={{fontSize:12,color:C.navy}}>{feat}</p>
+                <p style={{fontSize:12,color:C.muted,textAlign:"center"}}>{free}</p>
+                <p style={{fontSize:12,color:C.primary,fontWeight:700,textAlign:"center"}}>{pro}</p>
+              </div>
+            ))}
+          </div>
+          <button className="pill-btn" style={{width:"100%",padding:"16px",fontSize:16,fontWeight:800,
+            background:"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",color:"white",border:"none",
+            boxShadow:"0 8px 28px rgba(76,95,213,0.5)"}}>
+            Start Free Trial — £4.99/mo after
+          </button>
+          <p style={{textAlign:"center",fontSize:11,color:C.muted2,marginTop:12}}>Cancel anytime · No hidden fees · Secure payment via Stripe</p>
         </div>
       </div>
     </div>
   );
+
+  if(modal==="help") return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:500,maxHeight:"88vh",overflowY:"auto",boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`}}>
+        <div style={{padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.border}`}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:40,height:40,borderRadius:11,background:"linear-gradient(145deg,#6677E8,#4C5FD5)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <i className="ti ti-help-circle" style={{fontSize:20,color:"white"}} aria-hidden="true"/></div>
+            <div><p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:17,color:C.navy}}>Help & Support</p>
+              <p style={{fontSize:11,color:C.muted}}>We're here to help</p></div>
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}><i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/></button>
+        </div>
+        <div style={{padding:"20px 24px"}}>
+          {[{icon:"ti-sparkles",q:"How do I use the AI assistant?",a:"Tap the ✦ button bottom-right. Talk naturally — 'Add gym Monday at 7am', 'What's on tomorrow?'. It asks questions before making changes."},
+            {icon:"ti-moon-stars",q:"How do prayer times work?",a:"Tap ⚙️ Settings and toggle on Accurate Prayer Times. The app fetches real times from the Aladhan API using your location."},
+            {icon:"ti-bell",q:"Why aren't notifications working?",a:"Toggle notifications on in Settings. Your browser may also need permission — check browser settings and allow notifications for this site."},
+            {icon:"ti-devices",q:"Can I use it on multiple devices?",a:"Create an account to sync your data across all devices. Guest data stays local to your browser."},
+          ].map((faq,i)=>(
+            <div key={i} style={{marginBottom:10,borderRadius:14,overflow:"hidden",border:`1px solid ${C.border}`}}>
+              <div style={{display:"flex",gap:12,padding:"13px 16px",background:dark?"rgba(255,255,255,0.03)":"#F8F7FE",alignItems:"center"}}>
+                <i className={`ti ${faq.icon}`} style={{fontSize:17,color:C.primary,flexShrink:0}} aria-hidden="true"/>
+                <p style={{fontSize:13,fontWeight:700,color:C.navy}}>{faq.q}</p>
+              </div>
+              <div style={{padding:"12px 16px"}}><p style={{fontSize:12.5,color:C.muted,lineHeight:1.6}}>{faq.a}</p></div>
+            </div>
+          ))}
+          <div style={{borderRadius:16,padding:"20px",marginTop:12,background:"linear-gradient(135deg,rgba(76,95,213,0.08),rgba(134,112,232,0.05))",border:`1px solid rgba(76,95,213,0.15)`}}>
+            <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:15,color:C.navy,marginBottom:6}}>Still need help?</p>
+            <p style={{fontSize:13,color:C.muted,lineHeight:1.5,marginBottom:14}}>Our support team responds within 24 hours.</p>
+            <a href="mailto:support@thedocket.app" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"12px",borderRadius:12,background:"linear-gradient(145deg,#6677E8,#4C5FD5)",color:"white",textDecoration:"none",fontSize:13,fontWeight:700}}>
+              <i className="ti ti-mail" style={{fontSize:15}} aria-hidden="true"/>support@thedocket.app</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if(modal==="privacy") return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:500,maxHeight:"88vh",overflowY:"auto",boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`}}>
+        <div style={{padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.border}`}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:40,height:40,borderRadius:11,background:"linear-gradient(145deg,#2E8B57,#1A5235)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <i className="ti ti-shield-lock" style={{fontSize:20,color:"white"}} aria-hidden="true"/></div>
+            <div><p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:17,color:C.navy}}>Privacy & Permissions</p>
+              <p style={{fontSize:11,color:C.muted}}>Your data, your control</p></div>
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}><i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/></button>
+        </div>
+        <div style={{padding:"20px 24px"}}>
+          {[{icon:"ti-database",color:"#4C5FD5",title:"Data Storage",text:"Tasks stay on your device by default. With an account, data is encrypted on EU servers. We never sell your data."},
+            {icon:"ti-map-pin",color:"#2E8B57",title:"Location",text:"Used only for prayer times via Aladhan API. Never stored or shared."},
+            {icon:"ti-bell",color:"#C9A84C",title:"Notifications",text:"Only for scheduled reminders. Never marketing. Disable anytime in Settings."},
+            {icon:"ti-sparkles",color:"#8670E8",title:"AI Assistant",text:"Processed by Anthropic or Groq. No conversation data retained after your session."},
+            {icon:"ti-lock",color:"#D94F3D",title:"Security",text:"All data encrypted with TLS. Passwords hashed and never stored in plain text."},
+          ].map((item,i)=>(
+            <div key={i} style={{display:"flex",gap:14,padding:"16px 0",borderBottom:i<4?`1px solid ${C.border}`:"none"}}>
+              <div style={{width:38,height:38,borderRadius:10,flexShrink:0,background:`${item.color}18`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <i className={`ti ${item.icon}`} style={{fontSize:18,color:item.color}} aria-hidden="true"/></div>
+              <div><p style={{fontSize:13,fontWeight:700,color:C.navy,marginBottom:4}}>{item.title}</p>
+                <p style={{fontSize:12.5,color:C.muted,lineHeight:1.6}}>{item.text}</p></div>
+            </div>
+          ))}
+          <div style={{marginTop:16,padding:"14px",borderRadius:12,textAlign:"center",background:dark?"rgba(255,255,255,0.03)":"#F8F7FE",border:`1px solid ${C.border}`}}>
+            <p style={{fontSize:12,color:C.muted}}>Full policy at <span style={{color:C.primary,fontWeight:600}}>thedocket.app/privacy</span> · July 2026</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if(modal==="terms") return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:500,maxHeight:"88vh",overflowY:"auto",boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`}}>
+        <div style={{padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.border}`}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:40,height:40,borderRadius:11,background:"linear-gradient(145deg,#6677E8,#4C5FD5)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <i className="ti ti-file-description" style={{fontSize:20,color:"white"}} aria-hidden="true"/></div>
+            <div><p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:17,color:C.navy}}>Terms & Conditions</p>
+              <p style={{fontSize:11,color:C.muted}}>Last updated July 2026</p></div>
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}><i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/></button>
+        </div>
+        <div style={{padding:"20px 24px"}}>
+          {[{n:"1",t:"Acceptance",b:"By using The Docket, you agree to these terms."},
+            {n:"2",t:"Use of Service",b:"The Docket is a personal productivity tool. Do not use it for unlawful purposes."},
+            {n:"3",t:"Account Security",b:"You are responsible for your account. Notify us of any unauthorised access immediately."},
+            {n:"4",t:"Subscriptions",b:"Pro plans are billed at £4.99/month. Cancel anytime. Refunds within 7 days of first payment."},
+            {n:"5",t:"AI Assistant",b:"The AI is a productivity tool only — not professional, legal, medical, or financial advice."},
+            {n:"6",t:"Your Data",b:"Guest data stays on your device. Account data is encrypted and stored in the EU."},
+            {n:"7",t:"Intellectual Property",b:"All content is owned by The Docket. Do not copy or distribute without permission."},
+            {n:"8",t:"Liability",b:"Service is provided as-is. We are not liable for any loss from use of The Docket."},
+            {n:"9",t:"Changes",b:"We may update these terms. Continued use constitutes acceptance."},
+            {n:"10",t:"Governing Law",b:"These terms are governed by the laws of England and Wales."},
+          ].map((term,i)=>(
+            <div key={i} style={{display:"flex",gap:14,padding:"13px 0",borderBottom:i<9?`1px solid ${C.border}`:"none"}}>
+              <span style={{width:26,height:26,borderRadius:7,flexShrink:0,background:"rgba(76,95,213,0.12)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:C.primary}}>{term.n}</span>
+              <div><p style={{fontSize:13,fontWeight:700,color:C.navy,marginBottom:3}}>{term.t}</p>
+                <p style={{fontSize:12.5,color:C.muted,lineHeight:1.6}}>{term.b}</p></div>
+            </div>
+          ))}
+          <div style={{marginTop:16,padding:"14px",borderRadius:12,textAlign:"center",background:dark?"rgba(255,255,255,0.03)":"#F8F7FE",border:`1px solid ${C.border}`}}>
+            <p style={{fontSize:12,color:C.muted}}>Questions? <a href="mailto:legal@thedocket.app" style={{color:C.primary,fontWeight:600,textDecoration:"none"}}>legal@thedocket.app</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if(modal==="widgets"||modal==="siri") return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:460,boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`}}>
+        <div style={{padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.border}`}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:40,height:40,borderRadius:11,background:modal==="widgets"?"linear-gradient(145deg,#C9A84C,#8A6820)":"linear-gradient(145deg,#5DE8A0,#2E8B57)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <i className={`ti ${modal==="widgets"?"ti-layout-grid":"ti-microphone"}`} style={{fontSize:20,color:"white"}} aria-hidden="true"/></div>
+            <div><p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:17,color:C.navy}}>{modal==="widgets"?"Widgets & Shortcuts":"Siri & Shortcuts"}</p>
+              <p style={{fontSize:11,color:C.muted}}>Coming soon</p></div>
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}><i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/></button>
+        </div>
+        <div style={{padding:"24px"}}>
+          <p style={{fontSize:13,color:C.muted,lineHeight:1.6,marginBottom:16}}>{modal==="widgets"?"Home screen widgets and quick actions are coming in a future update.":"Siri integration and voice commands are planned for a future release."}</p>
+          <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
+            {(modal==="widgets"?[{icon:"ti-home",text:"Home screen widget — today's routine at a glance"},{icon:"ti-bolt",text:"Quick add — new tasks without opening the app"},{icon:"ti-moon-stars",text:"Prayer times widget — always on your home screen"}]
+              :[{icon:"ti-microphone",text:""Hey Siri, add a task to The Docket""},{icon:"ti-microphone",text:""Hey Siri, what's on my Docket today?""},{icon:"ti-microphone",text:""Hey Siri, mark my gym session as done""}])
+              .map((item,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:12,background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",border:`1px solid ${C.border}`}}>
+                <i className={`ti ${item.icon}`} style={{fontSize:16,color:C.primary,flexShrink:0}} aria-hidden="true"/>
+                <p style={{fontSize:12.5,color:C.navy}}>{item.text}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{padding:"16px",borderRadius:14,textAlign:"center",background:"linear-gradient(135deg,rgba(76,95,213,0.08),rgba(134,112,232,0.05))",border:`1px solid rgba(76,95,213,0.15)`}}>
+            <a href="mailto:support@thedocket.app" style={{color:C.primary,fontWeight:600,textDecoration:"none",fontSize:13}}>Vote for this feature →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return null;
 }
 
 
