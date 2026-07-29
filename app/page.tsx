@@ -1105,10 +1105,10 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
       background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}>
       <div onClick={e=>e.stopPropagation()}
-        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:520,
-          maxHeight:"88vh",overflowY:"auto",
+        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:500,
+          maxHeight:"88vh",display:"flex",flexDirection:"column",
           boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,overflow:"hidden"}}>
-        <div style={{background:"linear-gradient(135deg,#4C5FD5,#6677E8,#8670E8)",padding:"32px 28px",position:"relative"}}>
+        <div style={{background:"linear-gradient(135deg,#4C5FD5,#6677E8,#8670E8)",padding:"24px 24px 20px",position:"relative",flexShrink:0}}>
           <button onClick={onClose} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.15)",
             border:"none",cursor:"pointer",width:32,height:32,borderRadius:8,color:"white",
             display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -1124,20 +1124,20 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
             <span style={{marginLeft:8,background:"rgba(255,255,255,0.2)",color:"white",padding:"4px 10px",borderRadius:50,fontSize:11,fontWeight:700}}>7-day free trial</span>
           </div>
         </div>
-        <div style={{padding:"24px 28px"}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:24}}>
+        <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
             {[{icon:"ti-sparkles",title:"Unlimited AI",desc:"Ask anything, anytime"},{icon:"ti-devices",title:"All Devices",desc:"Sync everywhere"},
               {icon:"ti-moon-stars",title:"Auto Prayer",desc:"Always accurate"},{icon:"ti-chart-bar",title:"Analytics",desc:"Productivity insights"},
               {icon:"ti-headset",title:"Priority Support",desc:"24h response"},{icon:"ti-rocket",title:"Early Access",desc:"First to new features"}].map((f,i)=>(
-              <div key={i} style={{padding:"14px",borderRadius:14,background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",border:`1px solid ${C.border}`}}>
-                <div style={{width:32,height:32,borderRadius:9,marginBottom:8,background:"rgba(76,95,213,0.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <i className={`ti ${f.icon}`} style={{fontSize:16,color:C.primary}} aria-hidden="true"/></div>
-                <p style={{fontSize:12,fontWeight:700,color:C.navy,marginBottom:2}}>{f.title}</p>
-                <p style={{fontSize:11,color:C.muted}}>{f.desc}</p>
+              <div key={i} style={{padding:"12px",borderRadius:12,background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",border:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:34,height:34,borderRadius:9,flexShrink:0,background:"rgba(76,95,213,0.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <i className={`ti ${f.icon}`} style={{fontSize:17,color:C.primary}} aria-hidden="true"/></div>
+                <div><p style={{fontSize:12,fontWeight:700,color:C.navy,marginBottom:1}}>{f.title}</p>
+                <p style={{fontSize:11,color:C.muted}}>{f.desc}</p></div>
               </div>
             ))}
           </div>
-          <div style={{borderRadius:16,overflow:"hidden",border:`1px solid ${C.border}`,marginBottom:24}}>
+          <div style={{borderRadius:16,overflow:"hidden",border:`1px solid ${C.border}`,marginBottom:16}}>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",background:dark?"#1E2235":"#F4F2FC",padding:"10px 16px"}}>
               <p style={{fontSize:11,fontWeight:700,color:C.muted2,textTransform:"uppercase"}}>Feature</p>
               <p style={{fontSize:11,fontWeight:700,color:C.muted2,textTransform:"uppercase",textAlign:"center"}}>Free</p>
@@ -2053,8 +2053,8 @@ function OnboardingScreen({onComplete,dark}:{onComplete:(name:string,goals:strin
 
   const steps=[
     // Step 0: Welcome
-    <div key="0" style={{textAlign:"center",padding:"0 8px"}}>
-      <div style={{width:80,height:80,borderRadius:24,margin:"0 auto 28px",
+    <div key="0" style={{textAlign:"center"}}>
+      <div style={{width:64,height:64,borderRadius:20,margin:"0 auto 20px",
         background:"linear-gradient(145deg,#8BA8FF 0%,#4C5FD5 45%,#1A2566 100%)",
         display:"flex",alignItems:"center",justifyContent:"center",
         boxShadow:"0 16px 48px rgba(76,95,213,0.5)"}}>
@@ -2079,12 +2079,12 @@ function OnboardingScreen({onComplete,dark}:{onComplete:(name:string,goals:strin
     </div>,
 
     // Step 1: Name
-    <div key="1" style={{textAlign:"center",padding:"0 8px"}}>
-      <div style={{width:64,height:64,borderRadius:20,margin:"0 auto 24px",
+    <div key="1" style={{textAlign:"center"}}>
+      <div style={{width:52,height:52,borderRadius:14,margin:"0 auto 16px",
         background:"linear-gradient(145deg,#E8C84C 0%,#C9A84C 45%,#8A6820 100%)",
         display:"flex",alignItems:"center",justifyContent:"center",
         boxShadow:"0 12px 36px rgba(201,168,76,0.45)"}}>
-        <i className="ti ti-user" style={{fontSize:30,color:"white"}} aria-hidden="true"/>
+        <i className="ti ti-user" style={{fontSize:24,color:"white"}} aria-hidden="true"/>
       </div>
       <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:26,fontWeight:800,
         color:C.navy,letterSpacing:"-0.5px",marginBottom:8}}>What's your name?</h2>
@@ -2117,12 +2117,12 @@ function OnboardingScreen({onComplete,dark}:{onComplete:(name:string,goals:strin
     </div>,
 
     // Step 2: Goals
-    <div key="2" style={{textAlign:"center",padding:"0 8px"}}>
-      <div style={{width:64,height:64,borderRadius:20,margin:"0 auto 24px",
+    <div key="2" style={{textAlign:"center"}}>
+      <div style={{width:52,height:52,borderRadius:14,margin:"0 auto 16px",
         background:"linear-gradient(145deg,#5DE8A0 0%,#2E8B57 45%,#1A5235 100%)",
         display:"flex",alignItems:"center",justifyContent:"center",
         boxShadow:"0 12px 36px rgba(46,139,87,0.45)"}}>
-        <i className="ti ti-target" style={{fontSize:30,color:"white"}} aria-hidden="true"/>
+        <i className="ti ti-target" style={{fontSize:24,color:"white"}} aria-hidden="true"/>
       </div>
       <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:26,fontWeight:800,
         color:C.navy,letterSpacing:"-0.5px",marginBottom:8}}>
@@ -2131,12 +2131,12 @@ function OnboardingScreen({onComplete,dark}:{onComplete:(name:string,goals:strin
       <p style={{fontSize:14,color:C.muted,marginBottom:24}}>
         Pick everything that matters to you. Your Docket will be built around these.
       </p>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:28}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
         {OB_GOALS.map(g=>{
           const active=goals.includes(g.id);
           return(
             <button key={g.id} onClick={()=>toggleGoal(g.id)}
-              style={{padding:"14px 12px",borderRadius:14,cursor:"pointer",
+              style={{padding:"10px 12px",borderRadius:12,cursor:"pointer",
                 border:`2px solid ${active?C.primary:C.border}`,
                 background:active?"linear-gradient(135deg,rgba(76,95,213,0.12),rgba(76,95,213,0.06))":C.surface2,
                 display:"flex",alignItems:"center",gap:10,transition:"all 0.15s",
@@ -2166,12 +2166,12 @@ function OnboardingScreen({onComplete,dark}:{onComplete:(name:string,goals:strin
     </div>,
 
     // Step 3: Account choice
-    <div key="3" style={{textAlign:"center",padding:"0 8px"}}>
-      <div style={{width:64,height:64,borderRadius:20,margin:"0 auto 24px",
+    <div key="3" style={{textAlign:"center"}}>
+      <div style={{width:52,height:52,borderRadius:14,margin:"0 auto 16px",
         background:"linear-gradient(145deg,#FFD580 0%,#E8A020 45%,#B06800 100%)",
         display:"flex",alignItems:"center",justifyContent:"center",
         boxShadow:"0 12px 36px rgba(232,160,32,0.5)"}}>
-        <i className="ti ti-crown" style={{fontSize:30,color:"white"}} aria-hidden="true"/>
+        <i className="ti ti-crown" style={{fontSize:24,color:"white"}} aria-hidden="true"/>
       </div>
       <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:26,fontWeight:800,
         color:C.navy,letterSpacing:"-0.5px",marginBottom:8}}>How do you want to start?</h2>
@@ -2244,12 +2244,12 @@ function OnboardingScreen({onComplete,dark}:{onComplete:(name:string,goals:strin
     </div>,
 
     // Step 4: AI intro
-    <div key="4" style={{textAlign:"center",padding:"0 8px"}}>
-      <div style={{width:64,height:64,borderRadius:20,margin:"0 auto 24px",
+    <div key="4" style={{textAlign:"center"}}>
+      <div style={{width:52,height:52,borderRadius:14,margin:"0 auto 16px",
         background:"linear-gradient(145deg,#C4A8FF 0%,#8670E8 45%,#4A2A9E 100%)",
         display:"flex",alignItems:"center",justifyContent:"center",
         boxShadow:"0 12px 36px rgba(134,112,232,0.5)"}}>
-        <i className="ti ti-sparkles" style={{fontSize:30,color:"white"}} aria-hidden="true"/>
+        <i className="ti ti-sparkles" style={{fontSize:24,color:"white"}} aria-hidden="true"/>
       </div>
       <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:26,fontWeight:800,
         color:C.navy,letterSpacing:"-0.5px",marginBottom:12}}>
@@ -2291,32 +2291,34 @@ function OnboardingScreen({onComplete,dark}:{onComplete:(name:string,goals:strin
         backdropFilter:"blur(20px)"}}/>
 
       {/* Card */}
-      <div className="glass" style={{position:"relative",width:"100%",maxWidth:420,
-        borderRadius:28,padding:"32px 24px",maxHeight:"92vh",overflowY:"auto",
+      <div className="glass" style={{position:"relative",width:"100%",maxWidth:440,
+        borderRadius:28,maxHeight:"90vh",display:"flex",flexDirection:"column",overflow:"hidden",
         boxShadow:"0 40px 120px rgba(0,0,0,0.3)",
         opacity:animating?0:1,transform:animating?"translateY(12px)":"translateY(0)",
         transition:"opacity 0.35s ease, transform 0.35s ease"}}>
 
-        {/* Progress dots */}
-        <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:36}}>
-          {steps.map((_,i)=>(
-            <div key={i} style={{height:4,borderRadius:2,transition:"all 0.3s",
-              width:i===step?28:8,
-              background:i<=step?C.primary:C.border}}/>
-          ))}
+        {/* Header row - progress dots + X */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+          padding:"24px 24px 0",flexShrink:0}}>
+          <div style={{display:"flex",gap:8}}>
+            {steps.map((_,i)=>(
+              <div key={i} style={{height:4,borderRadius:2,transition:"all 0.3s",
+                width:i===step?28:8,
+                background:i<=step?C.primary:C.border}}/>
+            ))}
+          </div>
+          <button onClick={finish}
+            style={{width:30,height:30,borderRadius:8,border:`1px solid ${C.border}`,
+              background:"transparent",cursor:"pointer",color:C.muted,
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <i className="ti ti-x" style={{fontSize:16}} aria-hidden="true"/>
+          </button>
         </div>
 
-        {/* Step content */}
-        {steps[step]}
-
-        {/* Skip for first step only */}
-        {step===0&&(
-          <button onClick={finish}
-            style={{display:"block",margin:"16px auto 0",background:"none",border:"none",
-              fontSize:12,color:C.muted2,cursor:"pointer",textDecoration:"underline"}}>
-            Skip setup
-          </button>
-        )}
+        {/* Step content - scrollable */}
+        <div style={{flex:1,overflowY:"auto",padding:"24px 24px 28px"}}>
+          {steps[step]}
+        </div>
       </div>
     </div>
   );
@@ -2862,10 +2864,7 @@ export default function Home(){
               color:C.muted,marginBottom:10}}>
               {selDay?.label||new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}
             </p>
-            <div style={{background:dark?"#1a2535":"#E4E9F9",color:C.primary,fontSize:12,
-              padding:"10px 14px",borderRadius:10,marginBottom:14,lineHeight:1.5}}>
-              {prayerEnabled?t("prayerDone"):t("prayerPlaceholder")}
-            </div>
+
             {(()=>{
               const ov=tasks.filter(t=>!t.done&&!t.deleted&&t.date&&(daysUntil(t.date)??0)<0);
               const og=tasks.filter(t=>t.type==="ongoing"&&!t.done&&!t.deleted);
