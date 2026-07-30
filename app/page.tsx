@@ -1325,9 +1325,11 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
 }
 
 
-function Drawer({isOpen,onClose,currentView,setView,onOpenModal}:{
+function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChange}:{
   isOpen:boolean;onClose:()=>void;currentView:View;setView:(v:View)=>void;
   onOpenModal:(m:string)=>void;
+  user:{name:string;email:string;avatar?:string}|null;
+  onUserChange:(u:{name:string;email:string;avatar?:string}|null)=>void;
 }){
   const{t,dark}=useApp();
   const C=getC(dark);
@@ -1338,7 +1340,6 @@ function Drawer({isOpen,onClose,currentView,setView,onOpenModal}:{
     {key:"archive",label:"Finished & Deleted",icon:"ti-archive"},
   ];
   const accountItems:{label:string;icon:string;modal:string}[]=[
-    {label:"Login / Register",icon:"ti-user-circle",modal:"login"},
     {label:"Subscription",icon:"ti-crown",modal:"subscription"},
   ];
   const supportItems:{label:string;icon:string;modal:string}[]=[
@@ -1388,22 +1389,70 @@ function Drawer({isOpen,onClose,currentView,setView,onOpenModal}:{
         transform:isOpen?"translateX(0)":"translateX(-100%)",
         transition:"transform 0.22s cubic-bezier(0.34,1.56,0.64,1)",
         display:"flex",flexDirection:"column"}}>
-        <div style={{padding:"26px 20px 16px",borderBottom:`1px solid ${C.border}`}}>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:36,height:36,borderRadius:10,flexShrink:0,
-              background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
-              display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <i className="ti ti-check" style={{fontSize:18,color:"white"}} aria-hidden="true"/>
+        {/* User profile section */}
+        {user?(
+          <div style={{padding:"16px 16px 12px",borderBottom:`1px solid ${C.border}`}}>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+              <div style={{width:44,height:44,borderRadius:"50%",flexShrink:0,
+                background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+                display:"flex",alignItems:"center",justifyContent:"center",
+                overflow:"hidden",boxShadow:"0 4px 12px rgba(76,95,213,0.35)"}}>
+                {user.avatar
+                  ?<img src={user.avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                  :<i className="ti ti-user" style={{fontSize:20,color:"white"}} aria-hidden="true"/>}
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
+                  fontSize:14,color:C.navy,overflow:"hidden",textOverflow:"ellipsis",
+                  whiteSpace:"nowrap"}}>{user.name}</p>
+                <p style={{fontSize:11,color:C.muted,overflow:"hidden",textOverflow:"ellipsis",
+                  whiteSpace:"nowrap"}}>{user.email}</p>
+              </div>
             </div>
-            <div>
-              <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
-                fontSize:15,color:C.navy,letterSpacing:"-0.3px"}}>The Docket</p>
-              <p style={{fontSize:10,color:C.muted,letterSpacing:"1px",textTransform:"uppercase"}}>
-                Personal Planner
-              </p>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>{onOpenModal("login");onClose();}}
+                style={{flex:1,padding:"8px",borderRadius:9,fontSize:12,fontWeight:600,
+                  border:`1px solid ${C.border}`,background:C.surface2,
+                  color:C.navy,cursor:"pointer",display:"flex",alignItems:"center",
+                  justifyContent:"center",gap:5}}>
+                <i className="ti ti-user-edit" style={{fontSize:13}} aria-hidden="true"/>
+                Profile
+              </button>
+              <button onClick={async()=>{
+                  const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
+                  const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+                  if(url&&key){
+                    const{createClient}=await import("@supabase/supabase-js");
+                    const sb=createClient(url,key);
+                    await sb.auth.signOut();
+                  }
+                  onUserChange(null);
+                  onClose();
+                }}
+                style={{flex:1,padding:"8px",borderRadius:9,fontSize:12,fontWeight:600,
+                  border:`1px solid rgba(217,79,61,0.3)`,
+                  background:"rgba(217,79,61,0.08)",
+                  color:C.urgent,cursor:"pointer",display:"flex",alignItems:"center",
+                  justifyContent:"center",gap:5}}>
+                <i className="ti ti-logout" style={{fontSize:13}} aria-hidden="true"/>
+                Sign out
+              </button>
             </div>
           </div>
-        </div>
+        ):(
+          <div style={{padding:"12px 16px",borderBottom:`1px solid ${C.border}`}}>
+            <button onClick={()=>{onOpenModal("login");onClose();}}
+              style={{width:"100%",padding:"10px",borderRadius:10,fontSize:13,fontWeight:600,
+                background:"linear-gradient(135deg,#4C5FD5,#2A3699)",color:"white",
+                border:"none",cursor:"pointer",display:"flex",alignItems:"center",
+                justifyContent:"center",gap:8,
+                boxShadow:"0 4px 14px rgba(76,95,213,0.35)"}}>
+              <i className="ti ti-user-circle" style={{fontSize:16}} aria-hidden="true"/>
+              Sign in / Create account
+            </button>
+          </div>
+        )}
+
         <div style={{padding:"10px 12px 6px"}}>
           <p style={{fontSize:9,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
             textTransform:"uppercase",padding:"4px 12px 6px"}}>Navigation</p>
@@ -2408,7 +2457,8 @@ export default function Home(){
               const u=session.user;
               const displayName=u.user_metadata?.full_name||u.email?.split("@")[0]||"User";
               setUser({name:displayName,email:u.email||"",avatar:u.user_metadata?.avatar_url});
-              if(event==="SIGNED_IN"||event==="USER_UPDATED"){
+              // Only show welcome on explicit sign in, not on page load session restore
+              if(event==="SIGNED_IN"){
                 const firstName=displayName.split(" ")[0];
                 setWelcomeMsg(firstName);
                 setShowWelcome(true);
@@ -2416,6 +2466,7 @@ export default function Home(){
               }
             } else if(event==="SIGNED_OUT"){
               setUser(null);
+              setShowWelcome(false);
             }
           });
         }catch(e){ console.log("Supabase session check failed",e); }
@@ -2684,7 +2735,7 @@ export default function Home(){
 
       <Drawer isOpen={isDrawerOpen} onClose={()=>setIsDrawerOpen(false)}
         currentView={currentView} setView={(v)=>{setCurrentView(v);setShowSettings(false);}}
-        onOpenModal={setActiveModal}/>
+        onOpenModal={setActiveModal} user={user} onUserChange={setUser}/>
 
       {/* Nav */}
       <nav style={{position:"relative",zIndex:10,display:"flex",justifyContent:"space-between",
@@ -2699,7 +2750,7 @@ export default function Home(){
             fontSize:18,color:C.navy,letterSpacing:"-0.5px"}}>{t("appName")}</p>
           <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,
             color:C.muted,letterSpacing:"2px",textTransform:"uppercase",marginTop:2}}>
-            {user?`👤 ${user.name.split(" ")[0]}`:new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
+            {new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
           </p>
         </div>
         <div style={{display:"flex",gap:8}}>
