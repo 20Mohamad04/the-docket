@@ -2597,7 +2597,7 @@ export default function Home(){
     const dayIdx=(now.getDay()+6)%7;
     const monday=new Date(now);monday.setDate(now.getDate()-dayIdx);
     // Generate 14 days (2 weeks) starting from Monday
-    return Array.from({length:14},(_,i)=>{
+    return Array.from({length:21},(_,i)=>{
       const d=new Date(monday);d.setDate(monday.getDate()+i);
       const key=["sun","mon","tue","wed","thu","fri","sat"][d.getDay()];
       return{key,date:d.toISOString().slice(0,10),dayNum:d.getDate(),
@@ -2724,6 +2724,9 @@ export default function Home(){
 
       {/* Settings Panel */}
       {showSettings&&(
+        <>
+        <div onClick={()=>setShowSettings(false)}
+          style={{position:"fixed",inset:0,zIndex:9}}/>
         <div style={{position:"relative",zIndex:10,maxWidth:1100,margin:"0 auto",
           padding:"0 20px 16px"}}>
           <div className="glass" style={{borderRadius:20,padding:"24px 26px"}}>
@@ -2810,6 +2813,7 @@ export default function Home(){
             </div>
           </div>
         </div>
+        </>
       )}
 
       {/* Content */}
@@ -2879,10 +2883,10 @@ export default function Home(){
                       style={{position:"relative",flexShrink:0,width:52,paddingTop:8,paddingBottom:8,
                         borderRadius:11,textAlign:"center",cursor:"pointer",transition:"all 0.15s",
                         border:active?"2px solid transparent":isToday?`2px solid ${C.primary}`:`1.5px solid ${C.border}`,
-                        background:active
-                          ?"linear-gradient(145deg,#6677E8 0%,#4C5FD5 50%,#2A3699 100%)"
-                          :dark?"rgba(255,255,255,0.06)":C.surface,
-                        boxShadow:active?"0 6px 20px rgba(76,95,213,0.5)":"none"}}>
+                        background:active?"#4C5FD5":dark?"rgba(255,255,255,0.06)":C.surface,
+                        outline:active?"3px solid #8BA8FF":"none",
+                        outlineOffset:active?"-1px":"0",
+                        boxShadow:"none"}}>
                       <p style={{fontSize:9,fontWeight:700,textTransform:"uppercase",
                         letterSpacing:0.5,
                         color:active?"rgba(255,255,255,0.9)":isToday?C.primary:C.muted}}>
