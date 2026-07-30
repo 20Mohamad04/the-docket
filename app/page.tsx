@@ -975,7 +975,18 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
           <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
             textTransform:"uppercase",marginBottom:12}}>Account</p>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            <button onClick={()=>{onClose();setTimeout(()=>onNavigate?.("subscription"),50);}}
+            <button onClick={async()=>{
+                try{
+                  const res=await fetch("/api/stripe/checkout",{
+                    method:"POST",
+                    headers:{"Content-Type":"application/json"},
+                    body:JSON.stringify({email:user?.email||"",userId:user?.email||""})
+                  });
+                  const data=await res.json();
+                  if(data.url) window.location.href=data.url;
+                  else alert("Payment error: "+data.error);
+                }catch(e:any){alert("Something went wrong: "+e.message);}
+              }}
               style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
                 borderRadius:12,border:`1px solid ${C.border}`,background:C.surface2,
                 cursor:"pointer",color:C.navy,fontSize:13,fontWeight:600}}>
@@ -1284,13 +1295,25 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
               </div>
             ))}
           </div>
-          <button className="pill-btn" style={{width:"100%",padding:"13px",fontSize:14,fontWeight:800,
-            background:"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",color:"white",border:"none",
-            boxShadow:"0 6px 20px rgba(76,95,213,0.45)"}}>
+          <button className="pill-btn" onClick={async()=>{
+              try{
+                const res=await fetch("/api/stripe/checkout",{
+                  method:"POST",
+                  headers:{"Content-Type":"application/json"},
+                  body:JSON.stringify({email:user?.email||"",userId:user?.email||""})
+                });
+                const data=await res.json();
+                if(data.url) window.location.href=data.url;
+                else alert("Payment error: "+data.error);
+              }catch(e:any){alert("Something went wrong: "+e.message);}
+            }}
+            style={{width:"100%",padding:"13px",fontSize:14,fontWeight:800,
+              background:"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",color:"white",border:"none",
+              boxShadow:"0 6px 20px rgba(76,95,213,0.45)"}}>
             Start Free Trial — £4.99/mo after
           </button>
           <p style={{textAlign:"center",fontSize:11,color:C.muted2,marginTop:10}}>
-            Cancel anytime · No hidden fees · Secure payment via Stripe
+            Cancel anytime · No hidden fees · Secure payment via Stripe 🔒
           </p>
         </div>
       </div>
@@ -2552,6 +2575,14 @@ export default function Home(){
     }
     const t=localStorage.getItem(STORAGE_TASKS);
     const r=localStorage.getItem(STORAGE_ROUTINES);
+    // Handle Stripe redirect
+    const urlParams=new URLSearchParams(window.location.search);
+    if(urlParams.get("subscription")==="success"){
+      setWelcomeMsg("🎉 You're now on The Docket Pro!");
+      setShowWelcome(true);
+      setTimeout(()=>setShowWelcome(false),5000);
+      window.history.replaceState({},"",window.location.pathname);
+    }
     const visited=localStorage.getItem("docket-onboarded");
     const savedNotif=localStorage.getItem("docket-notif");
     if(savedNotif==="true") setNotifEnabled(true);
