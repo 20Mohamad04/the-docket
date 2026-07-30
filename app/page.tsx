@@ -838,40 +838,156 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
       background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
       <div onClick={e=>e.stopPropagation()}
-        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,width:"100%",maxWidth:380,
-          boxShadow:"0 40px 100px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`}}>
-        <div style={{padding:"32px 24px",textAlign:"center"}}>
-          <div style={{width:80,height:80,borderRadius:"50%",margin:"0 auto 16px",
-            background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
-            display:"flex",alignItems:"center",justifyContent:"center",
-            boxShadow:"0 8px 28px rgba(76,95,213,0.45)",overflow:"hidden"}}>
-            {user.avatar
-              ?<img src={user.avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-              :<i className="ti ti-user" style={{fontSize:36,color:"white"}} aria-hidden="true"/>}
+        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,width:"100%",maxWidth:440,
+          maxHeight:"88vh",display:"flex",flexDirection:"column",
+          boxShadow:"0 40px 100px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,overflow:"hidden"}}>
+        {/* Header */}
+        <div style={{padding:"20px 24px 16px",display:"flex",justifyContent:"space-between",
+          alignItems:"center",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:48,height:48,borderRadius:"50%",
+              background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              overflow:"hidden",boxShadow:"0 4px 14px rgba(76,95,213,0.4)"}}>
+              {user.avatar
+                ?<img src={user.avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                :<i className="ti ti-user" style={{fontSize:22,color:"white"}} aria-hidden="true"/>}
+            </div>
+            <div>
+              <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
+                fontSize:16,color:C.navy}}>{user.name}</p>
+              <span style={{background:"rgba(76,95,213,0.1)",color:C.primary,
+                padding:"2px 10px",borderRadius:50,fontSize:10,fontWeight:700}}>
+                ✓ Signed in
+              </span>
+            </div>
           </div>
-          <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:22,
-            color:C.navy,marginBottom:4}}>{user.name}</p>
-          <p style={{fontSize:13,color:C.muted,marginBottom:8}}>{user.email}</p>
-          <span style={{background:"rgba(76,95,213,0.1)",color:C.primary,
-            padding:"5px 14px",borderRadius:50,fontSize:12,fontWeight:700,
-            border:"1px solid rgba(76,95,213,0.2)"}}>
-            <i className="ti ti-circle-check" style={{fontSize:12,marginRight:5}} aria-hidden="true"/>
-            Signed in
-          </span>
-          <div style={{height:1,background:C.border,margin:"24px 0 16px"}}/>
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            <button onClick={onClose} className="pill-btn"
-              style={{width:"100%",padding:"13px",fontSize:14,fontWeight:700,
-                background:"linear-gradient(145deg,#6677E8,#4C5FD5)",color:"white",border:"none",
-                boxShadow:"0 4px 16px rgba(76,95,213,0.4)"}}>
-              Continue to my Docket
+          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}>
+            <i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/>
+          </button>
+        </div>
+
+        {/* Scrollable content */}
+        <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
+          {/* Edit profile section */}
+          <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
+            textTransform:"uppercase",marginBottom:12}}>Edit Profile</p>
+
+          <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
+            <div>
+              <p style={{fontSize:11,fontWeight:600,color:C.muted,marginBottom:5}}>Display Name</p>
+              <div style={{display:"flex",gap:8}}>
+                <input defaultValue={user.name} id="profile-name"
+                  style={{flex:1,padding:"11px 14px",borderRadius:10,
+                    border:`1.5px solid ${C.border}`,fontSize:14,
+                    background:dark?"#1A1D2E":"#F8F7FE",
+                    color:C.navy,outline:"none",fontFamily:"inherit"}}
+                  onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+                  onBlur={e=>(e.target.style.borderColor=C.border)}/>
+                <button onClick={async()=>{
+                    const newName=(document.getElementById("profile-name") as HTMLInputElement)?.value?.trim();
+                    if(!newName) return;
+                    const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
+                    const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+                    if(!url||!key) return;
+                    const{createClient}=await import("@supabase/supabase-js");
+                    const sb=createClient(url,key);
+                    await sb.auth.updateUser({data:{full_name:newName}});
+                    onUserChange({...user,name:newName});
+                    setAuthMsg("✓ Name updated");setAuthStatus("success");
+                  }}
+                  style={{padding:"0 16px",borderRadius:10,fontSize:12,fontWeight:700,
+                    background:"linear-gradient(135deg,#4C5FD5,#2A3699)",color:"white",
+                    border:"none",cursor:"pointer",whiteSpace:"nowrap"}}>
+                  Save
+                </button>
+              </div>
+            </div>
+            <div>
+              <p style={{fontSize:11,fontWeight:600,color:C.muted,marginBottom:5}}>Email</p>
+              <input value={user.email} disabled
+                style={{width:"100%",padding:"11px 14px",borderRadius:10,
+                  border:`1.5px solid ${C.border}`,fontSize:14,
+                  background:dark?"#13151f":"#F0F0F8",
+                  color:C.muted,fontFamily:"inherit",cursor:"not-allowed"}}/>
+              <p style={{fontSize:10,color:C.muted2,marginTop:4}}>Email changes require re-verification. Contact support to update.</p>
+            </div>
+          </div>
+
+          {/* Change password */}
+          <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
+            textTransform:"uppercase",marginBottom:12}}>Change Password</p>
+          <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
+            <input type="password" id="profile-new-password"
+              placeholder="New password (min. 6 characters)"
+              style={{width:"100%",padding:"11px 14px",borderRadius:10,
+                border:`1.5px solid ${C.border}`,fontSize:14,
+                background:dark?"#1A1D2E":"#F8F7FE",
+                color:C.navy,outline:"none",fontFamily:"inherit"}}
+              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+              onBlur={e=>(e.target.style.borderColor=C.border)}/>
+            <input type="password" id="profile-confirm-password"
+              placeholder="Confirm new password"
+              style={{width:"100%",padding:"11px 14px",borderRadius:10,
+                border:`1.5px solid ${C.border}`,fontSize:14,
+                background:dark?"#1A1D2E":"#F8F7FE",
+                color:C.navy,outline:"none",fontFamily:"inherit"}}
+              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+              onBlur={e=>(e.target.style.borderColor=C.border)}/>
+            <button onClick={async()=>{
+                const np=(document.getElementById("profile-new-password") as HTMLInputElement)?.value;
+                const cp=(document.getElementById("profile-confirm-password") as HTMLInputElement)?.value;
+                if(!np){setAuthMsg("Enter a new password.");setAuthStatus("error");return;}
+                if(np!==cp){setAuthMsg("Passwords do not match.");setAuthStatus("error");return;}
+                if(np.length<6){setAuthMsg("Password must be at least 6 characters.");setAuthStatus("error");return;}
+                const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
+                const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+                if(!url||!key){setAuthMsg("Supabase not configured.");setAuthStatus("error");return;}
+                try{
+                  const{createClient}=await import("@supabase/supabase-js");
+                  const sb=createClient(url,key);
+                  const{error}=await sb.auth.updateUser({password:np});
+                  if(error){setAuthMsg(error.message);setAuthStatus("error");}
+                  else{setAuthMsg("✓ Password updated successfully.");setAuthStatus("success");}
+                }catch(e:any){setAuthMsg(e.message);setAuthStatus("error");}
+              }}
+              className="pill-btn"
+              style={{padding:"11px",fontSize:13,fontWeight:700,
+                background:"linear-gradient(135deg,#4C5FD5,#2A3699)",color:"white",
+                border:"none",boxShadow:"0 4px 14px rgba(76,95,213,0.35)"}}>
+              Update Password
+            </button>
+          </div>
+
+          {/* Status message */}
+          {authMsg&&(
+            <div style={{padding:"10px 14px",borderRadius:10,marginBottom:16,fontSize:13,
+              background:authStatus==="success"?"rgba(46,139,87,0.1)":"rgba(217,79,61,0.1)",
+              color:authStatus==="success"?C.sage:C.urgent,
+              border:`1px solid ${authStatus==="success"?"rgba(46,139,87,0.25)":"rgba(217,79,61,0.25)"}`}}>
+              {authMsg}
+            </div>
+          )}
+
+          {/* Account section */}
+          <div style={{height:1,background:C.border,marginBottom:16}}/>
+          <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
+            textTransform:"uppercase",marginBottom:12}}>Account</p>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            <button onClick={()=>setActiveModal&&setActiveModal("subscription")}
+              style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
+                borderRadius:12,border:`1px solid ${C.border}`,background:C.surface2,
+                cursor:"pointer",color:C.navy,fontSize:13,fontWeight:600}}>
+              <i className="ti ti-crown" style={{fontSize:16,color:"#C9A84C"}} aria-hidden="true"/>
+              Upgrade to Pro — £4.99/mo
             </button>
             <button onClick={handleSignOut}
-              style={{width:"100%",padding:"12px",fontSize:13,fontWeight:600,
-                background:"transparent",color:C.urgent,cursor:"pointer",
-                border:`1.5px solid rgba(192,80,60,0.25)`,borderRadius:50}}>
-              <i className="ti ti-logout" style={{fontSize:14,marginRight:6}} aria-hidden="true"/>
-              Sign out
+              style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
+                borderRadius:12,border:`1px solid rgba(217,79,61,0.25)`,
+                background:"rgba(217,79,61,0.06)",
+                cursor:"pointer",color:C.urgent,fontSize:13,fontWeight:600}}>
+              <i className="ti ti-logout" style={{fontSize:16}} aria-hidden="true"/>
+              Sign out of {user.email}
             </button>
           </div>
         </div>
