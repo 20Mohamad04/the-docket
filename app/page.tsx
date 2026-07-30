@@ -2869,7 +2869,8 @@ export default function Home(){
               </button>
               <div id="day-picker-scroll"
                 style={{display:"flex",gap:6,overflowX:"auto",flex:1,
-                  scrollbarWidth:"none",msOverflowStyle:"none",paddingBottom:2}}>
+                  scrollbarWidth:"none",msOverflowStyle:"none",
+                  padding:"3px 2px 3px",paddingBottom:4}}>
                 <style>{`#day-picker-scroll::-webkit-scrollbar{display:none}`}</style>
                 {weekDates.map(day=>{
                   const active=selectedDate===day.date;
@@ -2883,11 +2884,9 @@ export default function Home(){
                       }}
                       style={{position:"relative",flexShrink:0,width:52,paddingTop:8,paddingBottom:8,
                         borderRadius:11,textAlign:"center",cursor:"pointer",transition:"all 0.15s",
-                        border:active?"2px solid transparent":isToday?`2px solid ${C.primary}`:`1.5px solid ${C.border}`,
                         background:active?"#4C5FD5":dark?"rgba(255,255,255,0.06)":C.surface,
-                        outline:active?"3px solid #8BA8FF":"none",
-                        outlineOffset:active?"-1px":"0",
-                        boxShadow:"none"}}>
+                        border:active?`2px solid #8BA8FF`:isToday?`2px solid ${C.primary}`:`1.5px solid ${C.border}`,
+                        boxShadow:active?"0 0 0 1px #4C5FD5":"none"}}>
                       <p style={{fontSize:9,fontWeight:700,textTransform:"uppercase",
                         letterSpacing:0.5,
                         color:active?"rgba(255,255,255,0.9)":isToday?C.primary:C.muted}}>
