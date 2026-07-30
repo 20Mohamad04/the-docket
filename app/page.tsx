@@ -1296,11 +1296,12 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
             ))}
           </div>
           <button className="pill-btn" onClick={async()=>{
+              if(!user){onClose();setTimeout(()=>onNavigate?.("login"),100);return;}
               try{
                 const res=await fetch("/api/stripe/checkout",{
                   method:"POST",
                   headers:{"Content-Type":"application/json"},
-                  body:JSON.stringify({email:user?.email||"",userId:user?.email||""})
+                  body:JSON.stringify({email:user.email,userId:user.email})
                 });
                 const data=await res.json();
                 if(data.url) window.location.href=data.url;
@@ -1310,9 +1311,14 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
             style={{width:"100%",padding:"13px",fontSize:14,fontWeight:800,
               background:"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",color:"white",border:"none",
               boxShadow:"0 6px 20px rgba(76,95,213,0.45)"}}>
-            Start Free Trial — £4.99/mo after
+            {user?"Start Free Trial — £4.99/mo after":"Sign in to Subscribe"}
           </button>
-          <p style={{textAlign:"center",fontSize:11,color:C.muted2,marginTop:10}}>
+          {!user&&(
+            <p style={{textAlign:"center",fontSize:12,color:C.urgent,marginTop:8,fontWeight:600}}>
+              You need an account first — tap above to sign in
+            </p>
+          )}
+          <p style={{textAlign:"center",fontSize:11,color:C.muted2,marginTop:6}}>
             Cancel anytime · No hidden fees · Secure payment via Stripe 🔒
           </p>
         </div>
