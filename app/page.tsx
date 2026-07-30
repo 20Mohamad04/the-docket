@@ -2623,7 +2623,7 @@ export default function Home(){
 
   const todayItems=getDayItems(todayISO(),todayDayKey());
   const selDay=weekDates.find(d=>d.date===selectedDate)||weekDates.find(d=>d.key===selectedWeekDay);
-  const selectedDayItems=getDayItems(selDay?.date??todayISO(),selectedWeekDay);
+  const selectedDayItems=getDayItems(selectedDate,selectedWeekDay);
 
   const examTask=tasks.find(t=>!t.deleted&&t.title.toLowerCase().includes("land law"));
   const interviewTask=tasks.find(t=>!t.deleted&&t.title.toLowerCase().includes("cheshire oak"));
@@ -2879,6 +2879,7 @@ export default function Home(){
                   return(
                     <button key={day.date} onClick={()=>{
                         setSelectedWeekDay(day.key);
+                        setSelectedDate(day.date);
                       }}
                       style={{position:"relative",flexShrink:0,width:52,paddingTop:8,paddingBottom:8,
                         borderRadius:11,textAlign:"center",cursor:"pointer",transition:"all 0.15s",
