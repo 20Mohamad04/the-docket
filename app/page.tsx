@@ -717,10 +717,11 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
 }
 
 // ── Drawer ───────────────────────────────────────────────────────────────────
-function InfoModal({modal,onClose,dark,user,onUserChange}:{
+function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
   modal:string;onClose:()=>void;dark:boolean;
   user:{name:string;email:string;avatar?:string}|null;
   onUserChange:(u:{name:string;email:string;avatar?:string}|null)=>void;
+  onNavigate?:(m:string)=>void;
 }){
   const C=getC(dark);
   const[view,setView]=useState<"main"|"forgot"|"reset">("main");
@@ -974,7 +975,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange}:{
           <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
             textTransform:"uppercase",marginBottom:12}}>Account</p>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            <button onClick={()=>setActiveModal&&setActiveModal("subscription")}
+            <button onClick={()=>{onClose();setTimeout(()=>onNavigate?.("subscription"),50);}}
               style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
                 borderRadius:12,border:`1px solid ${C.border}`,background:C.surface2,
                 cursor:"pointer",color:C.navy,fontSize:13,fontWeight:600}}>
@@ -3187,7 +3188,7 @@ export default function Home(){
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
         onSave={data=>{updateTask(editingTask.id,data);setEditingTask(null);}}/>}
     </div>
-      {activeModal&&<InfoModal modal={activeModal} onClose={()=>setActiveModal(null)} dark={dark} user={user} onUserChange={setUser}/>}
+      {activeModal&&<InfoModal modal={activeModal} onClose={()=>setActiveModal(null)} dark={dark} user={user} onUserChange={setUser} onNavigate={setActiveModal}/>}
     </AppCtx.Provider>
   );
 }
