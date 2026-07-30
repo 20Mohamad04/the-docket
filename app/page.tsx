@@ -2350,6 +2350,7 @@ export default function Home(){
   const[editingTask,setEditingTask]=useState<Task|null>(null);
   const[isAddingTask,setIsAddingTask]=useState(false);
   const[selectedWeekDay,setSelectedWeekDay]=useState(todayDayKey());
+  const[selectedDate,setSelectedDate]=useState(todayISO());
   const[tasks,setTasks]=useState<Task[]>([]);
   const[routines,setRoutines]=useState<Routine[]>([]);
   const[notifEnabled,setNotifEnabled]=useState(false);
@@ -2595,10 +2596,13 @@ export default function Home(){
     const now=new Date();
     const dayIdx=(now.getDay()+6)%7;
     const monday=new Date(now);monday.setDate(now.getDate()-dayIdx);
-    return DAYS.map((key,i)=>{
+    // Generate 14 days (2 weeks) starting from Monday
+    return Array.from({length:14},(_,i)=>{
       const d=new Date(monday);d.setDate(monday.getDate()+i);
+      const key=["sun","mon","tue","wed","thu","fri","sat"][d.getDay()];
       return{key,date:d.toISOString().slice(0,10),dayNum:d.getDate(),
-        label:d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})};
+        label:d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}),
+        month:d.toLocaleDateString("en-GB",{month:"short"})};
     });
   })();
 
@@ -2618,7 +2622,7 @@ export default function Home(){
   }
 
   const todayItems=getDayItems(todayISO(),todayDayKey());
-  const selDay=weekDates.find(d=>d.key===selectedWeekDay);
+  const selDay=weekDates.find(d=>d.date===selectedDate)||weekDates.find(d=>d.key===selectedWeekDay);
   const selectedDayItems=getDayItems(selDay?.date??todayISO(),selectedWeekDay);
 
   const examTask=tasks.find(t=>!t.deleted&&t.title.toLowerCase().includes("land law"));
@@ -2848,34 +2852,64 @@ export default function Home(){
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
               fontSize:24,color:C.navy,marginBottom:10,letterSpacing:"-0.5px"}}>Daily Routine</p>
             <LiveClock dark={dark} C={C}/>
-            {/* Week day picker */}
-            <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:6,marginBottom:12}}>
-              {weekDates.map(day=>{
-                const active=selectedWeekDay===day.key;
-                const isToday=day.key===todayDayKey();
-                const highOnDay=routines.filter(r=>r.intensity==="high"&&(r.days??[]).includes(day.key));
-                const hasConflict=highOnDay.length>1;
-                return(
-                  <button key={day.key} onClick={()=>setSelectedWeekDay(day.key)}
-                    style={{position:"relative",flexShrink:0,width:50,paddingTop:8,paddingBottom:8,
-                      borderRadius:10,textAlign:"center",cursor:"pointer",transition:"all 0.15s",
-                      border:`1.5px solid ${active?C.navy:isToday?C.primary:C.border}`,
-                      background:active?C.navy:C.surface,
-                      backgroundImage:active?"linear-gradient(135deg,#3D52A0 0%,#232A4D 100%)":"none",
-                      boxShadow:active?"0 4px 14px rgba(35,42,77,0.35)":"none"}}>
-                    <p style={{fontSize:9,fontWeight:700,textTransform:"uppercase",
-                      letterSpacing:0.5,color:active?"rgba(255,255,255,0.75)":C.muted}}>
-                      {(DAY_LABELS[day.key]||day.key).slice(0,3)}
-                    </p>
-                    <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-                      fontSize:15,marginTop:1,color:active?"white":C.navy}}>{day.dayNum}</p>
-                    {isToday&&!active&&<div style={{width:4,height:4,borderRadius:"50%",
-                      background:C.primary,margin:"2px auto 0"}}/>}
-                    {hasConflict&&<span style={{position:"absolute",top:4,right:5,
-                      width:5,height:5,borderRadius:"50%",background:C.urgent}}/>}
-                  </button>
-                );
-              })}
+            {/* Week day picker with arrows */}
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+              <button onClick={()=>{
+                  const el=document.getElementById("day-picker-scroll");
+                  if(el) el.scrollBy({left:-180,behavior:"smooth"});
+                }}
+                style={{width:32,height:32,borderRadius:9,flexShrink:0,border:`1px solid ${C.border}`,
+                  background:C.surface,cursor:"pointer",color:C.navy,
+                  display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <i className="ti ti-chevron-left" style={{fontSize:15}} aria-hidden="true"/>
+              </button>
+              <div id="day-picker-scroll"
+                style={{display:"flex",gap:6,overflowX:"auto",flex:1,
+                  scrollbarWidth:"none",msOverflowStyle:"none",paddingBottom:2}}>
+                <style>{`#day-picker-scroll::-webkit-scrollbar{display:none}`}</style>
+                {weekDates.map(day=>{
+                  const active=selectedDate===day.date;
+                  const isToday=day.date===todayISO();
+                  const highOnDay=routines.filter(r=>r.intensity==="high"&&(r.days??[]).includes(day.key));
+                  const hasConflict=highOnDay.length>1;
+                  return(
+                    <button key={day.date} onClick={()=>{
+                        setSelectedWeekDay(day.key);
+                      }}
+                      style={{position:"relative",flexShrink:0,width:52,paddingTop:8,paddingBottom:8,
+                        borderRadius:11,textAlign:"center",cursor:"pointer",transition:"all 0.15s",
+                        border:active?"2px solid transparent":isToday?`2px solid ${C.primary}`:`1.5px solid ${C.border}`,
+                        background:active
+                          ?"linear-gradient(145deg,#6677E8 0%,#4C5FD5 50%,#2A3699 100%)"
+                          :dark?"rgba(255,255,255,0.06)":C.surface,
+                        boxShadow:active?"0 6px 20px rgba(76,95,213,0.5)":"none"}}>
+                      <p style={{fontSize:9,fontWeight:700,textTransform:"uppercase",
+                        letterSpacing:0.5,
+                        color:active?"rgba(255,255,255,0.9)":isToday?C.primary:C.muted}}>
+                        {(DAY_LABELS[day.key]||day.key).slice(0,3)}
+                      </p>
+                      <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
+                        fontSize:16,marginTop:2,
+                        color:active?"#FFFFFF":isToday?C.primary:dark?"rgba(255,255,255,0.85)":C.navy}}>
+                        {day.dayNum}
+                      </p>
+                      {isToday&&!active&&<div style={{width:4,height:4,borderRadius:"50%",
+                        background:C.primary,margin:"2px auto 0"}}/>}
+                      {hasConflict&&<span style={{position:"absolute",top:4,right:5,
+                        width:5,height:5,borderRadius:"50%",background:C.urgent}}/>}
+                    </button>
+                  );
+                })}
+              </div>
+              <button onClick={()=>{
+                  const el=document.getElementById("day-picker-scroll");
+                  if(el) el.scrollBy({left:180,behavior:"smooth"});
+                }}
+                style={{width:32,height:32,borderRadius:9,flexShrink:0,border:`1px solid ${C.border}`,
+                  background:C.surface,cursor:"pointer",color:C.navy,
+                  display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <i className="ti ti-chevron-right" style={{fontSize:15}} aria-hidden="true"/>
+              </button>
             </div>
             <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,
               color:C.muted,marginBottom:10}}>
