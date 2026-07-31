@@ -2030,7 +2030,8 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
             zIndex:60,transition:"all 0.3s cubic-bezier(0.34,1.56,0.64,1)"}}>
             <div style={{
               width:expanded?"100vw":400,
-              height:expanded?"100vh":600,
+              height:expanded?"100vh":"min(600px, calc(100vh - 40px))",
+              maxHeight:expanded?"100vh":"calc(100vh - 40px)",
               borderRadius:expanded?0:24,
               display:"flex",flexDirection:"column",overflow:"hidden",
               background:dark?"#0E1020":"#F0EFFC",
@@ -2040,11 +2041,11 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               {/* Orb header */}
               <div style={{
                 background:"linear-gradient(135deg,#1A1040 0%,#2A1060 50%,#1A2080 100%)",
-                padding:expanded?"40px 32px 32px":"24px 20px 20px",
+                padding:expanded?"32px 32px 24px":"16px 20px 12px",
                 display:"flex",flexDirection:"column",alignItems:"center",
                 position:"relative",flexShrink:0}}>
                 {/* Control buttons */}
-                <div style={{position:"absolute",top:16,right:16,display:"flex",gap:8}}>
+                <div style={{position:"absolute",top:10,right:10,display:"flex",gap:8}}>
                   <button onClick={()=>setExpanded(e=>!e)}
                     style={{width:28,height:28,borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",
                       background:"rgba(255,255,255,0.1)",cursor:"pointer",color:"white",
@@ -2060,26 +2061,46 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   </button>
                 </div>
 
-                {/* Animated orb */}
-                <div style={{width:expanded?80:64,height:expanded?80:64,borderRadius:"50%",
-                  marginBottom:12,position:"relative",transition:"all 0.3s",
-                  background:"radial-gradient(circle at 35% 35%, #C4A8FF, #8670E8 40%, #4C5FD5 70%, #2A1060)",
-                  boxShadow:"0 0 40px rgba(134,112,232,0.6), 0 0 80px rgba(76,95,213,0.3)",
-                  animation:"orbGlow 4s ease-in-out infinite"}}>
-                  <style>{`@keyframes orbGlow{0%,100%{box-shadow:0 0 40px rgba(134,112,232,0.6),0 0 80px rgba(76,95,213,0.3)}50%{box-shadow:0 0 60px rgba(134,112,232,0.9),0 0 120px rgba(76,95,213,0.5)}}`}</style>
-                  <div style={{position:"absolute",inset:0,borderRadius:"50%",
-                    background:"radial-gradient(circle at 30% 25%, rgba(255,255,255,0.3), transparent 60%)"}}/>
-                  <div style={{position:"absolute",inset:0,display:"flex",
-                    alignItems:"center",justifyContent:"center"}}>
-                    <i className="ti ti-sparkles" style={{fontSize:expanded?32:24,color:"white"}} aria-hidden="true"/>
-                  </div>
+                {/* Animated flowing energy orb */}
+                <div style={{width:expanded?76:52,height:expanded?76:52,
+                  marginBottom:expanded?12:8,position:"relative",transition:"all 0.3s",
+                  filter:"drop-shadow(0 0 24px rgba(134,112,232,0.65)) drop-shadow(0 0 46px rgba(76,95,213,0.35))"}}>
+                  <svg viewBox="0 0 100 100" style={{width:"100%",height:"100%",display:"block"}}>
+                    <defs>
+                      <radialGradient id="orbBase" cx="35%" cy="32%" r="75%">
+                        <stop offset="0%" stopColor="#DED0FF"/>
+                        <stop offset="45%" stopColor="#8670E8"/>
+                        <stop offset="100%" stopColor="#241058"/>
+                      </radialGradient>
+                      <filter id="orbNoise" x="-50%" y="-50%" width="200%" height="200%">
+                        <feTurbulence type="fractalNoise" baseFrequency="0.014 0.05" numOctaves="2" seed="6" result="noise">
+                          <animate attributeName="baseFrequency" dur="16s"
+                            values="0.014 0.05;0.024 0.07;0.014 0.05" repeatCount="indefinite"/>
+                        </feTurbulence>
+                        <feDisplacementMap in="SourceGraphic" in2="noise" scale="16"/>
+                      </filter>
+                    </defs>
+                    <circle cx="50" cy="50" r="46" fill="url(#orbBase)"/>
+                    <g filter="url(#orbNoise)" opacity="0.9">
+                      <circle cx="50" cy="50" r="43" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.6">
+                        <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="17s" repeatCount="indefinite"/>
+                      </circle>
+                      <circle cx="50" cy="50" r="36" fill="none" stroke="rgba(210,195,255,0.5)" strokeWidth="1.3">
+                        <animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="11s" repeatCount="indefinite"/>
+                      </circle>
+                      <circle cx="50" cy="50" r="27" fill="none" stroke="rgba(150,130,255,0.45)" strokeWidth="1.5">
+                        <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="8s" repeatCount="indefinite"/>
+                      </circle>
+                    </g>
+                    <circle cx="37" cy="33" r="9" fill="rgba(255,255,255,0.35)" style={{filter:"blur(3px)"}}/>
+                  </svg>
                 </div>
 
                 <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
-                  fontSize:expanded?22:16,color:"white",marginBottom:4,letterSpacing:"-0.3px"}}>
+                  fontSize:expanded?22:15,color:"white",marginBottom:2,letterSpacing:"-0.3px"}}>
                   Ask Docket
                 </p>
-                <p style={{fontSize:expanded?14:11,color:"rgba(255,255,255,0.6)",textAlign:"center"}}>
+                <p style={{fontSize:expanded?14:10,color:"rgba(255,255,255,0.6)",textAlign:"center"}}>
                   Your AI scheduling assistant
                 </p>
               </div>
