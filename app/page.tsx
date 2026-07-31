@@ -544,7 +544,6 @@ function TaskModal({initial,onClose,onSave}:{
 }){
   const{t,dark}=useApp();
   const C=getC(dark);
-  const inputStyle=useInputStyle();
   const[title,setTitle]=useState(initial?.title??"");
   const[category,setCategory]=useState<Category>(initial?.category??"study");
   const[priority,setPriority]=useState<Priority>(initial?.priority??"medium");
@@ -552,67 +551,192 @@ function TaskModal({initial,onClose,onSave}:{
   const[date,setDate]=useState(initial?.date??"");
   const[recurring,setRecurring]=useState(initial?.recurring??"");
   const[notes,setNotes]=useState(initial?.notes??"");
+
+  const priorityOpts=[
+    {v:"urgent",label:"Urgent",icon:"ti-flame",color:"#D94F3D",bg:"rgba(217,79,61,0.1)"},
+    {v:"high",label:"High",icon:"ti-arrow-up",color:"#C9A84C",bg:"rgba(201,168,76,0.1)"},
+    {v:"medium",label:"Medium",icon:"ti-minus",color:"#4C5FD5",bg:"rgba(76,95,213,0.1)"},
+  ];
+  const typeOpts=[
+    {v:"milestone",label:"Completable",icon:"ti-circle-check",desc:"Has a clear end"},
+    {v:"ongoing",label:"Ongoing",icon:"ti-repeat",desc:"No fixed finish"},
+  ];
+  const recurringOpts=[
+    {v:"",label:"One-off"},
+    {v:"daily",label:"Daily"},
+    {v:"weekly",label:"Weekly"},
+  ];
+
+  const inp:React.CSSProperties={
+    width:"100%",padding:"12px 14px",borderRadius:12,
+    border:`1.5px solid ${C.border}`,fontSize:14,
+    background:dark?"#1A1D2E":"#F8F7FE",
+    color:C.navy,outline:"none",fontFamily:"inherit",
+    transition:"border-color 0.2s",
+  };
+
   return(
-    <Modal onClose={onClose}>
-      <h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:20,fontWeight:700,
-        color:C.navy,marginBottom:18}}>{initial?.id?"Edit Task":"New Task"}</h3>
-      <div style={{marginBottom:14}}>
-        <FieldLabel>Task</FieldLabel>
-        <input value={title} onChange={e=>setTitle(e.target.value)}
-          placeholder="" style={inputStyle}/>
-      </div>
-      <div style={{marginBottom:14}}>
-        <FieldLabel>Category</FieldLabel>
-        <CategoryPicker value={category} onChange={setCategory}/>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-        <div><FieldLabel>Priority</FieldLabel>
-          <select value={priority} onChange={e=>setPriority(e.target.value as Priority)} style={inputStyle}>
-            <option value="urgent">Urgent</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-          </select>
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
+      background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()}
+        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,width:"100%",maxWidth:460,
+          maxHeight:"90vh",display:"flex",flexDirection:"column",
+          boxShadow:"0 40px 100px rgba(0,0,0,0.45)",border:`1px solid ${C.border}`,
+          overflow:"hidden"}}>
+        {/* Header */}
+        <div style={{padding:"20px 24px 16px",borderBottom:`1px solid ${C.border}`,
+          display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:36,height:36,borderRadius:10,
+              background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <i className={`ti ${initial?.id?"ti-pencil":"ti-plus"}`}
+                style={{fontSize:17,color:"white"}} aria-hidden="true"/>
+            </div>
+            <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
+              fontSize:17,color:C.navy}}>
+              {initial?.id?"Edit Task":"New Task"}
+            </p>
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"none",
+            cursor:"pointer",color:C.muted}}>
+            <i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/>
+          </button>
         </div>
-        <div><FieldLabel>Nature</FieldLabel>
-          <select value={type} onChange={e=>setType(e.target.value as TaskType)} style={inputStyle}>
-            <option value="milestone">Completable</option>
-            <option value="ongoing">Ongoing</option>
-          </select>
+
+        {/* Scrollable form */}
+        <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
+          {/* Task title */}
+          <div style={{marginBottom:16}}>
+            <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
+              textTransform:"uppercase",marginBottom:8}}>Task name</p>
+            <input value={title} onChange={e=>setTitle(e.target.value)}
+              placeholder="What needs to be done?"
+              autoFocus
+              style={inp}
+              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+              onBlur={e=>(e.target.style.borderColor=C.border)}
+              onKeyDown={e=>e.key==="Enter"&&title.trim()&&(onSave({title,category,priority,type,date,time:"",recurring,notes}),onClose())}/>
+          </div>
+
+          {/* Category */}
+          <div style={{marginBottom:16}}>
+            <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
+              textTransform:"uppercase",marginBottom:8}}>Category</p>
+            <CategoryPicker value={category} onChange={setCategory}/>
+          </div>
+
+          {/* Priority */}
+          <div style={{marginBottom:16}}>
+            <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
+              textTransform:"uppercase",marginBottom:8}}>Priority</p>
+            <div style={{display:"flex",gap:8}}>
+              {priorityOpts.map(p=>(
+                <button key={p.v} onClick={()=>setPriority(p.v as Priority)}
+                  style={{flex:1,padding:"10px 8px",borderRadius:12,cursor:"pointer",
+                    border:`2px solid ${priority===p.v?p.color:C.border}`,
+                    background:priority===p.v?p.bg:"transparent",
+                    display:"flex",flexDirection:"column",alignItems:"center",gap:4,
+                    transition:"all 0.15s"}}>
+                  <i className={`ti ${p.icon}`} style={{fontSize:18,color:priority===p.v?p.color:C.muted}} aria-hidden="true"/>
+                  <span style={{fontSize:11,fontWeight:700,color:priority===p.v?p.color:C.muted}}>{p.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Nature/Type */}
+          <div style={{marginBottom:16}}>
+            <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
+              textTransform:"uppercase",marginBottom:8}}>Nature</p>
+            <div style={{display:"flex",gap:8}}>
+              {typeOpts.map(tp=>(
+                <button key={tp.v} onClick={()=>setType(tp.v as TaskType)}
+                  style={{flex:1,padding:"12px",borderRadius:12,cursor:"pointer",
+                    border:`2px solid ${type===tp.v?C.primary:C.border}`,
+                    background:type===tp.v?"rgba(76,95,213,0.08)":"transparent",
+                    display:"flex",alignItems:"center",gap:10,transition:"all 0.15s"}}>
+                  <i className={`ti ${tp.icon}`} style={{fontSize:18,
+                    color:type===tp.v?C.primary:C.muted,flexShrink:0}} aria-hidden="true"/>
+                  <div style={{textAlign:"left"}}>
+                    <p style={{fontSize:12,fontWeight:700,color:type===tp.v?C.primary:C.navy}}>{tp.label}</p>
+                    <p style={{fontSize:10,color:C.muted2}}>{tp.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Recurring */}
+          <div style={{marginBottom:16}}>
+            <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
+              textTransform:"uppercase",marginBottom:8}}>Repeats</p>
+            <div style={{display:"flex",gap:8}}>
+              {recurringOpts.map(r=>(
+                <button key={r.v} onClick={()=>setRecurring(r.v)}
+                  style={{flex:1,padding:"10px",borderRadius:10,cursor:"pointer",
+                    border:`2px solid ${recurring===r.v?C.primary:C.border}`,
+                    background:recurring===r.v?"rgba(76,95,213,0.08)":"transparent",
+                    fontSize:12,fontWeight:700,
+                    color:recurring===r.v?C.primary:C.muted,
+                    transition:"all 0.15s"}}>
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Due date */}
+          <div style={{marginBottom:16}}>
+            <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
+              textTransform:"uppercase",marginBottom:8}}>Due date</p>
+            <input type="date" value={date} onChange={e=>setDate(e.target.value)}
+              style={inp}
+              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+              onBlur={e=>(e.target.style.borderColor=C.border)}/>
+          </div>
+
+          {/* Notes */}
+          <div style={{marginBottom:4}}>
+            <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
+              textTransform:"uppercase",marginBottom:8}}>Notes <span style={{fontWeight:400,textTransform:"none",letterSpacing:0}}>(optional)</span></p>
+            <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={2}
+              placeholder="Any details worth remembering…"
+              style={{...inp,resize:"vertical"}}
+              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+              onBlur={e=>(e.target.style.borderColor=C.border)}/>
+          </div>
+        </div>
+
+        {/* Footer buttons */}
+        <div style={{padding:"14px 24px 20px",borderTop:`1px solid ${C.border}`,
+          display:"flex",gap:10,flexShrink:0}}>
+          <button onClick={onClose}
+            style={{flex:1,padding:"12px",borderRadius:12,
+              border:`1.5px solid ${C.border}`,fontSize:13,fontWeight:700,
+              color:C.muted,background:"transparent",cursor:"pointer",
+              transition:"all 0.15s"}}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor=C.primary;e.currentTarget.style.color=C.primary;}}
+            onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.muted;}}>
+            Cancel
+          </button>
+          <button onClick={()=>{if(!title.trim())return;
+            onSave({title,category,priority,type,date,time:"",recurring,notes});onClose();}}
+            className="pill-btn"
+            style={{flex:2,padding:"12px",
+              background:title.trim()
+                ?"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)"
+                :C.border,
+              color:"white",border:"none",fontSize:13,fontWeight:700,
+              opacity:title.trim()?1:0.6,cursor:title.trim()?"pointer":"not-allowed",
+              boxShadow:title.trim()?"0 6px 20px rgba(76,95,213,0.4)":"none"}}>
+            <i className="ti ti-check" style={{fontSize:14,marginRight:6}} aria-hidden="true"/>
+            {initial?.id?"Save Changes":"Add Task"}
+          </button>
         </div>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-        <div><FieldLabel>Recurring</FieldLabel>
-          <select value={recurring} onChange={e=>setRecurring(e.target.value)} style={inputStyle}>
-            <option value="">One-off</option>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-          </select>
-        </div>
-      </div>
-      <div style={{marginBottom:14}}>
-        <FieldLabel>Due / target date</FieldLabel>
-        <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={inputStyle}/>
-      </div>
-      <div style={{marginBottom:20}}>
-        <FieldLabel>Notes</FieldLabel>
-        <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={2}
-          placeholder="Any detail worth remembering"
-          style={{...inputStyle,resize:"vertical"}}/>
-      </div>
-      <div style={{display:"flex",justifyContent:"flex-end",gap:10}}>
-        <button onClick={onClose} style={{padding:"10px 18px",borderRadius:9,
-          border:`1.5px solid ${C.border}`,fontSize:13,fontWeight:600,
-          color:C.muted,background:"none",cursor:"pointer"}}>Cancel</button>
-        <button onClick={()=>{if(!title.trim())return;
-          onSave({title,category,priority,type,date,time:"",recurring,notes});onClose();}}
-          className="pill-btn" style={{padding:"12px 24px",
-            background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
-            color:"white",border:"none",fontSize:13,
-            boxShadow:"0 6px 20px rgba(76,95,213,0.5)"}}>
-          {initial?.id?"Save Changes":"Save Task"}
-        </button>
-      </div>
-    </Modal>
+    </div>
   );
 }
 
@@ -1724,6 +1848,7 @@ function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAc
   const{t,dark}=useApp();
   const C=getC(dark);
   const[open,setOpen]=useState(false);
+  const[expanded,setExpanded]=useState(false);
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string}[]>([
     {role:"assistant",content:"Hi! I'm your Docket assistant. Tell me what you need — I'll find the best slot in your schedule and confirm before adding anything."},
   ]);
@@ -1876,85 +2001,163 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
   }
 
   return(<>
+      {/* Orb FAB button */}
       <button onClick={()=>setOpen(o=>!o)}
-        className="pill-btn" style={{position:"fixed",bottom:30,right:102,width:60,height:60,
-          color:"white",
+        style={{position:"fixed",bottom:30,right:102,width:60,height:60,
+          borderRadius:"50%",border:"none",cursor:"pointer",zIndex:40,
+          background:"transparent",padding:0}}>
+        <div style={{width:60,height:60,borderRadius:"50%",position:"relative",
           background:"linear-gradient(145deg,#B8A8FF 0%,#8670E8 40%,#4C5FD5 100%)",
-          boxShadow:"0 12px 36px rgba(76,95,213,0.7), 0 4px 10px rgba(0,0,0,0.3)",
-          zIndex:40}}>
-          <i className="ti ti-sparkles" style={{fontSize:24,color:"white"}} aria-hidden="true"/>
-        </button>
+          boxShadow:open
+            ?"0 0 0 4px rgba(134,112,232,0.3), 0 12px 36px rgba(76,95,213,0.7)"
+            :"0 12px 36px rgba(76,95,213,0.7), 0 4px 10px rgba(0,0,0,0.3)",
+          display:"flex",alignItems:"center",justifyContent:"center",
+          animation:!open?"orbPulse 3s ease-in-out infinite":"none",
+          transition:"all 0.3s"}}>
+          <style>{`@keyframes orbPulse{0%,100%{box-shadow:0 0 0 0 rgba(134,112,232,0.4),0 12px 36px rgba(76,95,213,0.7)}50%{box-shadow:0 0 0 12px rgba(134,112,232,0),0 12px 36px rgba(76,95,213,0.7)}}`}</style>
+          <i className={`ti ${open?"ti-x":"ti-sparkles"}`}
+            style={{fontSize:24,color:"white",transition:"all 0.2s"}} aria-hidden="true"/>
+        </div>
+      </button>
+
       {open&&(
         <>
-          {/* Click-outside backdrop */}
-          <div onClick={()=>setOpen(false)}
+          <div onClick={()=>{setOpen(false);setExpanded(false);}}
             style={{position:"fixed",inset:0,zIndex:58,background:"transparent"}}/>
-          <div style={{position:"fixed",bottom:20,right:20,zIndex:60}}>
-            <div style={{borderRadius:24,width:400,height:590,display:"flex",flexDirection:"column",
-              overflow:"hidden",
-              background:dark?"#1A1D2E":"#FFFFFF",
-              border:`1px solid ${C.border}`,
-              boxShadow:"0 32px 80px rgba(0,0,0,0.45), 0 8px 24px rgba(0,0,0,0.25)"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
-                padding:"16px 18px",borderBottom:`1px solid ${C.border}`,
-                background:dark?"#1E2235":"#F8F7FE"}}>
-                <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <div style={{width:36,height:36,borderRadius:10,flexShrink:0,
-                    background:"linear-gradient(145deg,#8670E8,#4C5FD5)",
-                    display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <i className="ti ti-sparkles" style={{fontSize:17,color:"white"}} aria-hidden="true"/>
-                  </div>
-                  <div>
-                    <h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:15,
-                      fontWeight:700,color:C.navy}}>Ask Docket</h3>
-                    <p style={{fontSize:10,color:C.muted,marginTop:1}}>Your AI scheduling assistant</p>
+          <div style={{position:"fixed",
+            bottom:expanded?0:20,right:expanded?0:20,
+            top:expanded?0:"auto",left:expanded?0:"auto",
+            zIndex:60,transition:"all 0.3s cubic-bezier(0.34,1.56,0.64,1)"}}>
+            <div style={{
+              width:expanded?"100vw":400,
+              height:expanded?"100vh":600,
+              borderRadius:expanded?0:24,
+              display:"flex",flexDirection:"column",overflow:"hidden",
+              background:dark?"#0E1020":"#F0EFFC",
+              border:expanded?"none":`1px solid ${C.border}`,
+              boxShadow:expanded?"none":"0 32px 80px rgba(0,0,0,0.45)"}}>
+
+              {/* Orb header */}
+              <div style={{
+                background:"linear-gradient(135deg,#1A1040 0%,#2A1060 50%,#1A2080 100%)",
+                padding:expanded?"40px 32px 32px":"24px 20px 20px",
+                display:"flex",flexDirection:"column",alignItems:"center",
+                position:"relative",flexShrink:0}}>
+                {/* Control buttons */}
+                <div style={{position:"absolute",top:16,right:16,display:"flex",gap:8}}>
+                  <button onClick={()=>setExpanded(e=>!e)}
+                    style={{width:28,height:28,borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",
+                      background:"rgba(255,255,255,0.1)",cursor:"pointer",color:"white",
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <i className={`ti ${expanded?"ti-minimize":"ti-maximize"}`}
+                      style={{fontSize:13}} aria-hidden="true"/>
+                  </button>
+                  <button onClick={()=>{setOpen(false);setExpanded(false);}}
+                    style={{width:28,height:28,borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",
+                      background:"rgba(255,255,255,0.1)",cursor:"pointer",color:"white",
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <i className="ti ti-x" style={{fontSize:13}} aria-hidden="true"/>
+                  </button>
+                </div>
+
+                {/* Animated orb */}
+                <div style={{width:expanded?80:64,height:expanded?80:64,borderRadius:"50%",
+                  marginBottom:12,position:"relative",transition:"all 0.3s",
+                  background:"radial-gradient(circle at 35% 35%, #C4A8FF, #8670E8 40%, #4C5FD5 70%, #2A1060)",
+                  boxShadow:"0 0 40px rgba(134,112,232,0.6), 0 0 80px rgba(76,95,213,0.3)",
+                  animation:"orbGlow 4s ease-in-out infinite"}}>
+                  <style>{`@keyframes orbGlow{0%,100%{box-shadow:0 0 40px rgba(134,112,232,0.6),0 0 80px rgba(76,95,213,0.3)}50%{box-shadow:0 0 60px rgba(134,112,232,0.9),0 0 120px rgba(76,95,213,0.5)}}`}</style>
+                  <div style={{position:"absolute",inset:0,borderRadius:"50%",
+                    background:"radial-gradient(circle at 30% 25%, rgba(255,255,255,0.3), transparent 60%)"}}/>
+                  <div style={{position:"absolute",inset:0,display:"flex",
+                    alignItems:"center",justifyContent:"center"}}>
+                    <i className="ti ti-sparkles" style={{fontSize:expanded?32:24,color:"white"}} aria-hidden="true"/>
                   </div>
                 </div>
-                <button onClick={()=>setOpen(false)}
-                  style={{background:"none",border:"none",fontSize:17,color:C.muted,
-                    cursor:"pointer",width:28,height:28,borderRadius:8,
-                    display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <i className="ti ti-x" style={{fontSize:16}} aria-hidden="true"/>
-                </button>
+
+                <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
+                  fontSize:expanded?22:16,color:"white",marginBottom:4,letterSpacing:"-0.3px"}}>
+                  Ask Docket
+                </p>
+                <p style={{fontSize:expanded?14:11,color:"rgba(255,255,255,0.6)",textAlign:"center"}}>
+                  Your AI scheduling assistant
+                </p>
               </div>
-              <div style={{flex:1,overflowY:"auto",padding:"14px 16px",
-                display:"flex",flexDirection:"column",gap:9,
-                background:dark?"#1A1D2E":"#FAFAFE"}}>
+
+              {/* Messages */}
+              <div style={{flex:1,overflowY:"auto",padding:"16px",
+                display:"flex",flexDirection:"column",gap:10,
+                background:dark?"#0E1020":"#F0EFFC"}}>
                 {messages.map((m,i)=>(
-                  <div key={i} style={{maxWidth:"85%",padding:"10px 14px",borderRadius:14,
-                    fontSize:13,lineHeight:1.5,
+                  <div key={i} style={{
+                    maxWidth:expanded?"60%":"85%",padding:"12px 16px",
+                    borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px",
+                    fontSize:13,lineHeight:1.6,
                     alignSelf:m.role==="user"?"flex-end":"flex-start",
                     background:m.role==="user"
                       ?"linear-gradient(135deg,#6677E8,#4C5FD5)"
-                      :dark?"#252840":"#FFFFFF",
+                      :dark?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.9)",
                     color:m.role==="user"?"white":C.navy,
                     boxShadow:m.role==="user"
                       ?"0 4px 14px rgba(76,95,213,0.35)"
-                      :"0 2px 8px rgba(0,0,0,0.08)",
-                    borderBottomRightRadius:m.role==="user"?4:14,
-                    borderBottomLeftRadius:m.role==="assistant"?4:14}}>
+                      :"0 2px 8px rgba(0,0,0,0.06)",
+                    border:m.role==="assistant"?`1px solid ${dark?"rgba(255,255,255,0.08)":C.border}`:"none"}}>
+                    {m.role==="assistant"&&(
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                        <div style={{width:16,height:16,borderRadius:"50%",
+                          background:"linear-gradient(135deg,#8670E8,#4C5FD5)",
+                          display:"flex",alignItems:"center",justifyContent:"center"}}>
+                          <i className="ti ti-sparkles" style={{fontSize:9,color:"white"}} aria-hidden="true"/>
+                        </div>
+                        <span style={{fontSize:10,fontWeight:700,color:C.primary,letterSpacing:"0.5px"}}>DOCKET AI</span>
+                      </div>
+                    )}
                     {m.content}
                   </div>
                 ))}
+                {loading&&(
+                  <div style={{alignSelf:"flex-start",padding:"12px 16px",borderRadius:"18px 18px 18px 4px",
+                    background:dark?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.9)",
+                    border:`1px solid ${C.border}`,display:"flex",gap:6,alignItems:"center"}}>
+                    {[0,1,2].map(i=>(
+                      <div key={i} style={{width:6,height:6,borderRadius:"50%",
+                        background:C.primary,opacity:0.7,
+                        animation:`dot 1.2s ease-in-out ${i*0.2}s infinite`}}/>
+                    ))}
+                    <style>{`@keyframes dot{0%,80%,100%{transform:scale(0.8);opacity:0.4}40%{transform:scale(1.2);opacity:1}}`}</style>
+                  </div>
+                )}
               </div>
-              <div style={{display:"flex",gap:8,padding:"12px 14px",
-                borderTop:`1px solid ${C.border}`,
-                background:dark?"#1E2235":"#F8F7FE"}}>
-                <input value={input} onChange={e=>setInput(e.target.value)}
-                  onKeyDown={e=>e.key==="Enter"&&send()}
-                  placeholder="e.g. add gym Monday at 7am"
-                  style={{flex:1,padding:"11px 14px",
-                    border:`1.5px solid ${C.border}`,
-                    borderRadius:12,fontSize:13,
-                    background:dark?"#1A1D2E":"#FFFFFF",
-                    color:C.navy,
-                    fontFamily:"inherit",outline:"none"}}/>
-                <button onClick={send} disabled={loading} className="pill-btn"
-                  style={{background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
-                    color:"white",border:"none",
-                    padding:"0 18px",fontWeight:700,
-                    fontSize:13,cursor:"pointer",opacity:loading?0.5:1,
-                    boxShadow:"0 4px 14px rgba(76,95,213,0.4)"}}>Send</button>
+
+              {/* Input */}
+              <div style={{padding:"12px 16px 16px",
+                background:dark?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.8)",
+                borderTop:`1px solid ${dark?"rgba(255,255,255,0.08)":C.border}`,
+                backdropFilter:"blur(10px)",flexShrink:0}}>
+                <div style={{display:"flex",gap:8,alignItems:"center",
+                  background:dark?"#1A1D3E":"#FFFFFF",
+                  borderRadius:16,padding:"6px 6px 6px 14px",
+                  border:`1.5px solid ${C.border}`,
+                  boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
+                  <input value={input} onChange={e=>setInput(e.target.value)}
+                    onKeyDown={e=>e.key==="Enter"&&send()}
+                    placeholder="Ask me anything…"
+                    style={{flex:1,border:"none",outline:"none",fontSize:13,
+                      background:"transparent",color:C.navy,fontFamily:"inherit"}}/>
+                  <button onClick={send} disabled={loading||!input.trim()}
+                    className="pill-btn"
+                    style={{width:36,height:36,
+                      background:input.trim()
+                        ?"linear-gradient(145deg,#6677E8,#4C5FD5)"
+                        :C.border,
+                      color:"white",border:"none",cursor:"pointer",
+                      opacity:loading||!input.trim()?0.5:1,flexShrink:0}}>
+                    <i className="ti ti-send" style={{fontSize:15}} aria-hidden="true"/>
+                  </button>
+                </div>
+                <p style={{fontSize:10,color:C.muted2,textAlign:"center",marginTop:8}}>
+                  Powered by Claude AI · Confirms before making changes
+                </p>
               </div>
             </div>
           </div>
@@ -2557,6 +2760,12 @@ export default function Home(){
   const[lang,setLang]=useState<Lang>("en");
   const[onboarding,setOnboarding]=useState(false);
   const[activeModal,setActiveModal]=useState<string|null>(null);
+
+  // Lock body scroll when drawer or modal is open
+  useEffect(()=>{
+    document.body.style.overflow=(isDrawerOpen||!!activeModal||onboarding)?"hidden":"";
+    return()=>{document.body.style.overflow="";};
+  },[isDrawerOpen,activeModal,onboarding]);
   const[user,setUser]=useState<{name:string;email:string;avatar?:string}|null>(null);
   const[showWelcome,setShowWelcome]=useState(false);
   const[welcomeMsg,setWelcomeMsg]=useState("");
@@ -2590,8 +2799,13 @@ export default function Home(){
       window.history.replaceState({},"",window.location.pathname);
     }
     const visited=localStorage.getItem("docket-onboarded");
+    const savedName=localStorage.getItem("docket-user-name");
     const savedNotif=localStorage.getItem("docket-notif");
     if(savedNotif==="true") setNotifEnabled(true);
+    // Show onboarding name as guest display if no Supabase user
+    if(savedName&&!user){
+      setUser({name:savedName,email:"Guest",avatar:undefined});
+    }
     // Check for existing Supabase session
     const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -2836,6 +3050,7 @@ export default function Home(){
   function completeOnboarding(name:string, goals:string[]){
     localStorage.setItem("docket-onboarded","true");
     localStorage.setItem("docket-user-name",name);
+    if(name) setUser({name,email:"Guest",avatar:undefined});
     const welcomeTasks:Task[]=[];
     if(goals.includes("health")) welcomeTasks.push({id:Date.now()+1,title:"Start a daily exercise habit",category:"fitness",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
     if(goals.includes("study")) welcomeTasks.push({id:Date.now()+2,title:"Set a daily study goal",category:"study",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
