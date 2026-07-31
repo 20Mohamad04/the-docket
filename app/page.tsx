@@ -1843,7 +1843,11 @@ function TimelineRow({item,onCheck}:{
   );
 }
 
-// ── Flowing plasma orb (canvas) ────────────────────────────────────────────────
+// ── Flowing wireframe energy orb (canvas) ──────────────────────────────────────
+// A tangle of glowing "ribbons" traced around a rotating 3D sphere — each
+// ribbon is a tilted great-circle, projected with simple perspective and
+// redrawn every frame so the whole thing continuously rotates and flows,
+// with a bright glint tracking whichever point is currently nearest camera.
 function FlowingOrb({size=52}:{size?:number}){
   const canvasRef=React.useRef<HTMLCanvasElement>(null);
   useEffect(()=>{
@@ -1856,51 +1860,83 @@ function FlowingOrb({size=52}:{size?:number}){
     canvas.height=size*dpr;
     ctx.scale(dpr,dpr);
     const r=size/2;
-    // Blobs of glowing colour that orbit and drift inside the sphere,
-    // additively blended so overlaps brighten — this is what gives the
-    // "flowing energy" look rather than a flat static gradient.
-    const blobs=[
-      {angle:0.0, speed:0.55, orbit:r*0.40, rad:r*0.68, hue:"rgba(224,212,255,0.95)"},
-      {angle:2.3, speed:-0.42,orbit:r*0.30, rad:r*0.58, hue:"rgba(150,130,255,0.85)"},
-      {angle:4.1, speed:0.68, orbit:r*0.34, rad:r*0.5,  hue:"rgba(103,119,232,0.85)"},
-      {angle:1.2, speed:-0.3, orbit:r*0.22, rad:r*0.42, hue:"rgba(196,168,255,0.75)"},
-      {angle:3.4, speed:0.36, orbit:r*0.44, rad:r*0.36, hue:"rgba(76,95,213,0.7)"},
-    ];
+    const sphereR=r*0.86;
+    const focal=sphereR*3.2;
+
+    // Build several tilted great-circle ribbons on a unit sphere (static
+    // in local space — only the camera-facing rotation changes per frame).
+    const N_CURVES=7, PTS=72;
+    const curves:{x:number;y:number;z:number}[][]=[];
+    for(let c=0;c<N_CURVES;c++){
+      const tiltX=(c/N_CURVES)*Math.PI*1.15+0.3;
+      const tiltZ=(c*2.4)%Math.PI;
+      const pts:{x:number;y:number;z:number}[]=[];
+      for(let i=0;i<=PTS;i++){
+        const a=(i/PTS)*Math.PI*2;
+        const x=Math.cos(a),y=Math.sin(a),z=0;
+        const y1=y*Math.cos(tiltX)-z*Math.sin(tiltX);
+        const z1=y*Math.sin(tiltX)+z*Math.cos(tiltX);
+        const x2=x*Math.cos(tiltZ)-y1*Math.sin(tiltZ);
+        const y2=x*Math.sin(tiltZ)+y1*Math.cos(tiltZ);
+        pts.push({x:x2,y:y2,z:z1});
+      }
+      curves.push(pts);
+    }
+
+    function rotate(p:{x:number;y:number;z:number},yaw:number,pitch:number){
+      const x=p.x*Math.cos(yaw)-p.z*Math.sin(yaw);
+      const z0=p.x*Math.sin(yaw)+p.z*Math.cos(yaw);
+      const y=p.y*Math.cos(pitch)-z0*Math.sin(pitch);
+      const z=p.y*Math.sin(pitch)+z0*Math.cos(pitch);
+      return{x,y,z};
+    }
+
     let raf=0,t=0;
     function frame(){
-      t+=0.014;
+      t+=0.012;
       ctx!.clearRect(0,0,size,size);
       ctx!.save();
       ctx!.beginPath();
       ctx!.arc(r,r,r,0,Math.PI*2);
       ctx!.clip();
-      const base=ctx!.createRadialGradient(r*0.6,r*0.55,r*0.05,r,r,r*1.05);
-      base.addColorStop(0,"#2E1878");
-      base.addColorStop(0.6,"#1A0F52");
-      base.addColorStop(1,"#0E0730");
-      ctx!.fillStyle=base;
+
+      const bg=ctx!.createRadialGradient(r*0.6,r*0.55,r*0.05,r,r,r*1.05);
+      bg.addColorStop(0,"#241958");
+      bg.addColorStop(0.65,"#150F3E");
+      bg.addColorStop(1,"#0A0826");
+      ctx!.fillStyle=bg;
       ctx!.fillRect(0,0,size,size);
+
       ctx!.globalCompositeOperation="lighter";
-      blobs.forEach(b=>{
-        const a=b.angle+t*b.speed;
-        const x=r+Math.cos(a)*b.orbit;
-        const y=r+Math.sin(a*1.4)*b.orbit*0.9;
-        const grad=ctx!.createRadialGradient(x,y,0,x,y,b.rad);
-        grad.addColorStop(0,b.hue);
-        grad.addColorStop(1,"rgba(0,0,0,0)");
-        ctx!.fillStyle=grad;
+      const yaw=t*0.9, pitch=Math.sin(t*0.4)*0.35+0.15;
+      let brightest:{x:number;y:number}|null=null, brightestZ=-Infinity;
+
+      curves.forEach((pts,ci)=>{
         ctx!.beginPath();
-        ctx!.arc(x,y,b.rad,0,Math.PI*2);
-        ctx!.fill();
+        pts.forEach((p,i)=>{
+          const rp=rotate(p,yaw+ci*0.15,pitch);
+          const scale=focal/(focal+rp.z*sphereR);
+          const px=r+rp.x*sphereR*scale;
+          const py=r+rp.y*sphereR*scale*0.98;
+          if(i===0)ctx!.moveTo(px,py);else ctx!.lineTo(px,py);
+          if(rp.z>brightestZ){brightestZ=rp.z;brightest={x:px,y:py};}
+        });
+        const depth=0.35+0.5*Math.sin(t*0.6+ci);
+        ctx!.strokeStyle=`rgba(${170+depth*70},${170+depth*70},255,${0.35+depth*0.3})`;
+        ctx!.lineWidth=Math.max(0.6,size*0.014);
+        ctx!.stroke();
       });
       ctx!.globalCompositeOperation="source-over";
-      const hl=ctx!.createRadialGradient(r*0.62,r*0.5,0,r*0.62,r*0.5,r*0.55);
-      hl.addColorStop(0,"rgba(255,255,255,0.3)");
-      hl.addColorStop(1,"rgba(255,255,255,0)");
-      ctx!.fillStyle=hl;
-      ctx!.beginPath();
-      ctx!.arc(r,r,r,0,Math.PI*2);
-      ctx!.fill();
+
+      if(brightest){
+        const glint=ctx!.createRadialGradient(brightest.x,brightest.y,0,brightest.x,brightest.y,r*0.5);
+        glint.addColorStop(0,"rgba(255,255,255,0.65)");
+        glint.addColorStop(1,"rgba(255,255,255,0)");
+        ctx!.fillStyle=glint;
+        ctx!.beginPath();
+        ctx!.arc(r,r,r,0,Math.PI*2);
+        ctx!.fill();
+      }
       ctx!.restore();
       raf=requestAnimationFrame(frame);
     }
