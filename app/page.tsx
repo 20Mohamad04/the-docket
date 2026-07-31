@@ -1843,6 +1843,74 @@ function TimelineRow({item,onCheck}:{
   );
 }
 
+// ── Flowing plasma orb (canvas) ────────────────────────────────────────────────
+function FlowingOrb({size=52}:{size?:number}){
+  const canvasRef=React.useRef<HTMLCanvasElement>(null);
+  useEffect(()=>{
+    const canvas=canvasRef.current;
+    if(!canvas)return;
+    const ctx=canvas.getContext("2d");
+    if(!ctx)return;
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=size*dpr;
+    canvas.height=size*dpr;
+    ctx.scale(dpr,dpr);
+    const r=size/2;
+    // Blobs of glowing colour that orbit and drift inside the sphere,
+    // additively blended so overlaps brighten — this is what gives the
+    // "flowing energy" look rather than a flat static gradient.
+    const blobs=[
+      {angle:0.0, speed:0.55, orbit:r*0.40, rad:r*0.68, hue:"rgba(224,212,255,0.95)"},
+      {angle:2.3, speed:-0.42,orbit:r*0.30, rad:r*0.58, hue:"rgba(150,130,255,0.85)"},
+      {angle:4.1, speed:0.68, orbit:r*0.34, rad:r*0.5,  hue:"rgba(103,119,232,0.85)"},
+      {angle:1.2, speed:-0.3, orbit:r*0.22, rad:r*0.42, hue:"rgba(196,168,255,0.75)"},
+      {angle:3.4, speed:0.36, orbit:r*0.44, rad:r*0.36, hue:"rgba(76,95,213,0.7)"},
+    ];
+    let raf=0,t=0;
+    function frame(){
+      t+=0.014;
+      ctx!.clearRect(0,0,size,size);
+      ctx!.save();
+      ctx!.beginPath();
+      ctx!.arc(r,r,r,0,Math.PI*2);
+      ctx!.clip();
+      const base=ctx!.createRadialGradient(r*0.6,r*0.55,r*0.05,r,r,r*1.05);
+      base.addColorStop(0,"#2E1878");
+      base.addColorStop(0.6,"#1A0F52");
+      base.addColorStop(1,"#0E0730");
+      ctx!.fillStyle=base;
+      ctx!.fillRect(0,0,size,size);
+      ctx!.globalCompositeOperation="lighter";
+      blobs.forEach(b=>{
+        const a=b.angle+t*b.speed;
+        const x=r+Math.cos(a)*b.orbit;
+        const y=r+Math.sin(a*1.4)*b.orbit*0.9;
+        const grad=ctx!.createRadialGradient(x,y,0,x,y,b.rad);
+        grad.addColorStop(0,b.hue);
+        grad.addColorStop(1,"rgba(0,0,0,0)");
+        ctx!.fillStyle=grad;
+        ctx!.beginPath();
+        ctx!.arc(x,y,b.rad,0,Math.PI*2);
+        ctx!.fill();
+      });
+      ctx!.globalCompositeOperation="source-over";
+      const hl=ctx!.createRadialGradient(r*0.62,r*0.5,0,r*0.62,r*0.5,r*0.55);
+      hl.addColorStop(0,"rgba(255,255,255,0.3)");
+      hl.addColorStop(1,"rgba(255,255,255,0)");
+      ctx!.fillStyle=hl;
+      ctx!.beginPath();
+      ctx!.arc(r,r,r,0,Math.PI*2);
+      ctx!.fill();
+      ctx!.restore();
+      raf=requestAnimationFrame(frame);
+    }
+    frame();
+    return()=>cancelAnimationFrame(raf);
+  },[size]);
+  return<canvas ref={canvasRef}
+    style={{width:size,height:size,borderRadius:"50%",display:"block"}}/>;
+}
+
 // ── Chatbot ──────────────────────────────────────────────────────────────────
 function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;}){
   const{t,dark}=useApp();
@@ -2062,38 +2130,10 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 </div>
 
                 {/* Animated flowing energy orb */}
-                <div style={{width:expanded?76:52,height:expanded?76:52,
-                  marginBottom:expanded?12:8,position:"relative",transition:"all 0.3s",
-                  filter:"drop-shadow(0 0 24px rgba(134,112,232,0.65)) drop-shadow(0 0 46px rgba(76,95,213,0.35))"}}>
-                  <svg viewBox="0 0 100 100" style={{width:"100%",height:"100%",display:"block"}}>
-                    <defs>
-                      <radialGradient id="orbBase" cx="35%" cy="32%" r="75%">
-                        <stop offset="0%" stopColor="#DED0FF"/>
-                        <stop offset="45%" stopColor="#8670E8"/>
-                        <stop offset="100%" stopColor="#241058"/>
-                      </radialGradient>
-                      <filter id="orbNoise" x="-50%" y="-50%" width="200%" height="200%">
-                        <feTurbulence type="fractalNoise" baseFrequency="0.014 0.05" numOctaves="2" seed="6" result="noise">
-                          <animate attributeName="baseFrequency" dur="16s"
-                            values="0.014 0.05;0.024 0.07;0.014 0.05" repeatCount="indefinite"/>
-                        </feTurbulence>
-                        <feDisplacementMap in="SourceGraphic" in2="noise" scale="16"/>
-                      </filter>
-                    </defs>
-                    <circle cx="50" cy="50" r="46" fill="url(#orbBase)"/>
-                    <g filter="url(#orbNoise)" opacity="0.9">
-                      <circle cx="50" cy="50" r="43" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.6">
-                        <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="17s" repeatCount="indefinite"/>
-                      </circle>
-                      <circle cx="50" cy="50" r="36" fill="none" stroke="rgba(210,195,255,0.5)" strokeWidth="1.3">
-                        <animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="11s" repeatCount="indefinite"/>
-                      </circle>
-                      <circle cx="50" cy="50" r="27" fill="none" stroke="rgba(150,130,255,0.45)" strokeWidth="1.5">
-                        <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="8s" repeatCount="indefinite"/>
-                      </circle>
-                    </g>
-                    <circle cx="37" cy="33" r="9" fill="rgba(255,255,255,0.35)" style={{filter:"blur(3px)"}}/>
-                  </svg>
+                <div style={{marginBottom:expanded?12:8,
+                  filter:"drop-shadow(0 0 24px rgba(134,112,232,0.65)) drop-shadow(0 0 46px rgba(76,95,213,0.35))",
+                  transition:"all 0.3s"}}>
+                  <FlowingOrb size={expanded?76:52}/>
                 </div>
 
                 <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
