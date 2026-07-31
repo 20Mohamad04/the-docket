@@ -1909,7 +1909,7 @@ function FlowingOrb({size=52}:{size?:number}){
 
       ctx!.globalCompositeOperation="lighter";
       const yaw=t*0.9, pitch=Math.sin(t*0.4)*0.35+0.15;
-      let brightest:{x:number;y:number}|null=null, brightestZ=-Infinity;
+      let foundBright=false, brightX=0, brightY=0, brightestZ=-Infinity;
 
       curves.forEach((pts,ci)=>{
         ctx!.beginPath();
@@ -1919,7 +1919,7 @@ function FlowingOrb({size=52}:{size?:number}){
           const px=r+rp.x*sphereR*scale;
           const py=r+rp.y*sphereR*scale*0.98;
           if(i===0)ctx!.moveTo(px,py);else ctx!.lineTo(px,py);
-          if(rp.z>brightestZ){brightestZ=rp.z;brightest={x:px,y:py};}
+          if(rp.z>brightestZ){brightestZ=rp.z;brightX=px;brightY=py;foundBright=true;}
         });
         const depth=0.35+0.5*Math.sin(t*0.6+ci);
         ctx!.strokeStyle=`rgba(${170+depth*70},${170+depth*70},255,${0.35+depth*0.3})`;
@@ -1928,8 +1928,8 @@ function FlowingOrb({size=52}:{size?:number}){
       });
       ctx!.globalCompositeOperation="source-over";
 
-      if(brightest){
-        const glint=ctx!.createRadialGradient(brightest.x,brightest.y,0,brightest.x,brightest.y,r*0.5);
+      if(foundBright){
+        const glint=ctx!.createRadialGradient(brightX,brightY,0,brightX,brightY,r*0.5);
         glint.addColorStop(0,"rgba(255,255,255,0.65)");
         glint.addColorStop(1,"rgba(255,255,255,0)");
         ctx!.fillStyle=glint;
