@@ -389,6 +389,43 @@ function computeStreak(r:Routine){
 function defaultTasks():Task[]{ return []; }
 function defaultRoutines():Routine[]{ return []; }
 
+// ── Supabase row <-> app-state mapping (cloud sync) ─────────────────────────
+function taskToRow(t:Task,userId:string){
+  return{
+    id:t.id,user_id:userId,title:t.title,category:t.category,priority:t.priority,
+    type:t.type,date:t.date||null,time:t.time||null,recurring:t.recurring||null,
+    notes:t.notes||null,done:t.done,deleted:t.deleted,checklist:t.checklist,
+  };
+}
+function rowToTask(r:any):Task{
+  return{
+    id:r.id,title:r.title,category:r.category,priority:r.priority,type:r.type,
+    date:r.date||"",time:r.time||"",recurring:r.recurring||"",notes:r.notes||"",
+    done:!!r.done,deleted:!!r.deleted,checklist:r.checklist||[],
+  };
+}
+function routineToRow(r:Routine,userId:string){
+  return{
+    id:r.id,user_id:userId,label:r.label,category:r.category,days:r.days,
+    time:r.time||null,duration:r.duration,intensity:r.intensity,notes:r.notes||null,
+    completions:r.completions||{},
+  };
+}
+function rowToRoutine(r:any):Routine{
+  return{
+    id:r.id,label:r.label,category:r.category,days:r.days||[],time:r.time||"",
+    duration:r.duration||0,intensity:(r.intensity as any)||"normal",notes:r.notes||"",
+    completions:r.completions||{},
+  };
+}
+async function getSupabaseClient(){
+  const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if(!url||!key)return null;
+  const{createClient}=await import("@supabase/supabase-js");
+  return createClient(url,key);
+}
+
 // ── Shared small components ──────────────────────────────────────────────────
 
 function CatPill({category,done}:{category:string;done?:boolean}){
@@ -843,8 +880,8 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
 // ── Drawer ───────────────────────────────────────────────────────────────────
 function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
   modal:string;onClose:()=>void;dark:boolean;
-  user:{name:string;email:string;avatar?:string}|null;
-  onUserChange:(u:{name:string;email:string;avatar?:string}|null)=>void;
+  user:{name:string;email:string;avatar?:string;id?:string}|null;
+  onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
   onNavigate?:(m:string)=>void;
 }){
   const C=getC(dark);
@@ -903,7 +940,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
         }
         if(data.user){
           const displayName=data.user.user_metadata?.full_name||data.user.email?.split("@")[0]||"User";
-          onUserChange({name:displayName,email:data.user.email||"",avatar:data.user.user_metadata?.avatar_url});
+          onUserChange({name:displayName,email:data.user.email||"",avatar:data.user.user_metadata?.avatar_url,id:data.user.id});
           setAuthStatus("success");
           setAuthMsg("Welcome back, "+displayName+"!");
           setTimeout(()=>onClose(),1500);
@@ -1598,8 +1635,8 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
 function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChange}:{
   isOpen:boolean;onClose:()=>void;currentView:View;setView:(v:View)=>void;
   onOpenModal:(m:string)=>void;
-  user:{name:string;email:string;avatar?:string}|null;
-  onUserChange:(u:{name:string;email:string;avatar?:string}|null)=>void;
+  user:{name:string;email:string;avatar?:string;id?:string}|null;
+  onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
 }){
   const{t,dark}=useApp();
   const C=getC(dark);
@@ -2779,7 +2816,7 @@ export default function Home(){
     document.body.style.overflow=(isDrawerOpen||!!activeModal||onboarding)?"hidden":"";
     return()=>{document.body.style.overflow="";};
   },[isDrawerOpen,activeModal,onboarding]);
-  const[user,setUser]=useState<{name:string;email:string;avatar?:string}|null>(null);
+  const[user,setUser]=useState<{name:string;email:string;avatar?:string;id?:string}|null>(null);
   const[showWelcome,setShowWelcome]=useState(false);
   const[welcomeMsg,setWelcomeMsg]=useState("");
   const[obStep,setObStep]=useState(0);
@@ -2831,13 +2868,13 @@ export default function Home(){
           if(session?.user){
             const u=session.user;
             const displayName=u.user_metadata?.full_name||u.email?.split("@")[0]||"User";
-            setUser({name:displayName,email:u.email||"",avatar:u.user_metadata?.avatar_url});
+            setUser({name:displayName,email:u.email||"",avatar:u.user_metadata?.avatar_url,id:u.id});
           }
           sb.auth.onAuthStateChange((event,session)=>{
             if(session?.user){
               const u=session.user;
               const displayName=u.user_metadata?.full_name||u.email?.split("@")[0]||"User";
-              setUser({name:displayName,email:u.email||"",avatar:u.user_metadata?.avatar_url});
+              setUser({name:displayName,email:u.email||"",avatar:u.user_metadata?.avatar_url,id:u.id});
               // Only show welcome on explicit sign in, not on page load session restore
               if(event==="SIGNED_IN"){
                 const firstName=displayName.split(" ")[0];
@@ -2860,6 +2897,67 @@ export default function Home(){
   },[]);
   useEffect(()=>{if(isLoaded)localStorage.setItem(STORAGE_TASKS,JSON.stringify(tasks));},[tasks,isLoaded]);
   useEffect(()=>{if(isLoaded)localStorage.setItem(STORAGE_ROUTINES,JSON.stringify(routines));},[routines,isLoaded]);
+
+  // ── Cloud sync (Supabase) — only for real signed-in accounts, not guests ──
+  const cloudSyncingRef=React.useRef(false); // guard: true while pulling cloud data down, to skip the immediate echo-push back up
+  const prevRoutineIdsRef=React.useRef<number[]>([]);
+
+  async function loadCloudData(userId:string){
+    const sb=await getSupabaseClient();
+    if(!sb)return;
+    const[{data:cloudTasks},{data:cloudRoutines}]=await Promise.all([
+      sb.from("tasks").select("*").eq("user_id",userId),
+      sb.from("routines").select("*").eq("user_id",userId),
+    ]);
+    cloudSyncingRef.current=true;
+    const hasCloudTasks=!!cloudTasks&&cloudTasks.length>0;
+    const hasCloudRoutines=!!cloudRoutines&&cloudRoutines.length>0;
+    if(hasCloudTasks||hasCloudRoutines){
+      // Account already has cloud data (e.g. signing in on a second device) — cloud wins
+      if(hasCloudTasks)setTasks(cloudTasks!.map(rowToTask));
+      if(hasCloudRoutines){
+        const mapped=cloudRoutines!.map(rowToRoutine);
+        setRoutines(mapped);
+        prevRoutineIdsRef.current=mapped.map(r=>r.id);
+      }
+    }else{
+      // First time this account has synced — push whatever's on this device up
+      if(tasks.length>0) await sb.from("tasks").upsert(tasks.map(t=>taskToRow(t,userId)));
+      if(routines.length>0){
+        await sb.from("routines").upsert(routines.map(r=>routineToRow(r,userId)));
+        prevRoutineIdsRef.current=routines.map(r=>r.id);
+      }
+    }
+    setTimeout(()=>{cloudSyncingRef.current=false;},300);
+  }
+
+  useEffect(()=>{
+    if(user?.id&&isLoaded) loadCloudData(user.id);
+  },[user?.id,isLoaded]);
+
+  useEffect(()=>{
+    if(!isLoaded||!user?.id||cloudSyncingRef.current)return;
+    const uid=user.id;
+    (async()=>{
+      const sb=await getSupabaseClient();
+      if(!sb||tasks.length===0)return;
+      await sb.from("tasks").upsert(tasks.map(t=>taskToRow(t,uid)));
+    })();
+  },[tasks,isLoaded,user?.id]);
+
+  useEffect(()=>{
+    if(!isLoaded||!user?.id||cloudSyncingRef.current)return;
+    const uid=user.id;
+    (async()=>{
+      const sb=await getSupabaseClient();
+      if(!sb)return;
+      if(routines.length>0) await sb.from("routines").upsert(routines.map(r=>routineToRow(r,uid)));
+      const currentIds=routines.map(r=>r.id);
+      const removed=prevRoutineIdsRef.current.filter(id=>!currentIds.includes(id));
+      if(removed.length>0) await sb.from("routines").delete().in("id",removed);
+      prevRoutineIdsRef.current=currentIds;
+    })();
+  },[routines,isLoaded,user?.id]);
 
   // Load prayer setting from storage
   useEffect(()=>{
