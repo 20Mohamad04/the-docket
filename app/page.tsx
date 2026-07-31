@@ -1843,97 +1843,24 @@ function TimelineRow({item,onCheck}:{
   );
 }
 
-// ── Flowing liquid-marble energy orb (canvas) ──────────────────────────────────
-// Renders a small pixel grid every frame where each pixel's colour comes from
-// layered sine waves (a cheap "domain warp" noise), mapped through a
-// blue→cyan→white palette, then smoothly upscaled — this is what produces a
-// filled, continuously swirling ball of colour instead of sparse lines/blobs.
+// ── Flowing energy orb (Higgsfield-generated image, CSS-animated) ──────────────
+// Uses the approved AI-generated orb artwork, spun continuously inside a
+// circular mask with a slow brightness/saturation pulse for a glowing,
+// breathing feel — no per-frame canvas work needed.
+const ORB_IMAGE_URL="https://d8j0ntlcm91z4.cloudfront.net/user_3FPDGKTdpQKgIxpcrRSiSDHLYrZ/hf_20260731_133525_ace7cb33-58d0-4533-a16a-0c0098c72b4b.png";
 function FlowingOrb({size=52}:{size?:number}){
-  const canvasRef=React.useRef<HTMLCanvasElement>(null);
-  useEffect(()=>{
-    const canvas=canvasRef.current;
-    if(!canvas)return;
-    const ctx=canvas.getContext("2d");
-    if(!ctx)return;
-    const dpr=Math.min(window.devicePixelRatio||1,2);
-    canvas.width=size*dpr;
-    canvas.height=size*dpr;
-    ctx.scale(dpr,dpr);
-    ctx.imageSmoothingEnabled=true;
-
-    const GRID=44;
-    const off=document.createElement("canvas");
-    off.width=GRID;off.height=GRID;
-    const octx=off.getContext("2d");
-    if(!octx)return;
-    const img=octx.createImageData(GRID,GRID);
-
-    // Colour palette: deep indigo → violet → blue → cyan → near-white
-    const stops:[number,number,number,number][]=[
-      [-1.0, 18, 14, 54],
-      [-0.35,52, 46,150],
-      [0.05, 80,102,224],
-      [0.4, 118,178,255],
-      [0.72,196,230,255],
-      [1.0, 255,255,255],
-    ];
-    function palette(v:number){
-      v=Math.max(-1,Math.min(1,v));
-      for(let i=0;i<stops.length-1;i++){
-        const a=stops[i],b=stops[i+1];
-        if(v>=a[0]&&v<=b[0]){
-          const f=(v-a[0])/(b[0]-a[0]);
-          return[a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f,a[3]+(b[3]-a[3])*f];
-        }
-      }
-      return[255,255,255];
-    }
-
-    let raf=0,t=0;
-    function frame(){
-      t+=0.018;
-      const data=img.data;
-      for(let gy=0;gy<GRID;gy++){
-        for(let gx=0;gx<GRID;gx++){
-          const x=(gx/(GRID-1))*2-1, y=(gy/(GRID-1))*2-1;
-          const d=Math.sqrt(x*x+y*y);
-          const idx=(gy*GRID+gx)*4;
-          if(d>1.06){data[idx+3]=0;continue;}
-          const angle=Math.atan2(y,x);
-          const n1=Math.sin(x*3.2+t*0.7)+Math.sin(y*2.7-t*0.55);
-          const n2=Math.sin((x*0.6+y*0.9)*3.0+t*0.9);
-          const swirl=Math.sin(angle*3+d*4-t*1.2);
-          const grain=Math.sin(x*9+y*9+t*2)*0.15;
-          const v=(n1*0.4+n2*0.35+swirl*0.6+grain)/1.35;
-          const shade=0.55+0.45*(1-d);
-          const[rr,gg,bb]=palette(v);
-          data[idx]=rr*shade;
-          data[idx+1]=gg*shade;
-          data[idx+2]=bb*shade;
-          data[idx+3]=d>0.94?Math.max(0,(1-(d-0.94)/0.12))*255:255;
-        }
-      }
-      octx!.putImageData(img,0,0);
-      ctx!.clearRect(0,0,size,size);
-      ctx!.save();
-      ctx!.beginPath();
-      ctx!.arc(size/2,size/2,size/2,0,Math.PI*2);
-      ctx!.clip();
-      ctx!.drawImage(off,0,0,GRID,GRID,0,0,size,size);
-      // soft specular highlight for a glassy finish
-      const hl=ctx!.createRadialGradient(size*0.34,size*0.3,0,size*0.34,size*0.3,size*0.5);
-      hl.addColorStop(0,"rgba(255,255,255,0.35)");
-      hl.addColorStop(1,"rgba(255,255,255,0)");
-      ctx!.fillStyle=hl;
-      ctx!.fillRect(0,0,size,size);
-      ctx!.restore();
-      raf=requestAnimationFrame(frame);
-    }
-    frame();
-    return()=>cancelAnimationFrame(raf);
-  },[size]);
-  return<canvas ref={canvasRef}
-    style={{width:size,height:size,borderRadius:"50%",display:"block"}}/>;
+  return(
+    <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",
+      flexShrink:0,boxShadow:"0 0 24px rgba(134,112,232,0.65), 0 0 46px rgba(76,95,213,0.35)"}}>
+      <style>{`
+        @keyframes orbSpin{from{transform:rotate(0deg) scale(1.35)}to{transform:rotate(360deg) scale(1.35)}}
+        @keyframes orbPulseGlow{0%,100%{filter:brightness(1) saturate(1)}50%{filter:brightness(1.18) saturate(1.3)}}
+      `}</style>
+      <img src={ORB_IMAGE_URL} alt=""
+        style={{width:"100%",height:"100%",objectFit:"cover",display:"block",
+          animation:"orbSpin 14s linear infinite, orbPulseGlow 4s ease-in-out infinite"}}/>
+    </div>
+  );
 }
 
 // ── Chatbot ──────────────────────────────────────────────────────────────────
