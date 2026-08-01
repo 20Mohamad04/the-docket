@@ -1152,7 +1152,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
                 borderRadius:12,border:`1px solid ${C.border}`,background:C.surface2,
                 cursor:"pointer",color:C.navy,fontSize:13,fontWeight:600}}>
               <i className="ti ti-crown" style={{fontSize:16,color:"#C9A84C"}} aria-hidden="true"/>
-              Upgrade to Pro — £4.99/mo
+              Try Pro Free for 7 Days
             </button>
             <button onClick={handleSignOut}
               style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
@@ -1410,23 +1410,30 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
             display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
             <i className="ti ti-crown" style={{fontSize:22,color:"#FFD700"}} aria-hidden="true"/></div>
           <div>
+            <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:600,fontSize:11.5,
+              color:"rgba(255,255,255,0.85)",letterSpacing:"0.3px",marginBottom:2}}>Never miss what matters</p>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:18,
-              color:"white",marginBottom:2}}>The Docket Pro</p>
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              color:"white",marginBottom:4}}>The Docket Pro</p>
+            <div style={{display:"flex",alignItems:"baseline",gap:6,flexWrap:"wrap"}}>
               <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
                 fontSize:22,color:"white"}}>£4.99</span>
-              <span style={{fontSize:12,color:"rgba(255,255,255,0.75)"}}>/ month</span>
-              <span style={{background:"rgba(255,255,255,0.2)",color:"white",
-                padding:"2px 8px",borderRadius:50,fontSize:10,fontWeight:700}}>7-day free trial</span>
+              <span style={{fontSize:12,color:"rgba(255,255,255,0.75)"}}>/month · 16p a day</span>
             </div>
           </div>
+        </div>
+        <div style={{padding:"10px 20px",background:dark?"rgba(46,139,87,0.14)":"#E9F7EF",
+          borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+          <i className="ti ti-shield-check" style={{fontSize:16,color:"#2E8B57",flexShrink:0}} aria-hidden="true"/>
+          <p style={{fontSize:11.5,color:dark?"#8ADAA8":"#1A5235",fontWeight:600,lineHeight:1.4}}>
+            Free for 7 days — you won't be charged a penny until day 7, and you can cancel in two taps before then.
+          </p>
         </div>
         {/* Scrollable content */}
         <div style={{flex:1,overflowY:"auto",padding:"16px 20px"}}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
-            {[{icon:"ti-sparkles",title:"Unlimited AI",desc:"Ask anything, anytime"},{icon:"ti-devices",title:"All Devices",desc:"Sync everywhere"},
-              {icon:"ti-moon-stars",title:"Auto Prayer",desc:"Always accurate"},{icon:"ti-chart-bar",title:"Analytics",desc:"Productivity insights"},
-              {icon:"ti-headset",title:"Priority Support",desc:"24h response"},{icon:"ti-rocket",title:"Early Access",desc:"First to new features"}].map((f,i)=>(
+            {[{icon:"ti-sparkles",title:"Unlimited AI",desc:"No daily cap — ask anything"},{icon:"ti-devices",title:"Every Device",desc:"Same Docket, always synced"},
+              {icon:"ti-moon-stars",title:"Auto Prayer Times",desc:"Exact times, zero setup"},{icon:"ti-chart-bar",title:"Insights",desc:"See where your time goes"},
+              {icon:"ti-headset",title:"Real Support",desc:"Reply within 24h, from a human"},{icon:"ti-rocket",title:"Early Access",desc:"New features first"}].map((f,i)=>(
               <div key={i} style={{padding:"10px 12px",borderRadius:10,
                 background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",
                 border:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:10}}>
@@ -1446,12 +1453,12 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
               <p style={{fontSize:10,fontWeight:700,color:C.primary,textTransform:"uppercase",textAlign:"center"}}>Pro</p>
             </div>
             {[["Tasks & Routines","Unlimited","Unlimited"],["AI Requests","10/day","Unlimited"],
-              ["Device Sync","This device","All devices"],["Prayer Times","Manual","Auto"],
+              ["Device Sync","This device only","All devices"],["Prayer Times","Manual","Auto"],
               ["Support","Community","Priority 24h"]].map(([feat,free,pro],i)=>(
               <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",
                 padding:"8px 14px",borderTop:`1px solid ${C.border}`}}>
                 <p style={{fontSize:11.5,color:C.navy}}>{feat}</p>
-                <p style={{fontSize:11.5,color:C.muted,textAlign:"center"}}>{free}</p>
+                <p style={{fontSize:11.5,color:i===1||i===2?C.urgent:C.muted,fontWeight:i===1||i===2?600:400,textAlign:"center"}}>{free}</p>
                 <p style={{fontSize:11.5,color:C.primary,fontWeight:700,textAlign:"center"}}>{pro}</p>
               </div>
             ))}
@@ -1472,7 +1479,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
             style={{width:"100%",padding:"13px",fontSize:14,fontWeight:800,
               background:"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",color:"white",border:"none",
               boxShadow:"0 6px 20px rgba(76,95,213,0.45)"}}>
-            {user?"Start Free Trial — £4.99/mo after":"Sign in to Subscribe"}
+            {user?"Start My Free 7 Days →":"Sign in to Start Free Trial"}
           </button>
           {!user&&(
             <p style={{textAlign:"center",fontSize:12,color:C.urgent,marginTop:8,fontWeight:600}}>
@@ -1480,7 +1487,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
             </p>
           )}
           <p style={{textAlign:"center",fontSize:11,color:C.muted2,marginTop:6}}>
-            Cancel anytime · No hidden fees · Secure payment via Stripe 🔒
+            Cancel anytime, no questions asked · Your tasks stay yours either way · Secure payment via Stripe 🔒
           </p>
         </div>
       </div>
@@ -2691,9 +2698,9 @@ function OnboardingScreen({onComplete,dark}:{onComplete:(name:string,goals:strin
             <i className="ti ti-crown" style={{fontSize:22,color:"white"}} aria-hidden="true"/>
           </div>
           <div style={{textAlign:"left"}}>
-            <p style={{fontWeight:700,fontSize:15,color:C.primary,marginBottom:2}}>The Docket Pro — £4.99/mo</p>
+            <p style={{fontWeight:700,fontSize:15,color:C.primary,marginBottom:2}}>Try Pro free for 7 days</p>
             <p style={{fontSize:12,color:C.muted,lineHeight:1.4}}>
-              Unlimited AI · Cloud sync · All devices · Priority support
+              Then £4.99/mo (16p a day) · Unlimited AI · Sync everywhere · Cancel anytime
             </p>
           </div>
         </div>
