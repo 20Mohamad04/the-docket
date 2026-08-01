@@ -3248,10 +3248,13 @@ export default function Home(){
       {showSettings&&(
         <>
         <div onClick={()=>setShowSettings(false)}
-          style={{position:"fixed",inset:0,zIndex:14}}/>
+          style={{position:"fixed",inset:0,zIndex:14,background:"rgba(20,20,35,0.25)",backdropFilter:"blur(3px)"}}/>
         <div style={{position:"fixed",top:88,left:0,right:0,zIndex:15,maxWidth:1100,margin:"0 auto",
           padding:"0 20px 16px",maxHeight:"calc(100vh - 100px)",overflowY:"auto"}}>
-          <div className="glass" style={{borderRadius:20,padding:"24px 26px"}}>
+          <div style={{borderRadius:20,padding:"24px 26px",
+            background:dark?"#181B2E":"#FFFFFF",
+            border:`1px solid ${C.border}`,
+            boxShadow:"0 24px 60px rgba(0,0,0,0.35)"}}>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
               fontSize:16,color:C.navy,marginBottom:14}}>{t("settings")}</p>
 
