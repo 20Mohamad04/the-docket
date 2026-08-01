@@ -893,6 +893,9 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
   const[name,setName]=useState("");
   const[authStatus,setAuthStatus]=useState<"idle"|"loading"|"success"|"error"|"confirm">("idle");
   const[authMsg,setAuthMsg]=useState("");
+  const[registerAgreed,setRegisterAgreed]=useState(false);
+  const[cameFromAuth,setCameFromAuth]=useState(false);
+  const[openFaq,setOpenFaq]=useState<string|null>(null);
 
   const SITE_URL=typeof window!=="undefined"?window.location.origin:"";
 
@@ -911,6 +914,9 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
     }
     if(authTab==="register"&&password.length<6){
       setAuthMsg("Password must be at least 6 characters.");setAuthStatus("error");return;
+    }
+    if(authTab==="register"&&!registerAgreed){
+      setAuthMsg("Please agree to the Terms & Conditions and Privacy Policy to continue.");setAuthStatus("error");return;
     }
     setAuthStatus("loading");setAuthMsg("");
     const sb=await getSB();
@@ -1332,6 +1338,20 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
               onBlur={e=>(e.target.style.borderColor=C.border)}
               onKeyDown={e=>e.key==="Enter"&&handleAuth()}/>
           )}
+          {authTab==="register"&&(
+            <label style={{display:"flex",alignItems:"flex-start",gap:9,marginBottom:14,cursor:"pointer"}}>
+              <input type="checkbox" checked={registerAgreed} onChange={e=>setRegisterAgreed(e.target.checked)}
+                style={{marginTop:2,width:15,height:15,flexShrink:0,accentColor:"#4C5FD5",cursor:"pointer"}}/>
+              <span style={{fontSize:11.5,color:C.muted,lineHeight:1.5}}>
+                I agree to the{" "}
+                <span onClick={e=>{e.preventDefault();setCameFromAuth(true);onNavigate?.("terms");}}
+                  style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>Terms & Conditions</span>
+                {" "}and{" "}
+                <span onClick={e=>{e.preventDefault();setCameFromAuth(true);onNavigate?.("privacy");}}
+                  style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>Privacy Policy</span>
+              </span>
+            </label>
+          )}
           {authMsg&&(
             <div style={{padding:"12px 14px",borderRadius:12,marginBottom:14,fontSize:13,
               lineHeight:1.5,
@@ -1507,17 +1527,73 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
           <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}><i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/></button>
         </div>
         <div style={{padding:"20px 24px",overflowY:"auto",flex:1}}>
-          {[{icon:"ti-sparkles",q:"How do I use the AI assistant?",a:"Tap the ✦ button bottom-right. Talk naturally — 'Add gym Monday at 7am', 'What's on tomorrow?'. It asks questions before making changes."},
-            {icon:"ti-moon-stars",q:"How do prayer times work?",a:"Tap ⚙️ Settings and toggle on Accurate Prayer Times. The app fetches real times from the Aladhan API using your location."},
-            {icon:"ti-bell",q:"Why aren't notifications working?",a:"Toggle notifications on in Settings. Your browser may also need permission — check browser settings and allow notifications for this site."},
-            {icon:"ti-devices",q:"Can I use it on multiple devices?",a:"Create an account to sync your data across all devices. Guest data stays local to your browser."},
-          ].map((faq,i)=>(
-            <div key={i} style={{marginBottom:10,borderRadius:14,overflow:"hidden",border:`1px solid ${C.border}`}}>
-              <div style={{display:"flex",gap:12,padding:"13px 16px",background:dark?"rgba(255,255,255,0.03)":"#F8F7FE",alignItems:"center"}}>
-                <i className={`ti ${faq.icon}`} style={{fontSize:17,color:C.primary,flexShrink:0}} aria-hidden="true"/>
-                <p style={{fontSize:13,fontWeight:700,color:C.navy}}>{faq.q}</p>
+          {[
+            {category:"Getting Started",icon:"ti-rocket",items:[
+              {q:"How do I add my first task?",a:"Tap the + button bottom-right, or just tell the AI assistant what you need — e.g. \"add a task to revise Land Law by Friday.\""},
+              {q:"What's the difference between a task and a routine?",a:"Tasks are one-off or ongoing items with a specific end, like an assignment or errand. Routines are recurring habits tied to specific days and times, like gym or prayer, and appear in your Daily Routine every week."},
+              {q:"Do I need an account to use The Docket?",a:"No. Guest mode gives you full access to tasks, routines, the calendar, and a limited AI assistant, with everything stored locally on your device. Create an account only when you want to sync across devices."},
+              {q:"Can I change the app's language?",a:"Yes — Settings supports English, Arabic, French, Turkish and Urdu, including full right-to-left layout for Arabic and Urdu."},
+            ]},
+            {category:"The AI Assistant",icon:"ti-sparkles",items:[
+              {q:"What can I ask the AI assistant to do?",a:"Add, edit, complete or delete tasks and routines; find free time in your schedule; break a big task into steps; and answer questions like \"what's on tomorrow?\" — all in plain English."},
+              {q:"Will it make changes without asking me first?",a:"For anything significant, like adding a new routine or rescheduling something, it confirms with you first. Simple things you explicitly asked for, like marking a task done, happen immediately."},
+              {q:"Is there a limit to how much I can use it?",a:"Free accounts get 10 AI requests a day. Pro removes that limit entirely."},
+              {q:"Can I undo something the AI did?",a:"Yes — just say \"undo\" and it will revert the last change it made."},
+            ]},
+            {category:"Tasks & Routines",icon:"ti-checkbox",items:[
+              {q:"How do I mark something as done?",a:"Tap the checkbox next to any task or routine in Daily Routine, All Tasks, or Calendar view."},
+              {q:"Where do finished or deleted items go?",a:"They move to Finished & Deleted in the sidebar, where you can review them or restore anything removed by mistake."},
+              {q:"Can I break a task into smaller steps?",a:"Yes — open any task and use the Steps section to add a checklist, or ask the AI assistant to do it for you."},
+              {q:"How accurate are the public holidays and Islamic dates on the Calendar?",a:"UK bank holidays and major awareness days are exact. Islamic dates (Ramadan, Eid, etc.) are estimates and may shift by a day depending on local moon sighting."},
+            ]},
+            {category:"Account & Sync",icon:"ti-devices",items:[
+              {q:"How do I sync my data across devices?",a:"Create a free account from the sidebar. Once signed in, your tasks and routines sync to the cloud automatically and appear on any device you sign into."},
+              {q:"I forgot my password — what do I do?",a:"On the sign-in screen, tap \"Forgot your password?\" and we'll email you a reset link."},
+              {q:"Can I change my name or password later?",a:"Yes — open Profile from the sidebar to update your display name or password at any time."},
+            ]},
+            {category:"Subscription & Billing",icon:"ti-crown",items:[
+              {q:"What does Pro actually unlock?",a:"Unlimited AI requests, sync across every device, automatic prayer times, productivity insights, and priority support — see the full comparison on the Subscription screen."},
+              {q:"When does my free trial end, and will I be charged automatically?",a:"Your trial lasts 7 days from when you start it. You won't be charged until it ends, and you can cancel anytime before then with nothing taken."},
+              {q:"How do I cancel my subscription?",a:"Open Profile from the sidebar and manage your subscription there. Cancellation takes effect at the end of your current billing period, so you keep Pro until then."},
+              {q:"Do you offer refunds?",a:"Since every subscription starts with a 7-day free trial, we generally don't refund charges made after that trial ends — but email support@thedocket.app if something's gone wrong and we'll take a look."},
+            ]},
+            {category:"Privacy & Data",icon:"ti-shield-lock",items:[
+              {q:"Is my data safe?",a:"Account data is encrypted in transit and at rest on EU servers. Guest data never leaves your device. See our full Privacy Policy for details."},
+              {q:"Do you sell my data or show ads?",a:"No. We don't sell data to third parties, and The Docket carries no advertising."},
+            ]},
+            {category:"Troubleshooting",icon:"ti-tool",items:[
+              {q:"The app won't load or looks broken.",a:"Try a hard refresh (Ctrl/Cmd + Shift + R), or clear your browser cache for this site. If it persists, email us your browser and device details."},
+              {q:"My tasks aren't syncing between devices.",a:"Make sure you're signed into the same account on both devices (not Guest mode) and have an internet connection — sync happens automatically in the background."},
+              {q:"Notifications aren't working.",a:"Toggle notifications on in Settings, then check your browser's site permissions — it needs explicit permission to show notifications for this site."},
+            ]},
+          ].map((cat,ci)=>(
+            <div key={ci} style={{marginBottom:18}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                <i className={`ti ${cat.icon}`} style={{fontSize:14,color:C.primary}} aria-hidden="true"/>
+                <p style={{fontSize:10.5,fontWeight:700,letterSpacing:"1px",color:C.muted2,
+                  textTransform:"uppercase"}}>{cat.category}</p>
               </div>
-              <div style={{padding:"12px 16px"}}><p style={{fontSize:12.5,color:C.muted,lineHeight:1.6}}>{faq.a}</p></div>
+              {cat.items.map((faq,i)=>{
+                const key=`${ci}-${i}`;
+                const open=openFaq===key;
+                return(
+                  <div key={key} style={{marginBottom:8,borderRadius:12,overflow:"hidden",border:`1px solid ${C.border}`}}>
+                    <button onClick={()=>setOpenFaq(open?null:key)}
+                      style={{width:"100%",display:"flex",gap:10,padding:"12px 14px",
+                        background:dark?"rgba(255,255,255,0.03)":"#F8F7FE",alignItems:"center",
+                        border:"none",cursor:"pointer",textAlign:"left"}}>
+                      <p style={{flex:1,fontSize:12.5,fontWeight:700,color:C.navy}}>{faq.q}</p>
+                      <i className={`ti ${open?"ti-chevron-up":"ti-chevron-down"}`}
+                        style={{fontSize:13,color:C.muted2,flexShrink:0}} aria-hidden="true"/>
+                    </button>
+                    {open&&(
+                      <div style={{padding:"12px 14px"}}>
+                        <p style={{fontSize:12,color:C.muted,lineHeight:1.6}}>{faq.a}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ))}
           <div style={{borderRadius:16,padding:"20px",marginTop:12,background:"linear-gradient(135deg,rgba(76,95,213,0.08),rgba(134,112,232,0.05))",border:`1px solid rgba(76,95,213,0.15)`}}>
@@ -1533,24 +1609,40 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
 
   if(modal==="privacy") return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:500,maxHeight:"88vh",boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:520,maxHeight:"88vh",boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,display:"flex",flexDirection:"column",overflow:"hidden"}}>
         <div style={{padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
+            {cameFromAuth&&(
+              <button onClick={()=>onNavigate?.("login")} style={{background:"none",border:"none",cursor:"pointer",color:C.muted,marginRight:2}}>
+                <i className="ti ti-arrow-left" style={{fontSize:18}} aria-hidden="true"/></button>
+            )}
             <div style={{width:40,height:40,borderRadius:11,background:"linear-gradient(145deg,#2E8B57,#1A5235)",display:"flex",alignItems:"center",justifyContent:"center"}}>
               <i className="ti ti-shield-lock" style={{fontSize:20,color:"white"}} aria-hidden="true"/></div>
-            <div><p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:17,color:C.navy}}>Privacy & Permissions</p>
-              <p style={{fontSize:11,color:C.muted}}>Your data, your control</p></div>
+            <div><p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:17,color:C.navy}}>Privacy Policy</p>
+              <p style={{fontSize:11,color:C.muted}}>Last updated August 2026</p></div>
           </div>
           <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}><i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/></button>
         </div>
         <div style={{padding:"20px 24px",overflowY:"auto",flex:1}}>
-          {[{icon:"ti-database",color:"#4C5FD5",title:"Data Storage",text:"Tasks stay on your device by default. With an account, data is encrypted on EU servers. We never sell your data."},
-            {icon:"ti-map-pin",color:"#2E8B57",title:"Location",text:"Used only for prayer times via Aladhan API. Never stored or shared."},
-            {icon:"ti-bell",color:"#C9A84C",title:"Notifications",text:"Only for scheduled reminders. Never marketing. Disable anytime in Settings."},
-            {icon:"ti-sparkles",color:"#8670E8",title:"AI Assistant",text:"Processed by Anthropic or Groq. No conversation data retained after your session."},
-            {icon:"ti-lock",color:"#D94F3D",title:"Security",text:"All data encrypted with TLS. Passwords hashed and never stored in plain text."},
+          <p style={{fontSize:12.5,color:C.muted,lineHeight:1.6,marginBottom:16}}>
+            This policy explains what personal data The Docket collects, why, and what rights you have over it under UK data protection law (UK GDPR).
+          </p>
+          {[
+            {icon:"ti-building",color:"#4C5FD5",title:"1. Who We Are",text:"The Docket is operated by [your legal or trading name], based in the United Kingdom. We are the data controller responsible for your personal data. Contact us at privacy@thedocket.app for anything data-related."},
+            {icon:"ti-database",color:"#4C5FD5",title:"2. What We Collect",text:"Account details (name, email); the tasks, routines and notes you create; your approximate location, only if you enable prayer times; and basic technical data (browser, device, IP address) needed to run the service securely."},
+            {icon:"ti-device-floppy",color:"#4C5FD5",title:"3. Guest vs Account Data",text:"As a guest, your tasks and routines stay only in your browser's local storage — we never see them. Creating an account syncs that same data to our encrypted database so you can access it from any device."},
+            {icon:"ti-settings",color:"#4C5FD5",title:"4. How We Use Your Data",text:"To provide the core service, process subscription payments, respond to support requests, and keep The Docket secure and working correctly. We do not use your data for advertising, and we never sell it."},
+            {icon:"ti-map-pin",color:"#2E8B57",title:"5. Location Data",text:"If you switch on Accurate Prayer Times, your device's coordinates are sent to the Aladhan prayer times API for that single calculation. We don't store your location, track your movement, or share it with anyone else."},
+            {icon:"ti-sparkles",color:"#8670E8",title:"6. The AI Assistant",text:"Messages you send to the Docket AI assistant are processed by our AI providers, Anthropic and/or Groq, to generate a response. We don't use your conversations to train AI models, and content isn't retained by us after your session ends."},
+            {icon:"ti-credit-card",color:"#C9A84C",title:"7. Payments",text:"Subscription payments are handled entirely by Stripe, a PCI-DSS compliant processor. We never see or store your full card details — only limited billing metadata, like subscription status, is shared back to us."},
+            {icon:"ti-server",color:"#4C5FD5",title:"8. Where Data Is Stored",text:"Account and task data is stored with Supabase on servers located in the EU, encrypted in transit and at rest. We only share data with the service providers named in this policy, where necessary to run The Docket."},
+            {icon:"ti-cookie",color:"#C9A84C",title:"9. Cookies & Local Storage",text:"We use browser local storage to keep the app working — your tasks, theme, and language preference. This is essential to the service and isn't used for tracking or third-party advertising."},
+            {icon:"ti-user-check",color:"#2E8B57",title:"10. Your Rights",text:"Under UK GDPR you can ask to access, correct, delete, or export your personal data, and object to or restrict certain processing. Email privacy@thedocket.app — we respond within 30 days. You can also complain to the ICO at ico.org.uk at any time."},
+            {icon:"ti-clock",color:"#4C5FD5",title:"11. Data Retention",text:"We keep your account data for as long as your account is active. If you delete your account, we delete your personal data within 30 days, except where we're legally required to retain billing records for longer (typically 6 years, under UK tax law)."},
+            {icon:"ti-shield",color:"#D94F3D",title:"12. Children's Privacy",text:"The Docket isn't directed at children under 16, and we don't knowingly collect data from anyone under that age. If you believe a child has given us personal data, contact us and we'll remove it."},
+            {icon:"ti-refresh",color:"#4C5FD5",title:"13. Changes to This Policy",text:"We may update this policy as the service evolves. Material changes will be flagged in the app. Continued use of The Docket after an update means you accept the revised policy."},
           ].map((item,i)=>(
-            <div key={i} style={{display:"flex",gap:14,padding:"16px 0",borderBottom:i<4?`1px solid ${C.border}`:"none"}}>
+            <div key={i} style={{display:"flex",gap:14,padding:"16px 0",borderBottom:i<12?`1px solid ${C.border}`:"none"}}>
               <div style={{width:38,height:38,borderRadius:10,flexShrink:0,background:`${item.color}18`,display:"flex",alignItems:"center",justifyContent:"center"}}>
                 <i className={`ti ${item.icon}`} style={{fontSize:18,color:item.color}} aria-hidden="true"/></div>
               <div><p style={{fontSize:13,fontWeight:700,color:C.navy,marginBottom:4}}>{item.title}</p>
@@ -1558,7 +1650,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
             </div>
           ))}
           <div style={{marginTop:16,padding:"14px",borderRadius:12,textAlign:"center",background:dark?"rgba(255,255,255,0.03)":"#F8F7FE",border:`1px solid ${C.border}`}}>
-            <p style={{fontSize:12,color:C.muted}}>Full policy at <span style={{color:C.primary,fontWeight:600}}>thedocket.app/privacy</span> · July 2026</p>
+            <p style={{fontSize:12,color:C.muted}}>Questions about your data? <a href="mailto:privacy@thedocket.app" style={{color:C.primary,fontWeight:600,textDecoration:"none"}}>privacy@thedocket.app</a></p>
           </div>
         </div>
       </div>
@@ -1567,29 +1659,45 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
 
   if(modal==="terms") return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:500,maxHeight:"88vh",boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:520,maxHeight:"88vh",boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,display:"flex",flexDirection:"column",overflow:"hidden"}}>
         <div style={{padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
+            {cameFromAuth&&(
+              <button onClick={()=>onNavigate?.("login")} style={{background:"none",border:"none",cursor:"pointer",color:C.muted,marginRight:2}}>
+                <i className="ti ti-arrow-left" style={{fontSize:18}} aria-hidden="true"/></button>
+            )}
             <div style={{width:40,height:40,borderRadius:11,background:"linear-gradient(145deg,#6677E8,#4C5FD5)",display:"flex",alignItems:"center",justifyContent:"center"}}>
               <i className="ti ti-file-description" style={{fontSize:20,color:"white"}} aria-hidden="true"/></div>
             <div><p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:17,color:C.navy}}>Terms & Conditions</p>
-              <p style={{fontSize:11,color:C.muted}}>Last updated July 2026</p></div>
+              <p style={{fontSize:11,color:C.muted}}>Last updated August 2026</p></div>
           </div>
           <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}><i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/></button>
         </div>
         <div style={{padding:"20px 24px",overflowY:"auto",flex:1}}>
-          {[{n:"1",t:"Acceptance",b:"By using The Docket, you agree to these terms."},
-            {n:"2",t:"Use of Service",b:"The Docket is a personal productivity tool. Do not use it for unlawful purposes."},
-            {n:"3",t:"Account Security",b:"You are responsible for your account. Notify us of any unauthorised access immediately."},
-            {n:"4",t:"Subscriptions",b:"Pro plans are billed at £4.99/month. Cancel anytime. Refunds within 7 days of first payment."},
-            {n:"5",t:"AI Assistant",b:"The AI is a productivity tool only — not professional, legal, medical, or financial advice."},
-            {n:"6",t:"Your Data",b:"Guest data stays on your device. Account data is encrypted and stored in the EU."},
-            {n:"7",t:"Intellectual Property",b:"All content is owned by The Docket. Do not copy or distribute without permission."},
-            {n:"8",t:"Liability",b:"Service is provided as-is. We are not liable for any loss from use of The Docket."},
-            {n:"9",t:"Changes",b:"We may update these terms. Continued use constitutes acceptance."},
-            {n:"10",t:"Governing Law",b:"These terms are governed by the laws of England and Wales."},
+          <p style={{fontSize:12.5,color:C.muted,lineHeight:1.6,marginBottom:16}}>
+            These Terms govern your use of The Docket. Please read them alongside our Privacy Policy, which explains how we handle your data.
+          </p>
+          {[
+            {n:"1",t:"Acceptance of These Terms",b:"By creating an account, starting a free trial, or otherwise using The Docket, you agree to be bound by these Terms. If you don't agree, please don't use the service."},
+            {n:"2",t:"About the Service",b:"The Docket is a personal task, routine and scheduling app with an AI assistant, available as a free tier and a paid Pro subscription. We may add, change, or remove features over time."},
+            {n:"3",t:"Eligibility",b:"You must be at least 16 years old to create an account. By registering, you confirm you meet this requirement and that the information you provide is accurate."},
+            {n:"4",t:"Your Account & Security",b:"You're responsible for keeping your login credentials secure and for all activity under your account. Tell us immediately at support@thedocket.app if you suspect unauthorised access."},
+            {n:"5",t:"Guest Mode",b:"You can use core features without an account. Guest data is stored only in your browser and isn't backed up by us — if you clear your browser data or switch devices, it will be lost."},
+            {n:"6",t:"Subscription, Trial & Billing",b:"Pro costs £4.99/month with a 7-day free trial. You won't be charged until the trial ends. Subscriptions renew automatically each month via Stripe until cancelled."},
+            {n:"7",t:"Cancellations & Refunds",b:"Cancel anytime from your account settings — you keep Pro access until the end of the current billing period, with no further charges. Because Pro includes a free trial, we don't generally refund charges made after that trial ends, except where required by law."},
+            {n:"8",t:"Acceptable Use",b:"Don't use The Docket for anything unlawful, to harass others, to attempt to access other users' data, or to interfere with or reverse-engineer the service."},
+            {n:"9",t:"The AI Assistant",b:"The AI assistant is a productivity tool, not professional, legal, medical, or financial advice. It can make mistakes — always use your own judgement, especially for anything time-sensitive or important."},
+            {n:"10",t:"Third-Party Services",b:"We rely on trusted providers to run The Docket: Supabase (data storage), Stripe (payments), Anthropic and Groq (AI processing), and Aladhan (prayer times). Their own terms may also apply to your use of those specific features."},
+            {n:"11",t:"Intellectual Property & Your Content",b:"The Docket's design, branding and code are our property and may not be copied or redistributed without permission. You keep ownership of the tasks, notes and content you create — we store and process it only to provide the service."},
+            {n:"12",t:"Privacy",b:"Our Privacy Policy explains what data we collect and how we use it, and forms part of these Terms."},
+            {n:"13",t:"Disclaimers",b:"The Docket is provided \"as is.\" We aim for high reliability but don't guarantee the service will be uninterrupted, error-free, or available at all times."},
+            {n:"14",t:"Limitation of Liability",b:"To the fullest extent permitted by law, we're not liable for indirect or consequential losses arising from your use of The Docket, including missed deadlines or appointments. Nothing here limits liability for death, personal injury caused by negligence, or fraud."},
+            {n:"15",t:"Indemnity",b:"You agree to cover reasonable losses we incur as a direct result of your breach of these Terms or misuse of the service."},
+            {n:"16",t:"Termination",b:"We may suspend or terminate accounts that breach these Terms, or that we reasonably believe are being used fraudulently or abusively. You can delete your account at any time from Settings."},
+            {n:"17",t:"Changes to These Terms",b:"We may update these Terms as the service evolves. We'll flag material changes in the app; continuing to use The Docket after an update means you accept the revised Terms."},
+            {n:"18",t:"Governing Law",b:"These Terms are governed by the laws of England and Wales, and any disputes are subject to the exclusive jurisdiction of the courts of England and Wales."},
           ].map((term,i)=>(
-            <div key={i} style={{display:"flex",gap:14,padding:"13px 0",borderBottom:i<9?`1px solid ${C.border}`:"none"}}>
+            <div key={i} style={{display:"flex",gap:14,padding:"13px 0",borderBottom:i<17?`1px solid ${C.border}`:"none"}}>
               <span style={{width:26,height:26,borderRadius:7,flexShrink:0,background:"rgba(76,95,213,0.12)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:C.primary}}>{term.n}</span>
               <div><p style={{fontSize:13,fontWeight:700,color:C.navy,marginBottom:3}}>{term.t}</p>
                 <p style={{fontSize:12.5,color:C.muted,lineHeight:1.6}}>{term.b}</p></div>
@@ -2506,12 +2614,13 @@ const OB_GOALS=[
   {id:"travel",icon:"ti-plane",label:"Travel & Lifestyle"},
 ];
 
-function OnboardingScreen({onComplete,dark}:{onComplete:(name:string,goals:string[])=>void;dark:boolean}){
+function OnboardingScreen({onComplete,dark,onOpenModal}:{onComplete:(name:string,goals:string[])=>void;dark:boolean;onOpenModal:(m:string)=>void}){
   const C=getC(dark);
   const[step,setStep]=useState(0);
   const[name,setName]=useState("");
   const[goals,setGoals]=useState<string[]>([]);
   const[animating,setAnimating]=useState(false);
+  const[agreed,setAgreed]=useState(false);
 
   function next(){
     setAnimating(true);
@@ -2538,13 +2647,29 @@ function OnboardingScreen({onComplete,dark}:{onComplete:(name:string,goals:strin
         color:C.navy,letterSpacing:"-1px",marginBottom:12,lineHeight:1.1}}>
         Welcome to<br/>The Docket
       </h1>
-      <p style={{fontSize:15,color:C.muted,lineHeight:1.6,marginBottom:36,maxWidth:280,margin:"0 auto 36px"}}>
+      <p style={{fontSize:15,color:C.muted,lineHeight:1.6,marginBottom:24,maxWidth:280,margin:"0 auto 24px"}}>
         Your intelligent personal planner. Built to keep you focused, on time, and in control of everything that matters.
       </p>
-      <button className="pill-btn" onClick={next}
-        style={{background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
+      <label style={{display:"flex",alignItems:"flex-start",gap:10,textAlign:"left",
+        maxWidth:300,margin:"0 auto 20px",cursor:"pointer"}}>
+        <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)}
+          style={{marginTop:3,width:16,height:16,flexShrink:0,accentColor:"#4C5FD5",cursor:"pointer"}}/>
+        <span style={{fontSize:12,color:C.muted,lineHeight:1.5}}>
+          I agree to the{" "}
+          <span onClick={e=>{e.preventDefault();onOpenModal("terms");}}
+            style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>Terms & Conditions</span>
+          {" "}and{" "}
+          <span onClick={e=>{e.preventDefault();onOpenModal("privacy");}}
+            style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>Privacy Policy</span>
+        </span>
+      </label>
+      <button className="pill-btn" onClick={next} disabled={!agreed}
+        style={{background:agreed
+          ?"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)"
+          :C.border,
           color:"white",padding:"16px 48px",fontSize:16,fontWeight:700,
-          boxShadow:"0 8px 28px rgba(76,95,213,0.5)"}}>
+          opacity:agreed?1:0.55,cursor:agreed?"pointer":"not-allowed",
+          boxShadow:agreed?"0 8px 28px rgba(76,95,213,0.5)":"none"}}>
         Get started
       </button>
       <p style={{fontSize:11,color:C.muted2,marginTop:20,letterSpacing:"0.5px"}}>
@@ -3184,7 +3309,7 @@ export default function Home(){
 
   return(
     <AppCtx.Provider value={{dark,lang,t,dir}}>
-    {onboarding&&<OnboardingScreen onComplete={completeOnboarding} dark={dark}/>}
+    {onboarding&&<OnboardingScreen onComplete={completeOnboarding} dark={dark} onOpenModal={setActiveModal}/>}
     {/* Welcome toast animation */}
     {showWelcome&&(
       <div style={{position:"fixed",top:24,left:"50%",transform:"translateX(-50%)",
