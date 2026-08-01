@@ -199,3 +199,19 @@ body.dark .glass {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(109,91,214,0.3); border-radius: 10px; }
+
+/* ── Mobile refinements ───────────────────────────────────────────────────
+   Smaller nav buttons, and the day picker sized so exactly 5 chips fill the
+   row cleanly (no 6th chip peeking half-visible at the edge). */
+@media (max-width: 640px) {
+  .nav-btn {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  .nav-btn i {
+    font-size: 19px !important;
+  }
+  .day-chip {
+    width: calc((100vw - 148px) / 5) !important;
+  }
+}

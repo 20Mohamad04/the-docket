@@ -1725,6 +1725,7 @@ function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChang
                 <i className="ti ti-user-edit" style={{fontSize:13}} aria-hidden="true"/>
                 Profile
               </button>
+              {user.id&&(
               <button onClick={async()=>{
                   const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
                   const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -1744,6 +1745,7 @@ function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChang
                 <i className="ti ti-logout" style={{fontSize:13}} aria-hidden="true"/>
                 Sign out
               </button>
+              )}
             </div>
           </div>
         ):(
@@ -3220,7 +3222,7 @@ export default function Home(){
       {/* Nav */}
       <nav style={{position:"relative",zIndex:10,display:"flex",justifyContent:"space-between",
         alignItems:"center",padding:"22px 22px 14px"}}>
-        <button onClick={()=>{setIsDrawerOpen(true);setShowSettings(false);}} className="sq-btn"
+        <button onClick={()=>{setIsDrawerOpen(true);setShowSettings(false);}} className="sq-btn nav-btn"
           style={{width:52,height:52,color:"white",
             background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
             boxShadow:"0 8px 28px rgba(76,95,213,0.6), 0 3px 8px rgba(0,0,0,0.25)"}}>
@@ -3234,22 +3236,11 @@ export default function Home(){
           </p>
         </div>
         <div style={{display:"flex",gap:8}}>
-          <button onClick={()=>setShowSettings(s=>!s)} className="sq-btn"
+          <button onClick={()=>setShowSettings(s=>!s)} className="sq-btn nav-btn"
             style={{width:52,height:52,fontSize:22,cursor:"pointer",
               background:"linear-gradient(145deg,#9B7FE8 0%,#6B4FD8 45%,#3A1A9E 100%)",
               boxShadow:"0 8px 28px rgba(107,79,216,0.55), 0 3px 8px rgba(0,0,0,0.25)"}} title="Settings">
             <i className="ti ti-adjustments-horizontal" style={{fontSize:22,color:"white"}} aria-hidden="true"/></button>
-          <button onClick={toggleNotifications} className="sq-btn"
-            style={{width:52,height:52,cursor:"pointer",
-              background:notifEnabled
-                ?"linear-gradient(145deg,#5DE8A0 0%,#2E8B57 45%,#1A5235 100%)"
-                :"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
-              boxShadow:notifEnabled
-                ?"0 8px 28px rgba(46,139,87,0.55), 0 3px 8px rgba(0,0,0,0.25)"
-                :"0 8px 28px rgba(76,95,213,0.55), 0 3px 8px rgba(0,0,0,0.25)"}}>
-            <i className={`ti ${notifEnabled?"ti-bell-ringing":"ti-bell-off"}`}
-              style={{fontSize:22,color:"white"}} aria-hidden="true"/>
-          </button>
         </div>
       </nav>
 
@@ -3257,9 +3248,9 @@ export default function Home(){
       {showSettings&&(
         <>
         <div onClick={()=>setShowSettings(false)}
-          style={{position:"fixed",inset:0,zIndex:9}}/>
-        <div style={{position:"relative",zIndex:10,maxWidth:1100,margin:"0 auto",
-          padding:"0 20px 16px"}}>
+          style={{position:"fixed",inset:0,zIndex:14}}/>
+        <div style={{position:"fixed",top:88,left:0,right:0,zIndex:15,maxWidth:1100,margin:"0 auto",
+          padding:"0 20px 16px",maxHeight:"calc(100vh - 100px)",overflowY:"auto"}}>
           <div className="glass" style={{borderRadius:20,padding:"24px 26px"}}>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
               fontSize:16,color:C.navy,marginBottom:14}}>{t("settings")}</p>
@@ -3409,7 +3400,7 @@ export default function Home(){
                   const highOnDay=routines.filter(r=>r.intensity==="high"&&(r.days??[]).includes(day.key));
                   const hasConflict=highOnDay.length>1;
                   return(
-                    <button key={day.date} onClick={()=>{
+                    <button key={day.date} className="day-chip" onClick={()=>{
                         setSelectedWeekDay(day.key);
                         setSelectedDate(day.date);
                       }}
