@@ -214,4 +214,14 @@ body.dark .glass {
   .day-chip {
     width: calc((100vw - 148px) / 5) !important;
   }
+  /* iOS/Android auto-zoom on focus triggers whenever an input's rendered
+     font-size is below 16px — forcing 16px here (via !important, which
+     beats a plain inline style) stops the zoom without disabling pinch-zoom
+     for the rest of the page. */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+  .all-tasks-grid {
+    grid-template-columns: 1fr !important;
+  }
 }

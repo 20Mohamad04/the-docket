@@ -1906,13 +1906,9 @@ function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChang
 function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFilter:(f:Filter)=>void;}){
   const{t,dark}=useApp();
   const C=getC(dark);
-  const[showAllCats,setShowAllCats]=useState(false);
   const open=tasks.filter(t=>!t.done&&!t.deleted);
   const archived=tasks.filter(t=>t.done||t.deleted);
-  const CAT_LIMIT=6;
   const catEntries=Object.entries(CATS);
-  const visibleCats=showAllCats?catEntries:catEntries.slice(0,CAT_LIMIT);
-  const hiddenCount=catEntries.length-CAT_LIMIT;
 
   function Btn({f,label,count}:{f:Filter;label:string;count:number}){
     const active=filter===f;
@@ -1940,22 +1936,11 @@ function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFil
       <div style={{height:1,background:C.border,margin:"6px 4px"}}/>
       <p style={{fontSize:10,fontWeight:700,letterSpacing:1.5,color:C.muted2,
         textTransform:"uppercase",padding:"6px 10px 6px"}}>Category</p>
-      {visibleCats.map(([k,v])=>(
-        <Btn key={k} f={k as Filter} label={v.label} count={open.filter(t=>t.category===k).length}/>
-      ))}
-      {/* View more / less toggle */}
-      <button onClick={()=>setShowAllCats(s=>!s)}
-        style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",
-          gap:6,padding:"8px 12px",borderRadius:10,fontSize:12,fontWeight:600,
-          border:`1px dashed ${C.border}`,background:"transparent",
-          color:C.primary,cursor:"pointer",marginTop:4,marginBottom:4,
-          transition:"all 0.15s"}}
-        onMouseEnter={e=>(e.currentTarget.style.background=C.surface2)}
-        onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
-        <i className={`ti ${showAllCats?"ti-chevron-up":"ti-chevron-down"}`}
-          style={{fontSize:13}} aria-hidden="true"/>
-        {showAllCats?`Show less`:`View ${hiddenCount} more categories`}
-      </button>
+      <div style={{maxHeight:260,overflowY:"auto",paddingRight:2}}>
+        {catEntries.map(([k,v])=>(
+          <Btn key={k} f={k as Filter} label={v.label} count={open.filter(t=>t.category===k).length}/>
+        ))}
+      </div>
       <div style={{height:1,background:C.border,margin:"6px 4px"}}/>
     </div>
   );
@@ -2105,15 +2090,18 @@ WHAT TO ADD WHERE:
 - Specific appointments/deadlines/events → add_task with exact date and time
 - Open-ended ongoing projects → add_task with type "ongoing", no date
 - Breaking a big task into steps → add_step multiple times
+- Any request using words like "every day", "daily", "weekly routine", "every week", "each [day]" signals a recurring routine → use add_routine with the right days, never a single one-off add_task. If someone says "set up a weekly routine" with no further detail, that is NOT enough information to act — see the disambiguation example below.
 
 CONVERSATION STYLE:
-- Be warm, direct, and genuinely helpful — like a brilliant friend who happens to be a world-class assistant
-- Keep replies SHORT — 1-3 sentences max unless explaining something complex
-- When suggesting a schedule slot, be SPECIFIC: "Tuesday and Thursday at 3pm for 60 minutes" not "sometime in the afternoon"
-- When you're about to add/change something important, confirm first — say what you're going to do and ask "does that work?"
-- For simple changes (completing a task, updating a time the user just specified), just do it — no need to confirm trivial edits
-- Never ask more than one question at a time
-- If the user's request is vague, make your best intelligent guess and tell them what you assumed
+- Talk like a sharp, friendly human assistant having an actual back-and-forth conversation — not a form that spits out "Task added." Read what the person actually said and respond to it directly, in your own words, every time.
+- Match your reply length to the moment. A quick confirmation of something fully specified can be one sentence. But when you're proposing a plan, explaining a schedule, or the request is genuinely complex, take 2–5 sentences to actually explain your thinking — don't compress everything into a clipped one-liner just to be brief.
+- Never reuse the same generic confirmation phrase ("Task added", "Done") without saying what was actually added — name the task or routine, the day(s)/time, and briefly why you chose that slot.
+- If a request is ambiguous or underspecified — for example "set up a weekly routine for me" with no detail on what it covers, how often, or when — do NOT guess and silently add one vague task. Ask a direct follow-up question about what they want covered and roughly how often, and wait for their answer before adding anything.
+- When suggesting a schedule slot, be SPECIFIC: "Tuesday and Thursday at 3pm for 60 minutes" not "sometime in the afternoon."
+- For anything with real weight (a new routine, rescheduling, deleting something), confirm first — describe the plan in a sentence or two and ask if it works.
+- For simple things the user already fully specified (marking something done, a time change they explicitly gave), just do it — no need to over-confirm.
+- One clarifying question at a time is fine and often necessary — ask it, then act on the answer. Don't interrogate with multiple questions at once.
+- If a request is only slightly vague but you can make a sensible, low-risk assumption, make the assumption, act on it, and clearly state what you assumed so they can correct it in one message — reserve outright clarifying questions for genuinely underspecified requests like the "weekly routine" example above.
 
 UNDO: If user says "undo", "revert", "go back", "undo that" → use {"type":"undo"} immediately.
 
@@ -2123,6 +2111,9 @@ COMPLETION & STATUS:
 - "mark X as done" → complete_task
 
 SMART SCHEDULING EXAMPLES:
+User: "set up a weekly routine for me" (nothing else specified)
+→ This is too vague to act on. Do NOT add anything yet. Reply: "Happy to set that up — what do you want it to cover (study, gym, prayer, something else), and how many days a week?" Wait for their answer, then add_routine once you know.
+
 User: "add a morning run to my routine"
 → Check schedule. If 06:30 is free most days: "I'll add a 30-minute morning run at 06:30 on weekdays — does that work?"
 → On confirmation: add_routine with days mon-fri, time 06:30, duration 30, intensity high
@@ -3618,7 +3609,7 @@ export default function Home(){
                 + New Task
               </button>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"200px 1fr",gap:22}}>
+            <div className="all-tasks-grid" style={{display:"grid",gridTemplateColumns:"200px 1fr",gap:22}}>
               <TaskSidebar tasks={tasks} filter={taskFilter} setFilter={setTaskFilter}/>
               <div>
                 {sortedTasks.length?sortedTasks.map(t=>(
