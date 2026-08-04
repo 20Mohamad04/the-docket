@@ -2284,14 +2284,32 @@ const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:nu
   },[size]);
 
   if(failed){
-    // WebGL/Three.js couldn't initialize — fall back to a simple animated
-    // gradient instead of leaving a blank circle.
+    // WebGL unavailable (disabled, unsupported, or blocked) — this fallback
+    // needs to hold its own visually, not just be "better than nothing",
+    // since some real visitors will land here too. Multiple independently
+    // animated blurred blobs, blended with "screen", approximate the additive
+    // glow of the WebGL version using nothing but CSS — works everywhere.
     return(
-      <div style={{width:size,height:size,borderRadius:"50%",flexShrink:0,
-        background:"radial-gradient(circle at 35% 32%, #d946ef, #8b5cf6 45%, #241058 100%)",
-        boxShadow:"0 0 24px rgba(139,92,246,0.5), 0 0 46px rgba(6,182,212,0.25)",
-        animation:"orbPulseFallback 3s ease-in-out infinite"}}>
-        <style>{`@keyframes orbPulseFallback{0%,100%{filter:brightness(1)}50%{filter:brightness(1.2)}}`}</style>
+      <div style={{width:size,height:size,borderRadius:"50%",flexShrink:0,overflow:"hidden",position:"relative",
+        background:"radial-gradient(circle at 50% 50%, #241058, #120a30 80%)",
+        boxShadow:"0 0 24px rgba(139,92,246,0.5), 0 0 46px rgba(6,182,212,0.25)"}}>
+        <style>{`
+          @keyframes fallbackBlob1{0%,100%{transform:translate(-10%,-10%) scale(1)}50%{transform:translate(15%,10%) scale(1.3)}}
+          @keyframes fallbackBlob2{0%,100%{transform:translate(15%,15%) scale(1.1)}50%{transform:translate(-10%,-15%) scale(0.9)}}
+          @keyframes fallbackBlob3{0%,100%{transform:translate(0%,20%) scale(1)}50%{transform:translate(-20%,-5%) scale(1.2)}}
+          @keyframes fallbackSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        `}</style>
+        <div style={{position:"absolute",inset:"-30%",animation:"fallbackSpin 20s linear infinite"}}>
+          <div style={{position:"absolute",width:"70%",height:"70%",left:"15%",top:"5%",borderRadius:"50%",
+            background:"radial-gradient(circle,#d946ef,transparent 70%)",filter:"blur(4px)",
+            animation:"fallbackBlob1 6s ease-in-out infinite",mixBlendMode:"screen"}}/>
+          <div style={{position:"absolute",width:"65%",height:"65%",left:"20%",top:"25%",borderRadius:"50%",
+            background:"radial-gradient(circle,#3b82f6,transparent 70%)",filter:"blur(4px)",
+            animation:"fallbackBlob2 7s ease-in-out infinite",mixBlendMode:"screen"}}/>
+          <div style={{position:"absolute",width:"60%",height:"60%",left:"10%",top:"30%",borderRadius:"50%",
+            background:"radial-gradient(circle,#8b5cf6,transparent 70%)",filter:"blur(4px)",
+            animation:"fallbackBlob3 8s ease-in-out infinite",mixBlendMode:"screen"}}/>
+        </div>
       </div>
     );
   }
