@@ -1982,24 +1982,376 @@ function TimelineRow({item,onCheck}:{
   );
 }
 
-// ── Flowing energy orb (Higgsfield-generated image, CSS-animated) ──────────────
-// Uses the approved AI-generated orb artwork, spun continuously inside a
-// circular mask with a slow brightness/saturation pulse for a glowing,
-// breathing feel — no per-frame canvas work needed.
-const ORB_IMAGE_URL="https://d8j0ntlcm91z4.cloudfront.net/user_3FPDGKTdpQKgIxpcrRSiSDHLYrZ/hf_20260731_133525_ace7cb33-58d0-4533-a16a-0c0098c72b4b.png";
-function FlowingOrb({size=52}:{size?:number}){
-  return(
-    <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",
-      flexShrink:0,boxShadow:"0 0 24px rgba(134,112,232,0.65), 0 0 46px rgba(76,95,213,0.35)"}}>
-      <style>{`
-        @keyframes orbSpin{from{transform:rotate(0deg) scale(1.35)}to{transform:rotate(360deg) scale(1.35)}}
-        @keyframes orbPulseGlow{0%,100%{filter:brightness(1) saturate(1)}50%{filter:brightness(1.18) saturate(1.3)}}
-      `}</style>
-      <img src={ORB_IMAGE_URL} alt=""
-        style={{width:"100%",height:"100%",objectFit:"cover",display:"block",
-          animation:"orbSpin 14s linear infinite, orbPulseGlow 4s ease-in-out infinite"}}/>
-    </div>
-  );
+// ── Flowing energy orb (Three.js — real 3D shader sphere) ──────────────────────
+// Icosahedron with simplex-noise vertex displacement + fresnel rim lighting,
+// an orbiting glow ring, and a floating particle field. "uAmplitude" (originally
+// driven by voice audio in the source this was adapted from) is instead driven
+// by whether the AI is actively thinking, so the orb visibly "comes alive"
+// while a response is being generated instead of sitting static.
+const ORB_VERTEX_SHADER=`
+uniform float uTime;
+uniform float uAmplitude;
+varying vec3 vNormal;
+varying vec3 vPosition;
+varying float vDisplacement;
+varying vec3 vWorldPosition;
+
+vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
+vec4 mod289(vec4 x){return x-floor(x*(1.0/289.0))*289.0;}
+vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
+vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+
+float snoise(vec3 v){
+  const vec2 C=vec2(1.0/6.0,1.0/3.0);
+  const vec4 D=vec4(0.0,0.5,1.0,2.0);
+  vec3 i=floor(v+dot(v,C.yyy));
+  vec3 x0=v-i+dot(i,C.xxx);
+  vec3 g=step(x0.yzx,x0.xyz);
+  vec3 l=1.0-g;
+  vec3 i1=min(g.xyz,l.zxy);
+  vec3 i2=max(g.xyz,l.zxy);
+  vec3 x1=x0-i1+C.xxx;
+  vec3 x2=x0-i2+C.yyy;
+  vec3 x3=x0-D.yyy;
+  i=mod289(i);
+  vec4 p=permute(permute(permute(
+    i.z+vec4(0.0,i1.z,i2.z,1.0),
+    i.y+vec4(0.0,i1.y,i2.y,1.0),
+    i.x+vec4(0.0,i1.x,i2.x,1.0)
+  )));
+  float n_=0.142857142857;
+  vec3 ns=n_*D.wyz-D.xzx;
+  vec4 j=p-49.0*floor(p*ns.z*ns.z);
+  vec4 x_=floor(j*ns.z);
+  vec4 y_=floor(j-7.0*x_);
+  vec4 x2_=x_*ns.x+ns.yyyy;
+  vec4 y2_=y_*ns.x+ns.yyyy;
+  vec4 h=1.0-abs(x2_)-abs(y2_);
+  vec4 b0=vec4(x2_.xy,y2_.xy);
+  vec4 b1=vec4(x2_.zw,y2_.zw);
+  vec4 s0=floor(b0)*2.0+1.0;
+  vec4 s1=floor(b1)*2.0+1.0;
+  vec4 sh=-step(h,vec4(0.0));
+  vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;
+  vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+  vec3 p0=vec3(a0.xy,h.x);
+  vec3 p1=vec3(a0.zw,h.y);
+  vec3 p2=vec3(a1.xy,h.z);
+  vec3 p3=vec3(a1.zw,h.w);
+  vec4 norm=taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+  p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
+  vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);
+  m=m*m;
+  return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+}
+
+void main(){
+  vNormal=normalize(normalMatrix*normal);
+  vPosition=position;
+  float noise1=snoise(position*1.2+uTime*0.25)*0.12;
+  float noise2=snoise(position*2.5+uTime*0.6)*0.06;
+  float noise3=snoise(position*5.0+uTime*1.2)*0.02;
+  float baseDisplacement=noise1+noise2+noise3;
+  float audioNoise1=snoise(position*2.0+uTime*1.5)*0.35;
+  float audioNoise2=snoise(position*4.0+uTime*3.0)*0.15;
+  float audioDisplacement=uAmplitude*(audioNoise1+audioNoise2);
+  float totalDisplacement=baseDisplacement+audioDisplacement;
+  vDisplacement=totalDisplacement;
+  vec3 newPosition=position+normal*totalDisplacement;
+  vec4 worldPosition=modelMatrix*vec4(newPosition,1.0);
+  vWorldPosition=worldPosition.xyz;
+  gl_Position=projectionMatrix*modelViewMatrix*vec4(newPosition,1.0);
+}`;
+
+const ORB_FRAGMENT_SHADER=`
+uniform vec3 uColor1;
+uniform vec3 uColor2;
+uniform vec3 uColor3;
+uniform float uAmplitude;
+uniform float uTime;
+uniform vec3 uLightPosition1;
+uniform vec3 uLightPosition2;
+uniform vec3 uCameraPosition;
+varying vec3 vNormal;
+varying vec3 vPosition;
+varying float vDisplacement;
+varying vec3 vWorldPosition;
+
+void main(){
+  vec3 viewDir=normalize(uCameraPosition-vWorldPosition);
+  float fresnel=pow(1.0-max(dot(viewDir,vNormal),0.0),3.0);
+  vec3 lightDir1=normalize(uLightPosition1-vWorldPosition);
+  float diffuse1=max(dot(vNormal,lightDir1),0.0);
+  vec3 lightDir2=normalize(uLightPosition2-vWorldPosition);
+  float diffuse2=max(dot(vNormal,lightDir2),0.0);
+  vec3 halfDir1=normalize(lightDir1+viewDir);
+  float specular1=pow(max(dot(vNormal,halfDir1),0.0),32.0);
+  vec3 halfDir2=normalize(lightDir2+viewDir);
+  float specular2=pow(max(dot(vNormal,halfDir2),0.0),24.0);
+  float colorMix=smoothstep(-0.15,0.15,vDisplacement);
+  vec3 baseColor=mix(uColor1,uColor2,colorMix);
+  float highlightMix=smoothstep(0.1,0.3,uAmplitude);
+  baseColor=mix(baseColor,uColor3,highlightMix*0.3);
+  vec3 diffuse=baseColor*(diffuse1*0.6+diffuse2*0.4+0.3);
+  vec3 specular=vec3(1.0)*(specular1*0.5+specular2*0.3);
+  float glowIntensity=fresnel*(0.5+uAmplitude*2.0);
+  vec3 glowColor=mix(uColor2,uColor3,fresnel);
+  vec3 glow=glowColor*glowIntensity;
+  float innerGlow=pow(max(dot(viewDir,vNormal),0.0),2.0);
+  vec3 innerColor=uColor1*innerGlow*0.15;
+  vec3 finalColor=diffuse+specular+glow+innerColor;
+  float alpha=0.88+fresnel*0.12;
+  gl_FragColor=vec4(finalColor,alpha);
+}`;
+
+const RING_VERTEX_SHADER=`
+uniform float uTime;
+uniform float uAmplitude;
+varying vec3 vPosition;
+void main(){
+  vPosition=position;
+  vec3 pos=position;
+  pos.x+=sin(uTime*2.0+position.y*3.0)*0.05*(1.0+uAmplitude);
+  pos.y+=cos(uTime*1.5+position.x*3.0)*0.05*(1.0+uAmplitude);
+  gl_Position=projectionMatrix*modelViewMatrix*vec4(pos,1.0);
+}`;
+
+const RING_FRAGMENT_SHADER=`
+uniform vec3 uGlowColor;
+uniform float uAmplitude;
+uniform float uTime;
+varying vec3 vPosition;
+void main(){
+  float pulse=0.4+sin(uTime*3.0)*0.2+uAmplitude*0.8;
+  vec3 color=uGlowColor*pulse;
+  float alpha=0.3+uAmplitude*0.5;
+  gl_FragColor=vec4(color,alpha);
+}`;
+
+const PARTICLE_VERTEX_SHADER=`
+uniform float uTime;
+uniform float uAmplitude;
+varying float vDistance;
+void main(){
+  vec3 pos=position;
+  pos.x+=sin(uTime*0.5+position.y*2.0)*0.1;
+  pos.y+=cos(uTime*0.3+position.x*2.0)*0.1;
+  pos.z+=sin(uTime*0.4+position.z*1.5)*0.05;
+  float pullFactor=1.0-uAmplitude*0.15;
+  pos*=pullFactor;
+  vDistance=length(pos);
+  vec4 mvPosition=modelViewMatrix*vec4(pos,1.0);
+  gl_PointSize=(3.0+uAmplitude*4.0)*(1.0/-mvPosition.z);
+  gl_Position=projectionMatrix*mvPosition;
+}`;
+
+const PARTICLE_FRAGMENT_SHADER=`
+uniform vec3 uParticleColor;
+uniform float uAmplitude;
+uniform float uTime;
+varying float vDistance;
+void main(){
+  vec2 center=gl_PointCoord-vec2(0.5);
+  float dist=length(center);
+  if(dist>0.5)discard;
+  float alpha=1.0-smoothstep(0.0,0.5,dist);
+  alpha*=0.4+uAmplitude*0.3;
+  alpha*=smoothstep(5.0,1.5,vDistance);
+  vec3 color=uParticleColor*(1.0+uAmplitude*0.5);
+  gl_FragColor=vec4(color,alpha);
+}`;
+
+const GLOW_VERTEX_SHADER=`
+varying vec3 vNormal;
+varying vec3 vWorldPos;
+void main(){
+  vNormal=normalize(normalMatrix*normal);
+  vec4 worldPos=modelMatrix*vec4(position,1.0);
+  vWorldPos=worldPos.xyz;
+  gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);
+}`;
+
+const GLOW_FRAGMENT_SHADER=`
+uniform vec3 uGlowColor;
+uniform float uAmplitude;
+uniform float uTime;
+varying vec3 vNormal;
+varying vec3 vWorldPos;
+void main(){
+  vec3 viewDir=normalize(cameraPosition-vWorldPos);
+  float fresnel=pow(1.0-max(dot(viewDir,vNormal),0.0),4.0);
+  float pulse=0.3+sin(uTime*2.0)*0.1+uAmplitude*0.6;
+  vec3 color=uGlowColor*fresnel*pulse;
+  float alpha=fresnel*(0.15+uAmplitude*0.3);
+  gl_FragColor=vec4(color,alpha);
+}`;
+
+function FlowingOrb({size=52,active=false}:{size?:number;active?:boolean}){
+  const containerRef=React.useRef<HTMLDivElement>(null);
+  const activeRef=React.useRef(active);
+  useEffect(()=>{activeRef.current=active;},[active]);
+
+  useEffect(()=>{
+    const container=containerRef.current;
+    if(!container)return;
+    let disposed=false;
+    let raf=0;
+    let renderer:any,orbGeometry:any,orbMaterial:any,ringGeometry:any,ringMaterial:any,
+      particleGeometry:any,particleMaterial:any,glowGeometry:any,glowMaterial:any;
+
+    (async()=>{
+      const THREE:any=await import("three");
+      if(disposed||!containerRef.current)return;
+
+      const scene=new THREE.Scene();
+      const camera=new THREE.PerspectiveCamera(75,1,0.1,1000);
+      camera.position.z=4;
+
+      renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+      const dpr=Math.min(window.devicePixelRatio||1,2);
+      renderer.setPixelRatio(dpr);
+      renderer.setSize(size,size);
+      renderer.toneMapping=THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure=1.2;
+      container.appendChild(renderer.domElement);
+
+      const ambientLight=new THREE.AmbientLight(0x7b68ee,0.3);
+      scene.add(ambientLight);
+      const pointLight1=new THREE.PointLight(0x7b68ee,2,20);
+      pointLight1.position.set(2,2,4);
+      scene.add(pointLight1);
+      const pointLight2=new THREE.PointLight(0x00d4ff,1.5,20);
+      pointLight2.position.set(-2,-1,3);
+      scene.add(pointLight2);
+      const pointLight3=new THREE.PointLight(0xff6b9d,0.8,15);
+      pointLight3.position.set(0,-3,2);
+      scene.add(pointLight3);
+
+      orbGeometry=new THREE.IcosahedronGeometry(1.2,6);
+      orbMaterial=new THREE.ShaderMaterial({
+        uniforms:{
+          uTime:{value:0},uAmplitude:{value:0},
+          uColor1:{value:new THREE.Color("#7b68ee")},
+          uColor2:{value:new THREE.Color("#00d4ff")},
+          uColor3:{value:new THREE.Color("#ff6b9d")},
+          uLightPosition1:{value:new THREE.Vector3(2,2,4)},
+          uLightPosition2:{value:new THREE.Vector3(-2,-1,3)},
+          uCameraPosition:{value:camera.position},
+        },
+        vertexShader:ORB_VERTEX_SHADER,fragmentShader:ORB_FRAGMENT_SHADER,
+        transparent:true,side:THREE.DoubleSide,depthWrite:true,
+      });
+      const orb=new THREE.Mesh(orbGeometry,orbMaterial);
+      scene.add(orb);
+
+      ringGeometry=new THREE.TorusGeometry(1.6,0.03,16,100);
+      ringMaterial=new THREE.ShaderMaterial({
+        uniforms:{uTime:{value:0},uAmplitude:{value:0},uGlowColor:{value:new THREE.Color("#7b68ee")}},
+        vertexShader:RING_VERTEX_SHADER,fragmentShader:RING_FRAGMENT_SHADER,
+        transparent:true,side:THREE.DoubleSide,depthWrite:false,
+      });
+      const ring=new THREE.Mesh(ringGeometry,ringMaterial);
+      ring.rotation.x=Math.PI*0.5;
+      scene.add(ring);
+
+      const particleCount=160;
+      particleGeometry=new THREE.BufferGeometry();
+      const particlePositions=new Float32Array(particleCount*3);
+      for(let i=0;i<particleCount;i++){
+        const i3=i*3;
+        const radius=1.5+Math.random()*3.0;
+        const theta=Math.random()*Math.PI*2;
+        const phi=Math.random()*Math.PI;
+        particlePositions[i3]=radius*Math.sin(phi)*Math.cos(theta);
+        particlePositions[i3+1]=radius*Math.sin(phi)*Math.sin(theta);
+        particlePositions[i3+2]=radius*Math.cos(phi);
+      }
+      particleGeometry.setAttribute("position",new THREE.BufferAttribute(particlePositions,3));
+      particleMaterial=new THREE.ShaderMaterial({
+        uniforms:{uTime:{value:0},uAmplitude:{value:0},uParticleColor:{value:new THREE.Color("#7b68ee")}},
+        vertexShader:PARTICLE_VERTEX_SHADER,fragmentShader:PARTICLE_FRAGMENT_SHADER,
+        transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+      });
+      const particles=new THREE.Points(particleGeometry,particleMaterial);
+      scene.add(particles);
+
+      glowGeometry=new THREE.IcosahedronGeometry(1.5,3);
+      glowMaterial=new THREE.ShaderMaterial({
+        uniforms:{uTime:{value:0},uAmplitude:{value:0},uGlowColor:{value:new THREE.Color("#7b68ee")}},
+        vertexShader:GLOW_VERTEX_SHADER,fragmentShader:GLOW_FRAGMENT_SHADER,
+        transparent:true,side:THREE.BackSide,depthWrite:false,blending:THREE.AdditiveBlending,
+      });
+      const glowMesh=new THREE.Mesh(glowGeometry,glowMaterial);
+      scene.add(glowMesh);
+
+      const clock=new THREE.Clock();
+      let smoothAmplitude=0;
+
+      function animate(){
+        raf=requestAnimationFrame(animate);
+        const time=clock.getElapsedTime();
+        // Reacts to the AI actively thinking instead of voice audio
+        const target=activeRef.current?0.55:0.1;
+        smoothAmplitude+=(target-smoothAmplitude)*0.05;
+
+        orbMaterial.uniforms.uTime.value=time;
+        orbMaterial.uniforms.uAmplitude.value=smoothAmplitude;
+        orb.rotation.y+=0.003+smoothAmplitude*0.025;
+        orb.rotation.x=Math.sin(time*0.4)*0.1+smoothAmplitude*Math.sin(time*3.0)*0.05;
+        orb.rotation.z=Math.cos(time*0.3)*0.05;
+        const orbScale=1.0+smoothAmplitude*0.15+Math.sin(time*1.5)*0.02;
+        orb.scale.set(orbScale,orbScale,orbScale);
+
+        ringMaterial.uniforms.uTime.value=time;
+        ringMaterial.uniforms.uAmplitude.value=smoothAmplitude;
+        ring.rotation.z+=0.005+smoothAmplitude*0.02;
+        const ringScale=1.0+smoothAmplitude*0.1;
+        ring.scale.set(ringScale,ringScale,ringScale);
+
+        particleMaterial.uniforms.uTime.value=time;
+        particleMaterial.uniforms.uAmplitude.value=smoothAmplitude;
+        particles.rotation.y+=0.001;
+        particles.rotation.x+=0.0005;
+
+        glowMaterial.uniforms.uTime.value=time;
+        glowMaterial.uniforms.uAmplitude.value=smoothAmplitude;
+        const glowScale=1.0+smoothAmplitude*0.15+Math.sin(time*2.0)*0.03;
+        glowMesh.scale.set(glowScale,glowScale,glowScale);
+
+        pointLight1.intensity=2.0+smoothAmplitude*2.0;
+        pointLight2.intensity=1.5+smoothAmplitude*1.6;
+        pointLight3.intensity=0.8+smoothAmplitude*1.2;
+        pointLight1.position.x=Math.sin(time*0.5)*3;
+        pointLight1.position.y=Math.cos(time*0.5)*3;
+        pointLight2.position.x=Math.sin(time*0.3+2.0)*3;
+        pointLight2.position.y=Math.cos(time*0.3+2.0)*3;
+
+        renderer.render(scene,camera);
+      }
+      animate();
+    })();
+
+    return()=>{
+      disposed=true;
+      cancelAnimationFrame(raf);
+      orbGeometry?.dispose?.();
+      orbMaterial?.dispose?.();
+      ringGeometry?.dispose?.();
+      ringMaterial?.dispose?.();
+      particleGeometry?.dispose?.();
+      particleMaterial?.dispose?.();
+      glowGeometry?.dispose?.();
+      glowMaterial?.dispose?.();
+      if(renderer){
+        renderer.dispose();
+        if(renderer.domElement?.parentNode===container) container.removeChild(renderer.domElement);
+      }
+    };
+  },[size]);
+
+  return<div ref={containerRef}
+    style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",flexShrink:0,
+      boxShadow:"0 0 24px rgba(123,104,238,0.5), 0 0 46px rgba(0,212,255,0.25)"}}/>;
 }
 
 // ── Chatbot ──────────────────────────────────────────────────────────────────
@@ -2230,7 +2582,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 <div style={{marginBottom:expanded?12:8,
                   filter:"drop-shadow(0 0 24px rgba(134,112,232,0.65)) drop-shadow(0 0 46px rgba(76,95,213,0.35))",
                   transition:"all 0.3s"}}>
-                  <FlowingOrb size={expanded?76:52}/>
+                  <FlowingOrb size={expanded?76:52} active={loading}/>
                 </div>
 
                 <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
@@ -2887,8 +3239,8 @@ function OnboardingScreen({onComplete,dark,onOpenModal}:{onComplete:(name:string
         opacity:animating?0:1,transform:animating?"translateY(12px)":"translateY(0)",
         transition:"opacity 0.35s ease, transform 0.35s ease"}}>
 
-        {/* Header row - progress dots + X */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+        {/* Header row - progress dots (no close button — onboarding must be completed to agree to Terms) */}
+        <div style={{display:"flex",justifyContent:"center",alignItems:"center",
           padding:"24px 24px 0",flexShrink:0}}>
           <div style={{display:"flex",gap:8}}>
             {steps.map((_,i)=>(
@@ -2897,12 +3249,6 @@ function OnboardingScreen({onComplete,dark,onOpenModal}:{onComplete:(name:string
                 background:i<=step?C.primary:C.border}}/>
             ))}
           </div>
-          <button onClick={finish}
-            style={{width:30,height:30,borderRadius:8,border:`1px solid ${C.border}`,
-              background:"transparent",cursor:"pointer",color:C.muted,
-              display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <i className="ti ti-x" style={{fontSize:16}} aria-hidden="true"/>
-          </button>
         </div>
 
         {/* Step content - scrollable */}
