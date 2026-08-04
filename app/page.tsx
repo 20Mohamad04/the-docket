@@ -2074,11 +2074,20 @@ function nebulaNoise3D(x:number,y:number,z:number){
     Math.sin(z*3.13+x*2.37+y*1.73);
 }
 
-function FlowingOrb({size=52,active=false}:{size?:number;active?:boolean}){
+const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:number;active?:boolean}>(
+  function FlowingOrb({size=52,active=false},ref){
   const containerRef=React.useRef<HTMLDivElement>(null);
   const activeRef=React.useRef(active);
+  // When non-null, this overrides the automatic idle/thinking pulse — the
+  // Chatbot sets this every animation frame from real TTS audio amplitude
+  // while speech is playing, and clears it (null) when speech ends so the
+  // orb falls back to its normal idle/thinking behavior.
+  const manualAmpRef=React.useRef<number|null>(null);
   const[failed,setFailed]=useState(false);
   useEffect(()=>{activeRef.current=active;},[active]);
+  React.useImperativeHandle(ref,()=>({
+    setAmplitude:(v:number|null)=>{manualAmpRef.current=v;},
+  }),[]);
 
   useEffect(()=>{
     const container=containerRef.current;
@@ -2200,9 +2209,11 @@ function FlowingOrb({size=52,active=false}:{size?:number;active?:boolean}){
       function frame(){
         raf=requestAnimationFrame(frame);
         const time=clock.getElapsedTime();
-        // Reacts to the AI actively thinking instead of voice audio
-        const target=activeRef.current?0.5:0.06;
-        smoothAmplitude+=(target-smoothAmplitude)*0.08;
+        // Real speech amplitude takes priority when set; otherwise fall back
+        // to the automatic "thinking" pulse, then idle.
+        const manual=manualAmpRef.current;
+        const target=manual!==null?manual:(activeRef.current?0.5:0.06);
+        smoothAmplitude+=(target-smoothAmplitude)*(manual!==null?0.35:0.08);
 
         particleMaterial.uniforms.uTime.value=time;
         particleMaterial.uniforms.uAmplitude.value=smoothAmplitude;
@@ -2288,7 +2299,7 @@ function FlowingOrb({size=52,active=false}:{size?:number;active?:boolean}){
   return<div ref={containerRef}
     style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",flexShrink:0,
       boxShadow:"0 0 24px rgba(139,92,246,0.5), 0 0 46px rgba(6,182,212,0.25)"}}/>;
-}
+  });
 
 // ── Chatbot ──────────────────────────────────────────────────────────────────
 function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;}){
@@ -2301,6 +2312,68 @@ function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAc
   ]);
   const[input,setInput]=useState("");
   const[loading,setLoading]=useState(false);
+  const[voiceOn,setVoiceOn]=useState(true);
+  const orbRef=React.useRef<{setAmplitude:(v:number|null)=>void}>(null);
+  const audioElRef=React.useRef<HTMLAudioElement|null>(null);
+  const speakAudioCtxRef=React.useRef<AudioContext|null>(null);
+  const speakRafRef=React.useRef<number>(0);
+
+  function stopSpeaking(){
+    if(audioElRef.current){audioElRef.current.pause();audioElRef.current=null;}
+    cancelAnimationFrame(speakRafRef.current);
+    orbRef.current?.setAmplitude(null);
+  }
+
+  async function speak(text:string){
+    if(!voiceOn||!text.trim())return;
+    stopSpeaking(); // interrupt any speech still playing from a previous reply
+    try{
+      const res=await fetch("/api/speak",{method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({text})});
+      if(!res.ok)return; // voice is a nice-to-have — fail silently rather than breaking the chat
+      const blob=await res.blob();
+      const url=URL.createObjectURL(blob);
+      const audio=new Audio(url);
+      audioElRef.current=audio;
+
+      let ctx=speakAudioCtxRef.current;
+      if(!ctx){
+        const Ctx=(window as any).AudioContext||(window as any).webkitAudioContext;
+        ctx=new Ctx();
+        speakAudioCtxRef.current=ctx;
+      }
+      const source=ctx.createMediaElementSource(audio);
+      const analyser=ctx.createAnalyser();
+      analyser.fftSize=512;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+      const data=new Uint8Array(analyser.frequencyBinCount);
+
+      function loop(){
+        speakRafRef.current=requestAnimationFrame(loop);
+        analyser.getByteFrequencyData(data);
+        let sum=0;
+        for(let i=0;i<data.length;i++)sum+=data[i];
+        orbRef.current?.setAmplitude(sum/data.length/255);
+      }
+      loop();
+
+      await audio.play();
+      audio.onended=()=>{
+        cancelAnimationFrame(speakRafRef.current);
+        orbRef.current?.setAmplitude(null);
+        URL.revokeObjectURL(url);
+        if(audioElRef.current===audio) audioElRef.current=null;
+      };
+    }catch(err){
+      console.error("Voice playback failed:",err);
+      orbRef.current?.setAmplitude(null);
+    }
+  }
+
+  // Stop any speech immediately if the chat panel is closed mid-reply
+  useEffect(()=>{ if(!open) stopSpeaking(); },[open]);
 
   const scheduleContext=()=>{
     const occ:Record<string,string[]>={};
@@ -2490,6 +2563,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
       const{actions,reply}=parseAIResponse(raw);
       onAction(actions);
       setMessages([...newMsgs,{role:"assistant",content:reply}]);
+      speak(reply);
     }catch{
       setMessages([...newMsgs,{role:"assistant",content:"Something went wrong — try rephrasing."}]);
     }finally{setLoading(false);}
@@ -2541,6 +2615,14 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 position:"relative",flexShrink:0}}>
                 {/* Control buttons */}
                 <div style={{position:"absolute",top:10,right:10,display:"flex",gap:8}}>
+                  <button onClick={()=>{setVoiceOn(v=>{const next=!v;if(!next)stopSpeaking();return next;});}}
+                    title={voiceOn?"Mute voice replies":"Unmute voice replies"}
+                    style={{width:28,height:28,borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",
+                      background:"rgba(255,255,255,0.1)",cursor:"pointer",color:"white",
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <i className={`ti ${voiceOn?"ti-volume":"ti-volume-off"}`}
+                      style={{fontSize:13}} aria-hidden="true"/>
+                  </button>
                   <button onClick={()=>setExpanded(e=>!e)}
                     style={{width:28,height:28,borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",
                       background:"rgba(255,255,255,0.1)",cursor:"pointer",color:"white",
@@ -2548,7 +2630,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     <i className={`ti ${expanded?"ti-minimize":"ti-maximize"}`}
                       style={{fontSize:13}} aria-hidden="true"/>
                   </button>
-                  <button onClick={()=>{setOpen(false);setExpanded(false);}}
+                  <button onClick={()=>{stopSpeaking();setOpen(false);setExpanded(false);}}
                     style={{width:28,height:28,borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",
                       background:"rgba(255,255,255,0.1)",cursor:"pointer",color:"white",
                       display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -2560,7 +2642,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 <div style={{flexShrink:0,
                   filter:"drop-shadow(0 0 16px rgba(134,112,232,0.6)) drop-shadow(0 0 30px rgba(76,95,213,0.3))",
                   transition:"all 0.3s"}}>
-                  <FlowingOrb size={expanded?42:34} active={loading}/>
+                  <FlowingOrb ref={orbRef} size={expanded?42:34} active={loading}/>
                 </div>
 
                 <div style={{textAlign:"left",minWidth:0}}>
@@ -2886,14 +2968,21 @@ function CalendarView({tasks,routines,dark,C}:{tasks:Task[];routines:Routine[];d
 
 // ── Live Clock — signature element ───────────────────────────────────────────
 function LiveClock({dark,C}:{dark:boolean;C:ReturnType<typeof getC>}){
-  const[time,setTime]=useState(new Date());
+  // time starts null so server-render and the client's pre-hydration render
+  // are identical (both show the placeholder) — Date() is only ever evaluated
+  // inside useEffect, which runs client-side only, after hydration completes.
+  const[time,setTime]=useState<Date|null>(null);
   useEffect(()=>{
+    setTime(new Date());
     const id=setInterval(()=>setTime(new Date()),1000);
     return()=>clearInterval(id);
   },[]);
-  const hh=String(time.getHours()).padStart(2,"0");
-  const mm=String(time.getMinutes()).padStart(2,"0");
-  const ss=String(time.getSeconds()).padStart(2,"0");
+  const hh=time?String(time.getHours()).padStart(2,"0"):"--";
+  const mm=time?String(time.getMinutes()).padStart(2,"0"):"--";
+  const ss=time?String(time.getSeconds()).padStart(2,"0"):"--";
+  const dateLabel=time?time.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"";
+  const weekNum=time?String(Math.ceil((time.getDate()+new Date(time.getFullYear(),time.getMonth(),1).getDay())/7)):"–";
+  const monthShort=time?time.toLocaleDateString("en-GB",{month:"short"}):"";
   return(
     <div className="glass" style={{borderRadius:20,padding:"20px 24px",marginBottom:18,
       background:dark?"rgba(0,0,0,0.1)":"rgba(255,255,255,0.05)",
@@ -2906,7 +2995,7 @@ function LiveClock({dark,C}:{dark:boolean;C:ReturnType<typeof getC>}){
         </p>
         <p style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:13,fontWeight:500,
           color:C.muted,marginTop:4}}>
-          {time.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+          {dateLabel}
         </p>
       </div>
       <div style={{textAlign:"right"}}>
@@ -2914,11 +3003,11 @@ function LiveClock({dark,C}:{dark:boolean;C:ReturnType<typeof getC>}){
           color:C.muted2,letterSpacing:"2px",textTransform:"uppercase"}}>Week</p>
         <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:28,
           color:C.navy,lineHeight:1,marginTop:2}}>
-          {String(Math.ceil((time.getDate()+new Date(time.getFullYear(),time.getMonth(),1).getDay())/7))}
+          {weekNum}
         </p>
         <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,
           color:C.muted2,letterSpacing:"1px",textTransform:"uppercase",marginTop:2}}>
-          of {time.toLocaleDateString("en-GB",{month:"short"})}
+          of {monthShort}
         </p>
       </div>
     </div>
