@@ -2339,10 +2339,12 @@ function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAc
 
       let ctx=speakAudioCtxRef.current;
       if(!ctx){
-        const Ctx=(window as any).AudioContext||(window as any).webkitAudioContext;
-        ctx=new Ctx();
+        const AudioCtxClass:typeof AudioContext=
+          (window as any).AudioContext||(window as any).webkitAudioContext;
+        ctx=new AudioCtxClass();
         speakAudioCtxRef.current=ctx;
       }
+      if(!ctx)return; // unreachable in practice, but makes the non-null case explicit to TypeScript
       const source=ctx.createMediaElementSource(audio);
       const analyser=ctx.createAnalyser();
       analyser.fftSize=512;
