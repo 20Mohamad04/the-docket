@@ -2189,6 +2189,7 @@ void main(){
 function FlowingOrb({size=52,active=false}:{size?:number;active?:boolean}){
   const containerRef=React.useRef<HTMLDivElement>(null);
   const activeRef=React.useRef(active);
+  const[failed,setFailed]=useState(false);
   useEffect(()=>{activeRef.current=active;},[active]);
 
   useEffect(()=>{
@@ -2200,6 +2201,7 @@ function FlowingOrb({size=52,active=false}:{size?:number;active?:boolean}){
       particleGeometry:any,particleMaterial:any,glowGeometry:any,glowMaterial:any;
 
     (async()=>{
+      try{
       const THREE:any=await import("three");
       if(disposed||!containerRef.current)return;
 
@@ -2329,6 +2331,10 @@ function FlowingOrb({size=52,active=false}:{size?:number;active?:boolean}){
         renderer.render(scene,camera);
       }
       animate();
+      }catch(err){
+        console.error("FlowingOrb: Three.js setup failed —",err);
+        if(!disposed) setFailed(true);
+      }
     })();
 
     return()=>{
@@ -2348,6 +2354,19 @@ function FlowingOrb({size=52,active=false}:{size?:number;active?:boolean}){
       }
     };
   },[size]);
+
+  if(failed){
+    // WebGL/Three.js couldn't initialize (blocked, unsupported, or a load error) —
+    // fall back to a simple animated gradient instead of leaving a blank circle.
+    return(
+      <div style={{width:size,height:size,borderRadius:"50%",flexShrink:0,
+        background:"radial-gradient(circle at 35% 32%, #DED0FF, #8670E8 45%, #241058 100%)",
+        boxShadow:"0 0 24px rgba(123,104,238,0.5), 0 0 46px rgba(0,212,255,0.25)",
+        animation:"orbPulseFallback 3s ease-in-out infinite"}}>
+        <style>{`@keyframes orbPulseFallback{0%,100%{filter:brightness(1)}50%{filter:brightness(1.2)}}`}</style>
+      </div>
+    );
+  }
 
   return<div ref={containerRef}
     style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",flexShrink:0,
