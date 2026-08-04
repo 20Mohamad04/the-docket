@@ -2411,8 +2411,13 @@ ${JSON.stringify(tasks.filter(t=>!t.deleted&&!t.done).map(t=>({id:t.id,title:t.t
 ${JSON.stringify(routines.map(r=>({id:r.id,label:r.label,days:r.days,time:r.time,duration:r.duration,intensity:r.intensity})))}
 
 === RESPONSE FORMAT ===
-Always respond with ONLY valid JSON — no markdown, no plain text outside the JSON:
+Always respond with ONLY valid JSON — no markdown, no code fences, no plain text before or after the JSON object:
 {"actions": [...], "reply": "your message to the user"}
+
+CRITICAL JSON VALIDITY RULES — a broken response shows the user nothing useful, so these are non-negotiable:
+- The "reply" value must be a single JSON string. If your reply spans multiple sentences or would naturally have line breaks, use the escape sequence \n within the string — never a literal line break.
+- Do not use unescaped double-quote characters inside the "reply" string. If you need to quote something the user said, use single quotes instead.
+- Output exactly one JSON object and nothing else — no leading acknowledgment, no trailing notes, no markdown formatting of any kind.
 
 === COMPLETE ACTION REFERENCE ===
 ADD RECURRING ROUTINE (appears in Daily Routine + Week view every week):
@@ -2510,6 +2515,48 @@ User: "add steps to my CPS interview prep"
 
 REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can help with. Be the most capable, thoughtful, intelligent assistant possible.`;
 
+  function parseAIResponse(raw:string):{actions:any[];reply:string}{
+    const tryParse=(s:string)=>{try{return JSON.parse(s);}catch{return null;}};
+    let cleaned=raw.replace(/^```json\s*/i,"").replace(/^```/,"").replace(/```$/,"").trim();
+
+    // Attempt 1: parse as-is
+    let parsed=tryParse(cleaned);
+
+    // Attempt 2: the model may have added stray prose before/after the JSON
+    // despite instructions — isolate the outermost {...} block
+    if(!parsed){
+      const start=cleaned.indexOf("{");
+      const end=cleaned.lastIndexOf("}");
+      if(start!==-1&&end>start){
+        const slice=cleaned.slice(start,end+1);
+        parsed=tryParse(slice);
+        // Attempt 3: the model may have used literal line breaks inside a
+        // JSON string value (invalid JSON — needs \n) — escape and retry
+        if(!parsed) parsed=tryParse(slice.replace(/\r?\n/g,"\\n"));
+      }
+    }
+
+    if(parsed&&typeof parsed==="object"){
+      let actions:any[]=[];
+      if(Array.isArray(parsed.actions)&&parsed.actions.length>0) actions=parsed.actions;
+      else if(parsed.type) actions=[parsed];
+      else if(parsed.action?.type) actions=[parsed.action];
+      const reply=parsed.reply??parsed.message;
+      if(reply) return{actions,reply};
+    }
+
+    // Total fallback: JSON never parsed. Never fabricate "Done." — that
+    // actively lies about what happened. Instead surface the model's raw
+    // text (stripped of obvious JSON scaffolding) so the user sees SOMETHING
+    // real rather than a made-up confirmation, and take no actions since we
+    // can't reliably tell what (if anything) the model intended to change.
+    const bestEffort=cleaned
+      .replace(/^[{\[]\s*/,"").replace(/\s*[}\]]$/,"")
+      .replace(/"reply"\s*:\s*"/,"").replace(/"\s*,?\s*$/,"")
+      .replace(/\\n/g,"\n").trim();
+    return{actions:[],reply:bestEffort||"I had trouble processing that — could you try rephrasing?"};
+  }
+
   async function send(){
     if(!input.trim()||loading)return;
     const userMsg=input.trim();
@@ -2522,15 +2569,10 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({system:systemPrompt,messages:newMsgs.slice(-20)})});
       const data=await res.json();
-      const raw=(data.content??data.reply??"{}").replace(/^```json\s*/i,"").replace(/^```/,"").replace(/```$/,"").trim();
-      let parsed:any={};
-      try{ parsed=JSON.parse(raw); }catch(e){ console.error("Parse failed:",raw); }
-      let actions:any[]=[];
-      if(Array.isArray(parsed.actions)&&parsed.actions.length>0) actions=parsed.actions;
-      else if(parsed.type) actions=[parsed];
-      else if(parsed.action?.type) actions=[parsed.action];
+      const raw=data.content??data.reply??"{}";
+      const{actions,reply}=parseAIResponse(raw);
       onAction(actions);
-      setMessages([...newMsgs,{role:"assistant",content:parsed.reply??parsed.message??"Done."}]);
+      setMessages([...newMsgs,{role:"assistant",content:reply}]);
     }catch{
       setMessages([...newMsgs,{role:"assistant",content:"Something went wrong — try rephrasing."}]);
     }finally{setLoading(false);}
@@ -2577,8 +2619,8 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               {/* Orb header */}
               <div style={{
                 background:"linear-gradient(135deg,#1A1040 0%,#2A1060 50%,#1A2080 100%)",
-                padding:expanded?"32px 32px 24px":"16px 20px 12px",
-                display:"flex",flexDirection:"column",alignItems:"center",
+                padding:expanded?"16px 24px 12px":"10px 20px 8px",
+                display:"flex",flexDirection:"row",alignItems:"center",gap:12,
                 position:"relative",flexShrink:0}}>
                 {/* Control buttons */}
                 <div style={{position:"absolute",top:10,right:10,display:"flex",gap:8}}>
@@ -2598,19 +2640,21 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 </div>
 
                 {/* Animated flowing energy orb */}
-                <div style={{marginBottom:expanded?12:8,
-                  filter:"drop-shadow(0 0 24px rgba(134,112,232,0.65)) drop-shadow(0 0 46px rgba(76,95,213,0.35))",
+                <div style={{flexShrink:0,
+                  filter:"drop-shadow(0 0 16px rgba(134,112,232,0.6)) drop-shadow(0 0 30px rgba(76,95,213,0.3))",
                   transition:"all 0.3s"}}>
-                  <FlowingOrb size={expanded?76:52} active={loading}/>
+                  <FlowingOrb size={expanded?42:34} active={loading}/>
                 </div>
 
-                <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
-                  fontSize:expanded?22:15,color:"white",marginBottom:2,letterSpacing:"-0.3px"}}>
-                  Ask Docket
-                </p>
-                <p style={{fontSize:expanded?14:10,color:"rgba(255,255,255,0.6)",textAlign:"center"}}>
-                  Your AI scheduling assistant
-                </p>
+                <div style={{textAlign:"left",minWidth:0}}>
+                  <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
+                    fontSize:expanded?16:14,color:"white",letterSpacing:"-0.3px",lineHeight:1.2}}>
+                    Ask Docket
+                  </p>
+                  <p style={{fontSize:expanded?11:9.5,color:"rgba(255,255,255,0.6)"}}>
+                    Your AI scheduling assistant
+                  </p>
+                </div>
               </div>
 
               {/* Messages */}
