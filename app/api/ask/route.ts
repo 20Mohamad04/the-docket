@@ -7,7 +7,11 @@ export async function POST(req: Request) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     const groqKey = process.env.GROQ_API_KEY;
 
-    // Prefer Claude if key is available, fall back to Groq
+    // Claude Sonnet 5 — meaningfully stronger reasoning and instruction-following
+    // than Haiku, which matters a lot here: the system prompt asks the model to
+    // make judgment calls (when to ask a clarifying question vs just act, how to
+    // read an ambiguous request, how to explain what it did in its own words).
+    // Haiku is fast and cheap but not built for that kind of nuanced judgment.
     if (apiKey) {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -17,8 +21,9 @@ export async function POST(req: Request) {
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 1024,
+          model: "claude-sonnet-5",
+          max_tokens: 2048,
+          temperature: 0.3, // low — favors reliable, consistent JSON + focused replies over creative variance
           system,
           messages,
         }),
@@ -32,7 +37,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ content });
     }
 
-    // Groq fallback
+    // Groq fallback — only used if ANTHROPIC_API_KEY isn't set (e.g. Claude API
+    // outage or misconfiguration). Kept as a safety net, not the primary path.
     if (groqKey) {
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
@@ -42,8 +48,8 @@ export async function POST(req: Request) {
         },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
-          temperature: 0.1,
-          max_tokens: 1024,
+          temperature: 0.2,
+          max_tokens: 1500,
           messages: [{ role: "system", content: system }, ...messages],
         }),
       });
@@ -57,13 +63,14 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { content: '{"actions":[],"reply":"No AI API key configured. Add ANTHROPIC_API_KEY or GROQ_API_KEY in Vercel environment variables."}' }
+      { content: '{"actions":[],"reply":"No AI API key configured. Add ANTHROPIC_API_KEY in Vercel environment variables."}' },
+      { status: 200 }
     );
-
-  } catch (error: any) {
-    console.error("Route error:", error);
-    return NextResponse.json({
-      content: `{"actions":[],"reply":"Error: ${error.message ?? "Something went wrong"}"}`
-    });
+  } catch (err: any) {
+    console.error("Ask route error:", err);
+    return NextResponse.json(
+      { content: '{"actions":[],"reply":"Something went wrong on my end — try rephrasing, or try again in a moment."}' },
+      { status: 200 }
+    );
   }
 }
