@@ -2349,7 +2349,22 @@ function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAc
       const res=await fetch("/api/speak",{method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({text})});
-      if(!res.ok)return; // voice is a nice-to-have — fail silently rather than breaking the chat
+      if(!res.ok){
+        const errText=await res.text().catch(()=>"");
+        console.error("Voice API returned an error status:",res.status,errText.slice(0,500));
+        return; // voice is a nice-to-have — fail silently in the UI rather than breaking the chat
+      }
+      const contentType=res.headers.get("content-type")||"";
+      if(!contentType.startsWith("audio/")){
+        // The route responded 200 but with something that isn't audio — almost
+        // always means the underlying ElevenLabs call itself failed (bad key,
+        // quota exceeded, invalid voice ID) and that error got forwarded as if
+        // it were the audio body. Surface the real message instead of letting
+        // the browser fail with an opaque "no supported source" error.
+        const bodyText=await res.text().catch(()=>"");
+        console.error("Voice API did not return audio. Content-Type was:",contentType,"— body:",bodyText.slice(0,500));
+        return;
+      }
       const blob=await res.blob();
       const url=URL.createObjectURL(blob);
       const audio=new Audio(url);
