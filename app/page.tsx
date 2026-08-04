@@ -2343,7 +2343,8 @@ function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAc
   }
 
   async function speak(text:string){
-    if(!voiceOn||!text.trim())return;
+    if(!voiceOn){console.log("Voice reply skipped: muted.");return;}
+    if(!text.trim())return;
     stopSpeaking(); // interrupt any speech still playing from a previous reply
     try{
       const res=await fetch("/api/speak",{method:"POST",
