@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback, createContext, useContext } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 type Category = "study"|"legal"|"trading"|"finance"|"business"|"career"|"health"|"driving"|"admin"|"property"|"content"|"personal"|"family"|"faith"|"fitness"|"nutrition"|"mental"|"travel"|"technology"|"creative"|"social"|"volunteering"|"language"|"reading"|"music"|"sports"|"cooking"|"shopping"|"events"|"medical"|"insurance"|"tax"|"debt"|"savings"|"investment"|"side_hustle"|"networking"|"interview"|"project"|"research"|"writing"|"design"|"marketing"|"sales"|"customer"|"hr"|"legal_work"|"compliance"|"environment"|"community"|"charity"|"education"|"childcare"|"pets"|"home"|"vehicle"|"utilities"|"subscriptions"|"other";
 type Priority = "urgent"|"high"|"medium";
@@ -418,12 +419,20 @@ function rowToRoutine(r:any):Routine{
     completions:r.completions||{},
   };
 }
+// Single shared client — each call to createClient() spins up its own GoTrueClient
+// that auto-initializes and broadcasts session state over a BroadcastChannel to every
+// other instance sharing the same storage key, which was re-firing SIGNED_IN (and the
+// "Welcome back" toast) on unrelated state updates like restoring a task.
+let _supabaseClient:SupabaseClient|null=null;
 async function getSupabaseClient(){
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if(!url||!key)return null;
-  const{createClient}=await import("@supabase/supabase-js");
-  return createClient(url,key);
+  if(!_supabaseClient){
+    const{createClient}=await import("@supabase/supabase-js");
+    _supabaseClient=createClient(url,key);
+  }
+  return _supabaseClient;
 }
 
 // ── Shared small components ──────────────────────────────────────────────────
@@ -900,11 +909,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
   const SITE_URL=typeof window!=="undefined"?window.location.origin:"";
 
   async function getSB(){
-    const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if(!url||!key) return null;
-    const{createClient}=await import("@supabase/supabase-js");
-    return createClient(url,key);
+    return getSupabaseClient();
   }
 
   async function handleAuth(){
@@ -1055,11 +1060,8 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
                 <button onClick={async()=>{
                     const newName=(document.getElementById("profile-name") as HTMLInputElement)?.value?.trim();
                     if(!newName) return;
-                    const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
-                    const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-                    if(!url||!key) return;
-                    const{createClient}=await import("@supabase/supabase-js");
-                    const sb=createClient(url,key);
+                    const sb=await getSupabaseClient();
+                    if(!sb) return;
                     await sb.auth.updateUser({data:{full_name:newName}});
                     onUserChange({...user,name:newName});
                     setAuthMsg("✓ Name updated");setAuthStatus("success");
@@ -1080,51 +1082,6 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
                   color:C.muted,fontFamily:"inherit",cursor:"not-allowed"}}/>
               <p style={{fontSize:10,color:C.muted2,marginTop:4}}>Email changes require re-verification. Contact support to update.</p>
             </div>
-          </div>
-
-          {/* Change password */}
-          <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
-            textTransform:"uppercase",marginBottom:12}}>Change Password</p>
-          <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
-            <input type="password" id="profile-new-password"
-              placeholder="New password (min. 6 characters)"
-              style={{width:"100%",padding:"11px 14px",borderRadius:10,
-                border:`1.5px solid ${C.border}`,fontSize:14,
-                background:dark?"#1A1D2E":"#F8F7FE",
-                color:C.navy,outline:"none",fontFamily:"inherit"}}
-              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
-              onBlur={e=>(e.target.style.borderColor=C.border)}/>
-            <input type="password" id="profile-confirm-password"
-              placeholder="Confirm new password"
-              style={{width:"100%",padding:"11px 14px",borderRadius:10,
-                border:`1.5px solid ${C.border}`,fontSize:14,
-                background:dark?"#1A1D2E":"#F8F7FE",
-                color:C.navy,outline:"none",fontFamily:"inherit"}}
-              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
-              onBlur={e=>(e.target.style.borderColor=C.border)}/>
-            <button onClick={async()=>{
-                const np=(document.getElementById("profile-new-password") as HTMLInputElement)?.value;
-                const cp=(document.getElementById("profile-confirm-password") as HTMLInputElement)?.value;
-                if(!np){setAuthMsg("Enter a new password.");setAuthStatus("error");return;}
-                if(np!==cp){setAuthMsg("Passwords do not match.");setAuthStatus("error");return;}
-                if(np.length<6){setAuthMsg("Password must be at least 6 characters.");setAuthStatus("error");return;}
-                const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
-                const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-                if(!url||!key){setAuthMsg("Supabase not configured.");setAuthStatus("error");return;}
-                try{
-                  const{createClient}=await import("@supabase/supabase-js");
-                  const sb=createClient(url,key);
-                  const{error}=await sb.auth.updateUser({password:np});
-                  if(error){setAuthMsg(error.message);setAuthStatus("error");}
-                  else{setAuthMsg("✓ Password updated successfully.");setAuthStatus("success");}
-                }catch(e:any){setAuthMsg(e.message);setAuthStatus("error");}
-              }}
-              className="pill-btn"
-              style={{padding:"11px",fontSize:13,fontWeight:700,
-                background:"linear-gradient(135deg,#4C5FD5,#2A3699)",color:"white",
-                border:"none",boxShadow:"0 4px 14px rgba(76,95,213,0.35)"}}>
-              Update Password
-            </button>
           </div>
 
           {/* Status message */}
@@ -1549,7 +1506,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
             {category:"Account & Sync",icon:"ti-devices",items:[
               {q:"How do I sync my data across devices?",a:"Create a free account from the sidebar. Once signed in, your tasks and routines sync to the cloud automatically and appear on any device you sign into."},
               {q:"I forgot my password — what do I do?",a:"On the sign-in screen, tap \"Forgot your password?\" and we'll email you a reset link."},
-              {q:"Can I change my name or password later?",a:"Yes — open Profile from the sidebar to update your display name or password at any time."},
+              {q:"Can I change my name or password later?",a:"You can update your display name any time from Profile in the sidebar. To change your password, use \"Forgot your password?\" on the sign-in screen to receive a reset link."},
             ]},
             {category:"Subscription & Billing",icon:"ti-crown",items:[
               {q:"What does Pro actually unlock?",a:"Unlimited AI requests, sync across every device, automatic prayer times, productivity insights, and priority support — see the full comparison on the Subscription screen."},
@@ -1842,13 +1799,8 @@ function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChang
               </button>
               {user.id&&(
               <button onClick={async()=>{
-                  const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
-                  const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-                  if(url&&key){
-                    const{createClient}=await import("@supabase/supabase-js");
-                    const sb=createClient(url,key);
-                    await sb.auth.signOut();
-                  }
+                  const sb=await getSupabaseClient();
+                  if(sb) await sb.auth.signOut();
                   onUserChange(null);
                   onClose();
                 }}
@@ -2331,6 +2283,7 @@ function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAc
   const[input,setInput]=useState("");
   const[loading,setLoading]=useState(false);
   const[voiceOn,setVoiceOn]=useState(true);
+  const voiceOnRef=React.useRef(true); // mirrors voiceOn for reads inside in-flight async speak() calls, which otherwise close over a stale value
   const orbRef=React.useRef<{setAmplitude:(v:number|null)=>void}>(null);
   const audioElRef=React.useRef<HTMLAudioElement|null>(null);
   const speakAudioCtxRef=React.useRef<AudioContext|null>(null);
@@ -2395,6 +2348,15 @@ function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAc
       }
       loop();
 
+      if(!voiceOnRef.current){
+        // Muted while the fetch/decode above was still in flight — audioElRef
+        // was still null when the mute click ran, so stopSpeaking() had
+        // nothing to pause. Re-check right before playback actually starts.
+        cancelAnimationFrame(speakRafRef.current);
+        URL.revokeObjectURL(url);
+        if(audioElRef.current===audio) audioElRef.current=null;
+        return;
+      }
       await audio.play();
       audio.onended=()=>{
         cancelAnimationFrame(speakRafRef.current);
@@ -2651,7 +2613,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 position:"relative",flexShrink:0}}>
                 {/* Control buttons */}
                 <div style={{position:"absolute",top:10,right:10,display:"flex",gap:8}}>
-                  <button onClick={()=>{setVoiceOn(v=>{const next=!v;if(!next)stopSpeaking();return next;});}}
+                  <button onClick={()=>{setVoiceOn(v=>{const next=!v;voiceOnRef.current=next;if(!next)stopSpeaking();return next;});}}
                     title={voiceOn?"Mute voice replies":"Unmute voice replies"}
                     style={{width:28,height:28,borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",
                       background:"rgba(255,255,255,0.1)",cursor:"pointer",color:"white",
@@ -3438,8 +3400,8 @@ export default function Home(){
     if(supabaseUrl&&supabaseKey){
       (async()=>{
         try{
-          const{createClient}=await import("@supabase/supabase-js");
-          const sb=createClient(supabaseUrl,supabaseKey);
+          const sb=await getSupabaseClient();
+          if(!sb)return;
           const{data:{session}}=await sb.auth.getSession();
           if(session?.user){
             const u=session.user;

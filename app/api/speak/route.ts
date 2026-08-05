@@ -26,6 +26,14 @@ export async function POST(req: Request) {
     }
   );
 
+  if (!res.ok) {
+    const errorText = await res.text();
+    return NextResponse.json(
+      { error: `ElevenLabs error: ${errorText}` },
+      { status: res.status }
+    );
+  }
+
   const audioBuffer = await res.arrayBuffer();
   return new NextResponse(audioBuffer, {
     headers: {
