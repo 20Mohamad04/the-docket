@@ -11,7 +11,6 @@ export async function POST(req: Request) {
     // than Haiku, which matters a lot here: the system prompt asks the model to
     // make judgment calls (when to ask a clarifying question vs just act, how to
     // read an ambiguous request, how to explain what it did in its own words).
-    // Haiku is fast and cheap but not built for that kind of nuanced judgment.
     if (apiKey) {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -23,7 +22,12 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           model: "claude-sonnet-5",
           max_tokens: 2048,
-          temperature: 0.3, // low — favors reliable, consistent JSON + focused replies over creative variance
+          // NOTE: Sonnet 5 rejects `temperature` (and top_p/top_k) with a hard
+          // 400 error unless left at the default value — this is a real,
+          // documented breaking change from earlier Sonnet models, not a bug.
+          // Do NOT re-add a non-default temperature here. Behavior/consistency
+          // that used to be tuned via temperature should be controlled through
+          // the system prompt instead (which this route already does heavily).
           system,
           messages,
         }),
@@ -39,6 +43,8 @@ export async function POST(req: Request) {
 
     // Groq fallback — only used if ANTHROPIC_API_KEY isn't set (e.g. Claude API
     // outage or misconfiguration). Kept as a safety net, not the primary path.
+    // Groq's OpenAI-compatible API still supports temperature normally, so
+    // this one is untouched.
     if (groqKey) {
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
