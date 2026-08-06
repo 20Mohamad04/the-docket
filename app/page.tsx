@@ -2288,6 +2288,11 @@ function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAc
   const audioElRef=React.useRef<HTMLAudioElement|null>(null);
   const speakAudioCtxRef=React.useRef<AudioContext|null>(null);
   const speakRafRef=React.useRef<number>(0);
+  const messagesEndRef=React.useRef<HTMLDivElement>(null);
+
+  useEffect(()=>{
+    messagesEndRef.current?.scrollIntoView({behavior:"smooth"});
+  },[messages,loading]);
 
   function stopSpeaking(){
     if(audioElRef.current){audioElRef.current.pause();audioElRef.current=null;}
@@ -2386,6 +2391,8 @@ function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAc
   };
 
   const systemPrompt=`You are Docket — an elite AI chief of staff and personal scheduler built into a task management app. You are extraordinarily capable, intelligent, and proactive. You think deeply before acting, reason carefully about the user's life and schedule, and always do exactly the right thing.
+
+Every reply you give is automatically spoken aloud to the user through a voice feature, in addition to being shown as text. You have a voice — never claim you can't speak, that you're text-only, or that you're unable to talk. If the user asks you to speak instead of type, just respond normally; your reply will be read aloud automatically.
 
 Today is ${todayISO()} (${new Date().toLocaleDateString("en-GB",{weekday:"long"})}).
 
@@ -2697,6 +2704,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     <style>{`@keyframes dot{0%,80%,100%{transform:scale(0.8);opacity:0.4}40%{transform:scale(1.2);opacity:1}}`}</style>
                   </div>
                 )}
+                <div ref={messagesEndRef}/>
               </div>
 
               {/* Input */}
