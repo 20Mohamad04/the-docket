@@ -2271,6 +2271,45 @@ const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:nu
       boxShadow:"0 0 24px rgba(139,92,246,0.5), 0 0 46px rgba(6,182,212,0.25)"}}/>;
   });
 
+// ── Lightweight markdown renderer (bold spans + "- " bullet lists) ──────────
+function renderInlineMarkdown(text:string,keyPrefix:string):React.ReactNode[]{
+  const parts=text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.filter(p=>p!=="").map((part,i)=>
+    part.startsWith("**")&&part.endsWith("**")&&part.length>4
+      ?<strong key={`${keyPrefix}-b${i}`}>{part.slice(2,-2)}</strong>
+      :<React.Fragment key={`${keyPrefix}-t${i}`}>{part}</React.Fragment>
+  );
+}
+function renderMarkdown(text:string):React.ReactNode{
+  const lines=text.split("\n");
+  const blocks:React.ReactNode[]=[];
+  let list:string[]=[];
+  const flushList=(key:string)=>{
+    if(list.length){
+      blocks.push(
+        <ul key={key} style={{margin:"4px 0",paddingLeft:18}}>
+          {list.map((item,i)=>(
+            <li key={i} style={{marginBottom:2}}>{renderInlineMarkdown(item,`${key}-li${i}`)}</li>
+          ))}
+        </ul>
+      );
+      list=[];
+    }
+  };
+  lines.forEach((line,i)=>{
+    const trimmed=line.trim();
+    if(trimmed.startsWith("- ")){
+      list.push(trimmed.slice(2));
+    }else{
+      flushList(`ul-${i}`);
+      if(blocks.length>0) blocks.push(<br key={`br-${i}`}/>);
+      blocks.push(<React.Fragment key={`ln-${i}`}>{renderInlineMarkdown(line,`ln-${i}`)}</React.Fragment>);
+    }
+  });
+  flushList("ul-end");
+  return blocks;
+}
+
 // ── Chatbot ──────────────────────────────────────────────────────────────────
 function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;}){
   const{t,dark}=useApp();
@@ -2293,6 +2332,38 @@ function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAc
   useEffect(()=>{
     messagesEndRef.current?.scrollIntoView({behavior:"smooth"});
   },[messages,loading]);
+
+  // ── Voice input (speech-to-text via the browser's built-in Web Speech API) ──
+  const[listening,setListening]=useState(false);
+  const recognitionRef=React.useRef<any>(null);
+  const speechSupported=typeof window!=="undefined"
+    &&!!((window as any).SpeechRecognition||(window as any).webkitSpeechRecognition);
+
+  useEffect(()=>{
+    return()=>{recognitionRef.current?.stop();};
+  },[]);
+
+  function toggleMic(){
+    if(listening){
+      recognitionRef.current?.stop();
+      return;
+    }
+    const SpeechRecognitionCtor=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;
+    if(!SpeechRecognitionCtor)return;
+    const recognition=new SpeechRecognitionCtor();
+    recognition.continuous=false;
+    recognition.interimResults=true;
+    recognition.onresult=(e:any)=>{
+      let transcript="";
+      for(let i=0;i<e.results.length;i++)transcript+=e.results[i][0].transcript;
+      setInput(transcript);
+    };
+    recognition.onend=()=>{setListening(false);recognitionRef.current=null;};
+    recognition.onerror=()=>{setListening(false);recognitionRef.current=null;};
+    recognitionRef.current=recognition;
+    setListening(true);
+    recognition.start();
+  }
 
   function stopSpeaking(){
     if(audioElRef.current){audioElRef.current.pause();audioElRef.current=null;}
@@ -2689,7 +2760,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                         <span style={{fontSize:10,fontWeight:700,color:C.primary,letterSpacing:"0.5px"}}>DOCKET AI</span>
                       </div>
                     )}
-                    {m.content}
+                    {m.role==="assistant"?renderMarkdown(m.content):m.content}
                   </div>
                 ))}
                 {loading&&(
@@ -2722,6 +2793,17 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     placeholder="Ask me anything…"
                     style={{flex:1,border:"none",outline:"none",fontSize:13,
                       background:"transparent",color:C.navy,fontFamily:"inherit"}}/>
+                  {speechSupported&&(
+                    <button onClick={toggleMic} title={listening?"Stop listening":"Speak your message"}
+                      className="pill-btn"
+                      style={{width:36,height:36,
+                        background:listening?"#E14D4D":C.border,
+                        color:listening?"white":C.muted,border:"none",cursor:"pointer",
+                        flexShrink:0,animation:listening?"micPulse 1.2s ease-in-out infinite":"none"}}>
+                      <i className="ti ti-microphone" style={{fontSize:15}} aria-hidden="true"/>
+                    </button>
+                  )}
+                  <style>{`@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(225,77,77,0.5)}50%{box-shadow:0 0 0 8px rgba(225,77,77,0)}}`}</style>
                   <button onClick={send} disabled={loading||!input.trim()}
                     className="pill-btn"
                     style={{width:36,height:36,
