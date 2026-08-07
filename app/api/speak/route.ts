@@ -15,7 +15,8 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         text,
-        model_id: "eleven_monolingual_v1",
+        // eleven_monolingual_v1 was deprecated by ElevenLabs (400 "unsupported_model")
+        model_id: "eleven_flash_v2_5",
         voice_settings: {
           stability: 0.45,
           similarity_boost: 0.8,
