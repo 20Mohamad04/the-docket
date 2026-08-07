@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback, createContext, useContext } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import ReactMarkdown from "react-markdown";
 
 type Category = "study"|"legal"|"trading"|"finance"|"business"|"career"|"health"|"driving"|"admin"|"property"|"content"|"personal"|"family"|"faith"|"fitness"|"nutrition"|"mental"|"travel"|"technology"|"creative"|"social"|"volunteering"|"language"|"reading"|"music"|"sports"|"cooking"|"shopping"|"events"|"medical"|"insurance"|"tax"|"debt"|"savings"|"investment"|"side_hustle"|"networking"|"interview"|"project"|"research"|"writing"|"design"|"marketing"|"sales"|"customer"|"hr"|"legal_work"|"compliance"|"environment"|"community"|"charity"|"education"|"childcare"|"pets"|"home"|"vehicle"|"utilities"|"subscriptions"|"other";
 type Priority = "urgent"|"high"|"medium";
@@ -2271,44 +2272,40 @@ const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:nu
       boxShadow:"0 0 24px rgba(139,92,246,0.5), 0 0 46px rgba(6,182,212,0.25)"}}/>;
   });
 
-// ── Lightweight markdown renderer (bold spans + "- " bullet lists) ──────────
-function renderInlineMarkdown(text:string,keyPrefix:string):React.ReactNode[]{
-  const parts=text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.filter(p=>p!=="").map((part,i)=>
-    part.startsWith("**")&&part.endsWith("**")&&part.length>4
-      ?<strong key={`${keyPrefix}-b${i}`}>{part.slice(2,-2)}</strong>
-      :<React.Fragment key={`${keyPrefix}-t${i}`}>{part}</React.Fragment>
-  );
-}
-function renderMarkdown(text:string):React.ReactNode{
-  const lines=text.split("\n");
-  const blocks:React.ReactNode[]=[];
-  let list:string[]=[];
-  const flushList=(key:string)=>{
-    if(list.length){
-      blocks.push(
-        <ul key={key} style={{margin:"4px 0",paddingLeft:18}}>
-          {list.map((item,i)=>(
-            <li key={i} style={{marginBottom:2}}>{renderInlineMarkdown(item,`${key}-li${i}`)}</li>
-          ))}
-        </ul>
-      );
-      list=[];
+// ── Bracket matcher (JSON-aware: skips brackets inside string literals) ─────
+// Used by parseAIResponse's malformed-response recovery below.
+function findMatchingBracket(s:string,openIdx:number):number{
+  let depth=0,inStr=false,esc=false;
+  for(let i=openIdx;i<s.length;i++){
+    const c=s[i];
+    if(inStr){
+      if(esc)esc=false;
+      else if(c==="\\")esc=true;
+      else if(c==='"')inStr=false;
+      continue;
     }
-  };
-  lines.forEach((line,i)=>{
-    const trimmed=line.trim();
-    if(trimmed.startsWith("- ")){
-      list.push(trimmed.slice(2));
-    }else{
-      flushList(`ul-${i}`);
-      if(blocks.length>0) blocks.push(<br key={`br-${i}`}/>);
-      blocks.push(<React.Fragment key={`ln-${i}`}>{renderInlineMarkdown(line,`ln-${i}`)}</React.Fragment>);
+    if(c==='"'){inStr=true;continue;}
+    if(c==="["||c==="{")depth++;
+    else if(c==="]"||c==="}"){
+      depth--;
+      if(depth===0)return i;
     }
-  });
-  flushList("ul-end");
-  return blocks;
+  }
+  return -1;
 }
+
+// react-markdown renders bare <p>/<ul>/<ol>/<li>/<strong> tags with browser
+// default margins, which look wrong crammed into a tight chat bubble — these
+// overrides tighten spacing to match the bubble's existing typography.
+// Color/font-size/line-height already inherit from the bubble's own inline
+// styles, so only spacing and list markers need setting here.
+const markdownComponents={
+  p:({children}:any)=><p style={{margin:"0 0 6px 0"}}>{children}</p>,
+  ul:({children}:any)=><ul style={{margin:"0 0 6px 0",paddingLeft:18,listStyle:"disc"}}>{children}</ul>,
+  ol:({children}:any)=><ol style={{margin:"0 0 6px 0",paddingLeft:18,listStyle:"decimal"}}>{children}</ol>,
+  li:({children}:any)=><li style={{marginBottom:2}}>{children}</li>,
+  strong:({children}:any)=><strong style={{fontWeight:700}}>{children}</strong>,
+};
 
 // ── Chatbot ──────────────────────────────────────────────────────────────────
 function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;}){
@@ -2484,6 +2481,14 @@ CRITICAL JSON VALIDITY RULES — a broken response shows the user nothing useful
 - The "reply" value must be a single JSON string. If your reply spans multiple sentences or would naturally have line breaks, use the escape sequence \n within the string — never a literal line break.
 - Do not use unescaped double-quote characters inside the "reply" string. If you need to quote something the user said, use single quotes instead.
 - Output exactly one JSON object and nothing else — no leading acknowledgment, no trailing notes, no markdown formatting of any kind.
+- This applies no matter how many actions you're returning — even 3, 5, or 10 at once. They ALL go inside the "actions" array of that same single JSON object. Never break out of the envelope to list actions as prose, even briefly before explaining what you did.
+
+WRONG (never do this, even with multiple actions):
+added: [{"type":"add_routine","routine":{"label":"Stretch","category":"fitness","days":["mon","wed","fri"],"time":"07:00","duration":15,"intensity":"normal"}},{"type":"add_routine","routine":{"label":"Read","category":"reading","days":["mon","tue","wed","thu","fri"],"time":"21:00","duration":20,"intensity":"normal"}}]
+I've set up your morning stretch and evening reading routines.
+
+RIGHT:
+{"actions":[{"type":"add_routine","routine":{"label":"Stretch","category":"fitness","days":["mon","wed","fri"],"time":"07:00","duration":15,"intensity":"normal"}},{"type":"add_routine","routine":{"label":"Read","category":"reading","days":["mon","tue","wed","thu","fri"],"time":"21:00","duration":20,"intensity":"normal"}}],"reply":"I've set up your morning stretch and evening reading routines."}
 
 === COMPLETE ACTION REFERENCE ===
 ADD RECURRING ROUTINE (appears in Daily Routine + Week view every week):
@@ -2544,6 +2549,7 @@ CONVERSATION STYLE:
 - For simple things the user already fully specified (marking something done, a time change they explicitly gave), just do it — no need to over-confirm.
 - One clarifying question at a time is fine and often necessary — ask it, then act on the answer. Don't interrogate with multiple questions at once.
 - If a request is only slightly vague but you can make a sensible, low-risk assumption, make the assumption, act on it, and clearly state what you assumed so they can correct it in one message — reserve outright clarifying questions for genuinely underspecified requests like the "weekly routine" example above.
+- When explaining a multi-part plan or routine (e.g. laying out a full daily schedule, or summarizing several things you just added), use markdown *inside the "reply" string's text* instead of one dense paragraph: a numbered list for sequential steps, **bold** labels for the name of each task/routine/time, and a short paragraph break between distinct ideas — the way ChatGPT formats a structured answer. (This is separate from the RESPONSE FORMAT rule above, which is about the outer JSON envelope itself never being wrapped in code fences — the reply text inside it should still use markdown when it helps.) Keep single-sentence confirmations and quick answers as plain prose; save the structure for when there's genuinely more than one part to lay out.
 
 UNDO: If user says "undo", "revert", "go back", "undo that" → use {"type":"undo"} immediately.
 
@@ -2609,6 +2615,25 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
       else if(parsed.action?.type) actions=[parsed.action];
       const reply=parsed.reply??parsed.message;
       if(reply) return{actions,reply};
+    }
+
+    // Attempt 4: the model abandoned the JSON envelope entirely and wrote
+    // the actions as a loose array in prose (e.g. "added: [...]" followed by
+    // a human explanation) instead of nesting them in {"actions":[...]}.
+    // Find a "[{...}]" array of objects with a "type" field anywhere in the
+    // text, parse it directly as the actions array, and treat whatever text
+    // follows it as the reply — so actions still apply and the user only
+    // ever sees clean text, never raw JSON.
+    const arrStart=cleaned.search(/\[\s*\{/);
+    if(arrStart!==-1){
+      const arrEnd=findMatchingBracket(cleaned,arrStart);
+      if(arrEnd!==-1){
+        const arr=tryParse(cleaned.slice(arrStart,arrEnd+1));
+        if(Array.isArray(arr)&&arr.length>0&&arr.every(a=>a&&typeof a==="object"&&typeof a.type==="string")){
+          const after=cleaned.slice(arrEnd+1).replace(/^[\s:.,]*/,"").trim();
+          return{actions:arr,reply:after||"Done — all set."};
+        }
+      }
     }
 
     // Total fallback: JSON never parsed. Never fabricate "Done." — that
@@ -2760,7 +2785,9 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                         <span style={{fontSize:10,fontWeight:700,color:C.primary,letterSpacing:"0.5px"}}>DOCKET AI</span>
                       </div>
                     )}
-                    {m.role==="assistant"?renderMarkdown(m.content):m.content}
+                    {m.role==="assistant"
+                      ?<ReactMarkdown components={markdownComponents}>{m.content}</ReactMarkdown>
+                      :m.content}
                   </div>
                 ))}
                 {loading&&(
