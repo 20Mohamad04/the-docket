@@ -40,16 +40,26 @@ export async function POST(req: Request) {
       if (!userId) {
         console.error("checkout.session.completed missing metadata.userId — cannot link subscription to a user");
       } else if (sb) {
-        const { error } = await sb.from("subscriptions").upsert(
-          {
-            user_id: userId,
-            stripe_customer_id: session.customer as string,
-            stripe_subscription_id: session.subscription as string,
-            status: "active",
-          },
-          { onConflict: "user_id" }
-        );
-        if (error) console.error("Supabase upsert failed (checkout.session.completed):", error);
+        // The checkout/payment already succeeded on Stripe's side by this
+        // point — this DB write is bookkeeping, not part of that flow. Any
+        // failure here (including a thrown exception, not just a resolved
+        // {error}) must not stop this handler from returning 200, or Stripe
+        // will interpret it as a failed delivery and retry, risking
+        // duplicate processing.
+        try {
+          const { error } = await sb.from("subscriptions").upsert(
+            {
+              user_id: userId,
+              stripe_customer_id: session.customer as string,
+              stripe_subscription_id: session.subscription as string,
+              status: "active",
+            },
+            { onConflict: "user_id" }
+          );
+          if (error) console.error("Supabase upsert failed (checkout.session.completed):", error);
+        } catch (err) {
+          console.error("Supabase upsert threw (checkout.session.completed):", err);
+        }
       }
       break;
     }
@@ -57,11 +67,15 @@ export async function POST(req: Request) {
       const subscription = event.data.object as Stripe.Subscription;
       console.log("✗ Subscription cancelled:", subscription.customer);
       if (sb) {
-        const { error } = await sb
-          .from("subscriptions")
-          .update({ status: "canceled" })
-          .eq("stripe_customer_id", subscription.customer as string);
-        if (error) console.error("Supabase update failed (customer.subscription.deleted):", error);
+        try {
+          const { error } = await sb
+            .from("subscriptions")
+            .update({ status: "canceled" })
+            .eq("stripe_customer_id", subscription.customer as string);
+          if (error) console.error("Supabase update failed (customer.subscription.deleted):", error);
+        } catch (err) {
+          console.error("Supabase update threw (customer.subscription.deleted):", err);
+        }
       }
       break;
     }
@@ -69,19 +83,23 @@ export async function POST(req: Request) {
       const subscription = event.data.object as Stripe.Subscription;
       console.log("~ Subscription updated:", subscription.status);
       if (sb) {
-        // current_period_end lives on the subscription item, not the
-        // subscription itself, as of this Stripe API version.
-        const periodEndSeconds = subscription.items.data[0]?.current_period_end;
-        const { error } = await sb
-          .from("subscriptions")
-          .update({
-            status: subscription.status,
-            ...(periodEndSeconds
-              ? { current_period_end: new Date(periodEndSeconds * 1000).toISOString() }
-              : {}),
-          })
-          .eq("stripe_customer_id", subscription.customer as string);
-        if (error) console.error("Supabase update failed (customer.subscription.updated):", error);
+        try {
+          // current_period_end lives on the subscription item, not the
+          // subscription itself, as of this Stripe API version.
+          const periodEndSeconds = subscription.items.data[0]?.current_period_end;
+          const { error } = await sb
+            .from("subscriptions")
+            .update({
+              status: subscription.status,
+              ...(periodEndSeconds
+                ? { current_period_end: new Date(periodEndSeconds * 1000).toISOString() }
+                : {}),
+            })
+            .eq("stripe_customer_id", subscription.customer as string);
+          if (error) console.error("Supabase update failed (customer.subscription.updated):", error);
+        } catch (err) {
+          console.error("Supabase update threw (customer.subscription.updated):", err);
+        }
       }
       break;
     }
