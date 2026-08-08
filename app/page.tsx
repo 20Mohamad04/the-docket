@@ -1705,11 +1705,12 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
 }
 
 
-function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChange}:{
+function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChange,isPro}:{
   isOpen:boolean;onClose:()=>void;currentView:View;setView:(v:View)=>void;
   onOpenModal:(m:string)=>void;
   user:{name:string;email:string;avatar?:string;id?:string}|null;
   onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
+  isPro?:boolean;
 }){
   const{t,dark}=useApp();
   const C=getC(dark);
@@ -1782,9 +1783,17 @@ function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChang
                   :<i className="ti ti-user" style={{fontSize:20,color:"white"}} aria-hidden="true"/>}
               </div>
               <div style={{flex:1,minWidth:0}}>
-                <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-                  fontSize:14,color:C.navy,overflow:"hidden",textOverflow:"ellipsis",
-                  whiteSpace:"nowrap"}}>{user.name}</p>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
+                    fontSize:14,color:C.navy,overflow:"hidden",textOverflow:"ellipsis",
+                    whiteSpace:"nowrap"}}>{user.name}</p>
+                  {/* TEMP (Phase 0) — remove once Pro-gated UI reads `isPro` directly */}
+                  {isPro&&(
+                    <span style={{fontSize:9,fontWeight:800,letterSpacing:"0.5px",
+                      padding:"2px 7px",borderRadius:50,flexShrink:0,color:"white",
+                      background:"linear-gradient(135deg,#F5B342,#D98E1F)"}}>PRO</span>
+                  )}
+                </div>
                 <p style={{fontSize:11,color:C.muted,overflow:"hidden",textOverflow:"ellipsis",
                   whiteSpace:"nowrap"}}>{user.email}</p>
               </div>
@@ -3590,6 +3599,28 @@ export default function Home(){
     if(user?.id&&isLoaded) loadCloudData(user.id);
   },[user?.id,isLoaded]);
 
+  // ── Pro status (Phase 0) — reads the subscriptions row the Stripe webhook
+  // writes. RLS restricts this to the signed-in user's own row.
+  const[isPro,setIsPro]=useState(false);
+  useEffect(()=>{
+    if(!user?.id){setIsPro(false);return;}
+    let cancelled=false;
+    (async()=>{
+      const sb=await getSupabaseClient();
+      if(!sb)return;
+      const{data,error}=await sb.from("subscriptions")
+        .select("status").eq("user_id",user.id).maybeSingle();
+      if(cancelled)return;
+      if(error){console.error("Failed to load subscription status:",error);return;}
+      const active=data?.status==="active";
+      // TEMP — remove once Pro-gated UI (next phase) reads `isPro` directly;
+      // this is just to visually confirm the state is populating correctly.
+      console.log("[Pro status]",data?.status??"(no subscription row)","→ isPro:",active);
+      setIsPro(active);
+    })();
+    return()=>{cancelled=true;};
+  },[user?.id]);
+
   useEffect(()=>{
     if(!isLoaded||!user?.id||cloudSyncingRef.current)return;
     const uid=user.id;
@@ -3870,7 +3901,7 @@ export default function Home(){
 
       <Drawer isOpen={isDrawerOpen} onClose={()=>setIsDrawerOpen(false)}
         currentView={currentView} setView={(v)=>{setCurrentView(v);setShowSettings(false);}}
-        onOpenModal={setActiveModal} user={user} onUserChange={setUser}/>
+        onOpenModal={setActiveModal} user={user} onUserChange={setUser} isPro={isPro}/>
 
       {/* Nav */}
       <nav style={{position:"relative",zIndex:10,display:"flex",justifyContent:"space-between",
