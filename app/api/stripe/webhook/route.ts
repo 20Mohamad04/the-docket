@@ -16,6 +16,13 @@ function getSupabaseAdmin() {
   return createClient(url, key);
 }
 
+// current_period_end lives on the subscription item, not the subscription
+// object itself, as of this Stripe API version — see SubscriptionItems.
+function periodEndISO(sub: Stripe.Subscription): string | undefined {
+  const seconds = sub.items.data[0]?.current_period_end;
+  return seconds ? new Date(seconds * 1000).toISOString() : undefined;
+}
+
 export async function POST(req: Request) {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature")!;
@@ -47,12 +54,21 @@ export async function POST(req: Request) {
         // will interpret it as a failed delivery and retry, risking
         // duplicate processing.
         try {
+          // The checkout session itself doesn't carry subscription item data
+          // (session.subscription is just an ID here, not expanded) — fetch
+          // the subscription separately to get current_period_end.
+          let currentPeriodEnd: string | undefined;
+          if (session.subscription) {
+            const sub = await stripe.subscriptions.retrieve(session.subscription as string);
+            currentPeriodEnd = periodEndISO(sub);
+          }
           const { error } = await sb.from("subscriptions").upsert(
             {
               user_id: userId,
               stripe_customer_id: session.customer as string,
               stripe_subscription_id: session.subscription as string,
               status: "active",
+              ...(currentPeriodEnd ? { current_period_end: currentPeriodEnd } : {}),
             },
             { onConflict: "user_id" }
           );
@@ -84,16 +100,12 @@ export async function POST(req: Request) {
       console.log("~ Subscription updated:", subscription.status);
       if (sb) {
         try {
-          // current_period_end lives on the subscription item, not the
-          // subscription itself, as of this Stripe API version.
-          const periodEndSeconds = subscription.items.data[0]?.current_period_end;
+          const currentPeriodEnd = periodEndISO(subscription);
           const { error } = await sb
             .from("subscriptions")
             .update({
               status: subscription.status,
-              ...(periodEndSeconds
-                ? { current_period_end: new Date(periodEndSeconds * 1000).toISOString() }
-                : {}),
+              ...(currentPeriodEnd ? { current_period_end: currentPeriodEnd } : {}),
             })
             .eq("stripe_customer_id", subscription.customer as string);
           if (error) console.error("Supabase update failed (customer.subscription.updated):", error);
