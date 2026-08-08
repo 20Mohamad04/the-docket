@@ -1105,7 +1105,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
                   const res=await fetch("/api/stripe/checkout",{
                     method:"POST",
                     headers:{"Content-Type":"application/json"},
-                    body:JSON.stringify({email:user?.email||"",userId:user?.email||""})
+                    body:JSON.stringify({email:user?.email||"",userId:user?.id||""})
                   });
                   const data=await res.json();
                   if(data.url) window.location.href=data.url;
@@ -1447,7 +1447,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
                 const res=await fetch("/api/stripe/checkout",{
                   method:"POST",
                   headers:{"Content-Type":"application/json"},
-                  body:JSON.stringify({email:user.email,userId:user.email})
+                  body:JSON.stringify({email:user.email,userId:user.id})
                 });
                 const data=await res.json();
                 if(data.url) window.location.href=data.url;
