@@ -2281,28 +2281,6 @@ const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:nu
       boxShadow:"0 0 24px rgba(139,92,246,0.5), 0 0 46px rgba(6,182,212,0.25)"}}/>;
   });
 
-// ── Bracket matcher (JSON-aware: skips brackets inside string literals) ─────
-// Used by parseAIResponse's malformed-response recovery below.
-function findMatchingBracket(s:string,openIdx:number):number{
-  let depth=0,inStr=false,esc=false;
-  for(let i=openIdx;i<s.length;i++){
-    const c=s[i];
-    if(inStr){
-      if(esc)esc=false;
-      else if(c==="\\")esc=true;
-      else if(c==='"')inStr=false;
-      continue;
-    }
-    if(c==='"'){inStr=true;continue;}
-    if(c==="["||c==="{")depth++;
-    else if(c==="]"||c==="}"){
-      depth--;
-      if(depth===0)return i;
-    }
-  }
-  return -1;
-}
-
 // react-markdown renders bare <p>/<ul>/<ol>/<li>/<strong> tags with browser
 // default margins, which look wrong crammed into a tight chat bubble — these
 // overrides tighten spacing to match the bubble's existing typography.
@@ -2611,67 +2589,6 @@ User: "add steps to my CPS interview prep"
 
 REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can help with. Be the most capable, thoughtful, intelligent assistant possible.`;
 
-  function parseAIResponse(raw:string):{actions:any[];reply:string}{
-    const tryParse=(s:string)=>{try{return JSON.parse(s);}catch{return null;}};
-    let cleaned=raw.replace(/^```json\s*/i,"").replace(/^```/,"").replace(/```$/,"").trim();
-
-    // Attempt 1: parse as-is
-    let parsed=tryParse(cleaned);
-
-    // Attempt 2: the model may have added stray prose before/after the JSON
-    // despite instructions — isolate the outermost {...} block
-    if(!parsed){
-      const start=cleaned.indexOf("{");
-      const end=cleaned.lastIndexOf("}");
-      if(start!==-1&&end>start){
-        const slice=cleaned.slice(start,end+1);
-        parsed=tryParse(slice);
-        // Attempt 3: the model may have used literal line breaks inside a
-        // JSON string value (invalid JSON — needs \n) — escape and retry
-        if(!parsed) parsed=tryParse(slice.replace(/\r?\n/g,"\\n"));
-      }
-    }
-
-    if(parsed&&typeof parsed==="object"){
-      let actions:any[]=[];
-      if(Array.isArray(parsed.actions)&&parsed.actions.length>0) actions=parsed.actions;
-      else if(parsed.type) actions=[parsed];
-      else if(parsed.action?.type) actions=[parsed.action];
-      const reply=parsed.reply??parsed.message;
-      if(reply) return{actions,reply};
-    }
-
-    // Attempt 4: the model abandoned the JSON envelope entirely and wrote
-    // the actions as a loose array in prose (e.g. "added: [...]" followed by
-    // a human explanation) instead of nesting them in {"actions":[...]}.
-    // Find a "[{...}]" array of objects with a "type" field anywhere in the
-    // text, parse it directly as the actions array, and treat whatever text
-    // follows it as the reply — so actions still apply and the user only
-    // ever sees clean text, never raw JSON.
-    const arrStart=cleaned.search(/\[\s*\{/);
-    if(arrStart!==-1){
-      const arrEnd=findMatchingBracket(cleaned,arrStart);
-      if(arrEnd!==-1){
-        const arr=tryParse(cleaned.slice(arrStart,arrEnd+1));
-        if(Array.isArray(arr)&&arr.length>0&&arr.every(a=>a&&typeof a==="object"&&typeof a.type==="string")){
-          const after=cleaned.slice(arrEnd+1).replace(/^[\s:.,]*/,"").trim();
-          return{actions:arr,reply:after||"Done — all set."};
-        }
-      }
-    }
-
-    // Total fallback: JSON never parsed. Never fabricate "Done." — that
-    // actively lies about what happened. Instead surface the model's raw
-    // text (stripped of obvious JSON scaffolding) so the user sees SOMETHING
-    // real rather than a made-up confirmation, and take no actions since we
-    // can't reliably tell what (if anything) the model intended to change.
-    const bestEffort=cleaned
-      .replace(/^[{\[]\s*/,"").replace(/\s*[}\]]$/,"")
-      .replace(/"reply"\s*:\s*"/,"").replace(/"\s*,?\s*$/,"")
-      .replace(/\\n/g,"\n").trim();
-    return{actions:[],reply:bestEffort||"I had trouble processing that — could you try rephrasing?"};
-  }
-
   // Real Opus-credits indicator (Phase 2) — reads the usage row /api/ask
   // writes. Refetched on mount/user change and again after every send() so
   // the "(N left)" count reflects the just-sent message right away.
@@ -2702,8 +2619,11 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           ...(user?.id?{userId:user.id}:{}),
           ...(selectedModel==="opus"?{useOpus:true}:{})})});
       const data=await res.json();
-      const raw=data.content??data.reply??"{}";
-      const{actions,reply}=parseAIResponse(raw);
+      // The route always returns clean {actions, reply} directly now —
+      // Claude via forced tool_choice, Groq via server-side recovery — so
+      // there's no raw text to parse here anymore.
+      const actions=Array.isArray(data.actions)?data.actions:[];
+      const reply=data.reply??"I had trouble processing that — could you try rephrasing?";
       onAction(actions);
       setMessages([...newMsgs,{role:"assistant",content:reply,
         ...(data.opusFallback?{opusFallback:true}:{})}]);
