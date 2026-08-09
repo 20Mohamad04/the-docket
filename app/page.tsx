@@ -354,8 +354,13 @@ const CAT_STYLES:Record<string,{bg:string;color:string}> = {
   environment: {bg:"#DCF5DC",color:"#2a7a2a"},
   sports:      {bg:"#DCE4FA",color:"#2a3a9a"},
   cooking:     {bg:"#FAF0DC",color:"#9a6a1a"},
-  other:       {bg:"#F0F0F0",color:"#6a6a6a"},
+  other:       {bg:"#E1E4F5",color:"#333A5C"},
 };
+// Shared fallback for unmatched/custom categories — was a flat gray pair
+// that only just cleared the WCAG AA contrast minimum (4.75:1) at small
+// pill font sizes; this matches the palette's stronger pastel+saturated
+// pattern used everywhere else (~8.7:1).
+const CAT_STYLE_DEFAULT=CAT_STYLES.other;
 
 const STORAGE_TASKS="docket-tasks-v2";
 const STORAGE_ROUTINES="docket-routines-v1";
@@ -439,7 +444,7 @@ async function getSupabaseClient(){
 // ── Shared small components ──────────────────────────────────────────────────
 
 function CatPill({category,done}:{category:string;done?:boolean}){
-  const s=CAT_STYLES[category]??{bg:"#F0F0F0",color:"#6a6a6a"};
+  const s=CAT_STYLES[category]??CAT_STYLE_DEFAULT;
   const cat=CATS[category];
   const label=cat?.label??category;
   const icon=cat?.icon??"ti-dots-circle-horizontal";
@@ -510,7 +515,7 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
     k.toLowerCase().includes(search.toLowerCase())
   );
   const selected=CATS[value];
-  const s=CAT_STYLES[value]??{bg:"#F0F0F0",color:"#6a6a6a"};
+  const s=CAT_STYLES[value]??CAT_STYLE_DEFAULT;
   const displayLabel=selected?`${selected.icon} ${selected.label}`:value||"Select category";
   return(
     <div style={{position:"relative"}}>
@@ -563,7 +568,7 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
               </div>
             )}
             {filtered.map(([k,v])=>{
-              const st=CAT_STYLES[k]??{bg:"#F0F0F0",color:"#6a6a6a"};
+              const st=CAT_STYLES[k]??CAT_STYLE_DEFAULT;
               return(
                 <div key={k} onClick={()=>{onChange(k);setOpen(false);setSearch("");}}
                   style={{display:"flex",alignItems:"center",gap:10,padding:"9px 14px",
@@ -611,7 +616,11 @@ function TaskModal({initial,onClose,onSave}:{
   const recurringOpts=[
     {v:"",label:"One-off"},
     {v:"daily",label:"Daily"},
+    {v:"weekdays",label:"Weekdays"},
+    {v:"weekends",label:"Weekends"},
     {v:"weekly",label:"Weekly"},
+    {v:"biweekly",label:"Bi-weekly"},
+    {v:"monthly",label:"Monthly"},
   ];
 
   const inp:React.CSSProperties={
@@ -719,13 +728,13 @@ function TaskModal({initial,onClose,onSave}:{
           <div style={{marginBottom:16}}>
             <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
               textTransform:"uppercase",marginBottom:8}}>Repeats</p>
-            <div style={{display:"flex",gap:8}}>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
               {recurringOpts.map(r=>(
                 <button key={r.v} onClick={()=>setRecurring(r.v)}
-                  style={{flex:1,padding:"10px",borderRadius:10,cursor:"pointer",
+                  style={{flex:"1 1 27%",padding:"10px 6px",borderRadius:10,cursor:"pointer",
                     border:`2px solid ${recurring===r.v?C.primary:C.border}`,
                     background:recurring===r.v?"rgba(76,95,213,0.08)":"transparent",
-                    fontSize:12,fontWeight:700,
+                    fontSize:12,fontWeight:700,whiteSpace:"nowrap",
                     color:recurring===r.v?C.primary:C.muted,
                     transition:"all 0.15s"}}>
                   {r.label}
@@ -1857,7 +1866,7 @@ function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChang
           {supportItems.map(item=><ActionBtn key={item.label} {...item}/>)}
         </div>
         <div style={{marginTop:"auto",padding:"14px 20px",borderTop:`1px solid ${C.border}`}}>
-          <p style={{fontSize:10,color:C.muted2,textAlign:"center"}}>The Docket v1.0 · Made with ♥</p>
+          <p style={{fontSize:10,color:C.muted2,textAlign:"center"}}>The Docket v1.0</p>
         </div>
       </aside>
     </>
@@ -2988,14 +2997,14 @@ function CalendarView({tasks,routines,dark,C}:{tasks:Task[];routines:Routine[];d
       {/* Calendar grid */}
       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,overflow:"hidden"}}>
         {/* Day headers */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",borderBottom:`1px solid ${C.border}`}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",borderBottom:`1px solid ${C.border}`}}>
           {DOW.map(d=>(
             <div key={d} style={{padding:"8px 4px",textAlign:"center",fontSize:10.5,
               fontWeight:700,color:C.muted,background:C.surface2}}>{d}</div>
           ))}
         </div>
         {/* Days */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)"}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))"}}>
           {Array.from({length:startDow}).map((_,i)=>(
             <div key={`empty-${i}`} style={{minHeight:70,borderRight:`1px solid ${C.border}`,
               borderBottom:`1px solid ${C.border}`,background:C.surface2,opacity:0.4}}/>
@@ -3154,6 +3163,7 @@ const OB_GOALS=[
   {id:"finance",icon:"ti-chart-line",label:"Finance & Investing"},
   {id:"family",icon:"ti-users-group",label:"Family & Personal"},
   {id:"travel",icon:"ti-plane",label:"Travel & Lifestyle"},
+  {id:"other",icon:"ti-dots-circle-horizontal",label:"Something Else"},
 ];
 
 function OnboardingScreen({onComplete,dark,onOpenModal}:{onComplete:(name:string,goals:string[])=>void;dark:boolean;onOpenModal:(m:string)=>void}){
@@ -3161,6 +3171,7 @@ function OnboardingScreen({onComplete,dark,onOpenModal}:{onComplete:(name:string
   const[step,setStep]=useState(0);
   const[name,setName]=useState("");
   const[goals,setGoals]=useState<string[]>([]);
+  const[otherGoalText,setOtherGoalText]=useState("");
   const[animating,setAnimating]=useState(false);
   const[agreed,setAgreed]=useState(false);
 
@@ -3294,6 +3305,13 @@ function OnboardingScreen({onComplete,dark,onOpenModal}:{onComplete:(name:string
           );
         })}
       </div>
+      {goals.includes("other")&&(
+        <input type="text" value={otherGoalText} onChange={e=>setOtherGoalText(e.target.value)}
+          placeholder="What else would you like to track?" maxLength={80}
+          style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${C.border}`,
+            background:C.surface2,color:C.navy,fontSize:13,marginBottom:20,
+            fontFamily:"inherit",boxSizing:"border-box"}}/>
+      )}
       <button className="pill-btn" onClick={next} disabled={goals.length===0}
         style={{background:goals.length>0
           ?"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)"
