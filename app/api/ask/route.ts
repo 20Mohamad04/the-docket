@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+// Keep in sync with OPUS_MONTHLY_LIMIT in app/page.tsx — that copy is
+// display-only ("N left"); this is the one that actually enforces the limit.
+const OPUS_MONTHLY_LIMIT = 50;
+
 // Service-role client — bypasses RLS. Server-only; same pattern as the
 // Stripe webhook's admin client.
 function getSupabaseAdmin() {
@@ -10,9 +14,67 @@ function getSupabaseAdmin() {
   return createClient(url, key);
 }
 
-// Phase 1: track Sonnet usage per user per billing period. No enforcement
-// yet — this only counts. Must never throw: a tracking failure should never
-// break the actual chat response, so every error path here just logs.
+async function getSubscription(sb: any, userId: string) {
+  const { data, error } = await sb
+    .from("subscriptions")
+    .select("status, current_period_end")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) {
+    console.error("Failed to load subscription:", error);
+    return { status: null as string | null, periodEnd: null as string | null };
+  }
+  return {
+    status: (data?.status as string | undefined) ?? null,
+    periodEnd: (data?.current_period_end as string | undefined) ?? null,
+  };
+}
+
+async function getUsageRow(sb: any, userId: string) {
+  const { data, error } = await sb
+    .from("usage")
+    .select("period_end, sonnet_count, opus_count")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) {
+    console.error("Failed to load usage row:", error);
+    return null;
+  }
+  return data as { period_end: string; sonnet_count: number; opus_count: number } | null;
+}
+
+// Writes a bump to sonnet_count or opus_count for the given billing period.
+// On a new period (row missing, or its period_end doesn't match the current
+// one), both counters reset — the field being bumped starts at 1, the other
+// at 0. On an existing-period row, only the given field increments; the
+// other is simply omitted from the payload, which leaves it unchanged.
+async function bumpUsage(
+  sb: any,
+  userId: string,
+  periodEnd: string,
+  field: "sonnet_count" | "opus_count"
+) {
+  const usage = await getUsageRow(sb, userId);
+  const isNewPeriod = !usage || usage.period_end !== periodEnd;
+  const otherField = field === "sonnet_count" ? "opus_count" : "sonnet_count";
+  const nextCount = isNewPeriod ? 1 : (usage![field] ?? 0) + 1;
+
+  const { error } = await sb.from("usage").upsert(
+    {
+      user_id: userId,
+      period_end: periodEnd,
+      [field]: nextCount,
+      ...(isNewPeriod ? { [otherField]: 0 } : {}),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" }
+  );
+  if (error) console.error(`Usage tracking: failed to write usage row (${field}):`, error);
+}
+
+// Phase 1: track Sonnet usage per user per billing period. No enforcement —
+// this only counts. Must never throw: a tracking failure should never break
+// the actual chat response, so every error path here just logs.
 async function trackSonnetUsage(userId: string) {
   try {
     const sb = getSupabaseAdmin();
@@ -20,61 +82,66 @@ async function trackSonnetUsage(userId: string) {
       console.error("Usage tracking skipped — Supabase admin client unavailable");
       return;
     }
-
-    const { data: sub, error: subError } = await sb
-      .from("subscriptions")
-      .select("current_period_end")
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (subError) {
-      console.error("Usage tracking: failed to load subscription:", subError);
-      return;
-    }
-    const periodEnd = sub?.current_period_end;
+    const { periodEnd } = await getSubscription(sb, userId);
     if (!periodEnd) {
       // No subscription (or no current_period_end yet) for this user — there's
       // no billing period to key usage against, so skip rather than invent one.
       console.log("Usage tracking skipped — no current_period_end for user:", userId);
       return;
     }
-
-    const { data: usage, error: usageError } = await sb
-      .from("usage")
-      .select("period_end, sonnet_count")
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (usageError) {
-      console.error("Usage tracking: failed to load usage row:", usageError);
-      return;
-    }
-
-    // New billing period (or no row yet) — this request is the first count of
-    // the new period, so write sonnet_count: 1 directly instead of writing 0
-    // and then immediately incrementing in a second round trip.
-    const isNewPeriod = !usage || usage.period_end !== periodEnd;
-    const nextCount = isNewPeriod ? 1 : (usage.sonnet_count ?? 0) + 1;
-
-    const { error: writeError } = await sb.from("usage").upsert(
-      {
-        user_id: userId,
-        period_end: periodEnd,
-        sonnet_count: nextCount,
-        // Reset opus_count alongside sonnet_count on a fresh period; leave it
-        // untouched on an existing-period update (omitted = unchanged).
-        ...(isNewPeriod ? { opus_count: 0 } : {}),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" }
-    );
-    if (writeError) console.error("Usage tracking: failed to write usage row:", writeError);
+    await bumpUsage(sb, userId, periodEnd, "sonnet_count");
   } catch (err) {
     console.error("Usage tracking threw:", err);
   }
 }
 
+// Phase 2: increments opus_count for a period we already resolved during
+// the eligibility check below. Same never-throw contract as trackSonnetUsage.
+async function trackOpusUsage(userId: string, periodEnd: string) {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return;
+    await bumpUsage(sb, userId, periodEnd, "opus_count");
+  } catch (err) {
+    console.error("Opus usage tracking threw:", err);
+  }
+}
+
+// Phase 2: server-side Opus eligibility check. CRITICAL — never trust a
+// client-sent isPro/useOpus claim; that can be spoofed via devtools. This
+// independently re-verifies subscription status against Supabase. Any
+// failure (missing config, DB error, thrown exception) fails closed to
+// "use Sonnet, no special flag" — identical to a genuine non-Pro user, so a
+// transient error here can never grant free Opus access or produce a
+// confusing fallback message for something that isn't actually a limit.
+async function resolveOpusEligibility(
+  userId: string
+): Promise<{ allowed: boolean; periodEnd: string | null; overLimit: boolean }> {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return { allowed: false, periodEnd: null, overLimit: false };
+
+    const { status, periodEnd } = await getSubscription(sb, userId);
+    if (status !== "active" || !periodEnd) {
+      return { allowed: false, periodEnd: null, overLimit: false };
+    }
+
+    const usage = await getUsageRow(sb, userId);
+    const currentOpusCount = usage && usage.period_end === periodEnd ? usage.opus_count ?? 0 : 0;
+
+    if (currentOpusCount >= OPUS_MONTHLY_LIMIT) {
+      return { allowed: false, periodEnd, overLimit: true };
+    }
+    return { allowed: true, periodEnd, overLimit: false };
+  } catch (err) {
+    console.error("Opus eligibility check threw — falling back to Sonnet:", err);
+    return { allowed: false, periodEnd: null, overLimit: false };
+  }
+}
+
 export async function POST(req: Request) {
   try {
-    const { system, messages, userId } = await req.json();
+    const { system, messages, userId, useOpus } = await req.json();
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     const groqKey = process.env.GROQ_API_KEY;
@@ -84,6 +151,26 @@ export async function POST(req: Request) {
     // make judgment calls (when to ask a clarifying question vs just act, how to
     // read an ambiguous request, how to explain what it did in its own words).
     if (apiKey) {
+      let model = "claude-sonnet-5";
+      let maxTokens = 4096;
+      let opusFallback = false;
+      let opusPeriodEnd: string | null = null;
+
+      if (useOpus && userId) {
+        const eligibility = await resolveOpusEligibility(userId);
+        if (eligibility.allowed) {
+          model = "claude-opus-4-8";
+          maxTokens = 8192;
+          opusPeriodEnd = eligibility.periodEnd;
+        } else if (eligibility.overLimit) {
+          // Genuinely Pro, but used up this period's Opus credits — fall
+          // back to Sonnet and tell the frontend so it can show a note.
+          opusFallback = true;
+        }
+        // Otherwise: not genuinely Pro (or we couldn't verify) — silently
+        // ignore useOpus and proceed with Sonnet as normal, no error, no flag.
+      }
+
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
@@ -92,19 +179,18 @@ export async function POST(req: Request) {
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: "claude-sonnet-5",
-          // Raised from 2048: Sonnet 5 has adaptive thinking ON by default,
-          // and thinking tokens count against this same budget alongside the
-          // actual response text. With a tight cap, you can get a response
-          // that's almost entirely internal reasoning with a truncated (or
-          // missing) final answer. Extra headroom avoids that.
-          max_tokens: 4096,
-          // NOTE: Sonnet 5 rejects `temperature` (and top_p/top_k) with a hard
-          // 400 error unless left at the default value — this is a real,
-          // documented breaking change from earlier Sonnet models, not a bug.
-          // Do NOT re-add a non-default temperature here. Behavior/consistency
-          // that used to be tuned via temperature should be controlled through
-          // the system prompt instead (which this route already does heavily).
+          model,
+          // Sonnet 5 default of 4096 raised for adaptive-thinking headroom;
+          // Opus gets 8192 per the Think Harder spec — same reasoning, more
+          // room for the stronger/more expensive tier.
+          max_tokens: maxTokens,
+          // NOTE: both Sonnet 5 and Opus 4.8 reject `temperature` (and
+          // top_p/top_k) with a hard 400 unless left at the default — this is
+          // a real, documented constraint on both models, not a bug. Do NOT
+          // re-add a non-default temperature here for either model. Behavior
+          // that used to be tuned via temperature should be controlled
+          // through the system prompt instead (which this route already does
+          // heavily).
           system,
           messages,
         }),
@@ -114,26 +200,36 @@ export async function POST(req: Request) {
         console.error("Claude error:", data);
         throw new Error(data.error?.message ?? "Claude API error");
       }
-      // IMPORTANT: with adaptive thinking on by default, data.content is an
-      // array that may start with a "thinking" block before the real text
-      // block — content[0] is no longer reliably the actual answer. Find the
-      // first block that's actually type "text" instead of assuming position.
+      // IMPORTANT: with adaptive thinking on by default for Sonnet 5, and
+      // optionally for Opus, data.content is an array that may start with a
+      // "thinking" block before the real text block — content[0] is not
+      // reliably the actual answer. Find the first block that's actually
+      // type "text" instead of assuming position.
       const textBlock = Array.isArray(data.content)
         ? data.content.find((b: any) => b?.type === "text")
         : null;
       const content = textBlock?.text ?? "{}";
 
-      // Phase 1: track usage only after a confirmed-successful Sonnet
-      // response, and only for signed-in users (guests send no userId).
-      if (userId) await trackSonnetUsage(userId);
+      if (userId) {
+        if (model === "claude-opus-4-8" && opusPeriodEnd) {
+          await trackOpusUsage(userId, opusPeriodEnd);
+        } else {
+          // Sonnet's usage tracking stays exactly as it was in Phase 1 —
+          // track only, no enforcement — whether we ended up on Sonnet
+          // because useOpus was never set, because the caller wasn't
+          // genuinely Pro, or because of an Opus-limit fallback.
+          await trackSonnetUsage(userId);
+        }
+      }
 
-      return NextResponse.json({ content });
+      return NextResponse.json({ content, ...(opusFallback ? { opusFallback: true } : {}) });
     }
 
     // Groq fallback — only used if ANTHROPIC_API_KEY isn't set (e.g. Claude API
     // outage or misconfiguration). Kept as a safety net, not the primary path.
     // Groq's OpenAI-compatible API still supports temperature normally and
-    // doesn't have thinking blocks, so this one is untouched.
+    // doesn't have thinking blocks, so this one is untouched. No Opus/usage
+    // logic applies here — Groq is never Sonnet or Opus.
     if (groqKey) {
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",

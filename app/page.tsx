@@ -1705,13 +1705,12 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
 }
 
 
-function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChange,isPro,sonnetCount}:{
+function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChange,isPro}:{
   isOpen:boolean;onClose:()=>void;currentView:View;setView:(v:View)=>void;
   onOpenModal:(m:string)=>void;
   user:{name:string;email:string;avatar?:string;id?:string}|null;
   onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
   isPro?:boolean;
-  sonnetCount?:number|null;
 }){
   const{t,dark}=useApp();
   const C=getC(dark);
@@ -1797,12 +1796,6 @@ function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChang
                 </div>
                 <p style={{fontSize:11,color:C.muted,overflow:"hidden",textOverflow:"ellipsis",
                   whiteSpace:"nowrap"}}>{user.email}</p>
-                {/* TEMP (Phase 1) — remove once a real credits UI reads usage directly */}
-                {isPro&&sonnetCount!=null&&(
-                  <p style={{fontSize:10,color:C.muted2,marginTop:2}}>
-                    TEMP: {sonnetCount} Sonnet {sonnetCount===1?"request":"requests"} this period
-                  </p>
-                )}
               </div>
             </div>
             <div style={{display:"flex",gap:8}}>
@@ -2324,16 +2317,23 @@ const markdownComponents={
 };
 
 // ── Chatbot ──────────────────────────────────────────────────────────────────
-function Chatbot({tasks,routines,onAction,user}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
-  user?:{id?:string}|null;}){
+// Keep in sync with OPUS_MONTHLY_LIMIT in app/api/ask/route.ts — this is
+// only used for the "(N left)" display; the server independently enforces
+// the real limit and this constant has no effect on that enforcement.
+const OPUS_MONTHLY_LIMIT=50;
+
+function Chatbot({tasks,routines,onAction,user,isPro}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
+  user?:{id?:string}|null;isPro?:boolean;}){
   const{t,dark}=useApp();
   const C=getC(dark);
   const[open,setOpen]=useState(false);
   const[expanded,setExpanded]=useState(false);
-  const[messages,setMessages]=useState<{role:"user"|"assistant";content:string}[]>([
+  const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;opusFallback?:boolean}[]>([
     {role:"assistant",content:"Hi! I'm your Docket assistant. Tell me what you need — I'll find the best slot in your schedule and confirm before adding anything."},
   ]);
   const[input,setInput]=useState("");
+  const[thinkHarder,setThinkHarder]=useState(false);
+  const[opusCount,setOpusCount]=useState<number|null>(null);
   const[loading,setLoading]=useState(false);
   const[voiceOn,setVoiceOn]=useState(true);
   const voiceOnRef=React.useRef(true); // mirrors voiceOn for reads inside in-flight async speak() calls, which otherwise close over a stale value
@@ -2665,10 +2665,26 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
     return{actions:[],reply:bestEffort||"I had trouble processing that — could you try rephrasing?"};
   }
 
+  // Real Opus-credits indicator (Phase 2) — reads the usage row /api/ask
+  // writes. Refetched on mount/user change and again after every send() so
+  // the "(N left)" count reflects the just-sent message right away.
+  const refreshOpusCount=useCallback(async()=>{
+    if(!user?.id){setOpusCount(null);return;}
+    const sb=await getSupabaseClient();
+    if(!sb)return;
+    const{data,error}=await sb.from("usage")
+      .select("opus_count").eq("user_id",user.id).maybeSingle();
+    if(error){console.error("Failed to load Opus usage count:",error);return;}
+    setOpusCount(data?.opus_count??0);
+  },[user?.id]);
+  useEffect(()=>{refreshOpusCount();},[refreshOpusCount]);
+
   async function send(){
     if(!input.trim()||loading)return;
     const userMsg=input.trim();
+    const useOpusForThisMessage=thinkHarder;
     setInput("");
+    setThinkHarder(false); // opt-in per message, not a persistent setting
     const newMsgs=[...messages,{role:"user" as const,content:userMsg}];
     setMessages([...newMsgs,{role:"assistant" as const,content:"Working on it…"}]);
     setLoading(true);
@@ -2676,13 +2692,16 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
       const res=await fetch("/api/ask",{method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({system:systemPrompt,messages:newMsgs.slice(-20),
-          ...(user?.id?{userId:user.id}:{})})});
+          ...(user?.id?{userId:user.id}:{}),
+          ...(useOpusForThisMessage?{useOpus:true}:{})})});
       const data=await res.json();
       const raw=data.content??data.reply??"{}";
       const{actions,reply}=parseAIResponse(raw);
       onAction(actions);
-      setMessages([...newMsgs,{role:"assistant",content:reply}]);
+      setMessages([...newMsgs,{role:"assistant",content:reply,
+        ...(data.opusFallback?{opusFallback:true}:{})}]);
       speak(reply);
+      refreshOpusCount();
     }catch{
       setMessages([...newMsgs,{role:"assistant",content:"Something went wrong — try rephrasing."}]);
     }finally{setLoading(false);}
@@ -2806,6 +2825,13 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     {m.role==="assistant"
                       ?<ReactMarkdown components={markdownComponents}>{m.content}</ReactMarkdown>
                       :m.content}
+                    {m.opusFallback&&(
+                      <p style={{fontSize:10.5,color:C.muted2,marginTop:6,paddingTop:6,
+                        borderTop:`1px solid ${dark?"rgba(255,255,255,0.08)":C.border}`,fontStyle:"italic"}}>
+                        <i className="ti ti-info-circle" style={{fontSize:11,marginRight:3}} aria-hidden="true"/>
+                        Opus credits used up this month — sent with the standard model instead.
+                      </p>
+                    )}
                   </div>
                 ))}
                 {loading&&(
@@ -2838,6 +2864,19 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     placeholder="Ask me anything…"
                     style={{flex:1,border:"none",outline:"none",fontSize:13,
                       background:"transparent",color:C.navy,fontFamily:"inherit"}}/>
+                  {isPro&&(
+                    <button onClick={()=>setThinkHarder(v=>!v)}
+                      title={thinkHarder?"Think Harder is on — this message will use Opus":"Use a stronger model for this message"}
+                      style={{display:"flex",alignItems:"center",gap:4,height:36,
+                        padding:"0 10px",borderRadius:18,flexShrink:0,whiteSpace:"nowrap",
+                        border:`1.5px solid ${thinkHarder?"#8B5CF6":C.border}`,
+                        background:thinkHarder?"linear-gradient(135deg,#8B5CF6,#6D28D9)":"transparent",
+                        color:thinkHarder?"white":C.muted,
+                        fontSize:10.5,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                      <i className="ti ti-bulb" style={{fontSize:13}} aria-hidden="true"/>
+                      Think Harder{opusCount!=null?` (${Math.max(0,OPUS_MONTHLY_LIMIT-opusCount)} left)`:""}
+                    </button>
+                  )}
                   {speechSupported&&(
                     <button onClick={toggleMic} title={listening?"Stop listening":"Speak your message"}
                       className="pill-btn"
@@ -3630,27 +3669,6 @@ export default function Home(){
     return()=>{cancelled=true;};
   },[user?.id]);
 
-  // ── Sonnet usage count (Phase 1) — TEMP verification only, reads the
-  // usage row /api/ask writes after each successful request. Re-fetched
-  // whenever the drawer opens so the number stays reasonably fresh without
-  // needing real-time sync for what's a throwaway debug display.
-  const[sonnetCount,setSonnetCount]=useState<number|null>(null);
-  useEffect(()=>{
-    if(!user?.id||!isDrawerOpen)return;
-    let cancelled=false;
-    (async()=>{
-      const sb=await getSupabaseClient();
-      if(!sb)return;
-      const{data,error}=await sb.from("usage")
-        .select("sonnet_count").eq("user_id",user.id).maybeSingle();
-      if(cancelled)return;
-      if(error){console.error("Failed to load usage count:",error);return;}
-      console.log("[Sonnet usage]",data?.sonnet_count??0);
-      setSonnetCount(data?.sonnet_count??0);
-    })();
-    return()=>{cancelled=true;};
-  },[user?.id,isDrawerOpen]);
-
   useEffect(()=>{
     if(!isLoaded||!user?.id||cloudSyncingRef.current)return;
     const uid=user.id;
@@ -3931,7 +3949,7 @@ export default function Home(){
 
       <Drawer isOpen={isDrawerOpen} onClose={()=>setIsDrawerOpen(false)}
         currentView={currentView} setView={(v)=>{setCurrentView(v);setShowSettings(false);}}
-        onOpenModal={setActiveModal} user={user} onUserChange={setUser} isPro={isPro} sonnetCount={sonnetCount}/>
+        onOpenModal={setActiveModal} user={user} onUserChange={setUser} isPro={isPro}/>
 
       {/* Nav */}
       <nav style={{position:"relative",zIndex:10,display:"flex",justifyContent:"space-between",
@@ -4253,7 +4271,7 @@ export default function Home(){
           <i className="ti ti-plus" style={{fontSize:28,color:"white"}} aria-hidden="true"/>
         </button>
 
-      <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions} user={user}/>
+      <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions} user={user} isPro={isPro}/>
 
       {isAddingTask&&<TaskModal onClose={()=>setIsAddingTask(false)} onSave={addTask}/>}
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
