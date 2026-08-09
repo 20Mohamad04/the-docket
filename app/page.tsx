@@ -1705,12 +1705,13 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
 }
 
 
-function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChange,isPro}:{
+function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChange,isPro,sonnetCount}:{
   isOpen:boolean;onClose:()=>void;currentView:View;setView:(v:View)=>void;
   onOpenModal:(m:string)=>void;
   user:{name:string;email:string;avatar?:string;id?:string}|null;
   onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
   isPro?:boolean;
+  sonnetCount?:number|null;
 }){
   const{t,dark}=useApp();
   const C=getC(dark);
@@ -1796,6 +1797,12 @@ function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChang
                 </div>
                 <p style={{fontSize:11,color:C.muted,overflow:"hidden",textOverflow:"ellipsis",
                   whiteSpace:"nowrap"}}>{user.email}</p>
+                {/* TEMP (Phase 1) — remove once a real credits UI reads usage directly */}
+                {isPro&&sonnetCount!=null&&(
+                  <p style={{fontSize:10,color:C.muted2,marginTop:2}}>
+                    TEMP: {sonnetCount} Sonnet {sonnetCount===1?"request":"requests"} this period
+                  </p>
+                )}
               </div>
             </div>
             <div style={{display:"flex",gap:8}}>
@@ -2317,7 +2324,8 @@ const markdownComponents={
 };
 
 // ── Chatbot ──────────────────────────────────────────────────────────────────
-function Chatbot({tasks,routines,onAction}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;}){
+function Chatbot({tasks,routines,onAction,user}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
+  user?:{id?:string}|null;}){
   const{t,dark}=useApp();
   const C=getC(dark);
   const[open,setOpen]=useState(false);
@@ -2667,7 +2675,8 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
     try{
       const res=await fetch("/api/ask",{method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({system:systemPrompt,messages:newMsgs.slice(-20)})});
+        body:JSON.stringify({system:systemPrompt,messages:newMsgs.slice(-20),
+          ...(user?.id?{userId:user.id}:{})})});
       const data=await res.json();
       const raw=data.content??data.reply??"{}";
       const{actions,reply}=parseAIResponse(raw);
@@ -3621,6 +3630,27 @@ export default function Home(){
     return()=>{cancelled=true;};
   },[user?.id]);
 
+  // ── Sonnet usage count (Phase 1) — TEMP verification only, reads the
+  // usage row /api/ask writes after each successful request. Re-fetched
+  // whenever the drawer opens so the number stays reasonably fresh without
+  // needing real-time sync for what's a throwaway debug display.
+  const[sonnetCount,setSonnetCount]=useState<number|null>(null);
+  useEffect(()=>{
+    if(!user?.id||!isDrawerOpen)return;
+    let cancelled=false;
+    (async()=>{
+      const sb=await getSupabaseClient();
+      if(!sb)return;
+      const{data,error}=await sb.from("usage")
+        .select("sonnet_count").eq("user_id",user.id).maybeSingle();
+      if(cancelled)return;
+      if(error){console.error("Failed to load usage count:",error);return;}
+      console.log("[Sonnet usage]",data?.sonnet_count??0);
+      setSonnetCount(data?.sonnet_count??0);
+    })();
+    return()=>{cancelled=true;};
+  },[user?.id,isDrawerOpen]);
+
   useEffect(()=>{
     if(!isLoaded||!user?.id||cloudSyncingRef.current)return;
     const uid=user.id;
@@ -3901,7 +3931,7 @@ export default function Home(){
 
       <Drawer isOpen={isDrawerOpen} onClose={()=>setIsDrawerOpen(false)}
         currentView={currentView} setView={(v)=>{setCurrentView(v);setShowSettings(false);}}
-        onOpenModal={setActiveModal} user={user} onUserChange={setUser} isPro={isPro}/>
+        onOpenModal={setActiveModal} user={user} onUserChange={setUser} isPro={isPro} sonnetCount={sonnetCount}/>
 
       {/* Nav */}
       <nav style={{position:"relative",zIndex:10,display:"flex",justifyContent:"space-between",
@@ -4223,7 +4253,7 @@ export default function Home(){
           <i className="ti ti-plus" style={{fontSize:28,color:"white"}} aria-hidden="true"/>
         </button>
 
-      <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions}/>
+      <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions} user={user}/>
 
       {isAddingTask&&<TaskModal onClose={()=>setIsAddingTask(false)} onSave={addTask}/>}
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
