@@ -2326,13 +2326,20 @@ function Chatbot({tasks,routines,onAction,user,isPro}:{tasks:Task[];routines:Rou
   user?:{id?:string}|null;isPro?:boolean;}){
   const{t,dark}=useApp();
   const C=getC(dark);
+  // C.border/C.surface2 are near-transparent tints meant for subtle layering
+  // over textured surfaces — against the input row's solid white/navy bar
+  // they read as invisible. These give the mic/send/model-selector buttons
+  // an actually-visible idle background+border in both themes.
+  const inputBtnBg=dark?"#2A2F52":"#EEF0FB";
+  const inputBtnBorder=dark?"1.5px solid rgba(255,255,255,0.18)":"1.5px solid rgba(76,95,213,0.28)";
   const[open,setOpen]=useState(false);
   const[expanded,setExpanded]=useState(false);
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;opusFallback?:boolean}[]>([
     {role:"assistant",content:"Hi! I'm your Docket assistant. Tell me what you need — I'll find the best slot in your schedule and confirm before adding anything."},
   ]);
   const[input,setInput]=useState("");
-  const[thinkHarder,setThinkHarder]=useState(false);
+  const[selectedModel,setSelectedModel]=useState<"sonnet"|"opus">("sonnet");
+  const[modelMenuOpen,setModelMenuOpen]=useState(false);
   const[opusCount,setOpusCount]=useState<number|null>(null);
   const[loading,setLoading]=useState(false);
   const[voiceOn,setVoiceOn]=useState(true);
@@ -2682,9 +2689,9 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
   async function send(){
     if(!input.trim()||loading)return;
     const userMsg=input.trim();
-    const useOpusForThisMessage=thinkHarder;
     setInput("");
-    setThinkHarder(false); // opt-in per message, not a persistent setting
+    // selectedModel is persistent — unlike the old one-shot toggle it is
+    // NOT reset here, and applies to every message until the user changes it.
     const newMsgs=[...messages,{role:"user" as const,content:userMsg}];
     setMessages([...newMsgs,{role:"assistant" as const,content:"Working on it…"}]);
     setLoading(true);
@@ -2693,7 +2700,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({system:systemPrompt,messages:newMsgs.slice(-20),
           ...(user?.id?{userId:user.id}:{}),
-          ...(useOpusForThisMessage?{useOpus:true}:{})})});
+          ...(selectedModel==="opus"?{useOpus:true}:{})})});
       const data=await res.json();
       const raw=data.content??data.reply??"{}";
       const{actions,reply}=parseAIResponse(raw);
@@ -2865,24 +2872,54 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     style={{flex:1,border:"none",outline:"none",fontSize:13,
                       background:"transparent",color:C.navy,fontFamily:"inherit"}}/>
                   {isPro&&(
-                    <button onClick={()=>setThinkHarder(v=>!v)}
-                      title={thinkHarder?"Think Harder is on — this message will use Opus":"Use a stronger model for this message"}
-                      style={{display:"flex",alignItems:"center",gap:4,height:36,
-                        padding:"0 10px",borderRadius:18,flexShrink:0,whiteSpace:"nowrap",
-                        border:`1.5px solid ${thinkHarder?"#8B5CF6":C.border}`,
-                        background:thinkHarder?"linear-gradient(135deg,#8B5CF6,#6D28D9)":"transparent",
-                        color:thinkHarder?"white":C.muted,
-                        fontSize:10.5,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                      <i className="ti ti-bulb" style={{fontSize:13}} aria-hidden="true"/>
-                      Think Harder{opusCount!=null?` (${Math.max(0,OPUS_MONTHLY_LIMIT-opusCount)} left)`:""}
-                    </button>
+                    <div style={{position:"relative",flexShrink:0}}>
+                      <button onClick={()=>setModelMenuOpen(v=>!v)}
+                        className="pill-btn"
+                        title="Choose which model sends your next messages"
+                        style={{display:"flex",alignItems:"center",gap:4,height:36,
+                          padding:"0 10px",borderRadius:18,whiteSpace:"nowrap",
+                          border:inputBtnBorder,background:inputBtnBg,color:C.navy,
+                          fontSize:11,fontWeight:700,fontFamily:"inherit"}}>
+                        {selectedModel==="opus"?"Opus 4.8":"Sonnet 5"}
+                        <i className="ti ti-chevron-down" style={{fontSize:12,
+                          transform:modelMenuOpen?"rotate(180deg)":"none",transition:"transform 0.15s"}} aria-hidden="true"/>
+                      </button>
+                      {modelMenuOpen&&(<>
+                        <div onClick={()=>setModelMenuOpen(false)}
+                          style={{position:"fixed",inset:0,zIndex:200}}/>
+                        <div style={{position:"absolute",bottom:"calc(100% + 8px)",left:0,
+                          minWidth:190,background:dark?"#1A1D3E":"#FFFFFF",
+                          border:`1.5px solid ${dark?"rgba(255,255,255,0.14)":C.border}`,
+                          borderRadius:12,boxShadow:"0 8px 24px rgba(0,0,0,0.25)",
+                          overflow:"hidden",zIndex:201}}>
+                          <button onClick={()=>{setSelectedModel("sonnet");setModelMenuOpen(false);}}
+                            style={{display:"flex",width:"100%",alignItems:"center",justifyContent:"space-between",
+                              padding:"10px 14px",border:"none",cursor:"pointer",fontSize:12.5,fontWeight:600,
+                              background:selectedModel==="sonnet"?(dark?"rgba(255,255,255,0.06)":"#F0EFFC"):"transparent",
+                              color:C.navy,textAlign:"left",fontFamily:"inherit"}}>
+                            Sonnet 5
+                            {selectedModel==="sonnet"&&<i className="ti ti-check" style={{fontSize:13,color:C.primary}} aria-hidden="true"/>}
+                          </button>
+                          <button onClick={()=>{setSelectedModel("opus");setModelMenuOpen(false);}}
+                            style={{display:"flex",width:"100%",alignItems:"center",justifyContent:"space-between",
+                              padding:"10px 14px",cursor:"pointer",fontSize:12.5,fontWeight:600,
+                              border:"none",borderTop:`1px solid ${dark?"rgba(255,255,255,0.08)":C.border}`,
+                              background:selectedModel==="opus"?(dark?"rgba(255,255,255,0.06)":"#F0EFFC"):"transparent",
+                              color:C.navy,textAlign:"left",fontFamily:"inherit"}}>
+                            <span>Opus 4.8{opusCount!=null?` — ${Math.max(0,OPUS_MONTHLY_LIMIT-opusCount)} left`:""}</span>
+                            {selectedModel==="opus"&&<i className="ti ti-check" style={{fontSize:13,color:C.primary,marginLeft:8}} aria-hidden="true"/>}
+                          </button>
+                        </div>
+                      </>)}
+                    </div>
                   )}
                   {speechSupported&&(
                     <button onClick={toggleMic} title={listening?"Stop listening":"Speak your message"}
                       className="pill-btn"
                       style={{width:36,height:36,
-                        background:listening?"#E14D4D":C.border,
-                        color:listening?"white":C.muted,border:"none",cursor:"pointer",
+                        background:listening?"#E14D4D":inputBtnBg,
+                        color:listening?"white":C.muted,
+                        border:listening?"1.5px solid #E14D4D":inputBtnBorder,cursor:"pointer",
                         flexShrink:0,animation:listening?"micPulse 1.2s ease-in-out infinite":"none"}}>
                       <i className="ti ti-microphone" style={{fontSize:15}} aria-hidden="true"/>
                     </button>
@@ -2893,8 +2930,9 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     style={{width:36,height:36,
                       background:input.trim()
                         ?"linear-gradient(145deg,#6677E8,#4C5FD5)"
-                        :C.border,
-                      color:"white",border:"none",cursor:"pointer",
+                        :inputBtnBg,
+                      color:input.trim()?"white":C.muted,
+                      border:input.trim()?"1.5px solid transparent":inputBtnBorder,cursor:"pointer",
                       opacity:loading||!input.trim()?0.5:1,flexShrink:0}}>
                     <i className="ti ti-send" style={{fontSize:15}} aria-hidden="true"/>
                   </button>
