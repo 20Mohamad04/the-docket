@@ -521,7 +521,7 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
     <div style={{position:"relative"}}>
       <div onClick={()=>{setOpen(o=>!o);setCustomMode(false);}}
         style={{width:"100%",padding:"10px 12px",border:`1.5px solid ${open?C.primary:C.border}`,
-          borderRadius:9,background:C.surface2,display:"flex",
+          borderRadius:9,background:dark?"#16192A":"#FFFFFF",display:"flex",
           alignItems:"center",gap:8,cursor:"pointer",userSelect:"none",
           boxShadow:open?"0 0 0 3px rgba(61,82,160,0.12)":"none",
           transition:"all 0.15s"}}>
@@ -535,7 +535,7 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
       </div>
       {open&&(
         <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,
-          background:C.surface,border:`1.5px solid ${C.primary}`,borderRadius:9,
+          background:dark?"#16192A":"#FFFFFF",border:`1.5px solid ${C.primary}`,borderRadius:9,
           boxShadow:"0 8px 30px rgba(35,42,77,0.2)",zIndex:999,overflow:"hidden"}}>
           <div style={{padding:"8px 10px",borderBottom:`1px solid ${C.border}`,display:"flex",gap:6}}>
             <input autoFocus value={search}
@@ -616,6 +616,8 @@ function TaskModal({initial,onClose,onSave}:{
   const recurringOpts=[
     {v:"",label:"One-off"},
     {v:"daily",label:"Daily"},
+    {v:"every_2_days",label:"Every 2 days"},
+    {v:"every_3_days",label:"Every 3 days"},
     {v:"weekdays",label:"Weekdays"},
     {v:"weekends",label:"Weekends"},
     {v:"weekly",label:"Weekly"},
