@@ -589,6 +589,111 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
   );
 }
 
+// ── Date Picker ────────────────────────────────────────────────────────────────
+// Compact popover calendar, styled to match the app rather than the native
+// <input type="date"> widget. Adapts the same month-grid math CalendarView
+// uses (firstDay/daysInMonth/startDow, 7-col grid with empty offset cells)
+// but without CalendarView's task/event overlay — this only needs day cells.
+const DP_MONTH_NAMES=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DP_DOW=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+function DatePicker({value,onChange,dark}:{value:string;onChange:(v:string)=>void;dark:boolean}){
+  const C=getC(dark);
+  const[open,setOpen]=useState(false);
+  const parsed=value?new Date(value+"T12:00:00"):null;
+  const now=new Date();
+  const[viewMonth,setViewMonth]=useState(parsed?parsed.getMonth():now.getMonth());
+  const[viewYear,setViewYear]=useState(parsed?parsed.getFullYear():now.getFullYear());
+
+  const firstDay=new Date(viewYear,viewMonth,1);
+  const daysInMonth=new Date(viewYear,viewMonth+1,0).getDate();
+  const startDow=(firstDay.getDay()+6)%7; // 0=Mon
+  const monthISO=`${viewYear}-${String(viewMonth+1).padStart(2,"0")}`;
+
+  function selectDay(day:number){
+    onChange(`${monthISO}-${String(day).padStart(2,"0")}`);
+    setOpen(false);
+  }
+
+  const displayLabel=parsed
+    ?parsed.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",year:"numeric"})
+    :"Select a date";
+
+  return(
+    <div style={{position:"relative"}}>
+      <div onClick={()=>setOpen(o=>!o)}
+        style={{width:"100%",padding:"12px 14px",borderRadius:12,cursor:"pointer",
+          border:`1.5px solid ${open?C.primary:C.border}`,fontSize:14,
+          background:dark?"#1A1D2E":"#F8F7FE",color:value?C.navy:C.muted,
+          display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,
+          transition:"border-color 0.2s"}}>
+        <span style={{display:"flex",alignItems:"center",gap:8}}>
+          <i className="ti ti-calendar" style={{fontSize:15,color:C.muted}} aria-hidden="true"/>
+          {displayLabel}
+        </span>
+        {value&&(
+          <i className="ti ti-x" style={{fontSize:14,color:C.muted}} aria-hidden="true"
+            onClick={e=>{e.stopPropagation();onChange("");}}/>
+        )}
+      </div>
+      {open&&(
+        <div onClick={e=>e.stopPropagation()}
+          style={{position:"absolute",top:"calc(100% + 4px)",left:0,zIndex:999,width:280,
+            background:dark?"#16192A":"#FFFFFF",border:`1.5px solid ${C.primary}`,
+            borderRadius:14,boxShadow:"0 8px 30px rgba(35,42,77,0.2)",padding:12}}>
+          {/* Month nav */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <button onClick={()=>{if(viewMonth===0){setViewMonth(11);setViewYear(y=>y-1);}else setViewMonth(m=>m-1);}}
+              style={{width:28,height:28,borderRadius:8,border:`1px solid ${C.border}`,
+                background:C.surface2,cursor:"pointer",fontSize:14,color:C.navy}}>‹</button>
+            <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:13,color:C.navy}}>
+              {DP_MONTH_NAMES[viewMonth]} {viewYear}
+            </span>
+            <button onClick={()=>{if(viewMonth===11){setViewMonth(0);setViewYear(y=>y+1);}else setViewMonth(m=>m+1);}}
+              style={{width:28,height:28,borderRadius:8,border:`1px solid ${C.border}`,
+                background:C.surface2,cursor:"pointer",fontSize:14,color:C.navy}}>›</button>
+          </div>
+          {/* Day-of-week headers */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",marginBottom:4}}>
+            {DP_DOW.map(d=>(
+              <div key={d} style={{textAlign:"center",fontSize:10,fontWeight:700,
+                color:C.muted,padding:"4px 0"}}>{d}</div>
+            ))}
+          </div>
+          {/* Day grid */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",gap:2}}>
+            {Array.from({length:startDow}).map((_,i)=><div key={`e-${i}`}/>)}
+            {Array.from({length:daysInMonth}).map((_,i)=>{
+              const day=i+1;
+              const iso=`${monthISO}-${String(day).padStart(2,"0")}`;
+              const isToday=iso===todayISO();
+              const isSelected=iso===value;
+              return(
+                <button key={day} onClick={()=>selectDay(day)}
+                  style={{aspectRatio:"1",borderRadius:8,border:"none",cursor:"pointer",
+                    fontSize:12,fontWeight:isSelected||isToday?700:500,
+                    background:isSelected?C.primary:isToday?`${C.primary}18`:"transparent",
+                    color:isSelected?"white":isToday?C.primary:C.navy,
+                    transition:"background 0.1s"}}
+                  onMouseEnter={e=>{if(!isSelected)e.currentTarget.style.background=C.surface2;}}
+                  onMouseLeave={e=>{if(!isSelected)e.currentTarget.style.background=isToday?`${C.primary}18`:"transparent";}}>
+                  {day}
+                </button>
+              );
+            })}
+          </div>
+          <button onClick={()=>{onChange(todayISO());setOpen(false);}}
+            style={{width:"100%",marginTop:10,padding:"7px",borderRadius:8,cursor:"pointer",
+              border:`1px solid ${C.border}`,background:"transparent",
+              fontSize:11,fontWeight:700,color:C.primary}}>
+            Today
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Task Modal ────────────────────────────────────────────────────────────────
 function TaskModal({initial,onClose,onSave}:{
   initial?:Partial<Task>;onClose:()=>void;
@@ -749,10 +854,7 @@ function TaskModal({initial,onClose,onSave}:{
           <div style={{marginBottom:16}}>
             <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
               textTransform:"uppercase",marginBottom:8}}>Due date</p>
-            <input type="date" value={date} onChange={e=>setDate(e.target.value)}
-              style={inp}
-              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
-              onBlur={e=>(e.target.style.borderColor=C.border)}/>
+            <DatePicker value={date} onChange={setDate} dark={dark}/>
           </div>
 
           {/* Notes */}
@@ -3695,8 +3797,22 @@ export default function Home(){
         return{...r, time:rawTime.slice(0,5)};
       }));
       setPrayerStatus("done");
-    }catch(e){
-      console.error("Prayer times fetch failed:",e);
+    }catch(e:any){
+      // Diagnostic only — behavior/UI message unchanged for now. Differentiate
+      // the two failure points in the try block above: geolocation vs the
+      // Aladhan fetch/response, so the console shows what actually broke
+      // instead of a single generic "could not get location" guess.
+      const isGeoError=e&&typeof e.code==="number"&&typeof e.message==="string"&&!(e instanceof Error);
+      if(isGeoError){
+        const codeNames:Record<number,string>={1:"PERMISSION_DENIED",2:"POSITION_UNAVAILABLE",3:"TIMEOUT"};
+        console.error(`Prayer times: geolocation failed — code ${e.code} (${codeNames[e.code]??"unknown"}): ${e.message}`);
+      } else if(e instanceof TypeError){
+        console.error("Prayer times: network/fetch failure —",e.message,e);
+      } else if(e instanceof Error){
+        console.error("Prayer times: API/processing failure —",e.message,e);
+      } else {
+        console.error("Prayer times: unexpected failure —",e);
+      }
       setPrayerStatus("error");
     }
   }
