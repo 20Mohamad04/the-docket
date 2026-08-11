@@ -23,6 +23,18 @@ function periodEndISO(sub: Stripe.Subscription): string | undefined {
   return seconds ? new Date(seconds * 1000).toISOString() : undefined;
 }
 
+// Phase 1 of the Max tier: which price the subscription is actually on lives
+// on the same subscription item current_period_end is read from above.
+// Defaults to "pro" if the price ID matches neither configured price — this
+// should never happen, but must never error or leave tier unset.
+function resolveTier(sub: Stripe.Subscription): "pro" | "max" {
+  const priceId = sub.items.data[0]?.price?.id;
+  if (priceId && priceId === process.env.STRIPE_PRICE_ID_MAX) return "max";
+  if (priceId && priceId === process.env.STRIPE_PRICE_ID) return "pro";
+  console.error("Subscription price ID matched neither STRIPE_PRICE_ID nor STRIPE_PRICE_ID_MAX — defaulting to pro:", priceId);
+  return "pro";
+}
+
 export async function POST(req: Request) {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature")!;
@@ -58,9 +70,11 @@ export async function POST(req: Request) {
           // (session.subscription is just an ID here, not expanded) — fetch
           // the subscription separately to get current_period_end.
           let currentPeriodEnd: string | undefined;
+          let tier: "pro" | "max" = "pro";
           if (session.subscription) {
             const sub = await stripe.subscriptions.retrieve(session.subscription as string);
             currentPeriodEnd = periodEndISO(sub);
+            tier = resolveTier(sub);
           }
           const { error } = await sb.from("subscriptions").upsert(
             {
@@ -68,6 +82,7 @@ export async function POST(req: Request) {
               stripe_customer_id: session.customer as string,
               stripe_subscription_id: session.subscription as string,
               status: "active",
+              tier,
               ...(currentPeriodEnd ? { current_period_end: currentPeriodEnd } : {}),
             },
             { onConflict: "user_id" }
@@ -101,10 +116,12 @@ export async function POST(req: Request) {
       if (sb) {
         try {
           const currentPeriodEnd = periodEndISO(subscription);
+          const tier = resolveTier(subscription);
           const { error } = await sb
             .from("subscriptions")
             .update({
               status: subscription.status,
+              tier,
               ...(currentPeriodEnd ? { current_period_end: currentPeriodEnd } : {}),
             })
             .eq("stripe_customer_id", subscription.customer as string);
