@@ -1325,13 +1325,14 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
 }
 
 // ── Drawer ───────────────────────────────────────────────────────────────────
-function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPeriodEnd}:{
+function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPeriodEnd,subTier}:{
   modal:string;onClose:()=>void;dark:boolean;
   user:{name:string;email:string;avatar?:string;id?:string}|null;
   onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
   onNavigate?:(m:string)=>void;
   isPro?:boolean;
   subPeriodEnd?:string|null;
+  subTier?:string|null;
 }){
   const C=getC(dark);
   const[authStatus,setAuthStatus]=useState<"idle"|"loading"|"success"|"error"|"confirm">("idle");
@@ -1532,7 +1533,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
               </div>
               <div>
                 <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:16,color:C.navy}}>
-                  {isPro?"The Docket Pro":"Free Plan"}
+                  {isPro?(subTier==="max"?"The Docket Max":"The Docket Pro"):"Free Plan"}
                 </p>
                 <p style={{fontSize:11.5,color:C.muted}}>
                   {isPro
@@ -1617,12 +1618,12 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                       Opus 4.8 credits
                     </span>
                     <span style={{fontSize:12,fontWeight:700,color:C.navy}}>
-                      {usage?usage.opus_count:"–"} / {OPUS_MONTHLY_LIMIT}
+                      {usage?usage.opus_count:"–"} / {opusLimitForTier(subTier)}
                     </span>
                   </div>
                   <div style={{height:6,borderRadius:3,background:C.border,overflow:"hidden"}}>
                     <div style={{height:"100%",
-                      width:`${usage?Math.min(100,(usage.opus_count/OPUS_MONTHLY_LIMIT)*100):0}%`,
+                      width:`${usage?Math.min(100,(usage.opus_count/opusLimitForTier(subTier))*100):0}%`,
                       borderRadius:3,background:"linear-gradient(90deg,#C4A8FF,#8670E8)",transition:"width 0.3s"}}/>
                   </div>
                 </div>
@@ -1728,20 +1729,26 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
             ))}
           </div>
           <div style={{borderRadius:12,overflow:"hidden",border:`1px solid ${C.border}`,marginBottom:14}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",
+            <div style={{display:"grid",gridTemplateColumns:"1.3fr 1fr 1fr 1fr",
               background:dark?"#1E2235":"#F4F2FC",padding:"8px 14px"}}>
               <p style={{fontSize:10,fontWeight:700,color:C.muted2,textTransform:"uppercase"}}>Feature</p>
               <p style={{fontSize:10,fontWeight:700,color:C.muted2,textTransform:"uppercase",textAlign:"center"}}>Free</p>
               <p style={{fontSize:10,fontWeight:700,color:C.primary,textTransform:"uppercase",textAlign:"center"}}>Pro</p>
+              <p style={{fontSize:10,fontWeight:700,color:"#8670E8",textTransform:"uppercase",textAlign:"center"}}>Max</p>
             </div>
-            {[["Tasks & Routines","Unlimited","Unlimited"],["AI Requests","10/day","Unlimited"],
-              ["Device Sync","This device only","All devices"],["Prayer Times","Manual","Auto"],
-              ["Support","Community","Priority 24h"]].map(([feat,free,pro],i)=>(
-              <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",
+            {[["Tasks & Routines","Unlimited","Unlimited","Unlimited"],
+              ["Sonnet Messages","10/day","Unlimited","500/month"],
+              ["Opus Messages","—","50/month","120/month"],
+              ["Device Sync","This device only","All devices","All devices"],
+              ["Prayer Times","Manual","Auto","Auto"],
+              ["Support","Community","Priority 24h","Priority 24h"],
+              ["Early Access","—","✓","✓"]].map(([feat,free,pro,max],i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1.3fr 1fr 1fr 1fr",
                 padding:"8px 14px",borderTop:`1px solid ${C.border}`}}>
                 <p style={{fontSize:11.5,color:C.navy}}>{feat}</p>
-                <p style={{fontSize:11.5,color:i===1||i===2?C.urgent:C.muted,fontWeight:i===1||i===2?600:400,textAlign:"center"}}>{free}</p>
+                <p style={{fontSize:11.5,color:i===1||i===2||i===3?C.urgent:C.muted,fontWeight:i===1||i===2||i===3?600:400,textAlign:"center"}}>{free}</p>
                 <p style={{fontSize:11.5,color:C.primary,fontWeight:700,textAlign:"center"}}>{pro}</p>
+                <p style={{fontSize:11.5,color:"#8670E8",fontWeight:700,textAlign:"center"}}>{max}</p>
               </div>
             ))}
           </div>
@@ -1751,7 +1758,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                 const res=await fetch("/api/stripe/checkout",{
                   method:"POST",
                   headers:{"Content-Type":"application/json"},
-                  body:JSON.stringify({email:user.email,userId:user.id})
+                  body:JSON.stringify({email:user.email,userId:user.id,tier:"pro"})
                 });
                 const data=await res.json();
                 if(data.url) window.location.href=data.url;
@@ -1762,6 +1769,24 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
               background:"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",color:"white",border:"none",
               boxShadow:"0 6px 20px rgba(76,95,213,0.45)"}}>
             {user?"Start My Free 7 Days →":"Sign in to Start Free Trial"}
+          </button>
+          <button className="pill-btn" onClick={async()=>{
+              if(!user){onClose();setTimeout(()=>onNavigate?.("login"),100);return;}
+              try{
+                const res=await fetch("/api/stripe/checkout",{
+                  method:"POST",
+                  headers:{"Content-Type":"application/json"},
+                  body:JSON.stringify({email:user.email,userId:user.id,tier:"max"})
+                });
+                const data=await res.json();
+                if(data.url) window.location.href=data.url;
+                else alert("Payment error: "+data.error);
+              }catch(e:any){alert("Something went wrong: "+e.message);}
+            }}
+            style={{width:"100%",padding:"13px",fontSize:14,fontWeight:800,marginTop:10,
+              background:"linear-gradient(145deg,#A78BFA,#8670E8,#5B3FBF)",color:"white",border:"none",
+              boxShadow:"0 6px 20px rgba(134,112,232,0.45)"}}>
+            {user?"Try Docket Max — £14.99/mo →":"Sign in to Try Max"}
           </button>
           {!user&&(
             <p style={{textAlign:"center",fontSize:12,color:C.urgent,marginTop:8,fontWeight:600}}>
@@ -2592,13 +2617,15 @@ const markdownComponents={
 };
 
 // ── Chatbot ──────────────────────────────────────────────────────────────────
-// Keep in sync with OPUS_MONTHLY_LIMIT in app/api/ask/route.ts — this is
-// only used for the "(N left)" display; the server independently enforces
-// the real limit and this constant has no effect on that enforcement.
-const OPUS_MONTHLY_LIMIT=50;
+// Keep in sync with opusLimitForTier in app/api/ask/route.ts — this is only
+// used for the "(N left)" display; the server independently enforces the
+// real limit and this function has no effect on that enforcement.
+function opusLimitForTier(tier?:string|null):number{
+  return tier==="max"?120:50;
+}
 
-function Chatbot({tasks,routines,onAction,user,isPro}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
-  user?:{id?:string}|null;isPro?:boolean;}){
+function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
+  user?:{id?:string}|null;isPro?:boolean;tier?:string|null;}){
   const{t,dark}=useApp();
   const C=getC(dark);
   // C.border/C.surface2 are near-transparent tints meant for subtle layering
@@ -3123,7 +3150,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                               border:"none",borderTop:`1px solid ${dark?"rgba(255,255,255,0.08)":C.border}`,
                               background:selectedModel==="opus"?(dark?"rgba(255,255,255,0.06)":"#F0EFFC"):"transparent",
                               color:C.navy,textAlign:"left",fontFamily:"inherit"}}>
-                            <span>Opus 4.8{opusCount!=null?` — ${Math.max(0,OPUS_MONTHLY_LIMIT-opusCount)} left`:""}</span>
+                            <span>Opus 4.8{opusCount!=null?` — ${Math.max(0,opusLimitForTier(tier)-opusCount)} left`:""}</span>
                             {selectedModel==="opus"&&<i className="ti ti-check" style={{fontSize:13,color:C.primary,marginLeft:8}} aria-hidden="true"/>}
                           </button>
                         </div>
@@ -3878,21 +3905,25 @@ export default function Home(){
 
   // ── Pro status — reads the subscriptions row the Stripe webhook writes.
   // RLS restricts this to the signed-in user's own row. current_period_end
-  // feeds the Plan card's renewal date in InfoModal.
+  // feeds the Plan card's renewal date in InfoModal; tier ('pro'/'max')
+  // feeds the Opus limit shown in the Usage card and the chat input's
+  // "Opus — N left" indicator.
   const[isPro,setIsPro]=useState(false);
   const[subPeriodEnd,setSubPeriodEnd]=useState<string|null>(null);
+  const[subTier,setSubTier]=useState<string|null>(null);
   useEffect(()=>{
-    if(!user?.id){setIsPro(false);setSubPeriodEnd(null);return;}
+    if(!user?.id){setIsPro(false);setSubPeriodEnd(null);setSubTier(null);return;}
     let cancelled=false;
     (async()=>{
       const sb=await getSupabaseClient();
       if(!sb)return;
       const{data,error}=await sb.from("subscriptions")
-        .select("status,current_period_end").eq("user_id",user.id).maybeSingle();
+        .select("status,current_period_end,tier").eq("user_id",user.id).maybeSingle();
       if(cancelled)return;
       if(error){console.error("Failed to load subscription status:",error);return;}
       setIsPro(data?.status==="active");
       setSubPeriodEnd(data?.current_period_end??null);
+      setSubTier(data?.tier??null);
     })();
     return()=>{cancelled=true;};
   },[user?.id]);
@@ -4517,13 +4548,13 @@ export default function Home(){
           <i className="ti ti-plus" style={{fontSize:28,color:"white"}} aria-hidden="true"/>
         </button>
 
-      <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions} user={user} isPro={isPro}/>
+      <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions} user={user} isPro={isPro} tier={subTier}/>
 
       {isAddingTask&&<TaskModal onClose={()=>setIsAddingTask(false)} onSave={addTask}/>}
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
         onSave={data=>{updateTask(editingTask.id,data);setEditingTask(null);}}/>}
     </div>
-      {activeModal&&<InfoModal modal={activeModal} onClose={()=>setActiveModal(null)} dark={dark} user={user} onUserChange={setUser} onNavigate={setActiveModal} isPro={isPro} subPeriodEnd={subPeriodEnd}/>}
+      {activeModal&&<InfoModal modal={activeModal} onClose={()=>setActiveModal(null)} dark={dark} user={user} onUserChange={setUser} onNavigate={setActiveModal} isPro={isPro} subPeriodEnd={subPeriodEnd} subTier={subTier}/>}
     </AppCtx.Provider>
   );
 }

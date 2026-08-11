@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Keep in sync with OPUS_MONTHLY_LIMIT in app/page.tsx — that copy is
+// Keep in sync with opusLimitForTier in app/page.tsx — that copy is
 // display-only ("N left"); this is the one that actually enforces the limit.
-const OPUS_MONTHLY_LIMIT = 50;
+function opusLimitForTier(tier: string | null): number {
+  return tier === "max" ? 120 : 50;
+}
 
 // Service-role client — bypasses RLS. Server-only; same pattern as the
 // Stripe webhook's admin client.
@@ -17,16 +19,17 @@ function getSupabaseAdmin() {
 async function getSubscription(sb: any, userId: string) {
   const { data, error } = await sb
     .from("subscriptions")
-    .select("status, current_period_end")
+    .select("status, current_period_end, tier")
     .eq("user_id", userId)
     .maybeSingle();
   if (error) {
     console.error("Failed to load subscription:", error);
-    return { status: null as string | null, periodEnd: null as string | null };
+    return { status: null as string | null, periodEnd: null as string | null, tier: null as string | null };
   }
   return {
     status: (data?.status as string | undefined) ?? null,
     periodEnd: (data?.current_period_end as string | undefined) ?? null,
+    tier: (data?.tier as string | undefined) ?? null,
   };
 }
 
@@ -121,7 +124,7 @@ async function resolveOpusEligibility(
     const sb = getSupabaseAdmin();
     if (!sb) return { allowed: false, periodEnd: null, overLimit: false };
 
-    const { status, periodEnd } = await getSubscription(sb, userId);
+    const { status, periodEnd, tier } = await getSubscription(sb, userId);
     if (status !== "active" || !periodEnd) {
       return { allowed: false, periodEnd: null, overLimit: false };
     }
@@ -129,7 +132,7 @@ async function resolveOpusEligibility(
     const usage = await getUsageRow(sb, userId);
     const currentOpusCount = usage && usage.period_end === periodEnd ? usage.opus_count ?? 0 : 0;
 
-    if (currentOpusCount >= OPUS_MONTHLY_LIMIT) {
+    if (currentOpusCount >= opusLimitForTier(tier)) {
       return { allowed: false, periodEnd, overLimit: true };
     }
     return { allowed: true, periodEnd, overLimit: false };
