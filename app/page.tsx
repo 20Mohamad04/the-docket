@@ -1592,8 +1592,10 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
               You need an account first — tap above to sign in
             </p>
           )}
-          <p style={{textAlign:"center",fontSize:11,color:C.muted2,marginTop:6}}>
-            Cancel anytime, no questions asked · Your tasks stay yours either way · Secure payment via Stripe 🔒
+          <p style={{display:"flex",alignItems:"center",justifyContent:"center",flexWrap:"wrap",gap:4,
+            fontSize:11,color:C.muted2,marginTop:6}}>
+            Cancel anytime, no questions asked · Your tasks stay yours either way · Secure payment via Stripe
+            <i className="ti ti-lock" style={{fontSize:11,color:C.muted2}} aria-hidden="true"/>
           </p>
         </div>
       </div>
@@ -3044,12 +3046,12 @@ const ISLAMIC_2026:Record<string,string>={
 };
 
 const TYPE_STYLE:Record<string,{bg:string;color:string;icon:string}>={
-  public:    {bg:"#E4E9F9",color:"#3D52A0",icon:"🏛️"},
-  religious: {bg:"#DCF0E6",color:"#1f7a52",icon:"🕌"},
-  awareness: {bg:"#F6E9D3",color:"#9c6a1f",icon:"🎗️"},
-  cultural:  {bg:"#FFE4F0",color:"#a53070",icon:"🎉"},
-  islamic:   {bg:"#DCF0E6",color:"#1f7a52",icon:"☪️"},
-  bank:      {bg:"#EDE0F5",color:"#7a3a9e",icon:"🏦"},
+  public:    {bg:"#E4E9F9",color:"#3D52A0",icon:"ti-flag"},
+  religious: {bg:"#DCF0E6",color:"#1f7a52",icon:"ti-building"},
+  awareness: {bg:"#F6E9D3",color:"#9c6a1f",icon:"ti-heart-handshake"},
+  cultural:  {bg:"#FFE4F0",color:"#a53070",icon:"ti-confetti"},
+  islamic:   {bg:"#DCF0E6",color:"#1f7a52",icon:"ti-moon-stars"},
+  bank:      {bg:"#EDE0F5",color:"#7a3a9e",icon:"ti-building-bank"},
 };
 
 function CalendarView({tasks,routines,dark,C}:{tasks:Task[];routines:Routine[];dark:boolean;C:ReturnType<typeof getC>}){
@@ -3109,7 +3111,10 @@ function CalendarView({tasks,routines,dark,C}:{tasks:Task[];routines:Routine[];d
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
         {Object.entries(TYPE_STYLE).map(([k,v])=>(
           <span key={k} style={{background:v.bg,color:v.color,fontSize:10,fontWeight:600,
-            padding:"3px 8px",borderRadius:6}}>{v.icon} {k.charAt(0).toUpperCase()+k.slice(1)}</span>
+            padding:"3px 8px",borderRadius:6,display:"inline-flex",alignItems:"center",gap:4}}>
+            <i className={`ti ${v.icon}`} style={{fontSize:11}} aria-hidden="true"/>
+            {k.charAt(0).toUpperCase()+k.slice(1)}
+          </span>
         ))}
       </div>
 
@@ -3155,7 +3160,7 @@ function CalendarView({tasks,routines,dark,C}:{tasks:Task[];routines:Routine[];d
                       <div key={ei} style={{background:st.bg,color:st.color,fontSize:8.5,
                         fontWeight:600,padding:"1px 4px",borderRadius:3,
                         whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
-                        {st.icon} {ev.name}
+                        <i className={`ti ${st.icon}`} style={{fontSize:8}} aria-hidden="true"/> {ev.name}
                       </div>
                     );
                   })}
@@ -3188,7 +3193,7 @@ function CalendarView({tasks,routines,dark,C}:{tasks:Task[];routines:Routine[];d
                 return(
                   <div key={i} style={{display:"flex",alignItems:"center",gap:8,
                     padding:"6px 0",borderBottom:i<selData.events.length-1?`1px solid ${C.border}`:"none"}}>
-                    <span style={{fontSize:16}}>{st.icon}</span>
+                    <i className={`ti ${st.icon}`} style={{fontSize:16,color:st.color,flexShrink:0}} aria-hidden="true"/>
                     <span style={{fontSize:13,fontWeight:600,color:C.navy}}>{ev.name}</span>
                     <span style={{background:st.bg,color:st.color,fontSize:10,fontWeight:600,
                       padding:"2px 7px",borderRadius:5,marginLeft:"auto"}}>{ev.type}</span>
