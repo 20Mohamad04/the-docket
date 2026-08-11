@@ -898,15 +898,19 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
   );
 }
 
-// ── Drawer ───────────────────────────────────────────────────────────────────
-function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
-  modal:string;onClose:()=>void;dark:boolean;
-  user:{name:string;email:string;avatar?:string;id?:string}|null;
+// ── Shared sign-in / register form ────────────────────────────────────────────
+// Used by InfoModal's login modal AND OnboardingScreen's mandatory first step,
+// so auth behavior (OAuth, email/password, forgot-password, register terms
+// agreement) never drifts between the two entry points.
+function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
+  dark:boolean;
   onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
-  onNavigate?:(m:string)=>void;
+  onOpenLegal:(m:"terms"|"privacy")=>void;
+  onSuccess?:()=>void;
+  onClose?:()=>void;
 }){
   const C=getC(dark);
-  const[view,setView]=useState<"main"|"forgot"|"reset">("main");
+  const[view,setView]=useState<"main"|"forgot">("main");
   const[authTab,setAuthTab]=useState<"login"|"register">("login");
   const[email,setEmail]=useState("");
   const[password,setPassword]=useState("");
@@ -915,14 +919,8 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
   const[authStatus,setAuthStatus]=useState<"idle"|"loading"|"success"|"error"|"confirm">("idle");
   const[authMsg,setAuthMsg]=useState("");
   const[registerAgreed,setRegisterAgreed]=useState(false);
-  const[cameFromAuth,setCameFromAuth]=useState(false);
-  const[openFaq,setOpenFaq]=useState<string|null>(null);
 
   const SITE_URL=typeof window!=="undefined"?window.location.origin:"";
-
-  async function getSB(){
-    return getSupabaseClient();
-  }
 
   async function handleAuth(){
     if(!email||!password){setAuthMsg("Please fill in all fields.");setAuthStatus("error");return;}
@@ -936,7 +934,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
       setAuthMsg("Please agree to the Terms & Conditions and Privacy Policy to continue.");setAuthStatus("error");return;
     }
     setAuthStatus("loading");setAuthMsg("");
-    const sb=await getSB();
+    const sb=await getSupabaseClient();
     if(!sb){setAuthMsg("Supabase not configured. Add environment variables in Vercel.");setAuthStatus("error");return;}
     try{
       if(authTab==="register"){
@@ -966,14 +964,14 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
           onUserChange({name:displayName,email:data.user.email||"",avatar:data.user.user_metadata?.avatar_url,id:data.user.id});
           setAuthStatus("success");
           setAuthMsg("Welcome back, "+displayName+"!");
-          setTimeout(()=>onClose(),1500);
+          setTimeout(()=>onSuccess?.(),1500);
         }
       }
     }catch(e:any){setAuthMsg(e.message||"Something went wrong.");setAuthStatus("error");}
   }
 
   async function handleOAuth(provider:"google"|"apple"){
-    const sb=await getSB();
+    const sb=await getSupabaseClient();
     if(!sb){setAuthMsg("Supabase not configured.");setAuthStatus("error");return;}
     try{
       await sb.auth.signInWithOAuth({provider,options:{redirectTo:SITE_URL}});
@@ -983,7 +981,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
   async function handleForgotPassword(){
     if(!email){setAuthMsg("Enter your email address above first.");setAuthStatus("error");return;}
     setAuthStatus("loading");
-    const sb=await getSB();
+    const sb=await getSupabaseClient();
     if(!sb){setAuthStatus("error");return;}
     try{
       const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:SITE_URL+"?reset=true"});
@@ -993,13 +991,6 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
     }catch(e:any){setAuthMsg(e.message);setAuthStatus("error");}
   }
 
-  async function handleSignOut(){
-    const sb=await getSB();
-    if(sb) await sb.auth.signOut();
-    onUserChange(null);
-    onClose();
-  }
-
   const inp:React.CSSProperties={
     width:"100%",padding:"13px 16px",borderRadius:12,
     border:`1.5px solid ${C.border}`,fontSize:14,
@@ -1007,6 +998,249 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
     color:C.navy,outline:"none",fontFamily:"inherit",marginBottom:12,
     transition:"border-color 0.2s",
   };
+
+  if(view==="forgot") return(
+    <>
+      <div style={{padding:"24px 24px 0",display:"flex",alignItems:"center",gap:12}}>
+        <button onClick={()=>{setView("main");setAuthStatus("idle");setAuthMsg("");}}
+          style={{background:"none",border:"none",cursor:"pointer",color:C.muted,
+            display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:600}}>
+          <i className="ti ti-arrow-left" style={{fontSize:16}} aria-hidden="true"/>Back
+        </button>
+      </div>
+      <div style={{padding:"16px 24px 28px",textAlign:"center"}}>
+        <div style={{width:56,height:56,borderRadius:16,margin:"0 auto 16px",
+          background:"linear-gradient(145deg,#E8C84C,#C9A84C)",
+          display:"flex",alignItems:"center",justifyContent:"center",
+          boxShadow:"0 8px 24px rgba(201,168,76,0.4)"}}>
+          <i className="ti ti-mail" style={{fontSize:26,color:"white"}} aria-hidden="true"/>
+        </div>
+        <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:20,
+          color:C.navy,marginBottom:8}}>Reset your password</p>
+        <p style={{fontSize:13,color:C.muted,marginBottom:20,lineHeight:1.5}}>
+          Enter your email and we'll send you a link to reset your password.
+        </p>
+        <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+          placeholder="Your email address" style={inp}
+          onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+          onBlur={e=>(e.target.style.borderColor=C.border)}
+          onKeyDown={e=>e.key==="Enter"&&handleForgotPassword()}/>
+        {authMsg&&(
+          <div style={{padding:"12px 14px",borderRadius:12,marginBottom:14,fontSize:13,
+            lineHeight:1.5,textAlign:"left",
+            background:authStatus==="confirm"?"rgba(46,139,87,0.1)":"rgba(217,79,61,0.1)",
+            color:authStatus==="confirm"?C.sage:C.urgent,
+            border:`1px solid ${authStatus==="confirm"?"rgba(46,139,87,0.25)":"rgba(217,79,61,0.25)"}`}}>
+            {authMsg}
+          </div>
+        )}
+        {authStatus!=="confirm"&&(
+          <button onClick={handleForgotPassword} disabled={authStatus==="loading"}
+            className="pill-btn"
+            style={{width:"100%",padding:"14px",fontSize:15,fontWeight:700,
+              background:"linear-gradient(145deg,#6677E8,#4C5FD5)",color:"white",border:"none",
+              opacity:authStatus==="loading"?0.7:1,
+              boxShadow:"0 6px 20px rgba(76,95,213,0.4)"}}>
+            {authStatus==="loading"?"Sending…":"Send Reset Link"}
+          </button>
+        )}
+      </div>
+    </>
+  );
+
+  return(
+    <>
+      {/* Header */}
+      <div style={{padding:"24px 24px 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:40,height:40,borderRadius:11,
+            background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <i className="ti ti-user-circle" style={{fontSize:20,color:"white"}} aria-hidden="true"/>
+          </div>
+          <div>
+            <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:17,color:C.navy}}>
+              {authTab==="login"?"Welcome back":"Join The Docket"}
+            </p>
+            <p style={{fontSize:11,color:C.muted}}>
+              {authTab==="login"?"Sign in to sync your data":"Create your free account"}
+            </p>
+          </div>
+        </div>
+        {onClose&&(
+          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}>
+            <i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/>
+          </button>
+        )}
+      </div>
+
+      {/* OAuth buttons */}
+      <div style={{padding:"20px 24px 0",display:"flex",flexDirection:"column",gap:10}}>
+        <button onClick={()=>handleOAuth("google")}
+          style={{width:"100%",padding:"12px 16px",borderRadius:12,cursor:"pointer",
+            border:`1.5px solid ${C.border}`,background:dark?"#1E2235":"#F8F7FE",
+            display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+            fontSize:14,fontWeight:600,color:C.navy,transition:"all 0.15s"}}
+          onMouseEnter={e=>{e.currentTarget.style.borderColor="#4C5FD5";e.currentTarget.style.background=dark?"#252840":"#EEF0FF";}}
+          onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.background=dark?"#1E2235":"#F8F7FE";}}>
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Continue with Google
+        </button>
+        <button onClick={()=>handleOAuth("apple")}
+          style={{width:"100%",padding:"12px 16px",borderRadius:12,cursor:"pointer",
+            border:`1.5px solid ${C.border}`,background:dark?"#1E2235":"#000000",
+            display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+            fontSize:14,fontWeight:600,color:"white",transition:"all 0.15s"}}
+          onMouseEnter={e=>e.currentTarget.style.opacity="0.85"}
+          onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 3.99zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+          </svg>
+          Continue with Apple
+        </button>
+      </div>
+
+      {/* Divider */}
+      <div style={{display:"flex",alignItems:"center",gap:12,padding:"16px 24px 0"}}>
+        <div style={{flex:1,height:1,background:C.border}}/>
+        <span style={{fontSize:11,color:C.muted2,fontWeight:500}}>or use email</span>
+        <div style={{flex:1,height:1,background:C.border}}/>
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:"flex",margin:"14px 24px 0",background:C.surface2,
+        borderRadius:12,padding:4,gap:4}}>
+        {(["login","register"] as const).map(tab=>(
+          <button key={tab} onClick={()=>{setAuthTab(tab);setAuthMsg("");setAuthStatus("idle");}}
+            style={{flex:1,padding:"9px 0",borderRadius:9,fontSize:13,fontWeight:700,
+              border:"none",cursor:"pointer",transition:"all 0.15s",
+              background:authTab===tab?"linear-gradient(135deg,#4C5FD5,#2A3699)":"transparent",
+              color:authTab===tab?"white":C.muted,
+              boxShadow:authTab===tab?"0 4px 12px rgba(76,95,213,0.4)":"none"}}>
+            {tab==="login"?"Sign In":"Register"}
+          </button>
+        ))}
+      </div>
+
+      {/* Form */}
+      <div style={{padding:"16px 24px 24px"}}>
+        {authTab==="register"&&(
+          <input value={name} onChange={e=>setName(e.target.value)}
+            placeholder="Full name (optional)" style={inp}
+            onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+            onBlur={e=>(e.target.style.borderColor=C.border)}/>
+        )}
+        <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+          placeholder="Email address" style={inp}
+          onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+          onBlur={e=>(e.target.style.borderColor=C.border)}/>
+        <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
+          placeholder={authTab==="register"?"Password (min. 6 characters)":"Password"}
+          style={inp}
+          onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+          onBlur={e=>(e.target.style.borderColor=C.border)}
+          onKeyDown={e=>e.key==="Enter"&&authTab==="login"&&handleAuth()}/>
+        {authTab==="register"&&(
+          <input type="password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}
+            placeholder="Confirm password" style={{...inp,marginBottom:16}}
+            onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+            onBlur={e=>(e.target.style.borderColor=C.border)}
+            onKeyDown={e=>e.key==="Enter"&&handleAuth()}/>
+        )}
+        {authTab==="register"&&(
+          <label style={{display:"flex",alignItems:"flex-start",gap:9,marginBottom:14,cursor:"pointer"}}>
+            <input type="checkbox" checked={registerAgreed} onChange={e=>setRegisterAgreed(e.target.checked)}
+              style={{marginTop:2,width:15,height:15,flexShrink:0,accentColor:"#4C5FD5",cursor:"pointer"}}/>
+            <span style={{fontSize:11.5,color:C.muted,lineHeight:1.5}}>
+              I agree to the{" "}
+              <span onClick={e=>{e.preventDefault();onOpenLegal("terms");}}
+                style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>Terms & Conditions</span>
+              {" "}and{" "}
+              <span onClick={e=>{e.preventDefault();onOpenLegal("privacy");}}
+                style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>Privacy Policy</span>
+            </span>
+          </label>
+        )}
+        {authMsg&&(
+          <div style={{padding:"12px 14px",borderRadius:12,marginBottom:14,fontSize:13,
+            lineHeight:1.5,
+            background:authStatus==="success"||authStatus==="confirm"?"rgba(46,139,87,0.1)":"rgba(217,79,61,0.1)",
+            color:authStatus==="success"||authStatus==="confirm"?C.sage:C.urgent,
+            border:`1px solid ${authStatus==="success"||authStatus==="confirm"?"rgba(46,139,87,0.25)":"rgba(217,79,61,0.25)"}`}}>
+            {authMsg}
+          </div>
+        )}
+        {authStatus!=="confirm"&&(
+          <button onClick={handleAuth} disabled={authStatus==="loading"} className="pill-btn"
+            style={{width:"100%",padding:"14px",fontSize:15,fontWeight:700,
+              background:authStatus==="success"
+                ?"linear-gradient(135deg,#2E8B57,#1A5235)"
+                :"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",
+              color:"white",border:"none",cursor:"pointer",opacity:authStatus==="loading"?0.7:1,
+              boxShadow:"0 6px 20px rgba(76,95,213,0.45)"}}>
+            {authStatus==="loading"?"Please wait…":authStatus==="success"?"✓ Signed in!":authTab==="login"?"Sign In →":"Create Account →"}
+          </button>
+        )}
+        {authStatus==="confirm"&&authTab==="register"&&(
+          <button onClick={()=>{setAuthTab("login");setAuthStatus("idle");setAuthMsg("");}} className="pill-btn"
+            style={{width:"100%",padding:"14px",fontSize:14,fontWeight:700,
+              background:"linear-gradient(145deg,#6677E8,#4C5FD5)",color:"white",border:"none",
+              boxShadow:"0 6px 20px rgba(76,95,213,0.4)"}}>
+            Go to Sign In
+          </button>
+        )}
+        {authTab==="login"&&authStatus!=="confirm"&&(
+          <p style={{textAlign:"center",fontSize:12,color:C.muted2,marginTop:12}}>
+            <span style={{color:C.primary,cursor:"pointer",fontWeight:600}}
+              onClick={()=>{setView("forgot");setAuthStatus("idle");setAuthMsg("");}}>
+              Forgot your password?
+            </span>
+          </p>
+        )}
+        {authTab==="login"&&authStatus==="confirm"&&(
+          <div style={{marginTop:12,padding:"12px",borderRadius:10,
+            background:dark?"#1E2235":"#F0F4FF",textAlign:"center"}}>
+            <p style={{fontSize:12,color:C.muted,lineHeight:1.5}}>
+              Didn't receive the email? Check your spam folder or{" "}
+              <span style={{color:C.primary,cursor:"pointer",fontWeight:600}}
+                onClick={async()=>{
+                  const sb=await getSupabaseClient();
+                  if(!sb) return;
+                  await sb.auth.resend({type:"signup",email});
+                  setAuthMsg("Confirmation email resent to "+email);
+                }}>resend it</span>.
+            </p>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+// ── Drawer ───────────────────────────────────────────────────────────────────
+function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
+  modal:string;onClose:()=>void;dark:boolean;
+  user:{name:string;email:string;avatar?:string;id?:string}|null;
+  onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
+  onNavigate?:(m:string)=>void;
+}){
+  const C=getC(dark);
+  const[authStatus,setAuthStatus]=useState<"idle"|"loading"|"success"|"error"|"confirm">("idle");
+  const[authMsg,setAuthMsg]=useState("");
+  const[cameFromAuth,setCameFromAuth]=useState(false);
+  const[openFaq,setOpenFaq]=useState<string|null>(null);
+
+  async function handleSignOut(){
+    const sb=await getSupabaseClient();
+    if(sb) await sb.auth.signOut();
+    onUserChange(null);
+    onClose();
+  }
 
   const staticContent:Record<string,{title:string;icon:string;body:string}>={
     subscription:{title:"The Docket Pro",icon:"ti-crown",body:"£4.99/month · 7-day free trial\n\n✓ Unlimited AI assistant requests\n✓ Sync across all your devices\n✓ Auto prayer times (no setup needed)\n✓ Advanced analytics & insights\n✓ Priority support\n✓ Early access to new features\n\nCancel anytime · No hidden fees\n\nSubscription management will be available once you create an account."},
@@ -1143,63 +1377,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
     </div>
   );
 
-  // ── Forgot password view ──────────────────────────────────────────────────
-  if(modal==="login"&&view==="forgot") return(
-    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
-      background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
-      display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div onClick={e=>e.stopPropagation()}
-        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,width:"100%",maxWidth:420,
-          boxShadow:"0 40px 100px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`}}>
-        <div style={{padding:"24px 24px 0",display:"flex",alignItems:"center",gap:12}}>
-          <button onClick={()=>{setView("main");setAuthStatus("idle");setAuthMsg("");}}
-            style={{background:"none",border:"none",cursor:"pointer",color:C.muted,
-              display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:600}}>
-            <i className="ti ti-arrow-left" style={{fontSize:16}} aria-hidden="true"/>Back
-          </button>
-        </div>
-        <div style={{padding:"16px 24px 28px",textAlign:"center"}}>
-          <div style={{width:56,height:56,borderRadius:16,margin:"0 auto 16px",
-            background:"linear-gradient(145deg,#E8C84C,#C9A84C)",
-            display:"flex",alignItems:"center",justifyContent:"center",
-            boxShadow:"0 8px 24px rgba(201,168,76,0.4)"}}>
-            <i className="ti ti-mail" style={{fontSize:26,color:"white"}} aria-hidden="true"/>
-          </div>
-          <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:20,
-            color:C.navy,marginBottom:8}}>Reset your password</p>
-          <p style={{fontSize:13,color:C.muted,marginBottom:20,lineHeight:1.5}}>
-            Enter your email and we'll send you a link to reset your password.
-          </p>
-          <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
-            placeholder="Your email address" style={inp}
-            onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
-            onBlur={e=>(e.target.style.borderColor=C.border)}
-            onKeyDown={e=>e.key==="Enter"&&handleForgotPassword()}/>
-          {authMsg&&(
-            <div style={{padding:"12px 14px",borderRadius:12,marginBottom:14,fontSize:13,
-              lineHeight:1.5,textAlign:"left",
-              background:authStatus==="confirm"?"rgba(46,139,87,0.1)":"rgba(217,79,61,0.1)",
-              color:authStatus==="confirm"?C.sage:C.urgent,
-              border:`1px solid ${authStatus==="confirm"?"rgba(46,139,87,0.25)":"rgba(217,79,61,0.25)"}`}}>
-              {authMsg}
-            </div>
-          )}
-          {authStatus!=="confirm"&&(
-            <button onClick={handleForgotPassword} disabled={authStatus==="loading"}
-              className="pill-btn"
-              style={{width:"100%",padding:"14px",fontSize:15,fontWeight:700,
-                background:"linear-gradient(145deg,#6677E8,#4C5FD5)",color:"white",border:"none",
-                opacity:authStatus==="loading"?0.7:1,
-                boxShadow:"0 6px 20px rgba(76,95,213,0.4)"}}>
-              {authStatus==="loading"?"Sending…":"Send Reset Link"}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  // ── Main login/register view ──────────────────────────────────────────────
+  // ── Sign-in / register view (not logged in) ───────────────────────────────
   if(modal==="login") return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
       background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
@@ -1207,172 +1385,9 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
       <div onClick={e=>e.stopPropagation()}
         style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,width:"100%",maxWidth:440,
           boxShadow:"0 40px 100px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`}}>
-        {/* Header */}
-        <div style={{padding:"24px 24px 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:40,height:40,borderRadius:11,
-              background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
-              display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <i className="ti ti-user-circle" style={{fontSize:20,color:"white"}} aria-hidden="true"/>
-            </div>
-            <div>
-              <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:17,color:C.navy}}>
-                {authTab==="login"?"Welcome back":"Join The Docket"}
-              </p>
-              <p style={{fontSize:11,color:C.muted}}>
-                {authTab==="login"?"Sign in to sync your data":"Create your free account"}
-              </p>
-            </div>
-          </div>
-          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}>
-            <i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/>
-          </button>
-        </div>
-
-        {/* OAuth buttons */}
-        <div style={{padding:"20px 24px 0",display:"flex",flexDirection:"column",gap:10}}>
-          <button onClick={()=>handleOAuth("google")}
-            style={{width:"100%",padding:"12px 16px",borderRadius:12,cursor:"pointer",
-              border:`1.5px solid ${C.border}`,background:dark?"#1E2235":"#F8F7FE",
-              display:"flex",alignItems:"center",justifyContent:"center",gap:10,
-              fontSize:14,fontWeight:600,color:C.navy,transition:"all 0.15s"}}
-            onMouseEnter={e=>{e.currentTarget.style.borderColor="#4C5FD5";e.currentTarget.style.background=dark?"#252840":"#EEF0FF";}}
-            onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.background=dark?"#1E2235":"#F8F7FE";}}>
-            <svg width="18" height="18" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            Continue with Google
-          </button>
-          <button onClick={()=>handleOAuth("apple")}
-            style={{width:"100%",padding:"12px 16px",borderRadius:12,cursor:"pointer",
-              border:`1.5px solid ${C.border}`,background:dark?"#1E2235":"#000000",
-              display:"flex",alignItems:"center",justifyContent:"center",gap:10,
-              fontSize:14,fontWeight:600,color:"white",transition:"all 0.15s"}}
-            onMouseEnter={e=>e.currentTarget.style.opacity="0.85"}
-            onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 3.99zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-            </svg>
-            Continue with Apple
-          </button>
-        </div>
-
-        {/* Divider */}
-        <div style={{display:"flex",alignItems:"center",gap:12,padding:"16px 24px 0"}}>
-          <div style={{flex:1,height:1,background:C.border}}/>
-          <span style={{fontSize:11,color:C.muted2,fontWeight:500}}>or use email</span>
-          <div style={{flex:1,height:1,background:C.border}}/>
-        </div>
-
-        {/* Tabs */}
-        <div style={{display:"flex",margin:"14px 24px 0",background:C.surface2,
-          borderRadius:12,padding:4,gap:4}}>
-          {(["login","register"] as const).map(tab=>(
-            <button key={tab} onClick={()=>{setAuthTab(tab);setAuthMsg("");setAuthStatus("idle");}}
-              style={{flex:1,padding:"9px 0",borderRadius:9,fontSize:13,fontWeight:700,
-                border:"none",cursor:"pointer",transition:"all 0.15s",
-                background:authTab===tab?"linear-gradient(135deg,#4C5FD5,#2A3699)":"transparent",
-                color:authTab===tab?"white":C.muted,
-                boxShadow:authTab===tab?"0 4px 12px rgba(76,95,213,0.4)":"none"}}>
-              {tab==="login"?"Sign In":"Register"}
-            </button>
-          ))}
-        </div>
-
-        {/* Form */}
-        <div style={{padding:"16px 24px 24px"}}>
-          {authTab==="register"&&(
-            <input value={name} onChange={e=>setName(e.target.value)}
-              placeholder="Full name (optional)" style={inp}
-              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
-              onBlur={e=>(e.target.style.borderColor=C.border)}/>
-          )}
-          <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
-            placeholder="Email address" style={inp}
-            onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
-            onBlur={e=>(e.target.style.borderColor=C.border)}/>
-          <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
-            placeholder={authTab==="register"?"Password (min. 6 characters)":"Password"}
-            style={inp}
-            onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
-            onBlur={e=>(e.target.style.borderColor=C.border)}
-            onKeyDown={e=>e.key==="Enter"&&authTab==="login"&&handleAuth()}/>
-          {authTab==="register"&&(
-            <input type="password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}
-              placeholder="Confirm password" style={{...inp,marginBottom:16}}
-              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
-              onBlur={e=>(e.target.style.borderColor=C.border)}
-              onKeyDown={e=>e.key==="Enter"&&handleAuth()}/>
-          )}
-          {authTab==="register"&&(
-            <label style={{display:"flex",alignItems:"flex-start",gap:9,marginBottom:14,cursor:"pointer"}}>
-              <input type="checkbox" checked={registerAgreed} onChange={e=>setRegisterAgreed(e.target.checked)}
-                style={{marginTop:2,width:15,height:15,flexShrink:0,accentColor:"#4C5FD5",cursor:"pointer"}}/>
-              <span style={{fontSize:11.5,color:C.muted,lineHeight:1.5}}>
-                I agree to the{" "}
-                <span onClick={e=>{e.preventDefault();setCameFromAuth(true);onNavigate?.("terms");}}
-                  style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>Terms & Conditions</span>
-                {" "}and{" "}
-                <span onClick={e=>{e.preventDefault();setCameFromAuth(true);onNavigate?.("privacy");}}
-                  style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>Privacy Policy</span>
-              </span>
-            </label>
-          )}
-          {authMsg&&(
-            <div style={{padding:"12px 14px",borderRadius:12,marginBottom:14,fontSize:13,
-              lineHeight:1.5,
-              background:authStatus==="success"||authStatus==="confirm"?"rgba(46,139,87,0.1)":"rgba(217,79,61,0.1)",
-              color:authStatus==="success"||authStatus==="confirm"?C.sage:C.urgent,
-              border:`1px solid ${authStatus==="success"||authStatus==="confirm"?"rgba(46,139,87,0.25)":"rgba(217,79,61,0.25)"}`}}>
-              {authMsg}
-            </div>
-          )}
-          {authStatus!=="confirm"&&(
-            <button onClick={handleAuth} disabled={authStatus==="loading"} className="pill-btn"
-              style={{width:"100%",padding:"14px",fontSize:15,fontWeight:700,
-                background:authStatus==="success"
-                  ?"linear-gradient(135deg,#2E8B57,#1A5235)"
-                  :"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",
-                color:"white",border:"none",cursor:"pointer",opacity:authStatus==="loading"?0.7:1,
-                boxShadow:"0 6px 20px rgba(76,95,213,0.45)"}}>
-              {authStatus==="loading"?"Please wait…":authStatus==="success"?"✓ Signed in!":authTab==="login"?"Sign In →":"Create Account →"}
-            </button>
-          )}
-          {authStatus==="confirm"&&authTab==="register"&&(
-            <button onClick={()=>{setAuthTab("login");setAuthStatus("idle");setAuthMsg("");}} className="pill-btn"
-              style={{width:"100%",padding:"14px",fontSize:14,fontWeight:700,
-                background:"linear-gradient(145deg,#6677E8,#4C5FD5)",color:"white",border:"none",
-                boxShadow:"0 6px 20px rgba(76,95,213,0.4)"}}>
-              Go to Sign In
-            </button>
-          )}
-          {authTab==="login"&&authStatus!=="confirm"&&(
-            <p style={{textAlign:"center",fontSize:12,color:C.muted2,marginTop:12}}>
-              <span style={{color:C.primary,cursor:"pointer",fontWeight:600}}
-                onClick={()=>{setView("forgot");setAuthStatus("idle");setAuthMsg("");}}>
-                Forgot your password?
-              </span>
-            </p>
-          )}
-          {authTab==="login"&&authStatus==="confirm"&&(
-            <div style={{marginTop:12,padding:"12px",borderRadius:10,
-              background:dark?"#1E2235":"#F0F4FF",textAlign:"center"}}>
-              <p style={{fontSize:12,color:C.muted,lineHeight:1.5}}>
-                Didn't receive the email? Check your spam folder or{" "}
-                <span style={{color:C.primary,cursor:"pointer",fontWeight:600}}
-                  onClick={async()=>{
-                    const sb=await getSB();
-                    if(!sb) return;
-                    await sb.auth.resend({type:"signup",email});
-                    setAuthMsg("Confirmation email resent to "+email);
-                  }}>resend it</span>.
-              </p>
-            </div>
-          )}
-        </div>
+        <AuthForm dark={dark} onUserChange={onUserChange}
+          onOpenLegal={m=>{setCameFromAuth(true);onNavigate?.(m);}}
+          onSuccess={onClose} onClose={onClose}/>
       </div>
     </div>
   );
@@ -3168,14 +3183,18 @@ const OB_GOALS=[
   {id:"other",icon:"ti-dots-circle-horizontal",label:"Something Else"},
 ];
 
-function OnboardingScreen({onComplete,dark,onOpenModal}:{onComplete:(name:string,goals:string[])=>void;dark:boolean;onOpenModal:(m:string)=>void}){
+function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
+  onComplete:(goals:string[])=>void;
+  dark:boolean;
+  onOpenModal:(m:string)=>void;
+  user:{name:string;email:string;avatar?:string;id?:string}|null;
+  onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
+}){
   const C=getC(dark);
   const[step,setStep]=useState(0);
-  const[name,setName]=useState("");
   const[goals,setGoals]=useState<string[]>([]);
   const[otherGoalText,setOtherGoalText]=useState("");
   const[animating,setAnimating]=useState(false);
-  const[agreed,setAgreed]=useState(false);
 
   function next(){
     setAnimating(true);
@@ -3183,95 +3202,73 @@ function OnboardingScreen({onComplete,dark,onOpenModal}:{onComplete:(name:string
   }
   function finish(){
     setAnimating(true);
-    setTimeout(()=>onComplete(name,goals),600);
+    setTimeout(()=>onComplete(goals),600);
   }
   function toggleGoal(id:string){
     setGoals(g=>g.includes(id)?g.filter(x=>x!==id):[...g,id]);
   }
+  async function handleSignOut(){
+    const sb=await getSupabaseClient();
+    if(sb) await sb.auth.signOut();
+    onUserChange(null);
+  }
+  async function handleProCheckout(){
+    // Complete onboarding first (seed goal tasks, mark docket-onboarded) so
+    // the user always lands back in the real app after checkout — whether
+    // they finish the Stripe flow, cancel, or just close that tab.
+    onComplete(goals);
+    try{
+      const res=await fetch("/api/stripe/checkout",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({email:user?.email||"",userId:user?.id||""})
+      });
+      const data=await res.json();
+      if(data.url) window.location.href=data.url;
+      else alert("Payment error: "+data.error);
+    }catch(e:any){alert("Something went wrong: "+e.message);}
+  }
 
   const steps=[
-    // Step 0: Welcome
-    <div key="0" style={{textAlign:"center"}}>
-      <div style={{width:64,height:64,borderRadius:20,margin:"0 auto 20px",
-        background:"linear-gradient(145deg,#8BA8FF 0%,#4C5FD5 45%,#1A2566 100%)",
-        display:"flex",alignItems:"center",justifyContent:"center",
-        boxShadow:"0 16px 48px rgba(76,95,213,0.5)"}}>
-        <i className="ti ti-check" style={{fontSize:40,color:"white"}} aria-hidden="true"/>
-      </div>
-      <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:32,fontWeight:800,
-        color:C.navy,letterSpacing:"-1px",marginBottom:12,lineHeight:1.1}}>
-        Welcome to<br/>The Docket
-      </h1>
-      <p style={{fontSize:15,color:C.muted,lineHeight:1.6,marginBottom:24,maxWidth:280,margin:"0 auto 24px"}}>
-        Your intelligent personal planner. Built to keep you focused, on time, and in control of everything that matters.
-      </p>
-      <label style={{display:"flex",alignItems:"flex-start",gap:10,textAlign:"left",
-        maxWidth:300,margin:"0 auto 20px",cursor:"pointer"}}>
-        <input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)}
-          style={{marginTop:3,width:16,height:16,flexShrink:0,accentColor:"#4C5FD5",cursor:"pointer"}}/>
-        <span style={{fontSize:12,color:C.muted,lineHeight:1.5}}>
-          I agree to the{" "}
-          <span onClick={e=>{e.preventDefault();onOpenModal("terms");}}
-            style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>Terms & Conditions</span>
-          {" "}and{" "}
-          <span onClick={e=>{e.preventDefault();onOpenModal("privacy");}}
-            style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>Privacy Policy</span>
-        </span>
-      </label>
-      <button className="pill-btn" onClick={next} disabled={!agreed}
-        style={{background:agreed
-          ?"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)"
-          :C.border,
-          color:"white",padding:"16px 48px",fontSize:16,fontWeight:700,
-          opacity:agreed?1:0.55,cursor:agreed?"pointer":"not-allowed",
-          boxShadow:agreed?"0 8px 28px rgba(76,95,213,0.5)":"none"}}>
-        Get started
-      </button>
-      <p style={{fontSize:11,color:C.muted2,marginTop:20,letterSpacing:"0.5px"}}>
-        No account needed · Works offline · Your data stays private
-      </p>
+    // Step 0: Sign in / register — required before continuing. Once `user`
+    // is set (fresh sign-in, or a restored session on reload/OAuth-return),
+    // show a lightweight confirmation instead of re-prompting for a login.
+    <div key="0">
+      {user ? (
+        <div style={{textAlign:"center"}}>
+          <div style={{width:64,height:64,borderRadius:"50%",margin:"0 auto 20px",overflow:"hidden",
+            background:"linear-gradient(145deg,#8BA8FF 0%,#4C5FD5 45%,#1A2566 100%)",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            boxShadow:"0 16px 48px rgba(76,95,213,0.5)"}}>
+            {user.avatar
+              ?<img src={user.avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              :<i className="ti ti-check" style={{fontSize:32,color:"white"}} aria-hidden="true"/>}
+          </div>
+          <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:28,fontWeight:800,
+            color:C.navy,letterSpacing:"-0.5px",marginBottom:8,lineHeight:1.2}}>
+            Welcome, {user.name.split(" ")[0]}!
+          </h1>
+          <p style={{fontSize:14,color:C.muted,lineHeight:1.6,marginBottom:28}}>
+            You're signed in as {user.email}.
+          </p>
+          <button className="pill-btn" onClick={next}
+            style={{background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
+              color:"white",padding:"16px 48px",fontSize:16,fontWeight:700,
+              boxShadow:"0 8px 28px rgba(76,95,213,0.5)"}}>
+            Continue
+          </button>
+          <p style={{fontSize:12,color:C.muted2,marginTop:18,cursor:"pointer",textDecoration:"underline"}}
+            onClick={handleSignOut}>
+            Not you? Sign out
+          </p>
+        </div>
+      ):(
+        <AuthForm dark={dark} onUserChange={onUserChange} onOpenLegal={onOpenModal}/>
+      )}
     </div>,
 
-    // Step 1: Name
+    // Step 1: Goals
     <div key="1" style={{textAlign:"center"}}>
-      <div style={{width:52,height:52,borderRadius:14,margin:"0 auto 16px",
-        background:"linear-gradient(145deg,#E8C84C 0%,#C9A84C 45%,#8A6820 100%)",
-        display:"flex",alignItems:"center",justifyContent:"center",
-        boxShadow:"0 12px 36px rgba(201,168,76,0.45)"}}>
-        <i className="ti ti-user" style={{fontSize:24,color:"white"}} aria-hidden="true"/>
-      </div>
-      <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:26,fontWeight:800,
-        color:C.navy,letterSpacing:"-0.5px",marginBottom:8}}>What's your name?</h2>
-      <p style={{fontSize:14,color:C.muted,marginBottom:28}}>
-        Your Docket assistant will use this to personalise your experience.
-      </p>
-      <input
-        autoFocus
-        value={name}
-        onChange={e=>setName(e.target.value)}
-        onKeyDown={e=>e.key==="Enter"&&name.trim()&&next()}
-        placeholder="Your first name"
-        style={{width:"100%",padding:"16px 20px",borderRadius:14,
-          border:`2px solid ${name?C.primary:C.border}`,
-          fontSize:18,fontWeight:600,textAlign:"center",
-          background:C.surface2,color:C.navy,outline:"none",
-          fontFamily:"'Space Grotesk',sans-serif",
-          transition:"border-color 0.2s",marginBottom:24}}
-      />
-      <button className="pill-btn" onClick={next} disabled={!name.trim()}
-        style={{background:name.trim()
-          ?"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)"
-          :C.border,
-          color:"white",padding:"14px 40px",fontSize:15,fontWeight:700,
-          boxShadow:name.trim()?"0 8px 28px rgba(76,95,213,0.45)":"none",
-          opacity:name.trim()?1:0.6,
-          cursor:name.trim()?"pointer":"not-allowed"}}>
-        Continue
-      </button>
-    </div>,
-
-    // Step 2: Goals
-    <div key="2" style={{textAlign:"center"}}>
       <div style={{width:52,height:52,borderRadius:14,margin:"0 auto 16px",
         background:"linear-gradient(145deg,#5DE8A0 0%,#2E8B57 45%,#1A5235 100%)",
         display:"flex",alignItems:"center",justifyContent:"center",
@@ -3326,8 +3323,8 @@ function OnboardingScreen({onComplete,dark,onOpenModal}:{onComplete:(name:string
       </button>
     </div>,
 
-    // Step 3: Account choice
-    <div key="3" style={{textAlign:"center"}}>
+    // Step 2: Account choice
+    <div key="2" style={{textAlign:"center"}}>
       <div style={{width:52,height:52,borderRadius:14,margin:"0 auto 16px",
         background:"linear-gradient(145deg,#FFD580 0%,#E8A020 45%,#B06800 100%)",
         display:"flex",alignItems:"center",justifyContent:"center",
@@ -3340,36 +3337,8 @@ function OnboardingScreen({onComplete,dark,onOpenModal}:{onComplete:(name:string
         Start free or unlock the full Docket experience.
       </p>
 
-      {/* Guest option */}
-      <button onClick={next}
-        style={{width:"100%",padding:"18px 20px",borderRadius:16,cursor:"pointer",
-          border:`2px solid ${C.border}`,background:C.surface2,
-          marginBottom:12,textAlign:"left",transition:"all 0.15s"}}
-        onMouseEnter={e=>e.currentTarget.style.borderColor=C.primary}
-        onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
-        <div style={{display:"flex",alignItems:"center",gap:14}}>
-          <div style={{width:44,height:44,borderRadius:12,background:C.surface,
-            display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
-            border:`1px solid ${C.border}`}}>
-            <i className="ti ti-user" style={{fontSize:22,color:C.muted}} aria-hidden="true"/>
-          </div>
-          <div style={{textAlign:"left"}}>
-            <p style={{fontWeight:700,fontSize:15,color:C.navy,marginBottom:2}}>Continue as guest</p>
-            <p style={{fontSize:12,color:C.muted,lineHeight:1.4}}>
-              Free · Data stays on this device · No account needed
-            </p>
-          </div>
-        </div>
-        <div style={{marginTop:12,display:"flex",gap:6,flexWrap:"wrap"}}>
-          {["Daily routine","Task manager","Week view","Calendar","AI assistant (limited)"].map(f=>(
-            <span key={f} style={{fontSize:10,fontWeight:600,padding:"3px 9px",borderRadius:50,
-              background:C.surface2,border:`1px solid ${C.border}`,color:C.muted}}>{f}</span>
-          ))}
-        </div>
-      </button>
-
       {/* Pro option */}
-      <button onClick={next}
+      <button onClick={handleProCheckout}
         style={{width:"100%",padding:"18px 20px",borderRadius:16,cursor:"pointer",
           border:"2px solid #4C5FD5",
           background:"linear-gradient(135deg,rgba(76,95,213,0.08),rgba(134,112,232,0.05))",
@@ -3402,10 +3371,15 @@ function OnboardingScreen({onComplete,dark,onOpenModal}:{onComplete:(name:string
       <p style={{fontSize:11,color:C.muted2,marginTop:8}}>
         7-day free trial · Cancel anytime · No hidden fees
       </p>
+      <p onClick={next}
+        style={{fontSize:12,color:C.muted,marginTop:18,fontWeight:600,
+          textDecoration:"underline",cursor:"pointer"}}>
+        Skip trial, continue with Free
+      </p>
     </div>,
 
-    // Step 4: AI intro
-    <div key="4" style={{textAlign:"center"}}>
+    // Step 3: AI intro
+    <div key="3" style={{textAlign:"center"}}>
       <div style={{width:52,height:52,borderRadius:14,margin:"0 auto 16px",
         background:"linear-gradient(145deg,#C4A8FF 0%,#8670E8 45%,#4A2A9E 100%)",
         display:"flex",alignItems:"center",justifyContent:"center",
@@ -3458,7 +3432,7 @@ function OnboardingScreen({onComplete,dark,onOpenModal}:{onComplete:(name:string
         opacity:animating?0:1,transform:animating?"translateY(12px)":"translateY(0)",
         transition:"opacity 0.35s ease, transform 0.35s ease"}}>
 
-        {/* Header row - progress dots (no close button — onboarding must be completed to agree to Terms) */}
+        {/* Header row - progress dots (no close button — onboarding must be completed, starting with sign-in) */}
         <div style={{display:"flex",justifyContent:"center",alignItems:"center",
           padding:"24px 24px 0",flexShrink:0}}>
           <div style={{display:"flex",gap:8}}>
@@ -3470,8 +3444,11 @@ function OnboardingScreen({onComplete,dark,onOpenModal}:{onComplete:(name:string
           </div>
         </div>
 
-        {/* Step content - scrollable */}
-        <div style={{flex:1,overflowY:"auto",padding:"24px 24px 28px"}}>
+        {/* Step content - scrollable. Step 0's AuthForm supplies its own
+            24px horizontal padding (shared with InfoModal's login modal),
+            so drop this wrapper's sides there to avoid doubling it up. */}
+        <div style={{flex:1,overflowY:"auto",
+          padding:(step===0&&!user)?"24px 0 28px":"24px 24px 28px"}}>
           {steps[step]}
         </div>
       </div>
@@ -3870,10 +3847,14 @@ export default function Home(){
   const examTask=tasks.find(t=>!t.deleted&&t.title.toLowerCase().includes("land law"));
   const interviewTask=tasks.find(t=>!t.deleted&&t.title.toLowerCase().includes("cheshire oak"));
 
-  function completeOnboarding(name:string, goals:string[]){
+  function completeOnboarding(goals:string[]){
     localStorage.setItem("docket-onboarded","true");
-    localStorage.setItem("docket-user-name",name);
-    if(name) setUser({name,email:"Guest",avatar:undefined});
+    // The new flow authenticates via real Supabase accounts (set on `user`
+    // during onboarding's sign-in step already) — no guest placeholder to
+    // create here. Clear any stale guest-name key from a pre-auth-onboarding
+    // visit so a future reload can't briefly flash a "Guest" display name
+    // before the real Supabase session finishes restoring.
+    localStorage.removeItem("docket-user-name");
     const welcomeTasks:Task[]=[];
     if(goals.includes("health")) welcomeTasks.push({id:Date.now()+1,title:"Start a daily exercise habit",category:"fitness",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
     if(goals.includes("study")) welcomeTasks.push({id:Date.now()+2,title:"Set a daily study goal",category:"study",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
@@ -3887,7 +3868,7 @@ export default function Home(){
 
   return(
     <AppCtx.Provider value={{dark,lang,t,dir}}>
-    {onboarding&&<OnboardingScreen onComplete={completeOnboarding} dark={dark} onOpenModal={setActiveModal}/>}
+    {onboarding&&<OnboardingScreen onComplete={completeOnboarding} dark={dark} onOpenModal={setActiveModal} user={user} onUserChange={setUser}/>}
     {/* Welcome toast animation */}
     {showWelcome&&(
       <div style={{position:"fixed",top:24,left:"50%",transform:"translateX(-50%)",
