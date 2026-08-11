@@ -2680,20 +2680,37 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
       return;
     }
     const SpeechRecognitionCtor=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;
-    if(!SpeechRecognitionCtor)return;
+    // Diagnostic only (iOS Safari mic button reportedly does nothing) — not
+    // changing behavior here, just making every step of this path visible.
+    console.log("[mic] SpeechRecognition constructor available:",!!SpeechRecognitionCtor);
+    if(!SpeechRecognitionCtor){
+      console.error("[mic] No SpeechRecognition/webkitSpeechRecognition on window — unsupported in this browser.");
+      return;
+    }
     const recognition=new SpeechRecognitionCtor();
     recognition.continuous=false;
     recognition.interimResults=true;
+    recognition.onstart=()=>{console.log("[mic] recognition.onstart fired — actively listening.");};
     recognition.onresult=(e:any)=>{
       let transcript="";
       for(let i=0;i<e.results.length;i++)transcript+=e.results[i][0].transcript;
       setInput(transcript);
     };
-    recognition.onend=()=>{setListening(false);recognitionRef.current=null;};
-    recognition.onerror=()=>{setListening(false);recognitionRef.current=null;};
+    recognition.onend=()=>{console.log("[mic] recognition.onend fired.");setListening(false);recognitionRef.current=null;};
+    recognition.onerror=(e:any)=>{
+      console.error("[mic] recognition.onerror fired:",e?.error,e?.message,e);
+      setListening(false);recognitionRef.current=null;
+    };
     recognitionRef.current=recognition;
     setListening(true);
-    recognition.start();
+    try{
+      recognition.start();
+      console.log("[mic] recognition.start() called without throwing.");
+    }catch(err){
+      console.error("[mic] recognition.start() threw synchronously:",err);
+      setListening(false);
+      recognitionRef.current=null;
+    }
   }
 
   function stopSpeaking(){
@@ -3817,10 +3834,30 @@ export default function Home(){
   const[onboarding,setOnboarding]=useState(false);
   const[activeModal,setActiveModal]=useState<string|null>(null);
 
-  // Lock body scroll when drawer or modal is open
+  // Lock body scroll when drawer or modal is open. overflow:hidden alone
+  // doesn't reliably block touch-scroll bleed-through to the page behind an
+  // open drawer on mobile browsers (notably iOS Safari) — pinning the body
+  // with position:fixed at its current scroll offset, then restoring both
+  // the position and the scroll offset on unlock, does.
+  const scrollLockY=React.useRef(0);
   useEffect(()=>{
-    document.body.style.overflow=(isDrawerOpen||!!activeModal||onboarding)?"hidden":"";
-    return()=>{document.body.style.overflow="";};
+    const locked=isDrawerOpen||!!activeModal||onboarding;
+    if(locked){
+      scrollLockY.current=window.scrollY;
+      document.body.style.position="fixed";
+      document.body.style.top=`-${scrollLockY.current}px`;
+      document.body.style.width="100%";
+    }else{
+      document.body.style.position="";
+      document.body.style.top="";
+      document.body.style.width="";
+      window.scrollTo(0,scrollLockY.current);
+    }
+    return()=>{
+      document.body.style.position="";
+      document.body.style.top="";
+      document.body.style.width="";
+    };
   },[isDrawerOpen,activeModal,onboarding]);
   const[user,setUser]=useState<{name:string;email:string;avatar?:string;id?:string}|null>(null);
   const[showWelcome,setShowWelcome]=useState(false);
@@ -3849,7 +3886,8 @@ export default function Home(){
     // Handle Stripe redirect
     const urlParams=new URLSearchParams(window.location.search);
     if(urlParams.get("subscription")==="success"){
-      setWelcomeMsg("🎉 You're now on The Docket Pro!");
+      const purchasedTier=urlParams.get("tier")==="max"?"Max":"Pro";
+      setWelcomeMsg(`🎉 You're now on The Docket ${purchasedTier}!`);
       setShowWelcome(true);
       setTimeout(()=>setShowWelcome(false),5000);
       window.history.replaceState({},"",window.location.pathname);

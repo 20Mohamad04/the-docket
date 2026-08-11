@@ -8,7 +8,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 export async function POST(req: Request) {
   try {
     const { email, userId, tier } = await req.json();
-    const priceId = tier === "max" ? process.env.STRIPE_PRICE_ID_MAX : process.env.STRIPE_PRICE_ID;
+    const resolvedTier = tier === "max" ? "max" : "pro";
+    const priceId = resolvedTier === "max" ? process.env.STRIPE_PRICE_ID_MAX : process.env.STRIPE_PRICE_ID;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://planner-docket-git-main-mohamad0420.vercel.app";
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -16,8 +18,11 @@ export async function POST(req: Request) {
       line_items: [{ price: priceId!, quantity: 1 }],
       customer_email: email,
       metadata: { userId: userId || "" },
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://planner-docket-git-main-mohamad0420.vercel.app"}?subscription=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://planner-docket-git-main-mohamad0420.vercel.app"}?subscription=cancelled`,
+      // tier is known here at request time — passing it through avoids
+      // depending on the webhook's (possibly delayed) subscriptions-table
+      // write having landed by the time the success redirect is handled.
+      success_url: `${siteUrl}?subscription=success&tier=${resolvedTier}`,
+      cancel_url: `${siteUrl}?subscription=cancelled`,
     });
 
     return NextResponse.json({ url: session.url });
