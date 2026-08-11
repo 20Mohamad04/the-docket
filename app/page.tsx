@@ -1359,6 +1359,42 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
     return()=>{cancelled=true;};
   },[isPro,user?.id]);
 
+  // Email marketing preference, stored in the same auth user_metadata as
+  // full_name. The `user` prop here is a normalized {name,email,avatar,id}
+  // shape without user_metadata, so this reads it fresh via getUser() rather
+  // than threading a new field through every setUser(...) call site in the
+  // app. Defaults to false (off) until the real value loads — an unset or
+  // not-yet-loaded preference must never render as opted in.
+  const[emailOptIn,setEmailOptIn]=useState(false);
+  useEffect(()=>{
+    if(!user?.id){setEmailOptIn(false);return;}
+    let cancelled=false;
+    (async()=>{
+      const sb=await getSupabaseClient();
+      if(!sb)return;
+      const{data,error}=await sb.auth.getUser();
+      if(cancelled)return;
+      if(error){console.error("Failed to load email preference:",error);return;}
+      setEmailOptIn(!!data.user?.user_metadata?.email_opt_in);
+    })();
+    return()=>{cancelled=true;};
+  },[user?.id]);
+
+  async function toggleEmailOptIn(){
+    const next=!emailOptIn;
+    setEmailOptIn(next);
+    const sb=await getSupabaseClient();
+    if(!sb) return;
+    const{error}=await sb.auth.updateUser({data:{email_opt_in:next}});
+    if(error){
+      setEmailOptIn(!next);
+      setAuthMsg("Could not update email preference.");setAuthStatus("error");
+      return;
+    }
+    setAuthMsg(next?"✓ You'll get product updates by email":"✓ Email updates turned off");
+    setAuthStatus("success");
+  }
+
   async function handleSignOut(){
     const sb=await getSupabaseClient();
     if(sb) await sb.auth.signOut();
@@ -1454,6 +1490,21 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                     color:C.muted,fontFamily:"inherit",cursor:"not-allowed"}}/>
                 <p style={{fontSize:10,color:C.muted2,marginTop:4}}>Email changes require re-verification. Contact support to update.</p>
               </div>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+              marginTop:14,paddingTop:14,borderTop:`1px solid ${C.border}`}}>
+              <p style={{fontSize:12,fontWeight:600,color:C.navy,paddingRight:12}}>
+                Email me about product updates and tips
+              </p>
+              <button className="sq-btn" onClick={toggleEmailOptIn}
+                style={{width:52,height:28,borderRadius:14,
+                  background:emailOptIn?"linear-gradient(135deg,#5DE8A0,#2E8B57)":C.border,
+                  position:"relative",flexShrink:0,
+                  boxShadow:emailOptIn?"0 4px 12px rgba(46,139,87,0.4)":"none"}}>
+                <span style={{position:"absolute",top:4,left:emailOptIn?26:4,width:20,height:20,
+                  borderRadius:"50%",background:"white",transition:"left 0.25s",
+                  boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}/>
+              </button>
             </div>
             {authMsg&&(
               <div style={{padding:"10px 14px",borderRadius:10,marginTop:12,fontSize:13,
