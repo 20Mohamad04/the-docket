@@ -1325,11 +1325,12 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
 }
 
 // ── Drawer ───────────────────────────────────────────────────────────────────
-function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
+function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro}:{
   modal:string;onClose:()=>void;dark:boolean;
   user:{name:string;email:string;avatar?:string;id?:string}|null;
   onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
   onNavigate?:(m:string)=>void;
+  isPro?:boolean;
 }){
   const C=getC(dark);
   const[authStatus,setAuthStatus]=useState<"idle"|"loading"|"success"|"error"|"confirm">("idle");
@@ -1447,24 +1448,45 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate}:{
           <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
             textTransform:"uppercase",marginBottom:12}}>Account</p>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            <button onClick={async()=>{
-                try{
-                  const res=await fetch("/api/stripe/checkout",{
-                    method:"POST",
-                    headers:{"Content-Type":"application/json"},
-                    body:JSON.stringify({email:user?.email||"",userId:user?.id||""})
-                  });
-                  const data=await res.json();
-                  if(data.url) window.location.href=data.url;
-                  else alert("Payment error: "+data.error);
-                }catch(e:any){alert("Something went wrong: "+e.message);}
-              }}
-              style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
-                borderRadius:12,border:`1px solid ${C.border}`,background:C.surface2,
-                cursor:"pointer",color:C.navy,fontSize:13,fontWeight:600}}>
-              <i className="ti ti-crown" style={{fontSize:16,color:"#C9A84C"}} aria-hidden="true"/>
-              Try Pro Free for 7 Days
-            </button>
+            {isPro ? (
+              <button onClick={async()=>{
+                  try{
+                    const res=await fetch("/api/stripe/portal",{
+                      method:"POST",
+                      headers:{"Content-Type":"application/json"},
+                      body:JSON.stringify({userId:user?.id||""})
+                    });
+                    const data=await res.json();
+                    if(data.url) window.location.href=data.url;
+                    else alert("Could not open billing portal: "+data.error);
+                  }catch(e:any){alert("Something went wrong: "+e.message);}
+                }}
+                style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
+                  borderRadius:12,border:`1px solid ${C.border}`,background:C.surface2,
+                  cursor:"pointer",color:C.navy,fontSize:13,fontWeight:600}}>
+                <i className="ti ti-settings" style={{fontSize:16,color:"#C9A84C"}} aria-hidden="true"/>
+                Manage Subscription
+              </button>
+            ) : (
+              <button onClick={async()=>{
+                  try{
+                    const res=await fetch("/api/stripe/checkout",{
+                      method:"POST",
+                      headers:{"Content-Type":"application/json"},
+                      body:JSON.stringify({email:user?.email||"",userId:user?.id||""})
+                    });
+                    const data=await res.json();
+                    if(data.url) window.location.href=data.url;
+                    else alert("Payment error: "+data.error);
+                  }catch(e:any){alert("Something went wrong: "+e.message);}
+                }}
+                style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
+                  borderRadius:12,border:`1px solid ${C.border}`,background:C.surface2,
+                  cursor:"pointer",color:C.navy,fontSize:13,fontWeight:600}}>
+                <i className="ti ti-crown" style={{fontSize:16,color:"#C9A84C"}} aria-hidden="true"/>
+                Try Pro Free for 7 Days
+              </button>
+            )}
             <button onClick={handleSignOut}
               style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
                 borderRadius:12,border:`1px solid rgba(217,79,61,0.25)`,
@@ -4357,7 +4379,7 @@ export default function Home(){
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
         onSave={data=>{updateTask(editingTask.id,data);setEditingTask(null);}}/>}
     </div>
-      {activeModal&&<InfoModal modal={activeModal} onClose={()=>setActiveModal(null)} dark={dark} user={user} onUserChange={setUser} onNavigate={setActiveModal}/>}
+      {activeModal&&<InfoModal modal={activeModal} onClose={()=>setActiveModal(null)} dark={dark} user={user} onUserChange={setUser} onNavigate={setActiveModal} isPro={isPro}/>}
     </AppCtx.Provider>
   );
 }
