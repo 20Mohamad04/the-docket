@@ -1672,127 +1672,134 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
   );
 
   // Premium modals
-  if(modal==="subscription") return(
+  if(modal==="subscription"){
+    async function handleSubCheckout(tier:"pro"|"max"){
+      if(!user){onClose();setTimeout(()=>onNavigate?.("login"),100);return;}
+      try{
+        const res=await fetch("/api/stripe/checkout",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({email:user.email,userId:user.id,tier})
+        });
+        const data=await res.json();
+        if(data.url) window.location.href=data.url;
+        else alert("Payment error: "+data.error);
+      }catch(e:any){alert("Something went wrong: "+e.message);}
+    }
+    const plans=[
+      {id:"free",name:"Free",icon:"ti-user",accent:C.muted,price:"£0",priceSuffix:"/month",
+        iconBg:C.surface,iconBorder:`1.5px solid ${C.border}`,
+        features:[
+          {icon:"ti-message-circle",label:"Sonnet messages",value:"10/day"},
+          {icon:"ti-brain",label:"Opus messages",value:"—"},
+          {icon:"ti-devices",label:"Device sync",value:"This device only"},
+          {icon:"ti-moon-stars",label:"Prayer times",value:"Manual"},
+          {icon:"ti-headset",label:"Support",value:"Community"},
+          {icon:"ti-rocket",label:"Early access",value:"—"},
+        ],
+        cta:"Continue Free",onClick:onClose,ctaStyle:{background:"transparent",color:C.navy,border:`1.5px solid ${C.border}`}},
+      {id:"pro",name:"Pro",icon:"ti-crown",accent:C.primary,price:"£4.99",priceSuffix:"/month",
+        badge:"MOST POPULAR",trialNote:"Free for 7 days",highlight:true,
+        iconBg:"linear-gradient(145deg,#6677E8,#4C5FD5)",iconShadow:"0 4px 14px rgba(76,95,213,0.4)",
+        features:[
+          {icon:"ti-message-circle",label:"Sonnet messages",value:"Unlimited"},
+          {icon:"ti-brain",label:"Opus messages",value:"50/month"},
+          {icon:"ti-devices",label:"Device sync",value:"All devices"},
+          {icon:"ti-moon-stars",label:"Prayer times",value:"Auto"},
+          {icon:"ti-headset",label:"Support",value:"Priority 24h"},
+          {icon:"ti-rocket",label:"Early access",value:"✓"},
+        ],
+        cta:user?"Start My Free 7 Days →":"Sign in to Start Free Trial",onClick:()=>handleSubCheckout("pro"),
+        ctaStyle:{background:"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",color:"white",border:"none",boxShadow:"0 6px 20px rgba(76,95,213,0.4)"}},
+      {id:"max",name:"Max",icon:"ti-bolt",accent:"#8670E8",price:"£14.99",priceSuffix:"/month",
+        iconBg:"linear-gradient(145deg,#A78BFA,#8670E8)",iconShadow:"0 4px 14px rgba(134,112,232,0.4)",
+        features:[
+          {icon:"ti-message-circle",label:"Sonnet messages",value:"500/month"},
+          {icon:"ti-brain",label:"Opus messages",value:"120/month"},
+          {icon:"ti-devices",label:"Device sync",value:"All devices"},
+          {icon:"ti-moon-stars",label:"Prayer times",value:"Auto"},
+          {icon:"ti-headset",label:"Support",value:"Priority 24h"},
+          {icon:"ti-rocket",label:"Early access",value:"✓"},
+        ],
+        cta:user?"Try Docket Max →":"Sign in to Try Max",onClick:()=>handleSubCheckout("max"),
+        ctaStyle:{background:"linear-gradient(145deg,#A78BFA,#8670E8,#5B3FBF)",color:"white",border:"none",boxShadow:"0 6px 20px rgba(134,112,232,0.35)"}},
+    ];
+    return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
       background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}>
       <div onClick={e=>e.stopPropagation()}
-        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:480,
-          maxHeight:"88vh",display:"flex",flexDirection:"column",
+        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:820,
+          maxHeight:"90vh",display:"flex",flexDirection:"column",
           boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,overflow:"hidden"}}>
-        {/* Compact hero */}
+        {/* Header */}
         <div style={{background:"linear-gradient(135deg,#4C5FD5,#6677E8,#8670E8)",
-          padding:"16px 20px",position:"relative",flexShrink:0,
-          display:"flex",alignItems:"center",gap:14}}>
-          <button onClick={onClose} style={{position:"absolute",top:12,right:12,
+          padding:"22px 24px",position:"relative",flexShrink:0,textAlign:"center"}}>
+          <button onClick={onClose} style={{position:"absolute",top:14,right:14,
             background:"rgba(255,255,255,0.15)",border:"none",cursor:"pointer",
             width:28,height:28,borderRadius:7,color:"white",
             display:"flex",alignItems:"center",justifyContent:"center"}}>
             <i className="ti ti-x" style={{fontSize:15}} aria-hidden="true"/></button>
           <div style={{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,0.2)",
-            display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-            <i className="ti ti-crown" style={{fontSize:22,color:"#FFD700"}} aria-hidden="true"/></div>
-          <div>
-            <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:600,fontSize:11.5,
-              color:"rgba(255,255,255,0.85)",letterSpacing:"0.3px",marginBottom:2}}>Never miss what matters</p>
-            <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:18,
-              color:"white",marginBottom:4}}>The Docket Pro</p>
-            <div style={{display:"flex",alignItems:"baseline",gap:6,flexWrap:"wrap"}}>
-              <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
-                fontSize:22,color:"white"}}>£4.99</span>
-              <span style={{fontSize:12,color:"rgba(255,255,255,0.75)"}}>/month · 16p a day</span>
-            </div>
-          </div>
-        </div>
-        <div style={{padding:"10px 20px",background:dark?"rgba(46,139,87,0.14)":"#E9F7EF",
-          borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
-          <i className="ti ti-shield-check" style={{fontSize:16,color:"#2E8B57",flexShrink:0}} aria-hidden="true"/>
-          <p style={{fontSize:11.5,color:dark?"#8ADAA8":"#1A5235",fontWeight:600,lineHeight:1.4}}>
-            Free for 7 days — you won't be charged a penny until day 7, and you can cancel in two taps before then.
+            margin:"0 auto 10px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <i className="ti ti-sparkles" style={{fontSize:22,color:"#FFD700"}} aria-hidden="true"/></div>
+          <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:19,
+            color:"white",marginBottom:4}}>Choose Your Plan</p>
+          <p style={{fontSize:12,color:"rgba(255,255,255,0.85)"}}>
+            Free forever, or unlock more with Pro or Max
           </p>
         </div>
         {/* Scrollable content */}
-        <div style={{flex:1,overflowY:"auto",padding:"16px 20px"}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
-            {[{icon:"ti-sparkles",title:"Unlimited AI",desc:"No daily cap — ask anything"},{icon:"ti-devices",title:"Every Device",desc:"Same Docket, always synced"},
-              {icon:"ti-moon-stars",title:"Auto Prayer Times",desc:"Exact times, zero setup"},{icon:"ti-chart-bar",title:"Insights",desc:"See where your time goes"},
-              {icon:"ti-headset",title:"Real Support",desc:"Reply within 24h, from a human"},{icon:"ti-rocket",title:"Early Access",desc:"New features first"}].map((f,i)=>(
-              <div key={i} style={{padding:"10px 12px",borderRadius:10,
-                background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",
-                border:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:30,height:30,borderRadius:8,flexShrink:0,
-                  background:"rgba(76,95,213,0.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <i className={`ti ${f.icon}`} style={{fontSize:15,color:C.primary}} aria-hidden="true"/></div>
-                <div><p style={{fontSize:11.5,fontWeight:700,color:C.navy,marginBottom:1}}>{f.title}</p>
-                <p style={{fontSize:10.5,color:C.muted}}>{f.desc}</p></div>
+        <div style={{flex:1,overflowY:"auto",padding:"20px"}}>
+          <div className="pricing-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:16}}>
+            {plans.map(plan=>(
+              <div key={plan.id} style={{position:"relative",display:"flex",flexDirection:"column",
+                borderRadius:18,padding:plan.highlight?"26px 18px 20px":"20px 18px",
+                border:plan.highlight?`2px solid ${C.primary}`:`1.5px solid ${C.border}`,
+                background:plan.highlight
+                  ?"linear-gradient(160deg,rgba(76,95,213,0.1),rgba(134,112,232,0.05))"
+                  :(dark?"rgba(255,255,255,0.02)":"#FAFAFC"),
+                boxShadow:plan.highlight?"0 16px 40px rgba(76,95,213,0.25)":"none"}}>
+                {plan.badge&&(
+                  <div style={{position:"absolute",top:-11,left:"50%",transform:"translateX(-50%)",
+                    background:"linear-gradient(135deg,#4C5FD5,#8670E8)",padding:"4px 14px",borderRadius:50,
+                    fontSize:9.5,fontWeight:800,color:"white",letterSpacing:"0.5px",
+                    boxShadow:"0 4px 12px rgba(76,95,213,0.4)",whiteSpace:"nowrap"}}>{plan.badge}</div>
+                )}
+                <div style={{width:44,height:44,borderRadius:12,margin:"0 auto 12px",
+                  background:plan.iconBg,border:plan.iconBorder,
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  boxShadow:plan.iconShadow||"none"}}>
+                  <i className={`ti ${plan.icon}`} style={{fontSize:21,color:plan.iconBorder?C.muted:"white"}} aria-hidden="true"/>
+                </div>
+                <p style={{textAlign:"center",fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
+                  fontSize:16,color:plan.highlight?C.primary:C.navy,marginBottom:4}}>{plan.name}</p>
+                <div style={{textAlign:"center",marginBottom:plan.trialNote?4:14}}>
+                  <span style={{fontSize:23,fontWeight:800,fontFamily:"'Space Grotesk',sans-serif",color:C.navy}}>{plan.price}</span>
+                  <span style={{fontSize:11,color:C.muted}}>{plan.priceSuffix}</span>
+                </div>
+                {plan.trialNote&&(
+                  <p style={{textAlign:"center",fontSize:10,fontWeight:700,color:C.sage,marginBottom:14}}>
+                    <i className="ti ti-shield-check" style={{fontSize:11}} aria-hidden="true"/> {plan.trialNote}
+                  </p>
+                )}
+                <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:16,flex:1}}>
+                  {plan.features.map(f=>(
+                    <div key={f.label} style={{display:"flex",alignItems:"center",gap:7}}>
+                      <i className={`ti ${f.icon}`} style={{fontSize:13,color:plan.accent,flexShrink:0,width:15}} aria-hidden="true"/>
+                      <span style={{fontSize:11,color:C.muted,flex:1}}>{f.label}</span>
+                      <span style={{fontSize:11,fontWeight:700,color:C.navy,textAlign:"right"}}>{f.value}</span>
+                    </div>
+                  ))}
+                </div>
+                <button className="sq-btn" onClick={plan.onClick}
+                  style={{width:"100%",padding:"11px",borderRadius:12,fontSize:12.5,fontWeight:800,
+                    ...plan.ctaStyle}}>
+                  {plan.cta}
+                </button>
               </div>
             ))}
           </div>
-          <div style={{borderRadius:12,overflow:"hidden",border:`1px solid ${C.border}`,marginBottom:14}}>
-            <div style={{display:"grid",gridTemplateColumns:"1.3fr 1fr 1fr 1fr",
-              background:dark?"#1E2235":"#F4F2FC",padding:"8px 14px"}}>
-              <p style={{fontSize:10,fontWeight:700,color:C.muted2,textTransform:"uppercase"}}>Feature</p>
-              <p style={{fontSize:10,fontWeight:700,color:C.muted2,textTransform:"uppercase",textAlign:"center"}}>Free</p>
-              <p style={{fontSize:10,fontWeight:700,color:C.primary,textTransform:"uppercase",textAlign:"center"}}>Pro</p>
-              <p style={{fontSize:10,fontWeight:700,color:"#8670E8",textTransform:"uppercase",textAlign:"center"}}>Max</p>
-            </div>
-            {[["Tasks & Routines","Unlimited","Unlimited","Unlimited"],
-              ["Sonnet Messages","10/day","Unlimited","500/month"],
-              ["Opus Messages","—","50/month","120/month"],
-              ["Device Sync","This device only","All devices","All devices"],
-              ["Prayer Times","Manual","Auto","Auto"],
-              ["Support","Community","Priority 24h","Priority 24h"],
-              ["Early Access","—","✓","✓"]].map(([feat,free,pro,max],i)=>(
-              <div key={i} style={{display:"grid",gridTemplateColumns:"1.3fr 1fr 1fr 1fr",
-                padding:"8px 14px",borderTop:`1px solid ${C.border}`}}>
-                <p style={{fontSize:11.5,color:C.navy}}>{feat}</p>
-                <p style={{fontSize:11.5,color:i===1||i===2||i===3?C.urgent:C.muted,fontWeight:i===1||i===2||i===3?600:400,textAlign:"center"}}>{free}</p>
-                <p style={{fontSize:11.5,color:C.primary,fontWeight:700,textAlign:"center"}}>{pro}</p>
-                <p style={{fontSize:11.5,color:"#8670E8",fontWeight:700,textAlign:"center"}}>{max}</p>
-              </div>
-            ))}
-          </div>
-          <button className="pill-btn" onClick={async()=>{
-              if(!user){onClose();setTimeout(()=>onNavigate?.("login"),100);return;}
-              try{
-                const res=await fetch("/api/stripe/checkout",{
-                  method:"POST",
-                  headers:{"Content-Type":"application/json"},
-                  body:JSON.stringify({email:user.email,userId:user.id,tier:"pro"})
-                });
-                const data=await res.json();
-                if(data.url) window.location.href=data.url;
-                else alert("Payment error: "+data.error);
-              }catch(e:any){alert("Something went wrong: "+e.message);}
-            }}
-            style={{width:"100%",padding:"13px",fontSize:14,fontWeight:800,
-              background:"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",color:"white",border:"none",
-              boxShadow:"0 6px 20px rgba(76,95,213,0.45)"}}>
-            {user?"Start My Free 7 Days →":"Sign in to Start Free Trial"}
-          </button>
-          <button className="pill-btn" onClick={async()=>{
-              if(!user){onClose();setTimeout(()=>onNavigate?.("login"),100);return;}
-              try{
-                const res=await fetch("/api/stripe/checkout",{
-                  method:"POST",
-                  headers:{"Content-Type":"application/json"},
-                  body:JSON.stringify({email:user.email,userId:user.id,tier:"max"})
-                });
-                const data=await res.json();
-                if(data.url) window.location.href=data.url;
-                else alert("Payment error: "+data.error);
-              }catch(e:any){alert("Something went wrong: "+e.message);}
-            }}
-            style={{width:"100%",padding:"13px",fontSize:14,fontWeight:800,marginTop:10,
-              background:"linear-gradient(145deg,#A78BFA,#8670E8,#5B3FBF)",color:"white",border:"none",
-              boxShadow:"0 6px 20px rgba(134,112,232,0.45)"}}>
-            {user?"Try Docket Max — £14.99/mo →":"Sign in to Try Max"}
-          </button>
-          {!user&&(
-            <p style={{textAlign:"center",fontSize:12,color:C.urgent,marginTop:8,fontWeight:600}}>
-              You need an account first — tap above to sign in
-            </p>
-          )}
           <p style={{display:"flex",alignItems:"center",justifyContent:"center",flexWrap:"wrap",gap:4,
             fontSize:11,color:C.muted2,marginTop:6}}>
             Cancel anytime, no questions asked · Your tasks stay yours either way · Secure payment via Stripe
@@ -1801,7 +1808,8 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
         </div>
       </div>
     </div>
-  );
+    );
+  }
 
   if(modal==="help") return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
@@ -3513,7 +3521,7 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
     if(sb) await sb.auth.signOut();
     onUserChange(null);
   }
-  async function handleProCheckout(){
+  async function handleCheckout(tier:"pro"|"max"){
     // Complete onboarding first (seed goal tasks, mark docket-onboarded) so
     // the user always lands back in the real app after checkout — whether
     // they finish the Stripe flow, cancel, or just close that tab.
@@ -3522,7 +3530,7 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
       const res=await fetch("/api/stripe/checkout",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({email:user?.email||"",userId:user?.id||""})
+        body:JSON.stringify({email:user?.email||"",userId:user?.id||"",tier})
       });
       const data=await res.json();
       if(data.url) window.location.href=data.url;
@@ -3639,7 +3647,7 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
       </p>
 
       {/* Pro option */}
-      <button onClick={handleProCheckout}
+      <button onClick={()=>handleCheckout("pro")}
         style={{width:"100%",padding:"18px 20px",borderRadius:16,cursor:"pointer",
           border:"2px solid #4C5FD5",
           background:"linear-gradient(135deg,rgba(76,95,213,0.08),rgba(134,112,232,0.05))",
@@ -3657,21 +3665,51 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
           <div style={{textAlign:"left"}}>
             <p style={{fontWeight:700,fontSize:15,color:C.primary,marginBottom:2}}>Try Pro free for 7 days</p>
             <p style={{fontSize:12,color:C.muted,lineHeight:1.4}}>
-              Then £4.99/mo (16p a day) · Unlimited AI · Sync everywhere · Cancel anytime
+              Then £4.99/mo (16p a day) · 50 Opus messages/mo · Sync everywhere · Cancel anytime
             </p>
           </div>
         </div>
         <div style={{marginTop:12,display:"flex",gap:6,flexWrap:"wrap"}}>
-          {["Everything in free","Unlimited AI requests","Sync across devices","Prayer time auto-update","Advanced analytics","Priority support"].map(f=>(
+          {["Everything in free","Unlimited Sonnet messages","Sync across devices","Prayer time auto-update","Advanced analytics","Priority support"].map(f=>(
             <span key={f} style={{fontSize:10,fontWeight:600,padding:"3px 9px",borderRadius:50,
               background:"rgba(76,95,213,0.1)",border:"1px solid rgba(76,95,213,0.2)",
               color:C.primary}}>{f}</span>
           ))}
         </div>
       </button>
-      <p style={{fontSize:11,color:C.muted2,marginTop:8}}>
+      <p style={{fontSize:11,color:C.muted2,marginTop:8,marginBottom:16}}>
         7-day free trial · Cancel anytime · No hidden fees
       </p>
+
+      {/* Max option */}
+      <button onClick={()=>handleCheckout("max")}
+        style={{width:"100%",padding:"18px 20px",borderRadius:16,cursor:"pointer",
+          border:"2px solid #8670E8",
+          background:"linear-gradient(135deg,rgba(134,112,232,0.08),rgba(167,139,250,0.05))",
+          marginBottom:8,textAlign:"left",position:"relative",overflow:"hidden"}}>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <div style={{width:44,height:44,borderRadius:12,
+            background:"linear-gradient(145deg,#A78BFA,#8670E8)",
+            display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
+            boxShadow:"0 4px 14px rgba(134,112,232,0.4)"}}>
+            <i className="ti ti-bolt" style={{fontSize:22,color:"white"}} aria-hidden="true"/>
+          </div>
+          <div style={{textAlign:"left"}}>
+            <p style={{fontWeight:700,fontSize:15,color:"#8670E8",marginBottom:2}}>Go further with Max</p>
+            <p style={{fontSize:12,color:C.muted,lineHeight:1.4}}>
+              £14.99/mo · 500 Sonnet + 120 Opus messages/mo · Priority support
+            </p>
+          </div>
+        </div>
+        <div style={{marginTop:12,display:"flex",gap:6,flexWrap:"wrap"}}>
+          {["Everything in Pro","500 Sonnet messages/mo","120 Opus messages/mo","Priority support","Early access"].map(f=>(
+            <span key={f} style={{fontSize:10,fontWeight:600,padding:"3px 9px",borderRadius:50,
+              background:"rgba(134,112,232,0.1)",border:"1px solid rgba(134,112,232,0.2)",
+              color:"#8670E8"}}>{f}</span>
+          ))}
+        </div>
+      </button>
+
       <p onClick={next}
         style={{fontSize:12,color:C.muted,marginTop:18,fontWeight:600,
           textDecoration:"underline",cursor:"pointer"}}>

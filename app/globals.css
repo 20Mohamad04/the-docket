@@ -224,4 +224,7 @@ body.dark .glass {
   .all-tasks-grid {
     grid-template-columns: 1fr !important;
   }
+  .pricing-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
