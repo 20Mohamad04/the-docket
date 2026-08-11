@@ -1325,18 +1325,39 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
 }
 
 // ── Drawer ───────────────────────────────────────────────────────────────────
-function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro}:{
+function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPeriodEnd}:{
   modal:string;onClose:()=>void;dark:boolean;
   user:{name:string;email:string;avatar?:string;id?:string}|null;
   onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
   onNavigate?:(m:string)=>void;
   isPro?:boolean;
+  subPeriodEnd?:string|null;
 }){
   const C=getC(dark);
   const[authStatus,setAuthStatus]=useState<"idle"|"loading"|"success"|"error"|"confirm">("idle");
   const[authMsg,setAuthMsg]=useState("");
   const[cameFromAuth,setCameFromAuth]=useState(false);
   const[openFaq,setOpenFaq]=useState<string|null>(null);
+  // Independently reads the same usage table (sonnet_count/opus_count) that
+  // powers the "Opus — N left" indicator in the chat input, so the Usage
+  // card's numbers always agree with it. Pro-only — usage tracking never
+  // runs server-side for accounts with no active subscription (no billing
+  // period to key it against), so there's nothing real to show non-Pro users.
+  const[usage,setUsage]=useState<{sonnet_count:number;opus_count:number}|null>(null);
+  useEffect(()=>{
+    if(!isPro||!user?.id){setUsage(null);return;}
+    let cancelled=false;
+    (async()=>{
+      const sb=await getSupabaseClient();
+      if(!sb)return;
+      const{data,error}=await sb.from("usage")
+        .select("sonnet_count,opus_count").eq("user_id",user.id).maybeSingle();
+      if(cancelled)return;
+      if(error){console.error("Failed to load usage:",error);return;}
+      setUsage({sonnet_count:data?.sonnet_count??0,opus_count:data?.opus_count??0});
+    })();
+    return()=>{cancelled=true;};
+  },[isPro,user?.id]);
 
   async function handleSignOut(){
     const sb=await getSupabaseClient();
@@ -1391,65 +1412,88 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro}:{
 
         {/* Scrollable content */}
         <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
-          {/* Edit profile section */}
-          <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
-            textTransform:"uppercase",marginBottom:12}}>Edit Profile</p>
 
-          <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
-            <div>
-              <p style={{fontSize:11,fontWeight:600,color:C.muted,marginBottom:5}}>Display Name</p>
-              <div style={{display:"flex",gap:8}}>
-                <input defaultValue={user.name} id="profile-name"
-                  style={{flex:1,padding:"11px 14px",borderRadius:10,
+          {/* ── Account card ─────────────────────────────────────────────── */}
+          <div style={{background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",
+            border:`1px solid ${C.border}`,borderRadius:16,padding:"16px 18px",marginBottom:14}}>
+            <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
+              textTransform:"uppercase",marginBottom:14}}>Account</p>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <div>
+                <p style={{fontSize:11,fontWeight:600,color:C.muted,marginBottom:5}}>Display Name</p>
+                <div style={{display:"flex",gap:8}}>
+                  <input defaultValue={user.name} id="profile-name"
+                    style={{flex:1,padding:"11px 14px",borderRadius:10,
+                      border:`1.5px solid ${C.border}`,fontSize:14,
+                      background:dark?"#1A1D2E":"#F8F7FE",
+                      color:C.navy,outline:"none",fontFamily:"inherit"}}
+                    onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+                    onBlur={e=>(e.target.style.borderColor=C.border)}/>
+                  <button className="sq-btn" onClick={async()=>{
+                      const newName=(document.getElementById("profile-name") as HTMLInputElement)?.value?.trim();
+                      if(!newName) return;
+                      const sb=await getSupabaseClient();
+                      if(!sb) return;
+                      await sb.auth.updateUser({data:{full_name:newName}});
+                      onUserChange({...user,name:newName});
+                      setAuthMsg("✓ Name updated");setAuthStatus("success");
+                    }}
+                    style={{padding:"0 16px",borderRadius:10,fontSize:12,fontWeight:700,
+                      background:"linear-gradient(135deg,#4C5FD5,#2A3699)",color:"white",
+                      whiteSpace:"nowrap"}}>
+                    Save
+                  </button>
+                </div>
+              </div>
+              <div>
+                <p style={{fontSize:11,fontWeight:600,color:C.muted,marginBottom:5}}>Email</p>
+                <input value={user.email} disabled
+                  style={{width:"100%",padding:"11px 14px",borderRadius:10,
                     border:`1.5px solid ${C.border}`,fontSize:14,
-                    background:dark?"#1A1D2E":"#F8F7FE",
-                    color:C.navy,outline:"none",fontFamily:"inherit"}}
-                  onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
-                  onBlur={e=>(e.target.style.borderColor=C.border)}/>
-                <button onClick={async()=>{
-                    const newName=(document.getElementById("profile-name") as HTMLInputElement)?.value?.trim();
-                    if(!newName) return;
-                    const sb=await getSupabaseClient();
-                    if(!sb) return;
-                    await sb.auth.updateUser({data:{full_name:newName}});
-                    onUserChange({...user,name:newName});
-                    setAuthMsg("✓ Name updated");setAuthStatus("success");
-                  }}
-                  style={{padding:"0 16px",borderRadius:10,fontSize:12,fontWeight:700,
-                    background:"linear-gradient(135deg,#4C5FD5,#2A3699)",color:"white",
-                    border:"none",cursor:"pointer",whiteSpace:"nowrap"}}>
-                  Save
-                </button>
+                    background:dark?"#13151f":"#F0F0F8",
+                    color:C.muted,fontFamily:"inherit",cursor:"not-allowed"}}/>
+                <p style={{fontSize:10,color:C.muted2,marginTop:4}}>Email changes require re-verification. Contact support to update.</p>
               </div>
             </div>
-            <div>
-              <p style={{fontSize:11,fontWeight:600,color:C.muted,marginBottom:5}}>Email</p>
-              <input value={user.email} disabled
-                style={{width:"100%",padding:"11px 14px",borderRadius:10,
-                  border:`1.5px solid ${C.border}`,fontSize:14,
-                  background:dark?"#13151f":"#F0F0F8",
-                  color:C.muted,fontFamily:"inherit",cursor:"not-allowed"}}/>
-              <p style={{fontSize:10,color:C.muted2,marginTop:4}}>Email changes require re-verification. Contact support to update.</p>
-            </div>
+            {authMsg&&(
+              <div style={{padding:"10px 14px",borderRadius:10,marginTop:12,fontSize:13,
+                background:authStatus==="success"?"rgba(46,139,87,0.1)":"rgba(217,79,61,0.1)",
+                color:authStatus==="success"?C.sage:C.urgent,
+                border:`1px solid ${authStatus==="success"?"rgba(46,139,87,0.25)":"rgba(217,79,61,0.25)"}`}}>
+                {authMsg}
+              </div>
+            )}
           </div>
 
-          {/* Status message */}
-          {authMsg&&(
-            <div style={{padding:"10px 14px",borderRadius:10,marginBottom:16,fontSize:13,
-              background:authStatus==="success"?"rgba(46,139,87,0.1)":"rgba(217,79,61,0.1)",
-              color:authStatus==="success"?C.sage:C.urgent,
-              border:`1px solid ${authStatus==="success"?"rgba(46,139,87,0.25)":"rgba(217,79,61,0.25)"}`}}>
-              {authMsg}
+          {/* ── Plan card ─────────────────────────────────────────────────── */}
+          <div style={{background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",
+            border:`1px solid ${C.border}`,borderRadius:16,padding:"16px 18px",marginBottom:14}}>
+            <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
+              textTransform:"uppercase",marginBottom:14}}>Plan</p>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+              <div style={{width:40,height:40,borderRadius:11,flexShrink:0,
+                background:isPro?"linear-gradient(145deg,#F5B342,#D98E1F)":C.surface,
+                border:isPro?"none":`1px solid ${C.border}`,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                boxShadow:isPro?"0 4px 14px rgba(217,158,31,0.4)":"none"}}>
+                <i className={`ti ${isPro?"ti-crown":"ti-user"}`}
+                  style={{fontSize:19,color:isPro?"white":C.muted}} aria-hidden="true"/>
+              </div>
+              <div>
+                <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:16,color:C.navy}}>
+                  {isPro?"The Docket Pro":"Free Plan"}
+                </p>
+                <p style={{fontSize:11.5,color:C.muted}}>
+                  {isPro
+                    ?(subPeriodEnd
+                        ?`Renews ${new Date(subPeriodEnd).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})}`
+                        :"Active subscription")
+                    :"Upgrade for unlimited Opus access and more"}
+                </p>
+              </div>
             </div>
-          )}
-
-          {/* Account section */}
-          <div style={{height:1,background:C.border,marginBottom:16}}/>
-          <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
-            textTransform:"uppercase",marginBottom:12}}>Account</p>
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {isPro ? (
-              <button onClick={async()=>{
+              <button className="sq-btn" onClick={async()=>{
                   try{
                     const res=await fetch("/api/stripe/portal",{
                       method:"POST",
@@ -1461,14 +1505,14 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro}:{
                     else alert("Could not open billing portal: "+data.error);
                   }catch(e:any){alert("Something went wrong: "+e.message);}
                 }}
-                style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
-                  borderRadius:12,border:`1px solid ${C.border}`,background:C.surface2,
-                  cursor:"pointer",color:C.navy,fontSize:13,fontWeight:600}}>
+                style={{display:"flex",width:"100%",alignItems:"center",justifyContent:"center",gap:8,
+                  padding:"12px 14px",borderRadius:12,border:`1px solid ${C.border}`,
+                  background:C.surface2,color:C.navy,fontSize:13,fontWeight:600}}>
                 <i className="ti ti-settings" style={{fontSize:16,color:"#C9A84C"}} aria-hidden="true"/>
                 Manage Subscription
               </button>
             ) : (
-              <button onClick={async()=>{
+              <button className="sq-btn" onClick={async()=>{
                   try{
                     const res=await fetch("/api/stripe/checkout",{
                       method:"POST",
@@ -1480,22 +1524,81 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro}:{
                     else alert("Payment error: "+data.error);
                   }catch(e:any){alert("Something went wrong: "+e.message);}
                 }}
-                style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
-                  borderRadius:12,border:`1px solid ${C.border}`,background:C.surface2,
-                  cursor:"pointer",color:C.navy,fontSize:13,fontWeight:600}}>
-                <i className="ti ti-crown" style={{fontSize:16,color:"#C9A84C"}} aria-hidden="true"/>
+                style={{display:"flex",width:"100%",alignItems:"center",justifyContent:"center",gap:8,
+                  padding:"12px 14px",borderRadius:12,
+                  background:"linear-gradient(135deg,#4C5FD5,#2A3699)",color:"white",
+                  fontSize:13,fontWeight:700}}>
+                <i className="ti ti-crown" style={{fontSize:16}} aria-hidden="true"/>
                 Try Pro Free for 7 Days
               </button>
             )}
-            <button onClick={handleSignOut}
-              style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
-                borderRadius:12,border:`1px solid rgba(217,79,61,0.25)`,
-                background:"rgba(217,79,61,0.06)",
-                cursor:"pointer",color:C.urgent,fontSize:13,fontWeight:600}}>
-              <i className="ti ti-logout" style={{fontSize:16}} aria-hidden="true"/>
-              Sign out of {user.email}
-            </button>
           </div>
+
+          {/* ── Usage card ────────────────────────────────────────────────── */}
+          <div style={{background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",
+            border:`1px solid ${C.border}`,borderRadius:16,padding:"16px 18px",marginBottom:14}}>
+            <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
+              textTransform:"uppercase",marginBottom:14}}>Usage this period</p>
+            {isPro?(
+              <>
+                {/* Sonnet — uncapped for Pro, so this is a plain count rather than a fill bar with a fabricated denominator */}
+                <div style={{marginBottom:14}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
+                    <span style={{fontSize:12,fontWeight:600,color:C.navy,display:"flex",alignItems:"center",gap:6}}>
+                      <i className="ti ti-message-circle" style={{fontSize:14,color:C.primary}} aria-hidden="true"/>
+                      Sonnet 5 messages
+                    </span>
+                    <span style={{fontSize:12,color:C.navy}}>
+                      <span style={{fontWeight:700}}>{usage?usage.sonnet_count:"–"}</span>
+                      <span style={{color:C.muted2}}> · Unlimited</span>
+                    </span>
+                  </div>
+                  <div style={{height:6,borderRadius:3,background:C.border,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:"100%",borderRadius:3,
+                      background:"linear-gradient(90deg,#6677E8,#4C5FD5)"}}/>
+                  </div>
+                </div>
+                {/* Opus — real 50/period cap, same usage-table row as the chat input's "Opus — N left" indicator */}
+                <div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
+                    <span style={{fontSize:12,fontWeight:600,color:C.navy,display:"flex",alignItems:"center",gap:6}}>
+                      <i className="ti ti-brain" style={{fontSize:14,color:"#8670E8"}} aria-hidden="true"/>
+                      Opus 4.8 credits
+                    </span>
+                    <span style={{fontSize:12,fontWeight:700,color:C.navy}}>
+                      {usage?usage.opus_count:"–"} / {OPUS_MONTHLY_LIMIT}
+                    </span>
+                  </div>
+                  <div style={{height:6,borderRadius:3,background:C.border,overflow:"hidden"}}>
+                    <div style={{height:"100%",
+                      width:`${usage?Math.min(100,(usage.opus_count/OPUS_MONTHLY_LIMIT)*100):0}%`,
+                      borderRadius:3,background:"linear-gradient(90deg,#C4A8FF,#8670E8)",transition:"width 0.3s"}}/>
+                  </div>
+                </div>
+              </>
+            ):(
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <div style={{width:36,height:36,borderRadius:10,flexShrink:0,
+                  background:"rgba(76,95,213,0.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <i className="ti ti-chart-bar" style={{fontSize:17,color:C.primary}} aria-hidden="true"/>
+                </div>
+                <p style={{fontSize:12,color:C.muted,lineHeight:1.4}}>
+                  Usage tracking is included with Pro — see exactly how many Sonnet and Opus messages you've used each billing period.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* ── Sign out ──────────────────────────────────────────────────── */}
+          <div style={{height:1,background:C.border,marginBottom:14}}/>
+          <button className="sq-btn" onClick={handleSignOut}
+            style={{display:"flex",width:"100%",alignItems:"center",gap:10,padding:"12px 14px",
+              borderRadius:12,border:`1px solid rgba(217,79,61,0.25)`,
+              background:"rgba(217,79,61,0.06)",
+              color:C.urgent,fontSize:13,fontWeight:600}}>
+            <i className="ti ti-logout" style={{fontSize:16}} aria-hidden="true"/>
+            Sign out of {user.email}
+          </button>
         </div>
       </div>
     </div>
@@ -1857,12 +1960,11 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro}:{
 }
 
 
-function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChange,isPro}:{
+function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChange}:{
   isOpen:boolean;onClose:()=>void;currentView:View;setView:(v:View)=>void;
   onOpenModal:(m:string)=>void;
   user:{name:string;email:string;avatar?:string;id?:string}|null;
   onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
-  isPro?:boolean;
 }){
   const{t,dark}=useApp();
   const C=getC(dark);
@@ -1935,17 +2037,9 @@ function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChang
                   :<i className="ti ti-user" style={{fontSize:20,color:"white"}} aria-hidden="true"/>}
               </div>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-                    fontSize:14,color:C.navy,overflow:"hidden",textOverflow:"ellipsis",
-                    whiteSpace:"nowrap"}}>{user.name}</p>
-                  {/* TEMP (Phase 0) — remove once Pro-gated UI reads `isPro` directly */}
-                  {isPro&&(
-                    <span style={{fontSize:9,fontWeight:800,letterSpacing:"0.5px",
-                      padding:"2px 7px",borderRadius:50,flexShrink:0,color:"white",
-                      background:"linear-gradient(135deg,#F5B342,#D98E1F)"}}>PRO</span>
-                  )}
-                </div>
+                <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
+                  fontSize:14,color:C.navy,overflow:"hidden",textOverflow:"ellipsis",
+                  whiteSpace:"nowrap"}}>{user.name}</p>
                 <p style={{fontSize:11,color:C.muted,overflow:"hidden",textOverflow:"ellipsis",
                   whiteSpace:"nowrap"}}>{user.email}</p>
               </div>
@@ -3731,24 +3825,23 @@ export default function Home(){
     if(user?.id&&isLoaded) loadCloudData(user.id);
   },[user?.id,isLoaded]);
 
-  // ── Pro status (Phase 0) — reads the subscriptions row the Stripe webhook
-  // writes. RLS restricts this to the signed-in user's own row.
+  // ── Pro status — reads the subscriptions row the Stripe webhook writes.
+  // RLS restricts this to the signed-in user's own row. current_period_end
+  // feeds the Plan card's renewal date in InfoModal.
   const[isPro,setIsPro]=useState(false);
+  const[subPeriodEnd,setSubPeriodEnd]=useState<string|null>(null);
   useEffect(()=>{
-    if(!user?.id){setIsPro(false);return;}
+    if(!user?.id){setIsPro(false);setSubPeriodEnd(null);return;}
     let cancelled=false;
     (async()=>{
       const sb=await getSupabaseClient();
       if(!sb)return;
       const{data,error}=await sb.from("subscriptions")
-        .select("status").eq("user_id",user.id).maybeSingle();
+        .select("status,current_period_end").eq("user_id",user.id).maybeSingle();
       if(cancelled)return;
       if(error){console.error("Failed to load subscription status:",error);return;}
-      const active=data?.status==="active";
-      // TEMP — remove once Pro-gated UI (next phase) reads `isPro` directly;
-      // this is just to visually confirm the state is populating correctly.
-      console.log("[Pro status]",data?.status??"(no subscription row)","→ isPro:",active);
-      setIsPro(active);
+      setIsPro(data?.status==="active");
+      setSubPeriodEnd(data?.current_period_end??null);
     })();
     return()=>{cancelled=true;};
   },[user?.id]);
@@ -4051,7 +4144,7 @@ export default function Home(){
 
       <Drawer isOpen={isDrawerOpen} onClose={()=>setIsDrawerOpen(false)}
         currentView={currentView} setView={(v)=>{setCurrentView(v);setShowSettings(false);}}
-        onOpenModal={setActiveModal} user={user} onUserChange={setUser} isPro={isPro}/>
+        onOpenModal={setActiveModal} user={user} onUserChange={setUser}/>
 
       {/* Nav */}
       <nav style={{position:"relative",zIndex:10,display:"flex",justifyContent:"space-between",
@@ -4379,7 +4472,7 @@ export default function Home(){
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
         onSave={data=>{updateTask(editingTask.id,data);setEditingTask(null);}}/>}
     </div>
-      {activeModal&&<InfoModal modal={activeModal} onClose={()=>setActiveModal(null)} dark={dark} user={user} onUserChange={setUser} onNavigate={setActiveModal} isPro={isPro}/>}
+      {activeModal&&<InfoModal modal={activeModal} onClose={()=>setActiveModal(null)} dark={dark} user={user} onUserChange={setUser} onNavigate={setActiveModal} isPro={isPro} subPeriodEnd={subPeriodEnd}/>}
     </AppCtx.Provider>
   );
 }
