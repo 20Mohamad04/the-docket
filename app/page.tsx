@@ -3883,8 +3883,18 @@ export default function Home(){
     }
     const t=localStorage.getItem(STORAGE_TASKS);
     const r=localStorage.getItem(STORAGE_ROUTINES);
-    // Handle Stripe redirect
     const urlParams=new URLSearchParams(window.location.search);
+    // Debug console (Eruda) — only ever loads with ?debug=1 in the URL, e.g.
+    // for diagnosing mobile-only issues (like the iOS Safari mic bug) without
+    // a Mac to plug into. Never loads for normal users.
+    if(urlParams.get("debug")==="1"&&!document.querySelector('[data-eruda]')){
+      const script=document.createElement('script');
+      script.src='https://cdn.jsdelivr.net/npm/eruda';
+      script.setAttribute('data-eruda','1');
+      script.onload=()=>{(window as any).eruda?.init();};
+      document.body.appendChild(script);
+    }
+    // Handle Stripe redirect
     if(urlParams.get("subscription")==="success"){
       const purchasedTier=urlParams.get("tier")==="max"?"Max":"Pro";
       setWelcomeMsg(`🎉 You're now on The Docket ${purchasedTier}!`);
