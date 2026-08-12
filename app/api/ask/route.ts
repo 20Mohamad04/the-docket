@@ -315,6 +315,14 @@ export async function POST(req: Request) {
           // that used to be tuned via temperature should be controlled
           // through the system prompt instead (which this route already does
           // heavily).
+          //
+          // messages is forwarded exactly as the client built it — Anthropic's
+          // Messages API accepts each message's `content` as either a plain
+          // string or a multimodal array (e.g. [{type:"text",...},
+          // {type:"image",source:{type:"base64",...}}]) natively, so no
+          // reshaping happens here. Only the most recent user turn carries a
+          // real image; the client downgrades any earlier attachment to a
+          // text placeholder before it ever reaches this route.
           system,
           messages,
           tools: [DOCKET_RESPONSE_TOOL],
@@ -365,6 +373,23 @@ export async function POST(req: Request) {
     // Anthropic's tool_choice syntax, so this stays prompt-based — recovered
     // into the same {actions, reply} shape via parseGroqResponse above.
     if (groqKey) {
+      // llama-3.3-70b-versatile isn't vision-capable, and Groq's API doesn't
+      // understand Anthropic's image content-block shape anyway — flatten any
+      // multimodal message down to its text (plus a placeholder for the
+      // image) so an in-progress image conversation degrades gracefully here
+      // instead of hard-failing this fallback path.
+      const groqMessages = messages.map((m: any) => {
+        if (!Array.isArray(m.content)) return m;
+        const text = m.content
+          .filter((b: any) => b?.type === "text")
+          .map((b: any) => b.text)
+          .join(" ");
+        const hasImage = m.content.some((b: any) => b?.type === "image");
+        return {
+          role: m.role,
+          content: [text, hasImage ? "[user attached an image]" : ""].filter(Boolean).join(" "),
+        };
+      });
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -375,7 +400,7 @@ export async function POST(req: Request) {
           model: "llama-3.3-70b-versatile",
           temperature: 0.2,
           max_tokens: 1500,
-          messages: [{ role: "system", content: system }, ...messages],
+          messages: [{ role: "system", content: system }, ...groqMessages],
         }),
       });
       const data = await res.json();

@@ -2632,6 +2632,87 @@ function opusLimitForTier(tier?:string|null):number{
   return tier==="max"?120:50;
 }
 
+// Longest edge Anthropic recommends for image inputs — larger images are
+// downscaled before they ever reach Claude, not just for payload size but
+// because Claude gains no quality benefit past this resolution anyway.
+const IMAGE_MAX_EDGE=1568;
+// Defensive ceiling on the final base64 data URL. The resize step above
+// should always land well under this in practice (a few hundred KB at
+// quality 0.85) — this exists as a backstop against an unexpectedly large
+// output, partly because Vercel's serverless functions cap request bodies
+// around 4.5MB and the full /api/ask payload also carries the system
+// prompt and prior messages, not just the image.
+const IMAGE_MAX_DATAURL_LENGTH=2_000_000;
+
+// Normalizes whatever image file the user picked — including HEIC from an
+// iPhone camera, which Claude's API doesn't accept — into a size-capped
+// JPEG data URL. Decoding through <img>/<canvas> is also the real
+// validation: if the browser can't render the file as an image at all,
+// img.onerror fires and we reject with a clear message instead of silently
+// producing nothing.
+function processImageFile(file:File):Promise<string>{
+  return new Promise((resolve,reject)=>{
+    if(file.type&&!file.type.startsWith("image/")){
+      reject(new Error("That doesn't look like an image file."));
+      return;
+    }
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error("Couldn't read that file."));
+    reader.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error("Couldn't decode that image — try a different file."));
+      img.onload=()=>{
+        let{width,height}=img;
+        if(width>IMAGE_MAX_EDGE||height>IMAGE_MAX_EDGE){
+          if(width>=height){height=Math.round(height*(IMAGE_MAX_EDGE/width));width=IMAGE_MAX_EDGE;}
+          else{width=Math.round(width*(IMAGE_MAX_EDGE/height));height=IMAGE_MAX_EDGE;}
+        }
+        const canvas=document.createElement("canvas");
+        canvas.width=width;canvas.height=height;
+        const ctx=canvas.getContext("2d");
+        if(!ctx){reject(new Error("Couldn't process that image on this device."));return;}
+        ctx.drawImage(img,0,0,width,height);
+        const dataUrl=canvas.toDataURL("image/jpeg",0.85);
+        if(dataUrl.length>IMAGE_MAX_DATAURL_LENGTH){
+          reject(new Error("That image is too large to attach, even after compression."));
+          return;
+        }
+        resolve(dataUrl);
+      };
+      img.src=reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Builds the message array actually sent to /api/ask. Only the most recent
+// user turn keeps its real image bytes — every earlier message that had an
+// image is downgraded to a text placeholder instead. Re-sending full image
+// data for every past attachment on every subsequent request would grow
+// token cost roughly with conversation length for no real benefit: Claude
+// already produced whatever it needed to from that image in its own reply,
+// and the placeholder preserves enough context (something was attached,
+// and roughly when) for the model to still make sense of the user
+// referencing "that photo" later, without re-paying for the pixels every
+// turn. The trade-off is real — if the user asks a NEW question specifically
+// about an older image's contents, the model only has the placeholder text,
+// not the image itself, to work from — but that's a narrower case than the
+// steady cost growth of keeping every image live for the whole conversation.
+function buildApiMessages(msgs:{role:"user"|"assistant";content:string;imageDataUrl?:string}[]){
+  const lastIdx=msgs.length-1;
+  return msgs.map((m,i)=>{
+    if(m.role!=="user"||!m.imageDataUrl) return{role:m.role,content:m.content};
+    if(i===lastIdx){
+      const base64=m.imageDataUrl.split(",")[1]??"";
+      const blocks:any[]=[];
+      if(m.content.trim()) blocks.push({type:"text",text:m.content});
+      blocks.push({type:"image",source:{type:"base64",media_type:"image/jpeg",data:base64}});
+      return{role:m.role,content:blocks};
+    }
+    return{role:m.role,content:(m.content.trim()?m.content+" ":"")+"[user attached an image]"};
+  });
+}
+
 function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
   user?:{id?:string}|null;isPro?:boolean;tier?:string|null;}){
   const{t,dark}=useApp();
@@ -2644,10 +2725,15 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
   const inputBtnBorder=dark?"1.5px solid rgba(255,255,255,0.18)":"1.5px solid rgba(76,95,213,0.28)";
   const[open,setOpen]=useState(false);
   const[expanded,setExpanded]=useState(false);
-  const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;opusFallback?:boolean}[]>([
+  const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;imageDataUrl?:string;opusFallback?:boolean}[]>([
     {role:"assistant",content:"Hi! I'm your Docket assistant. Tell me what you need — I'll find the best slot in your schedule and confirm before adding anything."},
   ]);
   const[input,setInput]=useState("");
+  // Pending image attachment — reviewed via a small preview before sending,
+  // never auto-attached. Holds the already-processed (resized/JPEG) data URL.
+  const[pendingImage,setPendingImage]=useState<string|null>(null);
+  const[imageError,setImageError]=useState<string|null>(null);
+  const fileInputRef=React.useRef<HTMLInputElement>(null);
   const[selectedModel,setSelectedModel]=useState<"sonnet"|"opus">("sonnet");
   const[modelMenuOpen,setModelMenuOpen]=useState(false);
   const[opusCount,setOpusCount]=useState<number|null>(null);
@@ -2953,18 +3039,22 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
   useEffect(()=>{refreshOpusCount();},[refreshOpusCount]);
 
   async function send(){
-    if(!input.trim()||loading)return;
+    if((!input.trim()&&!pendingImage)||loading)return;
     const userMsg=input.trim();
+    const attachedImage=pendingImage;
     setInput("");
+    setPendingImage(null);
+    setImageError(null);
     // selectedModel is persistent — unlike the old one-shot toggle it is
     // NOT reset here, and applies to every message until the user changes it.
-    const newMsgs=[...messages,{role:"user" as const,content:userMsg}];
+    const newMsgs=[...messages,{role:"user" as const,content:userMsg,
+      ...(attachedImage?{imageDataUrl:attachedImage}:{})}];
     setMessages([...newMsgs,{role:"assistant" as const,content:"Working on it…"}]);
     setLoading(true);
     try{
       const res=await fetch("/api/ask",{method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({system:systemPrompt,messages:newMsgs.slice(-20),
+        body:JSON.stringify({system:systemPrompt,messages:buildApiMessages(newMsgs.slice(-20)),
           ...(user?.id?{userId:user.id}:{}),
           ...(selectedModel==="opus"?{useOpus:true}:{})})});
       const data=await res.json();
@@ -3098,6 +3188,11 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                         <span style={{fontSize:10,fontWeight:700,color:C.primary,letterSpacing:"0.5px"}}>DOCKET AI</span>
                       </div>
                     )}
+                    {m.role==="user"&&m.imageDataUrl&&(
+                      <img src={m.imageDataUrl} alt="Attached"
+                        style={{display:"block",maxWidth:"100%",borderRadius:10,
+                          marginBottom:m.content?6:0}}/>
+                    )}
                     {m.role==="assistant"
                       ?<ReactMarkdown components={markdownComponents}>{m.content}</ReactMarkdown>
                       :m.content}
@@ -3130,6 +3225,23 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 background:dark?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.8)",
                 borderTop:`1px solid ${dark?"rgba(255,255,255,0.08)":C.border}`,
                 backdropFilter:"blur(10px)",flexShrink:0}}>
+                {pendingImage&&(
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,
+                    padding:"6px 10px",borderRadius:12,
+                    background:dark?"rgba(255,255,255,0.05)":"#F0EFFC",
+                    border:`1px solid ${C.border}`}}>
+                    <img src={pendingImage} alt="Attached preview"
+                      style={{width:36,height:36,borderRadius:8,objectFit:"cover",flexShrink:0}}/>
+                    <span style={{fontSize:11,color:C.muted,flex:1}}>Image attached</span>
+                    <button onClick={()=>setPendingImage(null)} title="Remove image"
+                      style={{background:"none",border:"none",cursor:"pointer",color:C.muted2,padding:4}}>
+                      <i className="ti ti-x" style={{fontSize:14}} aria-hidden="true"/>
+                    </button>
+                  </div>
+                )}
+                {imageError&&(
+                  <p style={{fontSize:11,color:C.urgent,marginBottom:8}}>{imageError}</p>
+                )}
                 <div style={{display:"flex",gap:8,alignItems:"center",
                   background:dark?"#1A1D3E":"#FFFFFF",
                   borderRadius:16,padding:"6px 6px 6px 14px",
@@ -3182,6 +3294,28 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                       </>)}
                     </div>
                   )}
+                  <input ref={fileInputRef} type="file" accept="image/*" style={{display:"none"}}
+                    onChange={async e=>{
+                      const file=e.target.files?.[0];
+                      e.target.value="";
+                      if(!file) return;
+                      setImageError(null);
+                      try{
+                        const dataUrl=await processImageFile(file);
+                        setPendingImage(dataUrl);
+                      }catch(err:any){
+                        setImageError(err?.message||"Couldn't process that image.");
+                      }
+                    }}/>
+                  <button onClick={()=>fileInputRef.current?.click()} title="Attach an image"
+                    className="pill-btn"
+                    style={{width:36,height:36,
+                      background:pendingImage?C.primary:inputBtnBg,
+                      color:pendingImage?"white":C.muted,
+                      border:pendingImage?"1.5px solid transparent":inputBtnBorder,cursor:"pointer",
+                      flexShrink:0}}>
+                    <i className="ti ti-paperclip" style={{fontSize:15}} aria-hidden="true"/>
+                  </button>
                   {speechSupported&&(
                     <button onClick={toggleMic} title={listening?"Stop listening":"Speak your message"}
                       className="pill-btn"
@@ -3194,15 +3328,15 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     </button>
                   )}
                   <style>{`@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(225,77,77,0.5)}50%{box-shadow:0 0 0 8px rgba(225,77,77,0)}}`}</style>
-                  <button onClick={send} disabled={loading||!input.trim()}
+                  <button onClick={send} disabled={loading||(!input.trim()&&!pendingImage)}
                     className="pill-btn"
                     style={{width:36,height:36,
-                      background:input.trim()
+                      background:(input.trim()||pendingImage)
                         ?"linear-gradient(145deg,#6677E8,#4C5FD5)"
                         :inputBtnBg,
-                      color:input.trim()?"white":C.muted,
-                      border:input.trim()?"1.5px solid transparent":inputBtnBorder,cursor:"pointer",
-                      opacity:loading||!input.trim()?0.5:1,flexShrink:0}}>
+                      color:(input.trim()||pendingImage)?"white":C.muted,
+                      border:(input.trim()||pendingImage)?"1.5px solid transparent":inputBtnBorder,cursor:"pointer",
+                      opacity:loading||(!input.trim()&&!pendingImage)?0.5:1,flexShrink:0}}>
                     <i className="ti ti-send" style={{fontSize:15}} aria-hidden="true"/>
                   </button>
                 </div>
