@@ -2,6 +2,14 @@
 import React, { useState, useEffect, useCallback, createContext, useContext } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import ReactMarkdown from "react-markdown";
+import dynamic from "next/dynamic";
+
+// R3F/three/postprocessing must never land in the main bundle — this is the
+// framework-idiomatic equivalent of the old FlowingOrb's `await import("three")`
+// inside a useEffect, just adapted for a declarative JSX component tree
+// instead of an imperative one. Must be called at module scope (not inside
+// FlowingOrb's render) for Next's preloading to work.
+const FlowingOrbCanvasLazy=dynamic(()=>import("./FlowingOrbCanvas"),{ssr:false});
 
 type Category = "study"|"legal"|"trading"|"finance"|"business"|"career"|"health"|"driving"|"admin"|"property"|"content"|"personal"|"family"|"faith"|"fitness"|"nutrition"|"mental"|"travel"|"technology"|"creative"|"social"|"volunteering"|"language"|"reading"|"music"|"sports"|"cooking"|"shopping"|"events"|"medical"|"insurance"|"tax"|"debt"|"savings"|"investment"|"side_hustle"|"networking"|"interview"|"project"|"research"|"writing"|"design"|"marketing"|"sales"|"customer"|"hr"|"legal_work"|"compliance"|"environment"|"community"|"charity"|"education"|"childcare"|"pets"|"home"|"vehicle"|"utilities"|"subscriptions"|"other";
 type Priority = "urgent"|"high"|"medium";
@@ -2274,308 +2282,100 @@ function TimelineRow({item,onCheck}:{
   );
 }
 
-// ── Flowing energy orb (Three.js — particle nebula cloud) ──────────────────────
+// ── Flowing energy orb (React Three Fiber — particle nebula cloud + bloom) ──
 // A sphere of glowing colored points with per-particle spring physics and
 // noise-based displacement, plus an inner core glow and outer atmosphere glow
-// mesh. "uAmplitude" (originally driven by voice audio in the source this was
-// adapted from) is instead driven by whether the AI is actively thinking, so
-// the orb visibly intensifies and expands while a response is being generated.
-const NEBULA_PARTICLE_VERTEX_SHADER=`
-attribute vec3 aColor;
-attribute float aSize;
-attribute float aRandom;
-uniform float uTime;
-uniform float uAmplitude;
-varying vec3 vColor;
-varying float vAlpha;
+// mesh, rendered declaratively via R3F with real EffectComposer/Bloom
+// post-processing (see FlowingOrbCanvas.tsx). "uAmplitude" (originally
+// driven by voice audio in the source this was adapted from) is instead
+// driven by whether the AI is actively thinking, so the orb visibly
+// intensifies and expands while a response is being generated.
 
-void main(){
-  vColor=aColor;
-  vec4 mvPosition=modelViewMatrix*vec4(position,1.0);
-  float dist=length(position);
-  float baseSize=aSize*(1.0+uAmplitude*2.5);
-  float pulse=1.0+sin(uTime*3.0+aRandom*6.28)*0.15*(1.0+uAmplitude*2.0);
-  gl_PointSize=baseSize*pulse*(300.0/-mvPosition.z);
-  vAlpha=0.6+uAmplitude*0.4;
-  vAlpha*=smoothstep(3.5,1.0,dist);
-  gl_Position=projectionMatrix*mvPosition;
-}`;
+// Cheap, synchronous WebGL feature-detection using nothing but a throwaway
+// canvas — deliberately NOT importing three/R3F to run this check. Lets
+// FlowingOrb skip the dynamic import (and the R3F/three/postprocessing
+// bundle chunk) entirely when WebGL is unavailable, rather than attempting
+// it and relying on error handling to recover.
+function detectWebGL():boolean{
+  if(typeof document==="undefined") return false;
+  try{
+    const canvas=document.createElement("canvas");
+    return !!(canvas.getContext("webgl2")||canvas.getContext("webgl"));
+  }catch{
+    return false;
+  }
+}
 
-const NEBULA_PARTICLE_FRAGMENT_SHADER=`
-uniform float uAmplitude;
-varying vec3 vColor;
-varying float vAlpha;
-void main(){
-  vec2 center=gl_PointCoord-vec2(0.5);
-  float dist=length(center);
-  if(dist>0.5)discard;
-  float alpha=1.0-smoothstep(0.0,0.5,dist);
-  alpha=pow(alpha,1.5);
-  float core=exp(-dist*8.0)*0.5;
-  vec3 finalColor=vColor*(1.0+core);
-  finalColor*=(1.0+uAmplitude*0.6);
-  gl_FragColor=vec4(finalColor,alpha*vAlpha);
-}`;
-
-const NEBULA_CORE_VERTEX_SHADER=`
-varying vec3 vNormal;
-varying vec3 vWorldPos;
-void main(){
-  vNormal=normalize(normalMatrix*normal);
-  vec4 wp=modelMatrix*vec4(position,1.0);
-  vWorldPos=wp.xyz;
-  gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);
-}`;
-
-const NEBULA_CORE_FRAGMENT_SHADER=`
-uniform float uTime;
-uniform float uAmplitude;
-uniform vec3 uColor1;
-uniform vec3 uColor2;
-varying vec3 vNormal;
-varying vec3 vWorldPos;
-void main(){
-  vec3 viewDir=normalize(cameraPosition-vWorldPos);
-  float fresnel=pow(1.0-max(dot(viewDir,vNormal),0.0),2.5);
-  float pulse=0.5+sin(uTime*1.5)*0.15+uAmplitude*0.5;
-  vec3 color=mix(uColor1,uColor2,fresnel+uAmplitude*0.3);
-  color*=fresnel*pulse;
-  float alpha=fresnel*(0.25+uAmplitude*0.4);
-  gl_FragColor=vec4(color,alpha);
-}`;
-
-const NEBULA_ATMOS_FRAGMENT_SHADER=`
-uniform float uTime;
-uniform float uAmplitude;
-uniform vec3 uGlowColor;
-varying vec3 vNormal;
-varying vec3 vWorldPos;
-void main(){
-  vec3 viewDir=normalize(cameraPosition-vWorldPos);
-  float fresnel=pow(1.0-max(dot(viewDir,vNormal),0.0),5.0);
-  float pulse=0.3+sin(uTime*1.2)*0.08+uAmplitude*0.4;
-  vec3 color=uGlowColor*fresnel*pulse;
-  float alpha=fresnel*(0.08+uAmplitude*0.15);
-  gl_FragColor=vec4(color,alpha);
-}`;
-
-// Cheap pseudo-noise for CPU-side particle displacement (matches source technique)
-function nebulaNoise3D(x:number,y:number,z:number){
-  return Math.sin(x*1.27+y*3.71+z*2.53)*
-    Math.cos(y*2.91+z*1.37+x*3.17)*
-    Math.sin(z*3.13+x*2.37+y*1.73);
+// Catches synchronous render-phase failures from the dynamically-loaded
+// canvas tree — including a failed dynamic import, and (per R3F's own
+// internal error handling) errors thrown while rendering the 3D scene graph
+// itself, which R3F re-throws into its own top-level render specifically so
+// an ancestor boundary like this one can catch them.
+//
+// What this does NOT catch: WebGL context/renderer creation failing inside
+// R3F's Canvas. That happens inside an async configure() call with no
+// awaiting caller, so a failure there becomes an unhandled promise
+// rejection — invisible to both this boundary and to a plain try/catch.
+// detectWebGL() above sidesteps that for the common case (WebGL genuinely
+// unavailable) by never attempting Canvas mount at all; the
+// unhandledrejection listener in FlowingOrb below is the narrowly-scoped
+// backstop for the rarer case where basic context creation succeeds here
+// but the real renderer construction still fails.
+class OrbErrorBoundary extends React.Component<{onError:()=>void;children:React.ReactNode},{hasError:boolean}>{
+  constructor(props:{onError:()=>void;children:React.ReactNode}){
+    super(props);
+    this.state={hasError:false};
+  }
+  static getDerivedStateFromError(){
+    return{hasError:true};
+  }
+  componentDidCatch(error:unknown){
+    console.error("FlowingOrb: R3F canvas render failed —",error);
+    this.props.onError();
+  }
+  render(){
+    if(this.state.hasError) return null;
+    return this.props.children;
+  }
 }
 
 const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:number;active?:boolean}>(
   function FlowingOrb({size=52,active=false},ref){
-  const containerRef=React.useRef<HTMLDivElement>(null);
   const activeRef=React.useRef(active);
   // When non-null, this overrides the automatic idle/thinking pulse — the
   // Chatbot sets this every animation frame from real TTS audio amplitude
   // while speech is playing, and clears it (null) when speech ends so the
   // orb falls back to its normal idle/thinking behavior.
   const manualAmpRef=React.useRef<number|null>(null);
-  const[failed,setFailed]=useState(false);
+  const[webglAvailable]=useState(detectWebGL);
+  const[canvasFailed,setCanvasFailed]=useState(false);
   useEffect(()=>{activeRef.current=active;},[active]);
   React.useImperativeHandle(ref,()=>({
     setAmplitude:(v:number|null)=>{manualAmpRef.current=v;},
   }),[]);
 
+  const attempting=webglAvailable&&!canvasFailed;
+
+  // See OrbErrorBoundary's comment above — this is the backstop for a WebGL
+  // context/renderer creation failure specifically, which surfaces as an
+  // unhandled promise rejection rather than a catchable render error.
+  // Scoped to Three's actual context-creation error message so this can't
+  // swallow unrelated app errors.
   useEffect(()=>{
-    const container=containerRef.current;
-    if(!container)return;
-    let disposed=false;
-    let raf=0;
-    let renderer:any,geometry:any,particleMaterial:any,coreGeometry:any,coreMaterial:any,
-      atmosphereGeometry:any,atmosphereMaterial:any;
-
-    (async()=>{
-      try{
-      const THREE:any=await import("three");
-      if(disposed||!containerRef.current)return;
-
-      // Scaled down from the source's 12,000 — this renders at 34-76px, not
-      // full-screen, so density beyond this is invisible but still costs CPU
-      // every single frame for as long as the chat stays open.
-      const PARTICLE_COUNT=2200;
-      const baseRadius=1.8,radiusSpread=0.6,particleSize=0.05;
-
-      const colorPrimary=new THREE.Color("#8b5cf6");
-      const colorSecondary=new THREE.Color("#3b82f6");
-      const colorTertiary=new THREE.Color("#d946ef");
-      const colorQuaternary=new THREE.Color("#06b6d4");
-
-      const positions=new Float32Array(PARTICLE_COUNT*3);
-      const originalPositions=new Float32Array(PARTICLE_COUNT*3);
-      const velocities=new Float32Array(PARTICLE_COUNT*3);
-      const colorsArr=new Float32Array(PARTICLE_COUNT*3);
-      const sizesArr=new Float32Array(PARTICLE_COUNT);
-      const randomOffsets=new Float32Array(PARTICLE_COUNT);
-
-      for(let i=0;i<PARTICLE_COUNT;i++){
-        const i3=i*3;
-        const theta=Math.random()*Math.PI*2;
-        const phi=Math.acos(2*Math.random()-1);
-        const surfaceOrVolume=Math.random();
-        let radius:number;
-        if(surfaceOrVolume<0.7) radius=baseRadius+(Math.random()-0.5)*radiusSpread*0.3;
-        else if(surfaceOrVolume<0.9) radius=baseRadius*(0.7+Math.random()*0.35);
-        else radius=baseRadius*Math.random()*0.5;
-
-        const x=radius*Math.sin(phi)*Math.cos(theta);
-        const y=radius*Math.sin(phi)*Math.sin(theta);
-        const z=radius*Math.cos(phi);
-        positions[i3]=x;positions[i3+1]=y;positions[i3+2]=z;
-        originalPositions[i3]=x;originalPositions[i3+1]=y;originalPositions[i3+2]=z;
-
-        const normalizedY=(y/baseRadius+1)*0.5;
-        const particleColor=new THREE.Color();
-        if(normalizedY<0.3) particleColor.copy(colorSecondary).lerp(colorQuaternary,normalizedY/0.3);
-        else if(normalizedY<0.55) particleColor.copy(colorPrimary).lerp(colorSecondary,(normalizedY-0.3)/0.25);
-        else if(normalizedY<0.75) particleColor.copy(colorPrimary).lerp(colorTertiary,(normalizedY-0.55)/0.2);
-        else particleColor.copy(colorTertiary).lerp(colorPrimary,(normalizedY-0.75)/0.25);
-        particleColor.offsetHSL((Math.random()-0.5)*0.05,(Math.random()-0.5)*0.1,(Math.random()-0.5)*0.08);
-        colorsArr[i3]=particleColor.r;colorsArr[i3+1]=particleColor.g;colorsArr[i3+2]=particleColor.b;
-
-        sizesArr[i]=particleSize*(0.5+Math.random()*1.0);
-        randomOffsets[i]=Math.random()*Math.PI*2;
+    if(!attempting) return;
+    function onRejection(e:PromiseRejectionEvent){
+      const message=e.reason instanceof Error?e.reason.message:String(e.reason??"");
+      if(message.includes("WebGL context")){
+        console.error("FlowingOrb: WebGL context/renderer creation failed —",e.reason);
+        setCanvasFailed(true);
+        e.preventDefault();
       }
+    }
+    window.addEventListener("unhandledrejection",onRejection);
+    return()=>window.removeEventListener("unhandledrejection",onRejection);
+  },[attempting]);
 
-      geometry=new THREE.BufferGeometry();
-      geometry.setAttribute("position",new THREE.BufferAttribute(positions,3));
-      geometry.setAttribute("aColor",new THREE.BufferAttribute(colorsArr,3));
-      geometry.setAttribute("aSize",new THREE.BufferAttribute(sizesArr,1));
-      geometry.setAttribute("aRandom",new THREE.BufferAttribute(randomOffsets,1));
-
-      particleMaterial=new THREE.ShaderMaterial({
-        uniforms:{uTime:{value:0},uAmplitude:{value:0}},
-        vertexShader:NEBULA_PARTICLE_VERTEX_SHADER,
-        fragmentShader:NEBULA_PARTICLE_FRAGMENT_SHADER,
-        transparent:true,depthWrite:false,depthTest:true,blending:THREE.AdditiveBlending,
-      });
-      const particleOrb=new THREE.Points(geometry,particleMaterial);
-
-      coreGeometry=new THREE.SphereGeometry(0.6,24,24);
-      coreMaterial=new THREE.ShaderMaterial({
-        uniforms:{uTime:{value:0},uAmplitude:{value:0},uColor1:{value:colorPrimary},uColor2:{value:colorTertiary}},
-        vertexShader:NEBULA_CORE_VERTEX_SHADER,
-        fragmentShader:NEBULA_CORE_FRAGMENT_SHADER,
-        transparent:true,depthWrite:false,side:THREE.FrontSide,blending:THREE.AdditiveBlending,
-      });
-      const coreGlow=new THREE.Mesh(coreGeometry,coreMaterial);
-
-      atmosphereGeometry=new THREE.SphereGeometry(2.5,24,24);
-      atmosphereMaterial=new THREE.ShaderMaterial({
-        uniforms:{uTime:{value:0},uAmplitude:{value:0},uGlowColor:{value:colorPrimary.clone().lerp(colorSecondary,0.5)}},
-        vertexShader:NEBULA_CORE_VERTEX_SHADER,
-        fragmentShader:NEBULA_ATMOS_FRAGMENT_SHADER,
-        transparent:true,depthWrite:false,side:THREE.BackSide,blending:THREE.AdditiveBlending,
-      });
-      const atmosphere=new THREE.Mesh(atmosphereGeometry,atmosphereMaterial);
-
-      const scene=new THREE.Scene();
-      scene.add(atmosphere);
-      scene.add(coreGlow);
-      scene.add(particleOrb);
-
-      const camera=new THREE.PerspectiveCamera(45,1,0.1,100);
-      camera.position.z=6;
-
-      renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:"low-power"});
-      const dpr=Math.min(window.devicePixelRatio||1,2);
-      renderer.setPixelRatio(dpr);
-      renderer.setSize(size,size);
-      renderer.setClearColor(0x000000,0); // transparent — blends into the header's own gradient instead of showing a black box
-      renderer.toneMapping=THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure=1.0;
-      container.appendChild(renderer.domElement);
-
-      const clock=new THREE.Clock();
-      const posAttr=geometry.getAttribute("position");
-      const posArr:Float32Array=posAttr.array;
-      let smoothAmplitude=0;
-      const returnForce=0.04,damping=0.92,idleBreathSpeed=0.8,idleBreathAmount=0.03,
-        speakExpandAmount=0.35,speakNoiseScale=1.5,speakNoiseSpeed=2.0,
-        idleRotationSpeed=0.001,speakRotationSpeed=0.015;
-
-      function frame(){
-        raf=requestAnimationFrame(frame);
-        const time=clock.getElapsedTime();
-        // Real speech amplitude takes priority when set; otherwise fall back
-        // to the automatic "thinking" pulse, then idle.
-        const manual=manualAmpRef.current;
-        const target=manual!==null?manual:(activeRef.current?0.5:0.06);
-        smoothAmplitude+=(target-smoothAmplitude)*(manual!==null?0.35:0.08);
-
-        particleMaterial.uniforms.uTime.value=time;
-        particleMaterial.uniforms.uAmplitude.value=smoothAmplitude;
-        coreMaterial.uniforms.uTime.value=time;
-        coreMaterial.uniforms.uAmplitude.value=smoothAmplitude;
-        atmosphereMaterial.uniforms.uTime.value=time;
-        atmosphereMaterial.uniforms.uAmplitude.value=smoothAmplitude;
-
-        const breathScale=1.0+Math.sin(time*idleBreathSpeed)*idleBreathAmount;
-        const speakExpand=1.0+smoothAmplitude*speakExpandAmount;
-
-        for(let i=0;i<PARTICLE_COUNT;i++){
-          const i3=i*3;
-          const ox=originalPositions[i3],oy=originalPositions[i3+1],oz=originalPositions[i3+2];
-          const rand=randomOffsets[i];
-          let targetX=ox*breathScale*speakExpand;
-          let targetY=oy*breathScale*speakExpand;
-          let targetZ=oz*breathScale*speakExpand;
-
-          if(smoothAmplitude>0.01){
-            const nx=nebulaNoise3D(ox*speakNoiseScale+time*speakNoiseSpeed,oy*speakNoiseScale,oz*speakNoiseScale+rand);
-            const ny=nebulaNoise3D(ox*speakNoiseScale,oy*speakNoiseScale+time*speakNoiseSpeed,oz*speakNoiseScale+rand);
-            const nz=nebulaNoise3D(ox*speakNoiseScale+rand,oy*speakNoiseScale,oz*speakNoiseScale+time*speakNoiseSpeed);
-            const noiseStrength=smoothAmplitude*0.4;
-            targetX+=nx*noiseStrength;targetY+=ny*noiseStrength;targetZ+=nz*noiseStrength;
-          }
-
-          velocities[i3]+=(targetX-posArr[i3])*returnForce;
-          velocities[i3+1]+=(targetY-posArr[i3+1])*returnForce;
-          velocities[i3+2]+=(targetZ-posArr[i3+2])*returnForce;
-          velocities[i3]*=damping;velocities[i3+1]*=damping;velocities[i3+2]*=damping;
-          posArr[i3]+=velocities[i3];posArr[i3+1]+=velocities[i3+1];posArr[i3+2]+=velocities[i3+2];
-        }
-        posAttr.needsUpdate=true;
-
-        const rotSpeed=idleRotationSpeed+smoothAmplitude*speakRotationSpeed;
-        particleOrb.rotation.y+=rotSpeed;
-        particleOrb.rotation.x=Math.sin(time*0.3)*0.15;
-
-        const coreScale=0.8+smoothAmplitude*0.3+Math.sin(time*1.5)*0.05;
-        coreGlow.scale.set(coreScale,coreScale,coreScale);
-        const atmosScale=1.0+smoothAmplitude*0.1;
-        atmosphere.scale.set(atmosScale,atmosScale,atmosScale);
-
-        renderer.render(scene,camera);
-      }
-      frame();
-      }catch(err){
-        console.error("FlowingOrb: Three.js setup failed —",err);
-        if(!disposed) setFailed(true);
-      }
-    })();
-
-    return()=>{
-      disposed=true;
-      cancelAnimationFrame(raf);
-      geometry?.dispose?.();
-      particleMaterial?.dispose?.();
-      coreGeometry?.dispose?.();
-      coreMaterial?.dispose?.();
-      atmosphereGeometry?.dispose?.();
-      atmosphereMaterial?.dispose?.();
-      if(renderer){
-        renderer.dispose();
-        if(renderer.domElement?.parentNode===container) container.removeChild(renderer.domElement);
-      }
-    };
-  },[size]);
-
-  if(failed){
+  if(!attempting){
     // WebGL unavailable (disabled, unsupported, or blocked) — this fallback
     // needs to hold its own visually, not just be "better than nothing",
     // since some real visitors will land here too. Multiple independently
@@ -2606,9 +2406,14 @@ const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:nu
     );
   }
 
-  return<div ref={containerRef}
-    style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",flexShrink:0,
-      boxShadow:"0 0 24px rgba(139,92,246,0.5), 0 0 46px rgba(6,182,212,0.25)"}}/>;
+  return(
+    <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",flexShrink:0,
+      boxShadow:"0 0 24px rgba(139,92,246,0.5), 0 0 46px rgba(6,182,212,0.25)"}}>
+      <OrbErrorBoundary onError={()=>setCanvasFailed(true)}>
+        <FlowingOrbCanvasLazy size={size} activeRef={activeRef} manualAmpRef={manualAmpRef}/>
+      </OrbErrorBoundary>
+    </div>
+  );
   });
 
 // react-markdown renders bare <p>/<ul>/<ol>/<li>/<strong> tags with browser
