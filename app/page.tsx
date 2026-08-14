@@ -2291,6 +2291,16 @@ function TimelineRow({item,onCheck}:{
 // driven by whether the AI is actively thinking, so the orb visibly
 // intensifies and expands while a response is being generated.
 
+// Diagnostics-only, module-level so it survives every remount of FlowingOrb
+// for as long as the page stays loaded. detectWebGL() below creates a real
+// throwaway WebGL context that is never explicitly released (no
+// WEBGL_lose_context call, canvas never attached to the DOM) — normally
+// harmless, but if FlowingOrb turns out to be remounting repeatedly (see
+// flowingOrbMountCount below), each remount leaks one more of these on top
+// of whatever FlowingOrbCanvas's own context is doing, and iOS Safari's
+// simultaneous-context cap is low enough that this alone could plausibly
+// contribute to it force-evicting contexts.
+let detectWebGLThrowawayContextCount=0;
 // Cheap, synchronous WebGL feature-detection using nothing but a throwaway
 // canvas — deliberately NOT importing three/R3F to run this check. Lets
 // FlowingOrb skip the dynamic import (and the R3F/three/postprocessing
@@ -2300,7 +2310,16 @@ function detectWebGL():boolean{
   if(typeof document==="undefined") return false;
   try{
     const canvas=document.createElement("canvas");
-    return !!(canvas.getContext("webgl2")||canvas.getContext("webgl"));
+    const ctx=canvas.getContext("webgl2")||canvas.getContext("webgl");
+    if(ctx){
+      detectWebGLThrowawayContextCount+=1;
+      console.log(
+        `[FlowingOrb] detectWebGL() created throwaway WebGL context `+
+        `#${detectWebGLThrowawayContextCount} (cumulative, never explicitly `+
+        `released) @ ${new Date().toISOString()}`,
+      );
+    }
+    return !!ctx;
   }catch{
     return false;
   }
@@ -2339,9 +2358,29 @@ class OrbErrorBoundary extends React.Component<{onError:()=>void;children:React.
   }
 }
 
+// Diagnostics-only, module-level so it survives every remount for as long
+// as the page stays loaded. The previous fix (preventDefault + composer-
+// only remount) made no measurable difference on-device, and
+// 'webglcontextrestored' never fired at all — which points away from "the
+// browser is failing to restore" and toward "something is repeatedly
+// tearing down and recreating this component," which detectWebGL()'s
+// per-mount throwaway context (see above) would compound into real context
+// leakage. This directly tests that: if this climbs every ~10s in lockstep
+// with a fresh WebGL context #, FlowingOrb itself is the thing cycling.
+let flowingOrbMountCount=0;
+
 const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:number;active?:boolean}>(
   function FlowingOrb({size=52,active=false},ref){
   const activeRef=React.useRef(active);
+  // Diagnostics-only. See flowingOrbMountCount's comment above.
+  useEffect(()=>{
+    flowingOrbMountCount+=1;
+    const mountId=flowingOrbMountCount;
+    console.log(`[FlowingOrb] outer component MOUNTED (#${mountId} cumulative) @ ${new Date().toISOString()}`);
+    return()=>{
+      console.log(`[FlowingOrb] outer component UNMOUNTING (was #${mountId}) @ ${new Date().toISOString()}`);
+    };
+  },[]);
   // When non-null, this overrides the automatic idle/thinking pulse — the
   // Chatbot sets this every animation frame from real TTS audio amplitude
   // while speech is playing, and clears it (null) when speech ends so the

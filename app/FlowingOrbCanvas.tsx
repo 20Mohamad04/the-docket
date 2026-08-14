@@ -19,6 +19,18 @@ import * as THREE from "three";
 // not attempt a fix.
 const diagTime=()=>new Date().toISOString();
 
+// Module-level (not component state) so it survives across every remount of
+// this component for as long as the page itself stays loaded — the previous
+// fix (preventDefault + composer-only remount) didn't change the observed
+// recovery time at all, and 'webglcontextrestored' never fired even though
+// the listener exists. That points at something upstream repeatedly
+// creating fresh WebGL contexts rather than the browser actually restoring
+// the old one — this counter is how we confirm or rule that out: if it
+// climbs past 1-2 rather than staying flat, contexts are being leaked
+// somewhere and the ~10s cycle is mobile Safari's low-context-count cap
+// force-evicting the oldest one, not a failed native restore.
+let webglContextCreationCount=0;
+
 // ── Shaders — unchanged from the previous imperative implementation ────────
 const NEBULA_PARTICLE_VERTEX_SHADER=`
 attribute vec3 aColor;
@@ -308,6 +320,20 @@ export default function FlowingOrbCanvas({size,activeRef,manualAmpRef}:{
   // Bumped on 'webglcontextrestored' to remount just the EffectComposer
   // subtree — see the comment on that listener below for why.
   const[composerEpoch,setComposerEpoch]=useState(0);
+  // Diagnostics-only. R3F's own <Canvas> unmount cleanup calls
+  // gl.forceContextLoss() (verified by reading its source) — so if this
+  // whole subtree unmounts and remounts repeatedly, that call is where the
+  // OLD context should be getting released before a new one is requested.
+  // Logging the unmount timestamp here, next to the context-creation
+  // timestamp above, is how we tell whether that's actually happening in
+  // time, or whether a new context is being requested before the old one
+  // is released.
+  useEffect(()=>{
+    console.log(`[FlowingOrb] FlowingOrbCanvas mounted @ ${diagTime()}`);
+    return()=>{
+      console.log(`[FlowingOrb] FlowingOrbCanvas unmounting @ ${diagTime()}`);
+    };
+  },[]);
   return(
     <Canvas
       dpr={dpr}
@@ -338,28 +364,48 @@ export default function FlowingOrbCanvas({size,activeRef,manualAmpRef}:{
       // happening specifically during scroll.
       resize={{offsetSize:true,scroll:false}}
       onCreated={(state)=>{
+        webglContextCreationCount+=1;
+        const thisContextNumber=webglContextCreationCount;
+        console.log(
+          `[FlowingOrb] WebGL context #${thisContextNumber} created (cumulative this page session) @ ${diagTime()}`,
+          {canvas:state.gl.domElement},
+        );
         // Diagnostics confirmed genuine WebGL context loss (WebGLContextEvent,
-        // isTrusted:true) followed by a slow ~12s recovery via a full
-        // component remount — mobile Safari/WebKit reclaims WebGL contexts
-        // under memory pressure more aggressively than desktop, so this is
-        // a real, recurring condition to recover from properly, not just an
-        // edge case to log.
+        // isTrusted:true) followed by a slow ~12s recovery — but the prior
+        // fix (preventDefault + composer-only remount) made no difference,
+        // and 'webglcontextrestored' never fired despite the listener
+        // existing. That's the signature of the browser giving up on this
+        // context permanently and something upstream creating a brand new
+        // one instead of a native restore — the context counter above and
+        // the watchdog below exist to confirm that rather than guess at it.
         const canvas=state.gl.domElement;
+        let noRestoreWarningId:ReturnType<typeof setTimeout>|undefined;
         canvas.addEventListener("webglcontextlost",(e)=>{
           // Per the WebGL spec, an unprevented 'webglcontextlost' tells the
           // browser to treat the loss as permanent — it won't attempt
           // automatic restoration (or does so far more slowly/
-          // inconsistently). This is what actually enables the fast native
-          // restore path the fix below depends on. three.js's own
-          // WebGLRenderer already calls this internally too; calling it
-          // here as well is harmless (idempotent per spec) and doesn't
-          // leave fast recovery dependent on library-internal wiring we
-          // don't directly control.
+          // inconsistently). three.js's own WebGLRenderer already calls
+          // this internally on the same canvas too; calling it here as
+          // well is harmless (idempotent per spec). Confirmed by the
+          // previous deploy that calling this alone doesn't change the
+          // outcome, so it's kept only so it's not a live suspect anymore.
           e.preventDefault();
-          console.error(`[FlowingOrb] WebGL context LOST @ ${diagTime()}`,e);
+          console.error(
+            `[FlowingOrb] WebGL context #${thisContextNumber} LOST @ ${diagTime()}`,e,
+          );
+          noRestoreWarningId=setTimeout(()=>{
+            console.warn(
+              `[FlowingOrb] WebGL context #${thisContextNumber}: no 'webglcontextrestored' `+
+              `5s after loss @ ${diagTime()} — native restoration is not happening for this `+
+              `context on this device/browser.`,
+            );
+          },5000);
         });
         canvas.addEventListener("webglcontextrestored",(e)=>{
-          console.log(`[FlowingOrb] WebGL context RESTORED @ ${diagTime()}`,e);
+          if(noRestoreWarningId!==undefined) clearTimeout(noRestoreWarningId);
+          console.log(
+            `[FlowingOrb] WebGL context #${thisContextNumber} RESTORED @ ${diagTime()}`,e,
+          );
           // three.js's own renderer already rebuilds its core GL state and
           // resets its internal texture/geometry caches on restore (see
           // WebGLRenderer's onContextRestore -> initGLContext), so ordinary
