@@ -3,7 +3,7 @@
 // almost everything else in this app) purely so next/dynamic can code-split
 // it — R3F/three/postprocessing must never end up in the main bundle, and
 // that requires importing this file lazily as a real, separate chunk.
-import React,{useEffect,useMemo,useRef} from "react";
+import React,{useEffect,useMemo,useRef,useState} from "react";
 import {Canvas,useFrame,useThree} from "@react-three/fiber";
 import {Sphere} from "@react-three/drei";
 import {EffectComposer,Bloom,ToneMapping} from "@react-three/postprocessing";
@@ -298,8 +298,16 @@ export default function FlowingOrbCanvas({size,activeRef,manualAmpRef}:{
   activeRef:React.RefObject<boolean>;
   manualAmpRef:React.RefObject<number|null>;
 }){
+  // Already capped — an uncapped dpr on a high-density iPhone screen driving
+  // EffectComposer's multiple render targets (inputBuffer, outputBuffer,
+  // depth) for a 34-76px UI element is real, avoidable GPU memory pressure,
+  // and a plausible contributor to why the context gets lost in the first
+  // place, not just how slowly it recovers.
   const dpr=typeof window!=="undefined"?Math.min(window.devicePixelRatio||1,2):1;
   const composerRef=useRef<EffectComposerImpl|null>(null);
+  // Bumped on 'webglcontextrestored' to remount just the EffectComposer
+  // subtree — see the comment on that listener below for why.
+  const[composerEpoch,setComposerEpoch]=useState(0);
   return(
     <Canvas
       dpr={dpr}
@@ -330,17 +338,43 @@ export default function FlowingOrbCanvas({size,activeRef,manualAmpRef}:{
       // happening specifically during scroll.
       resize={{offsetSize:true,scroll:false}}
       onCreated={(state)=>{
-        // Diagnostics-only. Context loss/restore cycling on the GPU is the
-        // most likely cause of exactly the symptom reported (screenshots
-        // moments apart alternating between rendering correctly and going
-        // black) — mobile Safari/WebKit is known to reclaim WebGL contexts
-        // under memory pressure far more aggressively than desktop.
+        // Diagnostics confirmed genuine WebGL context loss (WebGLContextEvent,
+        // isTrusted:true) followed by a slow ~12s recovery via a full
+        // component remount — mobile Safari/WebKit reclaims WebGL contexts
+        // under memory pressure more aggressively than desktop, so this is
+        // a real, recurring condition to recover from properly, not just an
+        // edge case to log.
         const canvas=state.gl.domElement;
         canvas.addEventListener("webglcontextlost",(e)=>{
+          // Per the WebGL spec, an unprevented 'webglcontextlost' tells the
+          // browser to treat the loss as permanent — it won't attempt
+          // automatic restoration (or does so far more slowly/
+          // inconsistently). This is what actually enables the fast native
+          // restore path the fix below depends on. three.js's own
+          // WebGLRenderer already calls this internally too; calling it
+          // here as well is harmless (idempotent per spec) and doesn't
+          // leave fast recovery dependent on library-internal wiring we
+          // don't directly control.
+          e.preventDefault();
           console.error(`[FlowingOrb] WebGL context LOST @ ${diagTime()}`,e);
         });
         canvas.addEventListener("webglcontextrestored",(e)=>{
           console.log(`[FlowingOrb] WebGL context RESTORED @ ${diagTime()}`,e);
+          // three.js's own renderer already rebuilds its core GL state and
+          // resets its internal texture/geometry caches on restore (see
+          // WebGLRenderer's onContextRestore -> initGLContext), so ordinary
+          // scene resources — the particle points, core/atmosphere spheres
+          // in NebulaScene — re-upload automatically on the next frame; no
+          // action needed for those. @react-three/postprocessing's
+          // EffectComposer manages its own render targets (inputBuffer,
+          // outputBuffer, depth) outside that path, though, and is the one
+          // piece not verified to recover on its own. Bumping this key
+          // remounts just that subtree, creating fresh render targets
+          // against the now-restored context — the outer <Canvas>/
+          // WebGLRenderer/GL context itself is never touched, so this is a
+          // fast in-memory recreation, not the ~12s outer remount it
+          // replaces.
+          setComposerEpoch((n)=>n+1);
         });
       }}>
       <NebulaScene activeRef={activeRef} manualAmpRef={manualAmpRef}/>
@@ -353,6 +387,7 @@ export default function FlowingOrbCanvas({size,activeRef,manualAmpRef}:{
           it grades the combined bloom+scene output, not the reverse. */}
       <ComposerResizeDiagnostics/>
       <EffectComposer
+        key={composerEpoch}
         ref={(instance)=>{
           if(instance&&composerRef.current!==instance){
             composerRef.current=instance;
