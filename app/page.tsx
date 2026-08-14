@@ -2363,6 +2363,17 @@ let recentWebGLFailureTimestamps:number[]=[];
 const WEBGL_FAILURE_GIVE_UP_THRESHOLD=2;
 const WEBGL_FAILURE_WINDOW_MS=60_000;
 
+// TEMPORARY, deliberate rollback — not abandoning the R3F/bloom rebuild,
+// pausing it. Several rounds of fixes for iOS Safari WebGL context loss
+// (preventDefault, composer-only remount, then the give-up-after-repeated-
+// failure policy above) didn't resolve real-world flickering, which is
+// worse than just always showing the CSS fallback. Setting this to true
+// skips the WebGL/R3F attempt entirely — canvasFailed starts true below —
+// without deleting any of FlowingOrbCanvas.tsx or this failure-handling
+// code, so this is a one-line flip back to false to pick the feature back
+// up later.
+const ORB_R3F_DISABLED=true;
+
 const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:number;active?:boolean}>(
   function FlowingOrb({size=52,active=false},ref){
   const activeRef=React.useRef(active);
@@ -2372,7 +2383,7 @@ const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:nu
   // orb falls back to its normal idle/thinking behavior.
   const manualAmpRef=React.useRef<number|null>(null);
   const[webglAvailable]=useState(detectWebGL);
-  const[canvasFailed,setCanvasFailed]=useState(orbGaveUpOnWebGL);
+  const[canvasFailed,setCanvasFailed]=useState(ORB_R3F_DISABLED||orbGaveUpOnWebGL);
   useEffect(()=>{activeRef.current=active;},[active]);
   React.useImperativeHandle(ref,()=>({
     setAmplitude:(v:number|null)=>{manualAmpRef.current=v;},
