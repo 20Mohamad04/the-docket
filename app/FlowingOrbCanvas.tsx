@@ -306,6 +306,29 @@ export default function FlowingOrbCanvas({size,activeRef,manualAmpRef}:{
       gl={{antialias:true,alpha:true,powerPreference:"low-power"}}
       camera={{fov:45,position:[0,0,6],near:0.1,far:100}}
       style={{width:size,height:size,display:"block"}}
+      // Fixes a real bug the diagnostics above surfaced: EffectComposer was
+      // resizing seconds after creation with no genuine change to this
+      // fixed 34-76px container — a mobile Safari address-bar collapse
+      // fires a window 'resize' event, and R3F's <Canvas> unconditionally
+      // remeasures its container on that event (via react-use-measure)
+      // regardless of whether anything here actually changed size.
+      //
+      // Note this can't be fixed with a container-scoped ResizeObserver of
+      // our own: <Canvas> has no prop to supply an external size (its
+      // CanvasProps type explicitly omits `size`) or to swap in a custom
+      // observer — react-use-measure's ResizeObserver + window listener are
+      // both wired internally with no way to bypass them. `resize` is the
+      // one supported escape hatch, so it's used to make the *effect* of
+      // that unavoidable remeasurement inert: offsetSize measures via
+      // element.offsetWidth/offsetHeight (integer, layout-box) instead of
+      // getBoundingClientRect (fractional/subpixel), so a container whose
+      // real size hasn't changed reports identical numbers even through an
+      // address-bar-driven reflow — react-use-measure's own equality check
+      // then skips the state update entirely, so size never reaches
+      // EffectComposer. scroll:false additionally drops ancestor
+      // scroll-container listeners, since the flicker was reported as
+      // happening specifically during scroll.
+      resize={{offsetSize:true,scroll:false}}
       onCreated={(state)=>{
         // Diagnostics-only. Context loss/restore cycling on the GPU is the
         // most likely cause of exactly the symptom reported (screenshots
