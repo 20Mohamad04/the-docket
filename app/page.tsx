@@ -2341,18 +2341,27 @@ class OrbErrorBoundary extends React.Component<{onError:()=>void;children:React.
 
 // After several rounds of fixes (preventDefault, composer-only remount on
 // restore) made no measurable difference to recovery on iOS Safari, WebGL
-// context loss there is being treated as a platform-level limitation, not
+// failure there is being treated as a platform-level limitation, not
 // something reliably fixable from app code — so instead of continuing to
-// chase native recovery, repeated loss now permanently retires WebGL for
-// the rest of the session in favor of the CSS fallback. Tracked at module
-// level (not component state) so both the recent-loss window and the
-// give-up decision survive even if FlowingOrb itself gets remounted —
+// chase native recovery, repeated failure now permanently retires WebGL
+// for the rest of the session in favor of the CSS fallback. Tracked at
+// module level (not component state) so both the recent-failure window and
+// the give-up decision survive even if FlowingOrb itself gets remounted —
 // once given up, every future mount goes straight to the CSS fallback
-// rather than re-attempting WebGL and risking another loss cycle.
+// rather than re-attempting WebGL and risking another failure cycle.
+//
+// There are three independent ways WebGL can fail here — a direct
+// 'webglcontextlost' event, a React render-phase error caught by
+// OrbErrorBoundary, and an async WebGLRenderer-setup failure caught via the
+// scoped unhandledrejection listener below — and on this device the actual
+// failures were going through paths other than context-loss, so the
+// give-up counter never incremented and it kept retrying indefinitely. All
+// three now feed the same counter via giveUpOnWebGL, regardless of which
+// one fires.
 let orbGaveUpOnWebGL=false;
-let recentContextLossTimestamps:number[]=[];
-const CONTEXT_LOSS_GIVE_UP_THRESHOLD=2;
-const CONTEXT_LOSS_WINDOW_MS=60_000;
+let recentWebGLFailureTimestamps:number[]=[];
+const WEBGL_FAILURE_GIVE_UP_THRESHOLD=2;
+const WEBGL_FAILURE_WINDOW_MS=60_000;
 
 const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:number;active?:boolean}>(
   function FlowingOrb({size=52,active=false},ref){
@@ -2371,20 +2380,24 @@ const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:nu
 
   const attempting=webglAvailable&&!canvasFailed;
 
-  // See FlowingOrbCanvas's onContextLost prop: this is where repeated
-  // context loss is actually counted and turned into a permanent give-up.
-  // A short window (rather than any single loss) avoids abandoning WebGL
-  // over one rare, isolated event.
-  const handleContextLost=React.useCallback(()=>{
+  // Shared by all three WebGL failure paths (context loss, OrbErrorBoundary,
+  // the unhandledrejection backstop below) — see the module comment above.
+  // Always falls back for the current mount immediately (previously the
+  // context-loss path only did this once the threshold was already hit,
+  // so a single loss left the orb rendering nothing instead of showing the
+  // CSS fallback); additionally marks the give-up as permanent once 2
+  // failures land within the window, rather than any single one, so one
+  // rare/isolated failure doesn't retire WebGL for the whole session.
+  const giveUpOnWebGL=React.useCallback(()=>{
     const now=Date.now();
-    recentContextLossTimestamps=recentContextLossTimestamps.filter(
-      (t)=>now-t<CONTEXT_LOSS_WINDOW_MS,
+    recentWebGLFailureTimestamps=recentWebGLFailureTimestamps.filter(
+      (t)=>now-t<WEBGL_FAILURE_WINDOW_MS,
     );
-    recentContextLossTimestamps.push(now);
-    if(recentContextLossTimestamps.length>=CONTEXT_LOSS_GIVE_UP_THRESHOLD){
+    recentWebGLFailureTimestamps.push(now);
+    if(recentWebGLFailureTimestamps.length>=WEBGL_FAILURE_GIVE_UP_THRESHOLD){
       orbGaveUpOnWebGL=true;
-      setCanvasFailed(true);
     }
+    setCanvasFailed(true);
   },[]);
 
   // See OrbErrorBoundary's comment above — this is the backstop for a WebGL
@@ -2398,13 +2411,13 @@ const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:nu
       const message=e.reason instanceof Error?e.reason.message:String(e.reason??"");
       if(message.includes("WebGL context")){
         console.error("FlowingOrb: WebGL context/renderer creation failed —",e.reason);
-        setCanvasFailed(true);
+        giveUpOnWebGL();
         e.preventDefault();
       }
     }
     window.addEventListener("unhandledrejection",onRejection);
     return()=>window.removeEventListener("unhandledrejection",onRejection);
-  },[attempting]);
+  },[attempting,giveUpOnWebGL]);
 
   if(!attempting){
     // WebGL unavailable (disabled, unsupported, or blocked) — this fallback
@@ -2440,9 +2453,9 @@ const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:nu
   return(
     <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",flexShrink:0,
       boxShadow:"0 0 24px rgba(139,92,246,0.5), 0 0 46px rgba(6,182,212,0.25)"}}>
-      <OrbErrorBoundary onError={()=>setCanvasFailed(true)}>
+      <OrbErrorBoundary onError={giveUpOnWebGL}>
         <FlowingOrbCanvasLazy size={size} activeRef={activeRef} manualAmpRef={manualAmpRef}
-          onContextLost={handleContextLost}/>
+          onContextLost={giveUpOnWebGL}/>
       </OrbErrorBoundary>
     </div>
   );
