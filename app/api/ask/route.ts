@@ -110,6 +110,150 @@ async function trackOpusUsage(userId: string, periodEnd: string) {
   }
 }
 
+// ── Phase 1: persistent chat history ────────────────────────────────────
+// Best-effort, like usage tracking above — a persistence failure must never
+// break the actual chat response, so every error path here just logs.
+// Uses the same service-role client + client-sent-userId pattern as the
+// rest of this route (see trackSonnetUsage etc.) rather than RLS: ownership
+// is enforced manually below instead. The four /api/conversations routes
+// take the opposite approach (a user-scoped client so Postgres RLS on
+// conversations/chat_messages genuinely applies) since they have no other
+// reason to need this route's elevated privileges.
+
+// First few words of the user's first message — used only when creating a
+// brand new conversation, so the history list has something readable to
+// show without a separate model call just to name it.
+function titleFromMessage(text: string): string | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const allWords = trimmed.split(/\s+/);
+  const words = allWords.slice(0, 8);
+  return words.length < allWords.length ? `${words.join(" ")}…` : words.join(" ");
+}
+
+// The client (buildApiMessages in page.tsx) sends the current turn's
+// content as either a plain string, or — when an image is attached — an
+// array of Anthropic content blocks ([{type:"text"},{type:"image",...}]).
+// Pulls the plain text and, if present, the raw base64 image data back out
+// of whichever shape this turn actually is.
+function extractUserTurnContent(content: any): { text: string; imageBase64: string | null } {
+  if (typeof content === "string") return { text: content, imageBase64: null };
+  if (!Array.isArray(content)) return { text: "", imageBase64: null };
+  const textBlock = content.find((b: any) => b?.type === "text");
+  const imageBlock = content.find((b: any) => b?.type === "image");
+  return { text: textBlock?.text ?? "", imageBase64: imageBlock?.source?.data ?? null };
+}
+
+// Uploads the current turn's image (if any) to the private chat-images
+// bucket and returns the STORAGE PATH — not a URL. The bucket is private
+// (per-user RLS — see the storage policies set up alongside it), so there's
+// no permanent public/signed URL to hand back here; GET
+// /api/conversations/[id] mints a short-lived signed URL from this path
+// each time a conversation is actually loaded, instead of a long-lived one
+// sitting in the database.
+async function uploadChatImage(
+  sb: any,
+  userId: string,
+  conversationId: string,
+  imageBase64: string
+): Promise<string | null> {
+  try {
+    const path = `${userId}/${conversationId}/${crypto.randomUUID()}.jpg`;
+    const bytes = Buffer.from(imageBase64, "base64");
+    const { error } = await sb.storage
+      .from("chat-images")
+      .upload(path, bytes, { contentType: "image/jpeg", upsert: false });
+    if (error) {
+      console.error("Chat image upload failed:", error);
+      return null;
+    }
+    return path;
+  } catch (err) {
+    console.error("Chat image upload threw:", err);
+    return null;
+  }
+}
+
+// Resolves which conversation this turn belongs to (creating one if none
+// was given, or if the client-sent id doesn't actually check out) and
+// writes both the user's message and the assistant's reply to
+// chat_messages. Returns the resolved conversation id so the client can
+// keep using it for later turns in the same chat — or null if persistence
+// isn't possible or failed, in which case the chat itself still works
+// exactly as it did before this feature existed.
+async function persistTurn({
+  userId,
+  conversationId,
+  userContent,
+  assistantReply,
+}: {
+  userId: string;
+  conversationId: string | null | undefined;
+  userContent: any;
+  assistantReply: string;
+}): Promise<string | null> {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return null;
+
+    const { text, imageBase64 } = extractUserTurnContent(userContent);
+
+    let resolvedId: string | null = conversationId || null;
+    if (resolvedId) {
+      // Never trust a client-sent conversationId at face value — confirm it
+      // actually belongs to this user before writing into it. If it
+      // doesn't (wrong owner, or it no longer exists), fall through to
+      // creating a fresh conversation instead of erroring the whole turn
+      // out.
+      const { data: existing } = await sb
+        .from("conversations")
+        .select("id")
+        .eq("id", resolvedId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!existing) resolvedId = null;
+    }
+
+    if (!resolvedId) {
+      const title = titleFromMessage(text);
+      const { data: created, error } = await sb
+        .from("conversations")
+        .insert({ user_id: userId, ...(title ? { title } : {}) })
+        .select("id")
+        .single();
+      if (error || !created) {
+        console.error("Failed to create conversation:", error);
+        return null;
+      }
+      resolvedId = created.id as string;
+    }
+
+    const imagePath = imageBase64 ? await uploadChatImage(sb, userId, resolvedId, imageBase64) : null;
+
+    const { error: insertError } = await sb.from("chat_messages").insert([
+      {
+        conversation_id: resolvedId,
+        role: "user",
+        content: text,
+        ...(imagePath ? { image_url: imagePath } : {}),
+      },
+      { conversation_id: resolvedId, role: "assistant", content: assistantReply },
+    ]);
+    if (insertError) console.error("Failed to insert chat messages:", insertError);
+
+    const { error: touchError } = await sb
+      .from("conversations")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", resolvedId);
+    if (touchError) console.error("Failed to touch conversation updated_at:", touchError);
+
+    return resolvedId;
+  } catch (err) {
+    console.error("Conversation persistence threw:", err);
+    return null;
+  }
+}
+
 // Phase 2: server-side Opus eligibility check. CRITICAL — never trust a
 // client-sent isPro/useOpus claim; that can be spoofed via devtools. This
 // independently re-verifies subscription status against Supabase. Any
@@ -265,10 +409,27 @@ function parseGroqResponse(raw: string): { actions: any[]; reply: string } {
 
 export async function POST(req: Request) {
   try {
-    const { system, messages, userId, useOpus } = await req.json();
+    const { system, messages, userId, useOpus, conversationId } = await req.json();
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     const groqKey = process.env.GROQ_API_KEY;
+
+    // The client always sends the current turn as the last element of
+    // `messages` (see buildApiMessages in page.tsx) — persistence is
+    // skipped entirely for anonymous users (no userId), matching how usage
+    // tracking above already skips them, since conversations.user_id is
+    // NOT NULL.
+    async function persistIfPossible(reply: string): Promise<string | null> {
+      if (!userId) return null;
+      const lastMessage = messages?.[messages.length - 1];
+      if (!lastMessage || lastMessage.role !== "user") return null;
+      return persistTurn({
+        userId,
+        conversationId,
+        userContent: lastMessage.content,
+        assistantReply: reply,
+      });
+    }
 
     // Claude Sonnet 5 — meaningfully stronger reasoning and instruction-following
     // than Haiku, which matters a lot here: the system prompt asks the model to
@@ -362,7 +523,14 @@ export async function POST(req: Request) {
         }
       }
 
-      return NextResponse.json({ actions, reply, ...(opusFallback ? { opusFallback: true } : {}) });
+      const persistedConversationId = await persistIfPossible(reply);
+
+      return NextResponse.json({
+        actions,
+        reply,
+        ...(opusFallback ? { opusFallback: true } : {}),
+        conversationId: persistedConversationId,
+      });
     }
 
     // Groq fallback — only used if ANTHROPIC_API_KEY isn't set (e.g. Claude API
@@ -409,7 +577,8 @@ export async function POST(req: Request) {
         throw new Error(data.error?.message ?? "Groq API error");
       }
       const { actions, reply } = parseGroqResponse(data.choices[0].message.content);
-      return NextResponse.json({ actions, reply });
+      const persistedConversationId = await persistIfPossible(reply);
+      return NextResponse.json({ actions, reply, conversationId: persistedConversationId });
     }
 
     return NextResponse.json(

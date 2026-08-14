@@ -2599,6 +2599,12 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
   const[modelMenuOpen,setModelMenuOpen]=useState(false);
   const[opusCount,setOpusCount]=useState<number|null>(null);
   const[loading,setLoading]=useState(false);
+  // Phase 1 of persistent chat history — null until /api/ask creates (or
+  // resolves) a conversation for this chat session, then reused for every
+  // later turn so they land in the same conversation instead of each
+  // starting a new one. No history-browsing UI yet; this is just enough
+  // wiring for the backend persistence to actually apply per-conversation.
+  const[conversationId,setConversationId]=useState<string|null>(null);
   const[voiceOn,setVoiceOn]=useState(true);
   const voiceOnRef=React.useRef(true); // mirrors voiceOn for reads inside in-flight async speak() calls, which otherwise close over a stale value
   const orbRef=React.useRef<{setAmplitude:(v:number|null)=>void}>(null);
@@ -2917,7 +2923,8 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({system:systemPrompt,messages:buildApiMessages(newMsgs.slice(-20)),
           ...(user?.id?{userId:user.id}:{}),
-          ...(selectedModel==="opus"?{useOpus:true}:{})})});
+          ...(selectedModel==="opus"?{useOpus:true}:{}),
+          ...(conversationId?{conversationId}:{})})});
       const data=await res.json();
       // The route always returns clean {actions, reply} directly now —
       // Claude via forced tool_choice, Groq via server-side recovery — so
@@ -2927,6 +2934,11 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
       onAction(actions);
       setMessages([...newMsgs,{role:"assistant",content:reply,
         ...(data.opusFallback?{opusFallback:true}:{})}]);
+      // Only ever moves from null to a real id (or keeps the existing one) —
+      // a persistence failure server-side returns null, which must never
+      // knock an already-established conversation back to "start a new
+      // one" on the next message.
+      if(data.conversationId) setConversationId(data.conversationId);
       speak(reply);
       refreshOpusCount();
     }catch{
