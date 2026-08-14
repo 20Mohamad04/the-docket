@@ -4,32 +4,10 @@
 // it — R3F/three/postprocessing must never end up in the main bundle, and
 // that requires importing this file lazily as a real, separate chunk.
 import React,{useEffect,useMemo,useRef,useState} from "react";
-import {Canvas,useFrame,useThree} from "@react-three/fiber";
+import {Canvas,useFrame} from "@react-three/fiber";
 import {Sphere} from "@react-three/drei";
 import {EffectComposer,Bloom,ToneMapping} from "@react-three/postprocessing";
-import type {EffectComposer as EffectComposerImpl} from "postprocessing";
 import * as THREE from "three";
-
-// Diagnostics-only — reuses the existing Eruda debug console (loaded behind
-// ?debug=1 in app/page.tsx) rather than building new tooling. Plain
-// console.error/console.log calls show up there as-is on mobile, where
-// there's no other way to inspect what's happening. Investigating a
-// flicker reported on iPhone (screenshots alternate between rendering
-// correctly and going black) — this only makes the cause visible, it does
-// not attempt a fix.
-const diagTime=()=>new Date().toISOString();
-
-// Module-level (not component state) so it survives across every remount of
-// this component for as long as the page itself stays loaded — the previous
-// fix (preventDefault + composer-only remount) didn't change the observed
-// recovery time at all, and 'webglcontextrestored' never fired even though
-// the listener exists. That points at something upstream repeatedly
-// creating fresh WebGL contexts rather than the browser actually restoring
-// the old one — this counter is how we confirm or rule that out: if it
-// climbs past 1-2 rather than staying flat, contexts are being leaked
-// somewhere and the ~10s cycle is mobile Safari's low-context-count cap
-// force-evicting the oldest one, not a failed native restore.
-let webglContextCreationCount=0;
 
 // ── Shaders — unchanged from the previous imperative implementation ────────
 const NEBULA_PARTICLE_VERTEX_SHADER=`
@@ -283,32 +261,17 @@ function NebulaScene({activeRef,manualAmpRef}:{
   );
 }
 
-// Diagnostics-only. @react-three/postprocessing's <EffectComposer> has no
-// onResize/onCreated prop, but it internally calls `composer.setSize(...)`
-// once on mount and again every time R3F's reactive `size` changes (that's
-// the same value driving this hook) — so watching `size` here is a
-// reasonable stand-in for "render targets created or resized". Logged
-// separately from the ref-based creation log below since a mobile browser
-// recreating the composer without a matching size change (e.g. after a
-// context-loss/restore cycle) would itself be a meaningful signal.
-function ComposerResizeDiagnostics(){
-  const size=useThree((state)=>state.size);
-  const prevSizeRef=useRef<{width:number;height:number}|null>(null);
-  useEffect(()=>{
-    const prev=prevSizeRef.current;
-    console.log(
-      `[FlowingOrb] EffectComposer ${prev?"resized":"initial size"} @ ${diagTime()}`,
-      {from:prev,to:{width:size.width,height:size.height}},
-    );
-    prevSizeRef.current={width:size.width,height:size.height};
-  },[size.width,size.height]);
-  return null;
-}
-
-export default function FlowingOrbCanvas({size,activeRef,manualAmpRef}:{
+export default function FlowingOrbCanvas({size,activeRef,manualAmpRef,onContextLost}:{
   size:number;
   activeRef:React.RefObject<boolean>;
   manualAmpRef:React.RefObject<number|null>;
+  // Called every time the GPU context is lost (after preventDefault(), so
+  // the browser still gets a chance to restore it — see the listener
+  // below). FlowingOrb (the caller) owns the actual policy: it counts these
+  // and permanently falls back to the CSS orb if they recur, since iOS
+  // Safari was found not to reliably honor the restore request in
+  // practice.
+  onContextLost:()=>void;
 }){
   // Already capped — an uncapped dpr on a high-density iPhone screen driving
   // EffectComposer's multiple render targets (inputBuffer, outputBuffer,
@@ -316,39 +279,23 @@ export default function FlowingOrbCanvas({size,activeRef,manualAmpRef}:{
   // and a plausible contributor to why the context gets lost in the first
   // place, not just how slowly it recovers.
   const dpr=typeof window!=="undefined"?Math.min(window.devicePixelRatio||1,2):1;
-  const composerRef=useRef<EffectComposerImpl|null>(null);
   // Bumped on 'webglcontextrestored' to remount just the EffectComposer
   // subtree — see the comment on that listener below for why.
   const[composerEpoch,setComposerEpoch]=useState(0);
-  // Diagnostics-only. R3F's own <Canvas> unmount cleanup calls
-  // gl.forceContextLoss() (verified by reading its source) — so if this
-  // whole subtree unmounts and remounts repeatedly, that call is where the
-  // OLD context should be getting released before a new one is requested.
-  // Logging the unmount timestamp here, next to the context-creation
-  // timestamp above, is how we tell whether that's actually happening in
-  // time, or whether a new context is being requested before the old one
-  // is released.
-  useEffect(()=>{
-    console.log(`[FlowingOrb] FlowingOrbCanvas mounted @ ${diagTime()}`);
-    return()=>{
-      console.log(`[FlowingOrb] FlowingOrbCanvas unmounting @ ${diagTime()}`);
-    };
-  },[]);
   return(
     <Canvas
       dpr={dpr}
       gl={{antialias:true,alpha:true,powerPreference:"low-power"}}
       camera={{fov:45,position:[0,0,6],near:0.1,far:100}}
       style={{width:size,height:size,display:"block"}}
-      // Fixes a real bug the diagnostics above surfaced: EffectComposer was
-      // resizing seconds after creation with no genuine change to this
-      // fixed 34-76px container — a mobile Safari address-bar collapse
-      // fires a window 'resize' event, and R3F's <Canvas> unconditionally
+      // EffectComposer was resizing on mobile with no genuine change to
+      // this fixed 34-76px container — a Safari address-bar collapse fires
+      // a window 'resize' event, and R3F's <Canvas> unconditionally
       // remeasures its container on that event (via react-use-measure)
       // regardless of whether anything here actually changed size.
       //
-      // Note this can't be fixed with a container-scoped ResizeObserver of
-      // our own: <Canvas> has no prop to supply an external size (its
+      // This can't be fixed with a container-scoped ResizeObserver of our
+      // own: <Canvas> has no prop to supply an external size (its
       // CanvasProps type explicitly omits `size`) or to swap in a custom
       // observer — react-use-measure's ResizeObserver + window listener are
       // both wired internally with no way to bypass them. `resize` is the
@@ -360,66 +307,32 @@ export default function FlowingOrbCanvas({size,activeRef,manualAmpRef}:{
       // address-bar-driven reflow — react-use-measure's own equality check
       // then skips the state update entirely, so size never reaches
       // EffectComposer. scroll:false additionally drops ancestor
-      // scroll-container listeners, since the flicker was reported as
-      // happening specifically during scroll.
+      // scroll-container listeners.
       resize={{offsetSize:true,scroll:false}}
       onCreated={(state)=>{
-        webglContextCreationCount+=1;
-        const thisContextNumber=webglContextCreationCount;
-        console.log(
-          `[FlowingOrb] WebGL context #${thisContextNumber} created (cumulative this page session) @ ${diagTime()}`,
-          {canvas:state.gl.domElement},
-        );
-        // Diagnostics confirmed genuine WebGL context loss (WebGLContextEvent,
-        // isTrusted:true) followed by a slow ~12s recovery — but the prior
-        // fix (preventDefault + composer-only remount) made no difference,
-        // and 'webglcontextrestored' never fired despite the listener
-        // existing. That's the signature of the browser giving up on this
-        // context permanently and something upstream creating a brand new
-        // one instead of a native restore — the context counter above and
-        // the watchdog below exist to confirm that rather than guess at it.
         const canvas=state.gl.domElement;
-        let noRestoreWarningId:ReturnType<typeof setTimeout>|undefined;
         canvas.addEventListener("webglcontextlost",(e)=>{
-          // Per the WebGL spec, an unprevented 'webglcontextlost' tells the
-          // browser to treat the loss as permanent — it won't attempt
-          // automatic restoration (or does so far more slowly/
-          // inconsistently). three.js's own WebGLRenderer already calls
-          // this internally on the same canvas too; calling it here as
-          // well is harmless (idempotent per spec). Confirmed by the
-          // previous deploy that calling this alone doesn't change the
-          // outcome, so it's kept only so it's not a live suspect anymore.
+          // Per the WebGL spec, an unprevented context loss is treated as
+          // permanent — calling this is what allows the browser to attempt
+          // a native restore at all, so it stays here as correct,
+          // spec-compliant behavior. In practice this alone wasn't enough
+          // for a fast, reliable recovery on iOS Safari, so FlowingOrb (the
+          // caller) tracks repeated loss via onContextLost and permanently
+          // falls back to the CSS orb if it keeps recurring, rather than
+          // continuing to depend on native restoration this platform isn't
+          // reliably granting.
           e.preventDefault();
-          console.error(
-            `[FlowingOrb] WebGL context #${thisContextNumber} LOST @ ${diagTime()}`,e,
-          );
-          noRestoreWarningId=setTimeout(()=>{
-            console.warn(
-              `[FlowingOrb] WebGL context #${thisContextNumber}: no 'webglcontextrestored' `+
-              `5s after loss @ ${diagTime()} — native restoration is not happening for this `+
-              `context on this device/browser.`,
-            );
-          },5000);
+          onContextLost();
         });
-        canvas.addEventListener("webglcontextrestored",(e)=>{
-          if(noRestoreWarningId!==undefined) clearTimeout(noRestoreWarningId);
-          console.log(
-            `[FlowingOrb] WebGL context #${thisContextNumber} RESTORED @ ${diagTime()}`,e,
-          );
-          // three.js's own renderer already rebuilds its core GL state and
-          // resets its internal texture/geometry caches on restore (see
-          // WebGLRenderer's onContextRestore -> initGLContext), so ordinary
-          // scene resources — the particle points, core/atmosphere spheres
-          // in NebulaScene — re-upload automatically on the next frame; no
-          // action needed for those. @react-three/postprocessing's
-          // EffectComposer manages its own render targets (inputBuffer,
-          // outputBuffer, depth) outside that path, though, and is the one
-          // piece not verified to recover on its own. Bumping this key
-          // remounts just that subtree, creating fresh render targets
-          // against the now-restored context — the outer <Canvas>/
-          // WebGLRenderer/GL context itself is never touched, so this is a
-          // fast in-memory recreation, not the ~12s outer remount it
-          // replaces.
+        canvas.addEventListener("webglcontextrestored",()=>{
+          // three.js's own renderer rebuilds its core GL state and resets
+          // its internal texture/geometry caches on restore, so ordinary
+          // scene resources (the particle points, core/atmosphere spheres
+          // in NebulaScene) re-upload automatically on the next frame.
+          // @react-three/postprocessing's EffectComposer manages its own
+          // render targets outside that path, so this remounts just that
+          // subtree — not the outer <Canvas>/WebGLRenderer/GL context — to
+          // recreate them against the restored context.
           setComposerEpoch((n)=>n+1);
         });
       }}>
@@ -431,15 +344,7 @@ export default function FlowingOrbCanvas({size,activeRef,manualAmpRef}:{
           a blown-out blur at this small a render size; ToneMapping (ACES,
           matching the previous renderer.toneMapping setting) runs last so
           it grades the combined bloom+scene output, not the reverse. */}
-      <ComposerResizeDiagnostics/>
-      <EffectComposer
-        key={composerEpoch}
-        ref={(instance)=>{
-          if(instance&&composerRef.current!==instance){
-            composerRef.current=instance;
-            console.log(`[FlowingOrb] EffectComposer instance created @ ${diagTime()}`,instance);
-          }
-        }}>
+      <EffectComposer key={composerEpoch}>
         <Bloom luminanceThreshold={0.15} luminanceSmoothing={0.4} intensity={0.6} radius={0.4} mipmapBlur/>
         <ToneMapping/>
       </EffectComposer>

@@ -2291,16 +2291,6 @@ function TimelineRow({item,onCheck}:{
 // driven by whether the AI is actively thinking, so the orb visibly
 // intensifies and expands while a response is being generated.
 
-// Diagnostics-only, module-level so it survives every remount of FlowingOrb
-// for as long as the page stays loaded. detectWebGL() below creates a real
-// throwaway WebGL context that is never explicitly released (no
-// WEBGL_lose_context call, canvas never attached to the DOM) — normally
-// harmless, but if FlowingOrb turns out to be remounting repeatedly (see
-// flowingOrbMountCount below), each remount leaks one more of these on top
-// of whatever FlowingOrbCanvas's own context is doing, and iOS Safari's
-// simultaneous-context cap is low enough that this alone could plausibly
-// contribute to it force-evicting contexts.
-let detectWebGLThrowawayContextCount=0;
 // Cheap, synchronous WebGL feature-detection using nothing but a throwaway
 // canvas — deliberately NOT importing three/R3F to run this check. Lets
 // FlowingOrb skip the dynamic import (and the R3F/three/postprocessing
@@ -2310,16 +2300,7 @@ function detectWebGL():boolean{
   if(typeof document==="undefined") return false;
   try{
     const canvas=document.createElement("canvas");
-    const ctx=canvas.getContext("webgl2")||canvas.getContext("webgl");
-    if(ctx){
-      detectWebGLThrowawayContextCount+=1;
-      console.log(
-        `[FlowingOrb] detectWebGL() created throwaway WebGL context `+
-        `#${detectWebGLThrowawayContextCount} (cumulative, never explicitly `+
-        `released) @ ${new Date().toISOString()}`,
-      );
-    }
-    return !!ctx;
+    return !!(canvas.getContext("webgl2")||canvas.getContext("webgl"));
   }catch{
     return false;
   }
@@ -2349,7 +2330,7 @@ class OrbErrorBoundary extends React.Component<{onError:()=>void;children:React.
     return{hasError:true};
   }
   componentDidCatch(error:unknown){
-    console.error(`[FlowingOrb] R3F canvas render failed @ ${new Date().toISOString()} —`,error);
+    console.error("FlowingOrb: R3F canvas render failed —",error);
     this.props.onError();
   }
   render(){
@@ -2358,36 +2339,31 @@ class OrbErrorBoundary extends React.Component<{onError:()=>void;children:React.
   }
 }
 
-// Diagnostics-only, module-level so it survives every remount for as long
-// as the page stays loaded. The previous fix (preventDefault + composer-
-// only remount) made no measurable difference on-device, and
-// 'webglcontextrestored' never fired at all — which points away from "the
-// browser is failing to restore" and toward "something is repeatedly
-// tearing down and recreating this component," which detectWebGL()'s
-// per-mount throwaway context (see above) would compound into real context
-// leakage. This directly tests that: if this climbs every ~10s in lockstep
-// with a fresh WebGL context #, FlowingOrb itself is the thing cycling.
-let flowingOrbMountCount=0;
+// After several rounds of fixes (preventDefault, composer-only remount on
+// restore) made no measurable difference to recovery on iOS Safari, WebGL
+// context loss there is being treated as a platform-level limitation, not
+// something reliably fixable from app code — so instead of continuing to
+// chase native recovery, repeated loss now permanently retires WebGL for
+// the rest of the session in favor of the CSS fallback. Tracked at module
+// level (not component state) so both the recent-loss window and the
+// give-up decision survive even if FlowingOrb itself gets remounted —
+// once given up, every future mount goes straight to the CSS fallback
+// rather than re-attempting WebGL and risking another loss cycle.
+let orbGaveUpOnWebGL=false;
+let recentContextLossTimestamps:number[]=[];
+const CONTEXT_LOSS_GIVE_UP_THRESHOLD=2;
+const CONTEXT_LOSS_WINDOW_MS=60_000;
 
 const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:number;active?:boolean}>(
   function FlowingOrb({size=52,active=false},ref){
   const activeRef=React.useRef(active);
-  // Diagnostics-only. See flowingOrbMountCount's comment above.
-  useEffect(()=>{
-    flowingOrbMountCount+=1;
-    const mountId=flowingOrbMountCount;
-    console.log(`[FlowingOrb] outer component MOUNTED (#${mountId} cumulative) @ ${new Date().toISOString()}`);
-    return()=>{
-      console.log(`[FlowingOrb] outer component UNMOUNTING (was #${mountId}) @ ${new Date().toISOString()}`);
-    };
-  },[]);
   // When non-null, this overrides the automatic idle/thinking pulse — the
   // Chatbot sets this every animation frame from real TTS audio amplitude
   // while speech is playing, and clears it (null) when speech ends so the
   // orb falls back to its normal idle/thinking behavior.
   const manualAmpRef=React.useRef<number|null>(null);
   const[webglAvailable]=useState(detectWebGL);
-  const[canvasFailed,setCanvasFailed]=useState(false);
+  const[canvasFailed,setCanvasFailed]=useState(orbGaveUpOnWebGL);
   useEffect(()=>{activeRef.current=active;},[active]);
   React.useImperativeHandle(ref,()=>({
     setAmplitude:(v:number|null)=>{manualAmpRef.current=v;},
@@ -2395,19 +2371,21 @@ const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:nu
 
   const attempting=webglAvailable&&!canvasFailed;
 
-  // Diagnostics-only — reuses the existing Eruda debug console (?debug=1)
-  // rather than new tooling. Investigating an iPhone flicker (screenshots
-  // moments apart alternate between rendering correctly and going black):
-  // logging every webglAvailable/canvasFailed transition rules in or out
-  // whether this is actually FlowingOrb's own fallback logic re-triggering
-  // (e.g. if the component were remounting repeatedly) rather than a pure
-  // WebGL rendering issue inside an otherwise-stable mount — those would
-  // look identical in a screenshot but need a completely different fix.
-  useEffect(()=>{
-    console.log(
-      `[FlowingOrb] state: webglAvailable=${webglAvailable} canvasFailed=${canvasFailed} attempting=${attempting} @ ${new Date().toISOString()}`,
+  // See FlowingOrbCanvas's onContextLost prop: this is where repeated
+  // context loss is actually counted and turned into a permanent give-up.
+  // A short window (rather than any single loss) avoids abandoning WebGL
+  // over one rare, isolated event.
+  const handleContextLost=React.useCallback(()=>{
+    const now=Date.now();
+    recentContextLossTimestamps=recentContextLossTimestamps.filter(
+      (t)=>now-t<CONTEXT_LOSS_WINDOW_MS,
     );
-  },[webglAvailable,canvasFailed]);
+    recentContextLossTimestamps.push(now);
+    if(recentContextLossTimestamps.length>=CONTEXT_LOSS_GIVE_UP_THRESHOLD){
+      orbGaveUpOnWebGL=true;
+      setCanvasFailed(true);
+    }
+  },[]);
 
   // See OrbErrorBoundary's comment above — this is the backstop for a WebGL
   // context/renderer creation failure specifically, which surfaces as an
@@ -2419,7 +2397,7 @@ const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:nu
     function onRejection(e:PromiseRejectionEvent){
       const message=e.reason instanceof Error?e.reason.message:String(e.reason??"");
       if(message.includes("WebGL context")){
-        console.error(`[FlowingOrb] WebGL context/renderer creation failed @ ${new Date().toISOString()} —`,e.reason);
+        console.error("FlowingOrb: WebGL context/renderer creation failed —",e.reason);
         setCanvasFailed(true);
         e.preventDefault();
       }
@@ -2463,7 +2441,8 @@ const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:nu
     <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",flexShrink:0,
       boxShadow:"0 0 24px rgba(139,92,246,0.5), 0 0 46px rgba(6,182,212,0.25)"}}>
       <OrbErrorBoundary onError={()=>setCanvasFailed(true)}>
-        <FlowingOrbCanvasLazy size={size} activeRef={activeRef} manualAmpRef={manualAmpRef}/>
+        <FlowingOrbCanvasLazy size={size} activeRef={activeRef} manualAmpRef={manualAmpRef}
+          onContextLost={handleContextLost}/>
       </OrbErrorBoundary>
     </div>
   );
