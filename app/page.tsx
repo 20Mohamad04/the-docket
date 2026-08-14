@@ -2574,6 +2574,35 @@ function buildApiMessages(msgs:{role:"user"|"assistant";content:string;imageData
   });
 }
 
+const CHATBOT_GREETING="Hi! I'm your Docket assistant. Tell me what you need — I'll find the best slot in your schedule and confirm before adding anything.";
+
+// The four /api/conversations routes authenticate via the caller's own
+// Supabase access token (unlike /api/ask, which still trusts a client-sent
+// userId) so that Postgres RLS on conversations/chat_messages actually
+// applies — see the routes' own comments for why. This is the one place
+// that token gets attached to a request.
+async function getAuthHeader():Promise<Record<string,string>>{
+  const sb=await getSupabaseClient();
+  if(!sb) return{};
+  const{data:{session}}=await sb.auth.getSession();
+  return session?.access_token?{Authorization:`Bearer ${session.access_token}`}:{};
+}
+
+// "2 hours ago" for anything within the last day, otherwise a short date —
+// matches the en-GB day-then-month convention used everywhere else in this
+// app (fmtDate, the calendar views, etc.), with the year added only when
+// it isn't the current one.
+function formatConversationTime(iso:string):string{
+  const date=new Date(iso);
+  const diffMin=Math.round((Date.now()-date.getTime())/60000);
+  if(diffMin<1) return "Just now";
+  if(diffMin<60) return `${diffMin} minute${diffMin===1?"":"s"} ago`;
+  const diffHr=Math.round(diffMin/60);
+  if(diffHr<24) return `${diffHr} hour${diffHr===1?"":"s"} ago`;
+  const sameYear=date.getFullYear()===new Date().getFullYear();
+  return date.toLocaleDateString("en-GB",{day:"numeric",month:"short",...(sameYear?{}:{year:"numeric"})});
+}
+
 function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
   user?:{id?:string}|null;isPro?:boolean;tier?:string|null;}){
   const{t,dark}=useApp();
@@ -2587,7 +2616,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
   const[open,setOpen]=useState(false);
   const[expanded,setExpanded]=useState(false);
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;imageDataUrl?:string;opusFallback?:boolean}[]>([
-    {role:"assistant",content:"Hi! I'm your Docket assistant. Tell me what you need — I'll find the best slot in your schedule and confirm before adding anything."},
+    {role:"assistant",content:CHATBOT_GREETING},
   ]);
   const[input,setInput]=useState("");
   // Pending image attachment — reviewed via a small preview before sending,
@@ -2602,9 +2631,15 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
   // Phase 1 of persistent chat history — null until /api/ask creates (or
   // resolves) a conversation for this chat session, then reused for every
   // later turn so they land in the same conversation instead of each
-  // starting a new one. No history-browsing UI yet; this is just enough
-  // wiring for the backend persistence to actually apply per-conversation.
+  // starting a new one.
   const[conversationId,setConversationId]=useState<string|null>(null);
+  // Phase 2 — the history sidebar itself.
+  const[historyOpen,setHistoryOpen]=useState(false);
+  const[conversations,setConversations]=useState<{id:string;title:string;updated_at:string}[]>([]);
+  const[historyLoading,setHistoryLoading]=useState(false);
+  const[loadingConversationId,setLoadingConversationId]=useState<string|null>(null);
+  const[deletingId,setDeletingId]=useState<string|null>(null);
+  const[clearingAll,setClearingAll]=useState(false);
   const[voiceOn,setVoiceOn]=useState(true);
   const voiceOnRef=React.useRef(true); // mirrors voiceOn for reads inside in-flight async speak() calls, which otherwise close over a stale value
   const orbRef=React.useRef<{setAmplitude:(v:number|null)=>void}>(null);
@@ -2946,6 +2981,113 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
     }finally{setLoading(false);}
   }
 
+  // Locks background scroll while the history sidebar is open, mirroring
+  // the position:fixed pinning technique the app-level Drawer/modal lock
+  // uses (see the top-level App component) — a separate effect since this
+  // sidebar is scoped to the chat panel, not one of the app-level overlays
+  // that lock already covers. The two can't actually be open at once in
+  // practice (the chat's own full-viewport backdrop blocks reaching the
+  // Drawer toggle or anything that opens a modal while it's up), so there's
+  // no real risk of the two effects fighting over document.body.style.
+  const historyScrollLockY=React.useRef(0);
+  useEffect(()=>{
+    if(historyOpen){
+      historyScrollLockY.current=window.scrollY;
+      document.body.style.position="fixed";
+      document.body.style.top=`-${historyScrollLockY.current}px`;
+      document.body.style.width="100%";
+    }else{
+      document.body.style.position="";
+      document.body.style.top="";
+      document.body.style.width="";
+      window.scrollTo(0,historyScrollLockY.current);
+    }
+    return()=>{
+      document.body.style.position="";
+      document.body.style.top="";
+      document.body.style.width="";
+    };
+  },[historyOpen]);
+
+  const fetchConversations=React.useCallback(async()=>{
+    if(!user?.id)return;
+    setHistoryLoading(true);
+    try{
+      const headers=await getAuthHeader();
+      const res=await fetch("/api/conversations",{headers});
+      const data=await res.json();
+      setConversations(Array.isArray(data.conversations)?data.conversations:[]);
+    }catch(err){
+      console.error("Failed to load conversation history:",err);
+    }finally{
+      setHistoryLoading(false);
+    }
+  },[user?.id]);
+  useEffect(()=>{if(historyOpen)fetchConversations();},[historyOpen,fetchConversations]);
+
+  function startNewChat(){
+    setMessages([{role:"assistant",content:CHATBOT_GREETING}]);
+    setConversationId(null);
+    setHistoryOpen(false);
+  }
+
+  async function openConversation(id:string){
+    if(loadingConversationId)return;
+    setLoadingConversationId(id);
+    try{
+      const headers=await getAuthHeader();
+      const res=await fetch(`/api/conversations/${id}`,{headers});
+      if(!res.ok)throw new Error(`Failed to load conversation (${res.status})`);
+      const data=await res.json();
+      const loaded=(data.messages??[]).map((m:any)=>({
+        role:m.role,content:m.content,
+        // Signed URLs from the server render exactly like the base64 data
+        // URLs a fresh attachment produces — <img src> doesn't care which.
+        ...(m.image_url?{imageDataUrl:m.image_url}:{}),
+      }));
+      setMessages(loaded.length>0?loaded:[{role:"assistant",content:CHATBOT_GREETING}]);
+      setConversationId(id);
+      setHistoryOpen(false);
+    }catch(err){
+      console.error("Failed to open conversation:",err);
+    }finally{
+      setLoadingConversationId(null);
+    }
+  }
+
+  async function deleteConversation(id:string,e:React.MouseEvent){
+    e.stopPropagation();
+    if(!window.confirm("Delete this conversation? This can't be undone."))return;
+    setDeletingId(id);
+    try{
+      const headers=await getAuthHeader();
+      const res=await fetch(`/api/conversations/${id}`,{method:"DELETE",headers});
+      if(!res.ok)throw new Error(`Failed to delete conversation (${res.status})`);
+      setConversations(prev=>prev.filter(c=>c.id!==id));
+      if(conversationId===id)startNewChat();
+    }catch(err){
+      console.error("Failed to delete conversation:",err);
+    }finally{
+      setDeletingId(null);
+    }
+  }
+
+  async function clearAllHistory(){
+    if(!window.confirm("Clear ALL chat history? This permanently deletes every saved conversation and can't be undone."))return;
+    setClearingAll(true);
+    try{
+      const headers=await getAuthHeader();
+      const res=await fetch("/api/conversations",{method:"DELETE",headers});
+      if(!res.ok)throw new Error(`Failed to clear history (${res.status})`);
+      setConversations([]);
+      startNewChat();
+    }catch(err){
+      console.error("Failed to clear all history:",err);
+    }finally{
+      setClearingAll(false);
+    }
+  }
+
   return(<>
       {/* Orb FAB button */}
       <button onClick={()=>setOpen(o=>!o)}
@@ -2979,10 +3121,103 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               height:expanded?"100vh":"min(600px, calc(100vh - 40px))",
               maxHeight:expanded?"100vh":"calc(100vh - 40px)",
               borderRadius:expanded?0:24,
-              display:"flex",flexDirection:"column",overflow:"hidden",
+              display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",
               background:dark?"#0E1020":"#F0EFFC",
               border:expanded?"none":`1px solid ${C.border}`,
               boxShadow:expanded?"none":"0 32px 80px rgba(0,0,0,0.45)"}}>
+
+              {/* History sidebar — slides out from the left, clipped to this
+                  chat panel's own bounds (its parent has overflow:hidden),
+                  not the whole app, unlike the main Drawer it borrows its
+                  visual language from. */}
+              <div onClick={()=>setHistoryOpen(false)}
+                style={{position:"absolute",inset:0,zIndex:9,
+                  background:"rgba(0,0,0,0.4)",
+                  opacity:historyOpen?1:0,
+                  pointerEvents:historyOpen?"auto":"none",
+                  transition:"opacity 0.22s"}}/>
+              <div onClick={e=>e.stopPropagation()}
+                style={{position:"absolute",top:0,left:0,bottom:0,zIndex:10,
+                  width:expanded?320:260,
+                  background:dark?"#16192A":"#FFFFFF",
+                  borderRight:`1px solid ${C.border}`,
+                  boxShadow:"8px 0 32px rgba(0,0,0,0.25)",
+                  transform:historyOpen?"translateX(0)":"translateX(-100%)",
+                  transition:"transform 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+                  display:"flex",flexDirection:"column",overflow:"hidden"}}>
+                <div style={{padding:"14px 14px 10px",borderBottom:`1px solid ${C.border}`,
+                  display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+                  <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:13,color:C.navy}}>
+                    Chat history
+                  </p>
+                  <button onClick={()=>setHistoryOpen(false)}
+                    style={{width:24,height:24,borderRadius:7,border:"none",background:"transparent",
+                      cursor:"pointer",color:C.muted,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <i className="ti ti-x" style={{fontSize:13}} aria-hidden="true"/>
+                  </button>
+                </div>
+
+                <div style={{padding:"10px 10px 6px",flexShrink:0}}>
+                  <button onClick={startNewChat}
+                    style={{width:"100%",padding:"9px 12px",borderRadius:10,fontSize:12.5,fontWeight:600,
+                      border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:8,
+                      background:"linear-gradient(135deg,#4C5FD5,#2A3699)",color:"white",
+                      boxShadow:"0 4px 14px rgba(76,95,213,0.3)"}}>
+                    <i className="ti ti-plus" style={{fontSize:14}} aria-hidden="true"/>
+                    New chat
+                  </button>
+                </div>
+
+                <div style={{flex:1,overflowY:"auto",padding:"4px 8px"}}>
+                  {!user?.id?(
+                    <p style={{fontSize:11.5,color:C.muted,padding:"16px 10px",textAlign:"center"}}>
+                      Sign in to save and view your chat history.
+                    </p>
+                  ):historyLoading?(
+                    <p style={{fontSize:11.5,color:C.muted,padding:"16px 10px",textAlign:"center"}}>Loading…</p>
+                  ):conversations.length===0?(
+                    <p style={{fontSize:11.5,color:C.muted,padding:"16px 10px",textAlign:"center"}}>
+                      No past conversations yet.
+                    </p>
+                  ):conversations.map(c=>(
+                    <div key={c.id} onClick={()=>openConversation(c.id)}
+                      style={{display:"flex",alignItems:"center",gap:6,padding:"9px 10px",borderRadius:10,
+                        cursor:loadingConversationId?"default":"pointer",marginBottom:2,
+                        opacity:loadingConversationId&&loadingConversationId!==c.id?0.5:1,
+                        background:conversationId===c.id?(dark?"rgba(76,95,213,0.18)":"rgba(76,95,213,0.1)"):"transparent"}}
+                      onMouseEnter={e=>{if(conversationId!==c.id)e.currentTarget.style.background=C.surface2;}}
+                      onMouseLeave={e=>{if(conversationId!==c.id)e.currentTarget.style.background="transparent";}}>
+                      <div style={{flex:1,minWidth:0}}>
+                        <p style={{fontSize:12,fontWeight:600,color:C.navy,whiteSpace:"nowrap",
+                          overflow:"hidden",textOverflow:"ellipsis"}}>{c.title}</p>
+                        <p style={{fontSize:10,color:C.muted}}>{formatConversationTime(c.updated_at)}</p>
+                      </div>
+                      <button onClick={e=>deleteConversation(c.id,e)}
+                        disabled={deletingId===c.id}
+                        title="Delete conversation"
+                        style={{width:24,height:24,borderRadius:7,border:"none",background:"transparent",
+                          cursor:"pointer",color:C.muted2,flexShrink:0,display:"flex",
+                          alignItems:"center",justifyContent:"center"}}
+                        onMouseEnter={e=>{e.currentTarget.style.color=C.urgent;}}
+                        onMouseLeave={e=>{e.currentTarget.style.color=C.muted2;}}>
+                        <i className={`ti ${deletingId===c.id?"ti-loader-2":"ti-trash"}`}
+                          style={{fontSize:13}} aria-hidden="true"/>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {conversations.length>0&&(
+                  <div style={{padding:"8px 10px 12px",borderTop:`1px solid ${C.border}`,flexShrink:0}}>
+                    <button onClick={clearAllHistory} disabled={clearingAll}
+                      style={{width:"100%",padding:"8px",borderRadius:9,fontSize:11.5,fontWeight:600,
+                        border:"1px solid rgba(217,79,61,0.3)",background:"rgba(217,79,61,0.08)",
+                        color:C.urgent,cursor:clearingAll?"default":"pointer",opacity:clearingAll?0.6:1}}>
+                      {clearingAll?"Clearing…":"Clear all history"}
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {/* Orb header */}
               <div style={{
@@ -2992,6 +3227,14 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 position:"relative",flexShrink:0}}>
                 {/* Control buttons */}
                 <div style={{position:"absolute",top:10,right:10,display:"flex",gap:8}}>
+                  <button onClick={()=>setHistoryOpen(o=>!o)}
+                    title="Chat history"
+                    style={{width:28,height:28,borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",
+                      background:historyOpen?"rgba(255,255,255,0.24)":"rgba(255,255,255,0.1)",
+                      cursor:"pointer",color:"white",
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <i className="ti ti-history" style={{fontSize:13}} aria-hidden="true"/>
+                  </button>
                   <button onClick={()=>{setVoiceOn(v=>{const next=!v;voiceOnRef.current=next;if(!next)stopSpeaking();return next;});}}
                     title={voiceOn?"Mute voice replies":"Unmute voice replies"}
                     style={{width:28,height:28,borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",

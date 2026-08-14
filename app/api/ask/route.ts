@@ -508,8 +508,17 @@ export async function POST(req: Request) {
         throw new Error("Claude did not return a structured response");
       }
       const actions = Array.isArray(toolUseBlock.input?.actions) ? toolUseBlock.input.actions : [];
-      const reply =
+      // toolUseBlock.input is already a genuinely parsed object (JSON.parse
+      // ran once, on the raw HTTP response body) — so if reply still
+      // contains the two literal characters \ and n instead of a real line
+      // break, that's not a parsing bug on our end, it's the model itself
+      // occasionally double-escaping a newline inside the tool call's JSON
+      // arguments. Normalizing it back here is safe: nothing in a
+      // scheduling assistant's reply ever legitimately needs to show a
+      // literal backslash-n.
+      const rawReply: string =
         toolUseBlock.input?.reply ?? "I had trouble processing that — could you try rephrasing?";
+      const reply = rawReply.replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n");
 
       if (userId) {
         if (model === "claude-opus-4-8" && opusPeriodEnd) {
