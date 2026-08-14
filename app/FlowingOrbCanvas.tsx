@@ -3,11 +3,21 @@
 // almost everything else in this app) purely so next/dynamic can code-split
 // it — R3F/three/postprocessing must never end up in the main bundle, and
 // that requires importing this file lazily as a real, separate chunk.
-import React,{useMemo,useRef} from "react";
-import {Canvas,useFrame} from "@react-three/fiber";
+import React,{useEffect,useMemo,useRef} from "react";
+import {Canvas,useFrame,useThree} from "@react-three/fiber";
 import {Sphere} from "@react-three/drei";
 import {EffectComposer,Bloom,ToneMapping} from "@react-three/postprocessing";
+import type {EffectComposer as EffectComposerImpl} from "postprocessing";
 import * as THREE from "three";
+
+// Diagnostics-only — reuses the existing Eruda debug console (loaded behind
+// ?debug=1 in app/page.tsx) rather than building new tooling. Plain
+// console.error/console.log calls show up there as-is on mobile, where
+// there's no other way to inspect what's happening. Investigating a
+// flicker reported on iPhone (screenshots alternate between rendering
+// correctly and going black) — this only makes the cause visible, it does
+// not attempt a fix.
+const diagTime=()=>new Date().toISOString();
 
 // ── Shaders — unchanged from the previous imperative implementation ────────
 const NEBULA_PARTICLE_VERTEX_SHADER=`
@@ -261,18 +271,55 @@ function NebulaScene({activeRef,manualAmpRef}:{
   );
 }
 
+// Diagnostics-only. @react-three/postprocessing's <EffectComposer> has no
+// onResize/onCreated prop, but it internally calls `composer.setSize(...)`
+// once on mount and again every time R3F's reactive `size` changes (that's
+// the same value driving this hook) — so watching `size` here is a
+// reasonable stand-in for "render targets created or resized". Logged
+// separately from the ref-based creation log below since a mobile browser
+// recreating the composer without a matching size change (e.g. after a
+// context-loss/restore cycle) would itself be a meaningful signal.
+function ComposerResizeDiagnostics(){
+  const size=useThree((state)=>state.size);
+  const prevSizeRef=useRef<{width:number;height:number}|null>(null);
+  useEffect(()=>{
+    const prev=prevSizeRef.current;
+    console.log(
+      `[FlowingOrb] EffectComposer ${prev?"resized":"initial size"} @ ${diagTime()}`,
+      {from:prev,to:{width:size.width,height:size.height}},
+    );
+    prevSizeRef.current={width:size.width,height:size.height};
+  },[size.width,size.height]);
+  return null;
+}
+
 export default function FlowingOrbCanvas({size,activeRef,manualAmpRef}:{
   size:number;
   activeRef:React.RefObject<boolean>;
   manualAmpRef:React.RefObject<number|null>;
 }){
   const dpr=typeof window!=="undefined"?Math.min(window.devicePixelRatio||1,2):1;
+  const composerRef=useRef<EffectComposerImpl|null>(null);
   return(
     <Canvas
       dpr={dpr}
       gl={{antialias:true,alpha:true,powerPreference:"low-power"}}
       camera={{fov:45,position:[0,0,6],near:0.1,far:100}}
-      style={{width:size,height:size,display:"block"}}>
+      style={{width:size,height:size,display:"block"}}
+      onCreated={(state)=>{
+        // Diagnostics-only. Context loss/restore cycling on the GPU is the
+        // most likely cause of exactly the symptom reported (screenshots
+        // moments apart alternating between rendering correctly and going
+        // black) — mobile Safari/WebKit is known to reclaim WebGL contexts
+        // under memory pressure far more aggressively than desktop.
+        const canvas=state.gl.domElement;
+        canvas.addEventListener("webglcontextlost",(e)=>{
+          console.error(`[FlowingOrb] WebGL context LOST @ ${diagTime()}`,e);
+        });
+        canvas.addEventListener("webglcontextrestored",(e)=>{
+          console.log(`[FlowingOrb] WebGL context RESTORED @ ${diagTime()}`,e);
+        });
+      }}>
       <NebulaScene activeRef={activeRef} manualAmpRef={manualAmpRef}/>
       {/* Real full-screen luminance-threshold bloom, replacing the old
           additive-blending approximation. Threshold is low and smoothing
@@ -281,7 +328,14 @@ export default function FlowingOrbCanvas({size,activeRef,manualAmpRef}:{
           a blown-out blur at this small a render size; ToneMapping (ACES,
           matching the previous renderer.toneMapping setting) runs last so
           it grades the combined bloom+scene output, not the reverse. */}
-      <EffectComposer>
+      <ComposerResizeDiagnostics/>
+      <EffectComposer
+        ref={(instance)=>{
+          if(instance&&composerRef.current!==instance){
+            composerRef.current=instance;
+            console.log(`[FlowingOrb] EffectComposer instance created @ ${diagTime()}`,instance);
+          }
+        }}>
         <Bloom luminanceThreshold={0.15} luminanceSmoothing={0.4} intensity={0.6} radius={0.4} mipmapBlur/>
         <ToneMapping/>
       </EffectComposer>

@@ -2330,7 +2330,7 @@ class OrbErrorBoundary extends React.Component<{onError:()=>void;children:React.
     return{hasError:true};
   }
   componentDidCatch(error:unknown){
-    console.error("FlowingOrb: R3F canvas render failed —",error);
+    console.error(`[FlowingOrb] R3F canvas render failed @ ${new Date().toISOString()} —`,error);
     this.props.onError();
   }
   render(){
@@ -2356,6 +2356,20 @@ const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:nu
 
   const attempting=webglAvailable&&!canvasFailed;
 
+  // Diagnostics-only — reuses the existing Eruda debug console (?debug=1)
+  // rather than new tooling. Investigating an iPhone flicker (screenshots
+  // moments apart alternate between rendering correctly and going black):
+  // logging every webglAvailable/canvasFailed transition rules in or out
+  // whether this is actually FlowingOrb's own fallback logic re-triggering
+  // (e.g. if the component were remounting repeatedly) rather than a pure
+  // WebGL rendering issue inside an otherwise-stable mount — those would
+  // look identical in a screenshot but need a completely different fix.
+  useEffect(()=>{
+    console.log(
+      `[FlowingOrb] state: webglAvailable=${webglAvailable} canvasFailed=${canvasFailed} attempting=${attempting} @ ${new Date().toISOString()}`,
+    );
+  },[webglAvailable,canvasFailed]);
+
   // See OrbErrorBoundary's comment above — this is the backstop for a WebGL
   // context/renderer creation failure specifically, which surfaces as an
   // unhandled promise rejection rather than a catchable render error.
@@ -2366,7 +2380,7 @@ const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:nu
     function onRejection(e:PromiseRejectionEvent){
       const message=e.reason instanceof Error?e.reason.message:String(e.reason??"");
       if(message.includes("WebGL context")){
-        console.error("FlowingOrb: WebGL context/renderer creation failed —",e.reason);
+        console.error(`[FlowingOrb] WebGL context/renderer creation failed @ ${new Date().toISOString()} —`,e.reason);
         setCanvasFailed(true);
         e.preventDefault();
       }
