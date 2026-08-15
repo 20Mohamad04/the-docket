@@ -1389,6 +1389,62 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
     return()=>{cancelled=true;};
   },[user?.id]);
 
+  // AI memory management — InfoModal is conditionally rendered ({activeModal
+  // && <InfoModal .../>}) so it fully unmounts on close, meaning this effect
+  // re-fires fresh every time the Profile view is reopened without needing
+  // `modal` as an explicit dependency, same as the Usage card's fetch above.
+  const[memories,setMemories]=useState<{id:string;content:string;source:string;created_at:string}[]>([]);
+  const[memoriesLoading,setMemoriesLoading]=useState(false);
+  const[deletingMemoryId,setDeletingMemoryId]=useState<string|null>(null);
+  const[clearingMemories,setClearingMemories]=useState(false);
+  useEffect(()=>{
+    if(!user?.id){setMemories([]);return;}
+    let cancelled=false;
+    (async()=>{
+      setMemoriesLoading(true);
+      try{
+        const headers=await getAuthHeader();
+        const res=await fetch("/api/memories",{headers});
+        const data=await res.json();
+        if(!cancelled)setMemories(Array.isArray(data.memories)?data.memories:[]);
+      }catch(err){
+        console.error("Failed to load memories:",err);
+      }finally{
+        if(!cancelled)setMemoriesLoading(false);
+      }
+    })();
+    return()=>{cancelled=true;};
+  },[user?.id]);
+
+  async function handleDeleteMemory(id:string){
+    setDeletingMemoryId(id);
+    try{
+      const headers=await getAuthHeader();
+      const res=await fetch(`/api/memories/${id}`,{method:"DELETE",headers});
+      if(!res.ok)throw new Error(`Failed to delete memory (${res.status})`);
+      setMemories(prev=>prev.filter(m=>m.id!==id));
+    }catch(err){
+      console.error("Failed to delete memory:",err);
+    }finally{
+      setDeletingMemoryId(null);
+    }
+  }
+
+  async function handleClearAllMemories(){
+    if(!window.confirm("Clear everything the AI remembers about you? This can't be undone."))return;
+    setClearingMemories(true);
+    try{
+      const headers=await getAuthHeader();
+      const res=await fetch("/api/memories",{method:"DELETE",headers});
+      if(!res.ok)throw new Error(`Failed to clear memories (${res.status})`);
+      setMemories([]);
+    }catch(err){
+      console.error("Failed to clear memories:",err);
+    }finally{
+      setClearingMemories(false);
+    }
+  }
+
   async function toggleEmailOptIn(){
     const next=!emailOptIn;
     setEmailOptIn(next);
@@ -1645,6 +1701,59 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                 <p style={{fontSize:12,color:C.muted,lineHeight:1.4}}>
                   Usage tracking is included with Pro — see exactly how many Sonnet and Opus messages you've used each billing period.
                 </p>
+              </div>
+            )}
+          </div>
+
+          {/* ── AI Memory card ────────────────────────────────────────────── */}
+          <div style={{background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",
+            border:`1px solid ${C.border}`,borderRadius:16,padding:"16px 18px",marginBottom:14}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+              <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
+                textTransform:"uppercase"}}>AI Memory</p>
+              {memories.length>0&&(
+                <button onClick={handleClearAllMemories} disabled={clearingMemories}
+                  style={{fontSize:11,fontWeight:600,color:C.urgent,background:"none",border:"none",
+                    cursor:clearingMemories?"default":"pointer",opacity:clearingMemories?0.5:1}}>
+                  {clearingMemories?"Clearing…":"Clear all"}
+                </button>
+              )}
+            </div>
+            {memoriesLoading?(
+              <p style={{fontSize:12,color:C.muted}}>Loading…</p>
+            ):memories.length===0?(
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <div style={{width:36,height:36,borderRadius:10,flexShrink:0,
+                  background:"rgba(76,95,213,0.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <i className="ti ti-brain" style={{fontSize:17,color:C.primary}} aria-hidden="true"/>
+                </div>
+                <p style={{fontSize:12,color:C.muted,lineHeight:1.4}}>
+                  Nothing remembered yet — ask the assistant to remember something, or it'll pick up durable details on its own as you chat.
+                </p>
+              </div>
+            ):(
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {memories.map(m=>(
+                  <div key={m.id} style={{display:"flex",alignItems:"flex-start",gap:8,
+                    padding:"9px 10px",borderRadius:10,
+                    background:dark?"rgba(255,255,255,0.03)":"white",
+                    border:`1px solid ${C.border}`}}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <p style={{fontSize:12,color:C.navy,lineHeight:1.4}}>{m.content}</p>
+                      <p style={{fontSize:10,color:C.muted2,marginTop:3}}>{formatConversationTime(m.created_at)}</p>
+                    </div>
+                    <button onClick={()=>handleDeleteMemory(m.id)} disabled={deletingMemoryId===m.id}
+                      title="Delete memory"
+                      style={{width:22,height:22,borderRadius:6,border:"none",background:"transparent",
+                        cursor:"pointer",color:C.muted2,flexShrink:0,display:"flex",
+                        alignItems:"center",justifyContent:"center"}}
+                      onMouseEnter={e=>{e.currentTarget.style.color=C.urgent;}}
+                      onMouseLeave={e=>{e.currentTarget.style.color=C.muted2;}}>
+                      <i className={`ti ${deletingMemoryId===m.id?"ti-loader-2":"ti-x"}`}
+                        style={{fontSize:13}} aria-hidden="true"/>
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
