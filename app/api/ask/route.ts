@@ -254,6 +254,110 @@ async function persistTurn({
   }
 }
 
+// ── Persistent AI memory ────────────────────────────────────────────────
+// No insert RLS policy exists on user_memories (select/delete only, same as
+// the rest of this file's tables) — inserts go through the service-role
+// client, by design.
+
+const MEMORY_CAP = 50;
+
+// Fetches the user's most recent memories, capped, for two purposes in the
+// same request: injecting them into the system prompt below, and reused
+// as-is by persistMemories as the working set for its cap/eviction
+// decisions — one query instead of two.
+async function fetchUserMemories(
+  userId: string
+): Promise<{ id: string; content: string; source: string }[]> {
+  const sb = getSupabaseAdmin();
+  if (!sb) return [];
+  const { data, error } = await sb
+    .from("user_memories")
+    .select("id, content, source")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(MEMORY_CAP);
+  if (error) {
+    console.error("Failed to load user memories:", error);
+    return [];
+  }
+  return data ?? [];
+}
+
+// Appended to the client-sent system prompt — memories live in a table the
+// server can read directly, unlike the schedule/tasks/routines context
+// (client-only in-memory state), so there's no reason to round-trip this
+// through the client the way that context has to be. Omitted entirely when
+// there's nothing to show, rather than telling the model "you know nothing
+// yet" on every single message.
+function buildMemorySystemAddition(memories: { content: string }[]): string {
+  if (memories.length === 0) return "";
+  const lines = memories.map((m) => `- ${m.content}`).join("\n");
+  return `\n\n=== WHAT YOU KNOW ABOUT THIS USER (from past conversations) ===\n${lines}`;
+}
+
+// Persists any {type:"remember"} actions the model returned. Best-effort,
+// like the persistence above — a failure here must never break the actual
+// reply. `existingMemories` is the same list already fetched for prompt
+// injection (see fetchUserMemories) and is mutated in place as memories are
+// inserted/evicted, so multiple `remember` actions in one turn are each
+// judged against the state the previous one left, not a stale snapshot.
+async function persistMemories(
+  sb: any,
+  userId: string,
+  actions: any[],
+  existingMemories: { id: string; source: string }[]
+): Promise<void> {
+  const rememberActions = Array.isArray(actions)
+    ? actions.filter((a) => a?.type === "remember" && typeof a.content === "string" && a.content.trim())
+    : [];
+  if (rememberActions.length === 0) return;
+
+  for (const action of rememberActions) {
+    try {
+      const source = action.source === "explicit" ? "explicit" : "automatic";
+      const content = action.content.trim();
+
+      if (existingMemories.length >= MEMORY_CAP) {
+        // existingMemories is newest-first. Prefer evicting the oldest
+        // automatic memory to make room. Explicit memories are never
+        // evicted to make room for an automatic one — if every existing
+        // memory is explicit and the new one is only automatic, skip it
+        // silently instead. But a cap made up entirely of explicit
+        // memories still needs to make room for a brand new EXPLICIT
+        // request the user just made (ignoring "remember that I..." would
+        // feel broken), so that specific case evicts the oldest explicit
+        // memory instead — explicit-for-explicit turnover, not
+        // explicit-for-automatic.
+        let evictIdx: number | undefined;
+        for (let i = existingMemories.length - 1; i >= 0; i--) {
+          if (existingMemories[i].source === "automatic") { evictIdx = i; break; }
+        }
+        if (evictIdx === undefined && source === "explicit") {
+          evictIdx = existingMemories.length - 1;
+        }
+        if (evictIdx === undefined) continue;
+
+        const [evicted] = existingMemories.splice(evictIdx, 1);
+        const { error: deleteError } = await sb.from("user_memories").delete().eq("id", evicted.id);
+        if (deleteError) console.error("Failed to evict old memory:", deleteError);
+      }
+
+      const { data: inserted, error: insertError } = await sb
+        .from("user_memories")
+        .insert({ user_id: userId, content, source })
+        .select("id, source")
+        .single();
+      if (insertError || !inserted) {
+        console.error("Failed to insert memory:", insertError);
+        continue;
+      }
+      existingMemories.unshift(inserted);
+    } catch (err) {
+      console.error("Persisting memory threw:", err);
+    }
+  }
+}
+
 // Phase 2: server-side Opus eligibility check. CRITICAL — never trust a
 // client-sent isPro/useOpus claim; that can be spoofed via devtools. This
 // independently re-verifies subscription status against Supabase. Any
@@ -303,7 +407,7 @@ const DOCKET_RESPONSE_TOOL = {
       actions: {
         type: "array",
         description:
-          "Zero or more actions to perform on the user's tasks/routines (add_task, add_routine, update_task, complete_task, remove_task, reopen_task, add_step, remove_step, update_routine, remove_routine, mark_routine_done, undo). Empty array if no changes are needed yet.",
+          "Zero or more actions to perform on the user's tasks/routines (add_task, add_routine, update_task, complete_task, remove_task, reopen_task, add_step, remove_step, update_routine, remove_routine, mark_routine_done, undo), plus remember (save a durable fact about the user for future conversations — see the MEMORY section of the system prompt for when to use it). Empty array if no changes are needed yet.",
         items: { type: "object" },
       },
       reply: {
@@ -431,6 +535,19 @@ export async function POST(req: Request) {
       });
     }
 
+    // Fetched once up front (not per-branch) since both the Claude and Groq
+    // paths need the enriched system prompt, and persistMemories below
+    // reuses this exact list rather than re-querying.
+    const existingMemories = userId ? await fetchUserMemories(userId) : [];
+    const enrichedSystem = `${system ?? ""}${buildMemorySystemAddition(existingMemories)}`;
+
+    async function persistMemoriesIfPossible(actions: any[]): Promise<void> {
+      if (!userId) return;
+      const sb = getSupabaseAdmin();
+      if (!sb) return;
+      await persistMemories(sb, userId, actions, existingMemories);
+    }
+
     // Claude Sonnet 5 — meaningfully stronger reasoning and instruction-following
     // than Haiku, which matters a lot here: the system prompt asks the model to
     // make judgment calls (when to ask a clarifying question vs just act, how to
@@ -483,8 +600,10 @@ export async function POST(req: Request) {
           // {type:"image",source:{type:"base64",...}}]) natively, so no
           // reshaping happens here. Only the most recent user turn carries a
           // real image; the client downgrades any earlier attachment to a
-          // text placeholder before it ever reaches this route.
-          system,
+          // text placeholder before it ever reaches this route. system is
+          // the enriched version (client's prompt + this user's memories
+          // appended) built above, not the raw client-sent one.
+          system: enrichedSystem,
           messages,
           tools: [DOCKET_RESPONSE_TOOL],
           tool_choice: { type: "tool", name: "docket_response" },
@@ -533,6 +652,7 @@ export async function POST(req: Request) {
       }
 
       const persistedConversationId = await persistIfPossible(reply);
+      await persistMemoriesIfPossible(actions);
 
       return NextResponse.json({
         actions,
@@ -577,7 +697,7 @@ export async function POST(req: Request) {
           model: "llama-3.3-70b-versatile",
           temperature: 0.2,
           max_tokens: 1500,
-          messages: [{ role: "system", content: system }, ...groqMessages],
+          messages: [{ role: "system", content: enrichedSystem }, ...groqMessages],
         }),
       });
       const data = await res.json();
@@ -587,6 +707,7 @@ export async function POST(req: Request) {
       }
       const { actions, reply } = parseGroqResponse(data.choices[0].message.content);
       const persistedConversationId = await persistIfPossible(reply);
+      await persistMemoriesIfPossible(actions);
       return NextResponse.json({ actions, reply, conversationId: persistedConversationId });
     }
 
