@@ -283,6 +283,32 @@ async function fetchUserMemories(
   return data ?? [];
 }
 
+// Server-side check for the user's "let the AI automatically remember
+// useful details" preference (Profile → AI Memory card), stored the same
+// way as email_opt_in — in Supabase auth user_metadata. Deliberately
+// re-verified here via the admin API rather than trusting a client-sent
+// flag: same reasoning as resolveOpusEligibility below not trusting a
+// client-sent isPro claim — a user who turned this off is relying on the
+// server actually enforcing it, not on unmodified client JS choosing to
+// respect it. Unset (the common case — nobody has toggled it yet) means
+// enabled, matching the feature's default-on behavior; any lookup failure
+// fails CLOSED (treated as disabled) rather than defaulting to on, since
+// this gates a privacy preference, not a billing one — an occasionally
+// skipped automatic memory costs far less than occasionally creating one
+// the user explicitly turned off, however that happened.
+async function isAutoMemoryEnabled(userId: string): Promise<boolean> {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return false;
+    const { data, error } = await sb.auth.admin.getUserById(userId);
+    if (error || !data?.user) return false;
+    return data.user.user_metadata?.auto_memory_enabled !== false;
+  } catch (err) {
+    console.error("Failed to check auto-memory preference:", err);
+    return false;
+  }
+}
+
 // Appended to the client-sent system prompt — memories live in a table the
 // server can read directly, unlike the schedule/tasks/routines context
 // (client-only in-memory state), so there's no reason to round-trip this
@@ -305,7 +331,8 @@ async function persistMemories(
   sb: any,
   userId: string,
   actions: any[],
-  existingMemories: { id: string; source: string }[]
+  existingMemories: { id: string; source: string }[],
+  autoMemoryEnabled: boolean
 ): Promise<void> {
   const rememberActions = Array.isArray(actions)
     ? actions.filter((a) => a?.type === "remember" && typeof a.content === "string" && a.content.trim())
@@ -315,6 +342,10 @@ async function persistMemories(
   for (const action of rememberActions) {
     try {
       const source = action.source === "explicit" ? "explicit" : "automatic";
+      // Explicit memories are the user's own direct request and always go
+      // through regardless of this preference — only the model's own
+      // automatic judgment calls are gated by it.
+      if (source === "automatic" && !autoMemoryEnabled) continue;
       const content = action.content.trim();
 
       if (existingMemories.length >= MEMORY_CAP) {
@@ -543,9 +574,14 @@ export async function POST(req: Request) {
 
     async function persistMemoriesIfPossible(actions: any[]): Promise<void> {
       if (!userId) return;
+      if (!Array.isArray(actions) || !actions.some((a) => a?.type === "remember")) return;
       const sb = getSupabaseAdmin();
       if (!sb) return;
-      await persistMemories(sb, userId, actions, existingMemories);
+      // Only checked when there's actually a remember action to gate — no
+      // reason to pay for this admin-API round trip on the vast majority of
+      // turns that don't touch memory at all.
+      const autoMemoryEnabled = await isAutoMemoryEnabled(userId);
+      await persistMemories(sb, userId, actions, existingMemories, autoMemoryEnabled);
     }
 
     // Claude Sonnet 5 — meaningfully stronger reasoning and instruction-following

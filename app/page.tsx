@@ -1375,16 +1375,25 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
   // app. Defaults to false (off) until the real value loads — an unset or
   // not-yet-loaded preference must never render as opted in.
   const[emailOptIn,setEmailOptIn]=useState(false);
+  // "Let the AI automatically remember useful details" — same user_metadata
+  // storage as email_opt_in, loaded via the same getUser() call to avoid a
+  // second round trip. Unlike email_opt_in this defaults to true (on): it's
+  // core to how the assistant is meant to work, not a marketing-style
+  // opt-in, so both the not-yet-loaded state and an unset preference should
+  // read as enabled — matching /api/ask's own server-side default (unset
+  // means enabled; only an explicit `false` turns it off).
+  const[autoMemoryEnabled,setAutoMemoryEnabled]=useState(true);
   useEffect(()=>{
-    if(!user?.id){setEmailOptIn(false);return;}
+    if(!user?.id){setEmailOptIn(false);setAutoMemoryEnabled(true);return;}
     let cancelled=false;
     (async()=>{
       const sb=await getSupabaseClient();
       if(!sb)return;
       const{data,error}=await sb.auth.getUser();
       if(cancelled)return;
-      if(error){console.error("Failed to load email preference:",error);return;}
+      if(error){console.error("Failed to load user preferences:",error);return;}
       setEmailOptIn(!!data.user?.user_metadata?.email_opt_in);
+      setAutoMemoryEnabled(data.user?.user_metadata?.auto_memory_enabled!==false);
     })();
     return()=>{cancelled=true;};
   },[user?.id]);
@@ -1457,6 +1466,21 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
       return;
     }
     setAuthMsg(next?"✓ You'll get product updates by email":"✓ Email updates turned off");
+    setAuthStatus("success");
+  }
+
+  async function toggleAutoMemory(){
+    const next=!autoMemoryEnabled;
+    setAutoMemoryEnabled(next);
+    const sb=await getSupabaseClient();
+    if(!sb)return;
+    const{error}=await sb.auth.updateUser({data:{auto_memory_enabled:next}});
+    if(error){
+      setAutoMemoryEnabled(!next);
+      setAuthMsg("Could not update memory preference.");setAuthStatus("error");
+      return;
+    }
+    setAuthMsg(next?"✓ Automatic memory turned on":"✓ Automatic memory turned off — explicit \"remember\" requests still work");
     setAuthStatus("success");
   }
 
@@ -1718,6 +1742,22 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                   {clearingMemories?"Clearing…":"Clear all"}
                 </button>
               )}
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+              paddingBottom:14,marginBottom:14,borderBottom:`1px solid ${C.border}`}}>
+              <p style={{fontSize:12,fontWeight:600,color:C.navy,paddingRight:12,lineHeight:1.4}}>
+                Let the AI automatically remember useful details
+              </p>
+              <button className="sq-btn" onClick={toggleAutoMemory}
+                title={autoMemoryEnabled?"Turn off automatic memory":"Turn on automatic memory"}
+                style={{width:52,height:28,borderRadius:14,
+                  background:autoMemoryEnabled?"linear-gradient(135deg,#5DE8A0,#2E8B57)":C.border,
+                  position:"relative",flexShrink:0,
+                  boxShadow:autoMemoryEnabled?"0 4px 12px rgba(46,139,87,0.4)":"none"}}>
+                <span style={{position:"absolute",top:4,left:autoMemoryEnabled?26:4,width:20,height:20,
+                  borderRadius:"50%",background:"white",transition:"left 0.25s",
+                  boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}/>
+              </button>
             </div>
             {memoriesLoading?(
               <p style={{fontSize:12,color:C.muted}}>Loading…</p>
@@ -2977,6 +3017,13 @@ You can save a durable fact about this user with {"type":"remember","content":".
 ALWAYS save a memory (source: "explicit") the moment the user directly asks you to remember something, states how they want to be addressed, or gives you a standing instruction for how to treat them going forward — "remember that I...", "from now on, call me X", "just so you know, I always prefer...". Do this immediately and silently alongside whatever else you're doing in that turn; you don't need to ask permission or make a big deal of it beyond a brief acknowledgment in your reply.
 
 OPTIONALLY save a memory (source: "automatic") when the user reveals something durable and meaningful about themselves in the course of normal conversation — a real ongoing project, a genuine standing preference, a significant life change. Be conservative: the overwhelming majority of messages should produce zero memories. If you're genuinely unsure whether something is worth remembering, don't save it — a memory you should have made but didn't costs nothing; a trivial or wrong one keeps resurfacing and erodes trust every time it does.
+
+NEVER save an automatic memory that states or implies anything about the user's health or medical conditions, race or ethnicity, religious or philosophical beliefs, political opinions, trade union membership, sex life or sexual orientation, or genetic/biometric information — no matter how naturally it came up or how relevant it might seem to scheduling. This restriction applies ONLY to automatic memories. If the user directly and explicitly asks you to remember something in one of these categories ("remember that I'm vegetarian for religious reasons", "remember I have a peanut allergy"), that's their own deliberate choice — save it normally as an explicit memory. The restriction is specifically about you inferring and saving this on your own initiative, not about the topic being unmentionable. If you're genuinely unsure whether a detail falls into one of these categories, treat it as if it does and don't save it automatically.
+
+The underlying task or reply is never affected by this — only whether a memory gets created alongside it:
+- "I have a dentist appointment, I'm pretty anxious about it" → add_task for the appointment as normal; do NOT create a memory noting their anxiety
+- "Can't do a morning workout during Ramadan, let's shift it to after Iftar" → update_routine with the new time as normal; do NOT create a memory recording their religion or fasting
+- "I need Friday afternoons kept free for prayer" → schedule around it as normal; do NOT create a memory stating their religious practice
 
 Save (automatic):
 - "I'm training for a marathon in October" → an ongoing goal with real duration, worth knowing about for months
