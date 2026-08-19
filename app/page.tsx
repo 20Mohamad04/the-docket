@@ -4378,6 +4378,21 @@ export default function Home(){
             } else if(event==="SIGNED_OUT"){
               setUser(null);
               setShowWelcome(false);
+              // Sign-out only ends the Supabase session — tasks/routines are
+              // local React state mirrored into localStorage, neither of
+              // which auth touches on its own. Without this, the previous
+              // account's data stays fully visible after signing out, since
+              // the UI renders from this state, not from localStorage
+              // directly (localStorage is only ever read once, on initial
+              // mount). Device-level preferences (theme, language,
+              // notifications, onboarding-complete) are deliberately left
+              // alone — they aren't "whose data is this," and clearing
+              // docket-onboarded would force a returning user through the
+              // whole onboarding wizard again.
+              setTasks([]);
+              setRoutines([]);
+              localStorage.removeItem(STORAGE_TASKS);
+              localStorage.removeItem(STORAGE_ROUTINES);
             }
           });
         }catch(e){ console.log("Supabase session check failed",e); }
