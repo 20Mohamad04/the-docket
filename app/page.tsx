@@ -1815,11 +1815,15 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
 
   // ── Sign-in / register view (not logged in) ───────────────────────────────
   if(modal==="login") return(
-    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
+    // No backdrop-click-to-close here (unlike other modals) — this one has
+    // real typed input (email/password) that an accidental outside click
+    // would otherwise silently discard. Still closeable via the explicit X
+    // button AuthForm renders from the onClose prop passed below.
+    <div style={{position:"fixed",inset:0,zIndex:200,
       background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
       display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div onClick={e=>e.stopPropagation()}
-        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,width:"100%",maxWidth:440,
+      <div style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,width:"100%",maxWidth:440,
+          maxHeight:"90vh",overflowY:"auto",
           boxShadow:"0 40px 100px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`}}>
         <AuthForm dark={dark} onUserChange={onUserChange}
           onOpenLegal={m=>{setCameFromAuth(true);onNavigate?.(m);}}
