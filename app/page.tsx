@@ -1170,7 +1170,7 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
           </div>
           <div>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:17,color:C.navy}}>
-              {authTab==="login"?"Welcome back":"Join The Docket"}
+              {authTab==="login"?"Welcome":"Join The Docket"}
             </p>
             <p style={{fontSize:11,color:C.muted}}>
               {authTab==="login"?"Sign in to sync your data":"Create your free account"}
@@ -4011,7 +4011,7 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
           </div>
           <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:28,fontWeight:800,
             color:C.navy,letterSpacing:"-0.5px",marginBottom:8,lineHeight:1.2}}>
-            Welcome, {user.name.split(" ")[0]}!
+            Welcome back, {user.name.split(" ")[0]}
           </h1>
           <p style={{fontSize:14,color:C.muted,lineHeight:1.6,marginBottom:28}}>
             You're signed in as {user.email}.
