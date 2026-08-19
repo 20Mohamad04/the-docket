@@ -3323,7 +3323,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
             top:expanded?0:"auto",left:expanded?0:"auto",
             zIndex:60,transition:"all 0.3s cubic-bezier(0.34,1.56,0.64,1)"}}>
             <div style={{
-              width:expanded?"100vw":400,
+              width:expanded?"100vw":"min(400px, calc(100vw - 40px))",
               height:expanded?"100vh":"min(600px, calc(100vh - 40px))",
               maxHeight:expanded?"100vh":"calc(100vh - 40px)",
               borderRadius:expanded?0:24,
