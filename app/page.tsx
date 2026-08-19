@@ -3559,7 +3559,15 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   <input value={input} onChange={e=>setInput(e.target.value)}
                     onKeyDown={e=>e.key==="Enter"&&send()}
                     placeholder="Ask me anything…"
-                    style={{flex:1,border:"none",outline:"none",fontSize:13,
+                    // minWidth:0 overrides the browser's non-zero intrinsic
+                    // min-width for text inputs, which flex:1 alone doesn't
+                    // touch — without it, this row's fixed-width siblings
+                    // (attach, mic, send, plus the Pro-only model-selector
+                    // pill) could add up to more than the panel has room
+                    // for, and since the row doesn't wrap or scroll, the
+                    // overflow got silently clipped by the chat panel's own
+                    // overflow:hidden — send, being last, disappeared first.
+                    style={{flex:1,minWidth:0,border:"none",outline:"none",fontSize:13,
                       background:"transparent",color:C.navy,fontFamily:"inherit"}}/>
                   {isPro&&(
                     <div style={{position:"relative",flexShrink:0}}>
