@@ -2000,7 +2000,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
             {category:"Getting Started",icon:"ti-rocket",items:[
               {q:"How do I add my first task?",a:"Tap the + button bottom-right, or just tell the AI assistant what you need — e.g. \"add a task to revise Land Law by Friday.\""},
               {q:"What's the difference between a task and a routine?",a:"Tasks are one-off or ongoing items with a specific end, like an assignment or errand. Routines are recurring habits tied to specific days and times, like gym or prayer, and appear in your Daily Routine every week."},
-              {q:"Do I need an account to use The Docket?",a:"No. Guest mode gives you full access to tasks, routines, the calendar, and a limited AI assistant, with everything stored locally on your device. Create an account only when you want to sync across devices."},
+              {q:"Do I need an account to use The Docket?",a:"Yes. A free account is required to use The Docket — it keeps your tasks, routines and AI conversations backed up and synced across every device you use."},
               {q:"Can I change the app's language?",a:"Yes — Settings supports English, Arabic, French, Turkish and Urdu, including full right-to-left layout for Arabic and Urdu."},
             ]},
             {category:"The AI Assistant",icon:"ti-sparkles",items:[
@@ -2027,12 +2027,12 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
               {q:"Do you offer refunds?",a:"Since every subscription starts with a 7-day free trial, we generally don't refund charges made after that trial ends — but email support@thedocket.app if something's gone wrong and we'll take a look."},
             ]},
             {category:"Privacy & Data",icon:"ti-shield-lock",items:[
-              {q:"Is my data safe?",a:"Account data is encrypted in transit and at rest on EU servers. Guest data never leaves your device. See our full Privacy Policy for details."},
+              {q:"Is my data safe?",a:"Yes. Your account data is encrypted in transit and at rest on EU servers. See our full Privacy Policy for details."},
               {q:"Do you sell my data or show ads?",a:"No. We don't sell data to third parties, and The Docket carries no advertising."},
             ]},
             {category:"Troubleshooting",icon:"ti-tool",items:[
               {q:"The app won't load or looks broken.",a:"Try a hard refresh (Ctrl/Cmd + Shift + R), or clear your browser cache for this site. If it persists, email us your browser and device details."},
-              {q:"My tasks aren't syncing between devices.",a:"Make sure you're signed into the same account on both devices (not Guest mode) and have an internet connection — sync happens automatically in the background."},
+              {q:"My tasks aren't syncing between devices.",a:"Make sure you're signed into the same account on both devices and have an internet connection — sync happens automatically in the background."},
               {q:"Notifications aren't working.",a:"Toggle notifications on in Settings, then check your browser's site permissions — it needs explicit permission to show notifications for this site."},
             ]},
           ].map((cat,ci)=>(
@@ -2099,7 +2099,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
           {[
             {icon:"ti-building",color:"#4C5FD5",title:"1. Who We Are",text:"The Docket is operated by [your legal or trading name], based in the United Kingdom. We are the data controller responsible for your personal data. Contact us at privacy@thedocket.app for anything data-related."},
             {icon:"ti-database",color:"#4C5FD5",title:"2. What We Collect",text:"Account details (name, email); the tasks, routines and notes you create; your approximate location, only if you enable prayer times; and basic technical data (browser, device, IP address) needed to run the service securely."},
-            {icon:"ti-device-floppy",color:"#4C5FD5",title:"3. Guest vs Account Data",text:"As a guest, your tasks and routines stay only in your browser's local storage — we never see them. Creating an account syncs that same data to our encrypted database so you can access it from any device."},
+            {icon:"ti-device-floppy",color:"#4C5FD5",title:"3. Local Device Preferences",text:"Some settings, like theme, language and notification preferences, are stored only in your browser's local storage for convenience. Your tasks, routines and account details always live in your encrypted account, not just locally."},
             {icon:"ti-settings",color:"#4C5FD5",title:"4. How We Use Your Data",text:"To provide the core service, process subscription payments, respond to support requests, and keep The Docket secure and working correctly. We do not use your data for advertising, and we never sell it."},
             {icon:"ti-map-pin",color:"#2E8B57",title:"5. Location Data",text:"If you switch on Accurate Prayer Times, your device's coordinates are sent to the Aladhan prayer times API for that single calculation. We don't store your location, track your movement, or share it with anyone else."},
             {icon:"ti-sparkles",color:"#8670E8",title:"6. The AI Assistant",text:"Messages you send to the Docket AI assistant are processed by our AI providers, Anthropic and/or Groq, to generate a response. We don't use your conversations to train AI models, and content isn't retained by us after your session ends."},
@@ -2151,7 +2151,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
             {n:"2",t:"About the Service",b:"The Docket is a personal task, routine and scheduling app with an AI assistant, available as a free tier and a paid Pro subscription. We may add, change, or remove features over time."},
             {n:"3",t:"Eligibility",b:"You must be at least 16 years old to create an account. By registering, you confirm you meet this requirement and that the information you provide is accurate."},
             {n:"4",t:"Your Account & Security",b:"You're responsible for keeping your login credentials secure and for all activity under your account. Tell us immediately at support@thedocket.app if you suspect unauthorised access."},
-            {n:"5",t:"Guest Mode",b:"You can use core features without an account. Guest data is stored only in your browser and isn't backed up by us — if you clear your browser data or switch devices, it will be lost."},
+            {n:"5",t:"Account Required",b:"A registered account is required to use The Docket — there is no guest or local-only mode. If you sign out, you'll need to sign back in before you can access your tasks again."},
             {n:"6",t:"Subscription, Trial & Billing",b:"Pro costs £4.99/month with a 7-day free trial. You won't be charged until the trial ends. Subscriptions renew automatically each month via Stripe until cancelled."},
             {n:"7",t:"Cancellations & Refunds",b:"Cancel anytime from your account settings — you keep Pro access until the end of the current billing period, with no further charges. Because Pro includes a free trial, we don't generally refund charges made after that trial ends, except where required by law."},
             {n:"8",t:"Acceptable Use",b:"Don't use The Docket for anything unlawful, to harass others, to attempt to access other users' data, or to interfere with or reverse-engineer the service."},
