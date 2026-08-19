@@ -2875,8 +2875,9 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
     if(!text.trim())return;
     stopSpeaking(); // interrupt any speech still playing from a previous reply
     try{
+      const authHeaders=await getAuthHeader();
       const res=await fetch("/api/speak",{method:"POST",
-        headers:{"Content-Type":"application/json"},
+        headers:{"Content-Type":"application/json",...authHeaders},
         body:JSON.stringify({text})});
       if(!res.ok){
         const errText=await res.text().catch(()=>"");

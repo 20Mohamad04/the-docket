@@ -1,6 +1,34 @@
 import { NextResponse } from "next/server";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+// Same pattern as app/api/ask/route.ts — verifies the caller's own Supabase
+// access token rather than allowing anonymous requests, which this route
+// used to: anyone could POST arbitrary text and spend our ElevenLabs quota
+// with no authentication at all.
+function getSupabaseForToken(accessToken: string): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return null;
+  return createClient(url, anonKey, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: { persistSession: false },
+  });
+}
+
+async function authenticateRequest(req: Request): Promise<boolean> {
+  const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization");
+  const token = authHeader?.match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!token) return false;
+  const sb = getSupabaseForToken(token);
+  if (!sb) return false;
+  const { data, error } = await sb.auth.getUser(token);
+  return !error && !!data?.user;
+}
 
 export async function POST(req: Request) {
+  if (!(await authenticateRequest(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const { text } = await req.json();
 
   const VOICE_ID = "EdRF4OLfMKecDfuWuBXY";
