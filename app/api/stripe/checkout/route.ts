@@ -50,6 +50,14 @@ export async function POST(req: Request) {
       line_items: [{ price: priceId!, quantity: 1 }],
       customer_email: auth.email,
       metadata: { userId: auth.userId },
+      // The 7-day free trial advertised everywhere in the app (onboarding,
+      // the pricing modal, the FAQ) — without this, Checkout has no trial
+      // configured at all and charges the card immediately on signup.
+      // Checkout's default payment_method_collection ("always") already
+      // collects the card upfront during the trial, so the real charge at
+      // day 7 (when Stripe auto-converts trialing -> active) just works
+      // with no further config.
+      subscription_data: { trial_period_days: 7 },
       // tier is known here at request time — passing it through avoids
       // depending on the webhook's (possibly delayed) subscriptions-table
       // write having landed by the time the success redirect is handled.
