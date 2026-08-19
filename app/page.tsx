@@ -2779,6 +2779,33 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
   const inputBtnBorder=dark?"1.5px solid rgba(255,255,255,0.18)":"1.5px solid rgba(76,95,213,0.28)";
   const[open,setOpen]=useState(false);
   const[expanded,setExpanded]=useState(false);
+  // iOS Safari doesn't shrink the layout viewport when the on-screen
+  // keyboard opens — only the visual viewport shrinks/scrolls — so this
+  // panel's bottom-anchored position:fixed and vh-based height (both
+  // relative to the layout viewport) end up placing the input row and
+  // recent messages behind the keyboard instead of just above it.
+  // keyboardInset is how much of the layout viewport's bottom is currently
+  // covered (0 when the keyboard is closed, or on browsers without
+  // visualViewport, in which case this never updates from its 0 default
+  // and the panel falls back to its plain vh/bottom values below).
+  const[keyboardInset,setKeyboardInset]=useState(0);
+  const[visibleHeight,setVisibleHeight]=useState<number|null>(null);
+  useEffect(()=>{
+    if(!open)return;
+    const vv=typeof window!=="undefined"?window.visualViewport:null;
+    if(!vv)return;
+    const update=()=>{
+      setVisibleHeight(vv.height);
+      setKeyboardInset(Math.max(0,window.innerHeight-vv.height-vv.offsetTop));
+    };
+    update();
+    vv.addEventListener("resize",update);
+    vv.addEventListener("scroll",update);
+    return()=>{
+      vv.removeEventListener("resize",update);
+      vv.removeEventListener("scroll",update);
+    };
+  },[open]);
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;imageDataUrl?:string;opusFallback?:boolean}[]>([
     {role:"assistant",content:CHATBOT_GREETING},
   ]);
@@ -3319,13 +3346,17 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           <div onClick={()=>{setOpen(false);setExpanded(false);}}
             style={{position:"fixed",inset:0,zIndex:58,background:"transparent"}}/>
           <div style={{position:"fixed",
-            bottom:expanded?0:20,right:expanded?0:20,
+            bottom:(expanded?0:20)+keyboardInset,right:expanded?0:20,
             top:expanded?0:"auto",left:expanded?0:"auto",
             zIndex:60,transition:"all 0.3s cubic-bezier(0.34,1.56,0.64,1)"}}>
             <div style={{
               width:expanded?"100vw":"min(400px, calc(100vw - 40px))",
-              height:expanded?"100vh":"min(600px, calc(100vh - 40px))",
-              maxHeight:expanded?"100vh":"calc(100vh - 40px)",
+              height:expanded
+                ?(visibleHeight!=null?`${visibleHeight}px`:"100vh")
+                :(visibleHeight!=null?`${Math.min(600,visibleHeight-40)}px`:"min(600px, calc(100vh - 40px))"),
+              maxHeight:expanded
+                ?(visibleHeight!=null?`${visibleHeight}px`:"100vh")
+                :(visibleHeight!=null?`${visibleHeight-40}px`:"calc(100vh - 40px)"),
               borderRadius:expanded?0:24,
               display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",
               background:dark?"#0E1020":"#F0EFFC",
@@ -3580,7 +3611,10 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     // for, and since the row doesn't wrap or scroll, the
                     // overflow got silently clipped by the chat panel's own
                     // overflow:hidden — send, being last, disappeared first.
-                    style={{flex:1,minWidth:0,border:"none",outline:"none",fontSize:13,
+                    // fontSize 16, not 13 — iOS Safari auto-zooms the whole
+                    // page on focus for any input under 16px, which both
+                    // looks broken and fights the keyboard-inset fix above.
+                    style={{flex:1,minWidth:0,border:"none",outline:"none",fontSize:16,
                       background:"transparent",color:C.navy,fontFamily:"inherit"}}/>
                   {isPro&&(
                     <div style={{position:"relative",flexShrink:0}}>
