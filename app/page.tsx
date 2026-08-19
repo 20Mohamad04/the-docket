@@ -4623,7 +4623,10 @@ export default function Home(){
         .select("status,current_period_end,tier").eq("user_id",user.id).maybeSingle();
       if(cancelled)return;
       if(error){console.error("Failed to load subscription status:",error);return;}
-      setIsPro(data?.status==="active");
+      // "trialing" grants the same full access as "active" — it's a trial
+      // of the paid tier, not a lesser one, and Stripe reports it as
+      // "trialing" (not "active") for the first 7 days by design.
+      setIsPro(data?.status==="active"||data?.status==="trialing");
       setSubPeriodEnd(data?.current_period_end??null);
       setSubTier(data?.tier??null);
     })();

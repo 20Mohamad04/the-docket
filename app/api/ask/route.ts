@@ -61,6 +61,14 @@ async function getSubscription(sb: any, userId: string) {
   };
 }
 
+// "trialing" grants the same full access as "active" — it's a trial of
+// the paid tier, not a lesser one, and Stripe reports a subscription as
+// "trialing" (not "active") for the first 7 days of the free trial by
+// design. Shared by both eligibility checks below so they can't drift.
+function isEntitledStatus(status: string | null): boolean {
+  return status === "active" || status === "trialing";
+}
+
 async function getUsageRow(sb: any, userId: string) {
   const { data, error } = await sb
     .from("usage")
@@ -433,7 +441,7 @@ async function resolveOpusEligibility(
     if (!sb) return { allowed: false, periodEnd: null, overLimit: false };
 
     const { status, periodEnd, tier } = await getSubscription(sb, userId);
-    if (status !== "active" || !periodEnd) {
+    if (!isEntitledStatus(status) || !periodEnd) {
       return { allowed: false, periodEnd: null, overLimit: false };
     }
 
@@ -473,7 +481,7 @@ async function resolveSonnetPeriod(
   userId: string
 ): Promise<{ periodEnd: string; isActiveSubscriber: boolean }> {
   const { status, periodEnd } = await getSubscription(sb, userId);
-  if (status === "active" && periodEnd) return { periodEnd, isActiveSubscriber: true };
+  if (isEntitledStatus(status) && periodEnd) return { periodEnd, isActiveSubscriber: true };
   return { periodEnd: todayUTC(), isActiveSubscriber: false };
 }
 
