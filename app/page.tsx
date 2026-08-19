@@ -1865,7 +1865,9 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
         ],
         cta:"Continue Free",onClick:onClose,ctaStyle:{background:"transparent",color:C.navy,border:`1.5px solid ${C.border}`}},
       {id:"pro",name:"Pro",icon:"ti-crown",accent:C.primary,price:"£4.99",priceSuffix:"/month",
-        badge:"MOST POPULAR",trialNote:"Free for 7 days",highlight:true,
+        badge:"MOST POPULAR",
+        disclosure:"7 days free, then £4.99/month. Renews automatically until cancelled.",
+        highlight:true,
         iconBg:"linear-gradient(145deg,#6677E8,#4C5FD5)",iconShadow:"0 4px 14px rgba(76,95,213,0.4)",
         features:[
           {icon:"ti-message-circle",label:"Sonnet messages",value:"Unlimited"},
@@ -1878,6 +1880,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
         cta:user?.id?"Start My Free 7 Days →":"Sign in to Start Free Trial",onClick:()=>handleSubCheckout("pro"),
         ctaStyle:{background:"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",color:"white",border:"none",boxShadow:"0 6px 20px rgba(76,95,213,0.4)"}},
       {id:"max",name:"Max",icon:"ti-bolt",accent:"#8670E8",price:"£14.99",priceSuffix:"/month",
+        disclosure:"7 days free, then £14.99/month. Renews automatically until cancelled.",
         iconBg:"linear-gradient(145deg,#A78BFA,#8670E8)",iconShadow:"0 4px 14px rgba(134,112,232,0.4)",
         features:[
           {icon:"ti-message-circle",label:"Sonnet messages",value:"500/month"},
@@ -1947,13 +1950,13 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                 </div>
                 <p style={{textAlign:"center",fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
                   fontSize:16,color:plan.highlight?C.primary:C.navy,marginBottom:4}}>{plan.name}</p>
-                <div style={{textAlign:"center",marginBottom:plan.trialNote?4:14}}>
+                <div style={{textAlign:"center",marginBottom:plan.disclosure?4:14}}>
                   <span style={{fontSize:23,fontWeight:800,fontFamily:"'Space Grotesk',sans-serif",color:C.navy}}>{plan.price}</span>
                   <span style={{fontSize:11,color:C.muted}}>{plan.priceSuffix}</span>
                 </div>
-                {plan.trialNote&&(
-                  <p style={{textAlign:"center",fontSize:10,fontWeight:700,color:C.sage,marginBottom:14}}>
-                    <i className="ti ti-shield-check" style={{fontSize:11}} aria-hidden="true"/> {plan.trialNote}
+                {plan.disclosure&&(
+                  <p style={{textAlign:"center",fontSize:10,fontWeight:700,color:C.sage,lineHeight:1.4,marginBottom:14}}>
+                    <i className="ti ti-shield-check" style={{fontSize:11}} aria-hidden="true"/> {plan.disclosure}
                   </p>
                 )}
                 <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:16,flex:1}}>
@@ -1975,7 +1978,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
           </div>
           <p style={{display:"flex",alignItems:"center",justifyContent:"center",flexWrap:"wrap",gap:4,
             fontSize:11,color:C.muted2,marginTop:6}}>
-            Cancel anytime, no questions asked · Your tasks stay yours either way · Secure payment via Stripe
+            Cancel anytime before day 7 and you won't be charged · Secure payment via Stripe
             <i className="ti ti-lock" style={{fontSize:11,color:C.muted2}} aria-hidden="true"/>
           </p>
         </div>
@@ -4230,7 +4233,7 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
         </div>
       </button>
       <p style={{fontSize:11,color:C.muted2,marginTop:8,marginBottom:16}}>
-        7-day free trial · Cancel anytime · No hidden fees
+        7 days free, then £4.99/mo · Renews automatically until cancelled
       </p>
 
       {/* Max option */}
@@ -4261,6 +4264,9 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
           ))}
         </div>
       </button>
+      <p style={{fontSize:11,color:C.muted2,marginTop:8,marginBottom:16}}>
+        7 days free, then £14.99/mo · Renews automatically until cancelled
+      </p>
 
       <p onClick={next}
         style={{fontSize:12,color:C.muted,marginTop:18,fontWeight:600,
