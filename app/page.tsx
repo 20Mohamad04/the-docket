@@ -4426,6 +4426,15 @@ export default function Home(){
             const u=session.user;
             const displayName=u.user_metadata?.full_name||u.email?.split("@")[0]||"User";
             setUser({name:displayName,email:u.email||"",avatar:u.user_metadata?.avatar_url,id:u.id});
+            // docket-onboarded is per-DEVICE, but onboarding completion is
+            // recorded per-ACCOUNT too (see completeOnboarding) — so a
+            // device that's never seen this account before doesn't force it
+            // through the wizard again. Also caches the flag locally so
+            // future visits on this device skip this round-trip entirely.
+            if(u.user_metadata?.onboarding_complete===true){
+              localStorage.setItem("docket-onboarded","true");
+              setOnboarding(false);
+            }
           }
           setAuthChecked(true);
           sb.auth.onAuthStateChange((event,session)=>{
@@ -4433,6 +4442,10 @@ export default function Home(){
               const u=session.user;
               const displayName=u.user_metadata?.full_name||u.email?.split("@")[0]||"User";
               setUser({name:displayName,email:u.email||"",avatar:u.user_metadata?.avatar_url,id:u.id});
+              if(u.user_metadata?.onboarding_complete===true){
+                localStorage.setItem("docket-onboarded","true");
+                setOnboarding(false);
+              }
               // Only show welcome on explicit sign in, not on page load session restore
               if(event==="SIGNED_IN"){
                 const firstName=displayName.split(" ")[0];
@@ -4771,6 +4784,20 @@ export default function Home(){
 
   function completeOnboarding(goals:string[]){
     localStorage.setItem("docket-onboarded","true");
+    // Also record completion on the account itself (user_metadata, same
+    // pattern as email_opt_in/auto_memory_enabled), not just this device —
+    // otherwise signing into this account on a different browser has no way
+    // to know the wizard was already finished and re-runs it. Best-effort,
+    // fire-and-forget: docket-onboarded above already covers this device
+    // immediately regardless of how this network call turns out.
+    if(user?.id){
+      (async()=>{
+        const sb=await getSupabaseClient();
+        if(!sb)return;
+        const{error}=await sb.auth.updateUser({data:{onboarding_complete:true}});
+        if(error) console.error("Failed to record onboarding completion on account:",error);
+      })();
+    }
     const welcomeTasks:Task[]=[];
     if(goals.includes("health")) welcomeTasks.push({id:Date.now()+1,title:"Start a daily exercise habit",category:"fitness",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
     if(goals.includes("study")) welcomeTasks.push({id:Date.now()+2,title:"Set a daily study goal",category:"study",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
