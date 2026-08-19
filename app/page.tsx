@@ -4721,9 +4721,6 @@ export default function Home(){
   const selDay=weekDates.find(d=>d.date===selectedDate)||weekDates.find(d=>d.key===selectedWeekDay);
   const selectedDayItems=getDayItems(selectedDate,selectedWeekDay);
 
-  const examTask=tasks.find(t=>!t.deleted&&t.title.toLowerCase().includes("land law"));
-  const interviewTask=tasks.find(t=>!t.deleted&&t.title.toLowerCase().includes("cheshire oak"));
-
   function completeOnboarding(goals:string[]){
     localStorage.setItem("docket-onboarded","true");
     // The new flow authenticates via real Supabase accounts (set on `user`
@@ -4912,36 +4909,6 @@ export default function Home(){
       {/* Content */}
       <main onClick={()=>{if(showSettings)setShowSettings(false);}}
         style={{position:"relative",zIndex:10,maxWidth:1100,margin:"0 auto",padding:"0 20px 100px"}}>
-
-        {/* Countdown chips */}
-        {(examTask||interviewTask)&&(
-          <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
-            {examTask&&(
-              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,
-                padding:"12px 18px",display:"flex",alignItems:"center",gap:10,
-                backdropFilter:"blur(12px)",
-                boxShadow:"0 4px 16px rgba(35,42,77,0.12)"}}>
-                <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:20,
-                  color:(daysUntil(examTask.date)??1)<0?C.urgent:C.primary}}>
-                  {daysUntil(examTask.date)===null?"—":daysUntil(examTask.date)===0?"Today":`${daysUntil(examTask.date)}d`}
-                </span>
-                <span style={{fontSize:11,color:C.navy,fontWeight:600}}>Land Law exam</span>
-              </div>
-            )}
-            {interviewTask&&(
-              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,
-                padding:"12px 18px",display:"flex",alignItems:"center",gap:10,
-                backdropFilter:"blur(12px)",
-                boxShadow:"0 4px 16px rgba(35,42,77,0.12)"}}>
-                <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:20,
-                  color:(daysUntil(interviewTask.date)??1)<0?C.urgent:C.primary}}>
-                  {daysUntil(interviewTask.date)===null?"—":daysUntil(interviewTask.date)===0?"Today":`${daysUntil(interviewTask.date)}d`}
-                </span>
-                <span style={{fontSize:11,color:C.navy,fontWeight:600}}>Cheshire Oak</span>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* ── DAILY ─────────────────────────────────────────────────────── */}
         {currentView==="daily"&&(
