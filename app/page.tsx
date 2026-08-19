@@ -1831,7 +1831,11 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
   // Premium modals
   if(modal==="subscription"){
     async function handleSubCheckout(tier:"pro"|"max"){
-      if(!user){onClose();setTimeout(()=>onNavigate?.("login"),100);return;}
+      // user can be truthy for a guest (a local display name with no real
+      // Supabase account, id undefined) — gate on user.id specifically so a
+      // guest is sent to sign in instead of reaching checkout with a fake
+      // "Guest" email Stripe will reject.
+      if(!user?.id){onClose();setTimeout(()=>onNavigate?.("login"),100);return;}
       try{
         const res=await fetch("/api/stripe/checkout",{
           method:"POST",
@@ -1840,8 +1844,8 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
         });
         const data=await res.json();
         if(data.url) window.location.href=data.url;
-        else alert("Payment error: "+data.error);
-      }catch(e:any){alert("Something went wrong: "+e.message);}
+        else{setAuthMsg("Payment error: "+data.error);setAuthStatus("error");}
+      }catch(e:any){setAuthMsg("Something went wrong: "+e.message);setAuthStatus("error");}
     }
     const plans=[
       {id:"free",name:"Free",icon:"ti-user",accent:C.muted,price:"£0",priceSuffix:"/month",
@@ -1866,7 +1870,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
           {icon:"ti-headset",label:"Support",value:"Priority 24h"},
           {icon:"ti-rocket",label:"Early access",value:"✓"},
         ],
-        cta:user?"Start My Free 7 Days →":"Sign in to Start Free Trial",onClick:()=>handleSubCheckout("pro"),
+        cta:user?.id?"Start My Free 7 Days →":"Sign in to Start Free Trial",onClick:()=>handleSubCheckout("pro"),
         ctaStyle:{background:"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",color:"white",border:"none",boxShadow:"0 6px 20px rgba(76,95,213,0.4)"}},
       {id:"max",name:"Max",icon:"ti-bolt",accent:"#8670E8",price:"£14.99",priceSuffix:"/month",
         iconBg:"linear-gradient(145deg,#A78BFA,#8670E8)",iconShadow:"0 4px 14px rgba(134,112,232,0.4)",
@@ -1878,7 +1882,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
           {icon:"ti-headset",label:"Support",value:"Priority 24h"},
           {icon:"ti-rocket",label:"Early access",value:"✓"},
         ],
-        cta:user?"Try Docket Max →":"Sign in to Try Max",onClick:()=>handleSubCheckout("max"),
+        cta:user?.id?"Try Docket Max →":"Sign in to Try Max",onClick:()=>handleSubCheckout("max"),
         ctaStyle:{background:"linear-gradient(145deg,#A78BFA,#8670E8,#5B3FBF)",color:"white",border:"none",boxShadow:"0 6px 20px rgba(134,112,232,0.35)"}},
     ];
     return(
@@ -1908,6 +1912,13 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
         </div>
         {/* Scrollable content */}
         <div style={{flex:1,overflowY:"auto",padding:"20px"}}>
+          {authStatus==="error"&&authMsg&&(
+            <div style={{padding:"10px 14px",borderRadius:10,marginBottom:16,fontSize:13,
+              background:"rgba(217,79,61,0.1)",color:C.urgent,
+              border:`1px solid rgba(217,79,61,0.25)`}}>
+              {authMsg}
+            </div>
+          )}
           <div className="pricing-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:16}}>
             {plans.map(plan=>(
               <div key={plan.id} style={{position:"relative",display:"flex",flexDirection:"column",
