@@ -3972,11 +3972,6 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
   function toggleGoal(id:string){
     setGoals(g=>g.includes(id)?g.filter(x=>x!==id):[...g,id]);
   }
-  async function handleSignOut(){
-    const sb=await getSupabaseClient();
-    if(sb) await sb.auth.signOut();
-    onUserChange(null);
-  }
   async function handleCheckout(tier:"pro"|"max"){
     // Complete onboarding first (seed goal tasks, mark docket-onboarded) so
     // the user always lands back in the real app after checkout — whether
@@ -4022,10 +4017,6 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
               boxShadow:"0 8px 28px rgba(76,95,213,0.5)"}}>
             Continue
           </button>
-          <p style={{fontSize:12,color:C.muted2,marginTop:18,cursor:"pointer",textDecoration:"underline"}}
-            onClick={handleSignOut}>
-            Not you? Sign out
-          </p>
         </div>
       ):(
         <AuthForm dark={dark} onUserChange={onUserChange} onOpenLegal={onOpenModal}/>
