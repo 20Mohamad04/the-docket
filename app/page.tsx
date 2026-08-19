@@ -2790,38 +2790,53 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
   // and the panel falls back to its plain vh/bottom values below).
   const[keyboardInset,setKeyboardInset]=useState(0);
   const[visibleHeight,setVisibleHeight]=useState<number|null>(null);
-  // Declared here (rather than down by its own lock effect below) so the
-  // keyboard-tracking effect just below can reference it — see that
-  // effect's own comment for why.
+  // Declared here (rather than down by its own lock effect below) so
+  // updateFromViewport just below can reference it — see that function's
+  // own comment for why.
   const chatScrollLockY=React.useRef(0);
+  // Re-measures the visible viewport and, only while the keyboard is
+  // actually covering something, cancels iOS Safari's native "scroll the
+  // focused input into view" pan (see the inline comment below for why
+  // that's needed at all). Extracted to a stable function — rather than
+  // defined inline inside the effect below — so the input's onBlur can
+  // also call it directly: relying solely on the visualViewport listener
+  // meant this only ever re-ran on whatever cadence the browser delivers
+  // resize/scroll events on, which on keyboard-close was slow and laggy
+  // enough (~1s) to look broken, and calling scrollTo() unconditionally
+  // during that close transition — not just while a keyboard was actually
+  // open — fought the native close animation and could blur the input /
+  // drop the keyboard as a side effect, which is what made the panel
+  // depend on keeping focus to look right.
+  const updateFromViewport=useCallback(()=>{
+    const vv=typeof window!=="undefined"?window.visualViewport:null;
+    if(!vv)return;
+    setVisibleHeight(vv.height);
+    const inset=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
+    setKeyboardInset(inset);
+    // The position:fixed body-lock below only ever blocks manual
+    // touch-drag scrolling — it does nothing to stop iOS Safari's own
+    // native scroll-into-view pan, which is the actual root cause of the
+    // background app becoming visible through/around this panel while
+    // the input is focused. Only correct for it while the keyboard is
+    // genuinely open (inset>0) — that pan can't happen once it's closed,
+    // and correcting unconditionally is what caused the lag/focus-loss
+    // above.
+    if(inset>0&&window.scrollY!==chatScrollLockY.current){
+      window.scrollTo(0,chatScrollLockY.current);
+    }
+  },[]);
   useEffect(()=>{
     if(!open)return;
     const vv=typeof window!=="undefined"?window.visualViewport:null;
     if(!vv)return;
-    const update=()=>{
-      setVisibleHeight(vv.height);
-      setKeyboardInset(Math.max(0,window.innerHeight-vv.height-vv.offsetTop));
-      // The position:fixed body-lock below only ever blocks manual
-      // touch-drag scrolling — it does nothing to stop iOS Safari's own
-      // native "scroll the focused input into view" behavior, which pans
-      // the page independently of that lock (that's the actual root cause
-      // of the background app, including its own fixed +/× buttons,
-      // becoming visible through/around this panel when the input is
-      // focused). Re-asserting the locked scroll position every time the
-      // visual viewport reports having moved cancels that native pan
-      // instead of letting it move the page out from under the panel.
-      if(window.scrollY!==chatScrollLockY.current){
-        window.scrollTo(0,chatScrollLockY.current);
-      }
-    };
-    update();
-    vv.addEventListener("resize",update);
-    vv.addEventListener("scroll",update);
+    updateFromViewport();
+    vv.addEventListener("resize",updateFromViewport);
+    vv.addEventListener("scroll",updateFromViewport);
     return()=>{
-      vv.removeEventListener("resize",update);
-      vv.removeEventListener("scroll",update);
+      vv.removeEventListener("resize",updateFromViewport);
+      vv.removeEventListener("scroll",updateFromViewport);
     };
-  },[open]);
+  },[open,updateFromViewport]);
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;imageDataUrl?:string;opusFallback?:boolean}[]>([
     {role:"assistant",content:CHATBOT_GREETING},
   ]);
@@ -3628,6 +3643,13 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
                   <input value={input} onChange={e=>setInput(e.target.value)}
                     onKeyDown={e=>e.key==="Enter"&&send()}
+                    // Optimistic early re-measure for when this blur means
+                    // the keyboard is on its way down (e.g. tapping Send) —
+                    // doesn't replace the visualViewport listener above
+                    // (still the source of truth once the browser actually
+                    // reports the resize), just gives it a head start
+                    // instead of waiting solely on that event's own timing.
+                    onBlur={updateFromViewport}
                     placeholder="Ask me anything…"
                     // minWidth:0 overrides the browser's non-zero intrinsic
                     // min-width for text inputs, which flex:1 alone doesn't
