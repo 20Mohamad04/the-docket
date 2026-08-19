@@ -68,20 +68,27 @@ export async function POST(req: Request) {
         try {
           // The checkout session itself doesn't carry subscription item data
           // (session.subscription is just an ID here, not expanded) — fetch
-          // the subscription separately to get current_period_end.
+          // the subscription separately to get current_period_end and its
+          // real status. With a trial configured, this is "trialing" here,
+          // not "active" — hardcoding "active" would misrepresent a
+          // trialing subscription until the next customer.subscription.
+          // updated event happened to correct it (that handler already
+          // writes the real status, unlike this one previously did).
           let currentPeriodEnd: string | undefined;
           let tier: "pro" | "max" = "pro";
+          let status = "active";
           if (session.subscription) {
             const sub = await stripe.subscriptions.retrieve(session.subscription as string);
             currentPeriodEnd = periodEndISO(sub);
             tier = resolveTier(sub);
+            status = sub.status;
           }
           const { error } = await sb.from("subscriptions").upsert(
             {
               user_id: userId,
               stripe_customer_id: session.customer as string,
               stripe_subscription_id: session.subscription as string,
-              status: "active",
+              status,
               tier,
               ...(currentPeriodEnd ? { current_period_end: currentPeriodEnd } : {}),
             },
