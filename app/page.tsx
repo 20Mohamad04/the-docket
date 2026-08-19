@@ -3348,7 +3348,16 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           <div style={{position:"fixed",
             bottom:(expanded?0:20)+keyboardInset,right:expanded?0:20,
             top:expanded?0:"auto",left:expanded?0:"auto",
-            zIndex:60,transition:"all 0.3s cubic-bezier(0.34,1.56,0.64,1)"}}>
+            zIndex:60,
+            // Scoped to `right` only — that's the sole property still
+            // exclusively driven by the deliberate, discrete `expanded`
+            // toggle. `bottom` is now also driven by keyboardInset, which
+            // visualViewport can update several times through the native
+            // keyboard-open animation; animating it here would make the
+            // panel chase a moving target instead of tracking the keyboard
+            // directly. `top`/`left` only ever toggle between 0 and "auto",
+            // which CSS can't meaningfully tween anyway.
+            transition:"right 0.3s cubic-bezier(0.34,1.56,0.64,1)"}}>
             <div style={{
               width:expanded?"100vw":"min(400px, calc(100vw - 40px))",
               height:expanded
