@@ -2790,6 +2790,10 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
   // and the panel falls back to its plain vh/bottom values below).
   const[keyboardInset,setKeyboardInset]=useState(0);
   const[visibleHeight,setVisibleHeight]=useState<number|null>(null);
+  // Declared here (rather than down by its own lock effect below) so the
+  // keyboard-tracking effect just below can reference it — see that
+  // effect's own comment for why.
+  const chatScrollLockY=React.useRef(0);
   useEffect(()=>{
     if(!open)return;
     const vv=typeof window!=="undefined"?window.visualViewport:null;
@@ -2797,6 +2801,18 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
     const update=()=>{
       setVisibleHeight(vv.height);
       setKeyboardInset(Math.max(0,window.innerHeight-vv.height-vv.offsetTop));
+      // The position:fixed body-lock below only ever blocks manual
+      // touch-drag scrolling — it does nothing to stop iOS Safari's own
+      // native "scroll the focused input into view" behavior, which pans
+      // the page independently of that lock (that's the actual root cause
+      // of the background app, including its own fixed +/× buttons,
+      // becoming visible through/around this panel when the input is
+      // focused). Re-asserting the locked scroll position every time the
+      // visual viewport reports having moved cancels that native pan
+      // instead of letting it move the page out from under the panel.
+      if(window.scrollY!==chatScrollLockY.current){
+        window.scrollTo(0,chatScrollLockY.current);
+      }
     };
     update();
     vv.addEventListener("resize",update);
@@ -3222,7 +3238,8 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
   // it any time the panel was open with the sidebar closed, i.e. normal
   // chat use. `open` is a strict superset of `historyOpen` (the sidebar can
   // only be open while the panel itself is), so one condition covers both.
-  const chatScrollLockY=React.useRef(0);
+  // (chatScrollLockY itself is declared earlier, alongside the keyboard-
+  // tracking effect, which also needs to reference it.)
   useEffect(()=>{
     if(open){
       chatScrollLockY.current=window.scrollY;
