@@ -75,9 +75,15 @@ async function bumpUsage(
   if (error) console.error(`Usage tracking: failed to write usage row (${field}):`, error);
 }
 
-// Phase 1: track Sonnet usage per user per billing period. No enforcement —
-// this only counts. Must never throw: a tracking failure should never break
-// the actual chat response, so every error path here just logs.
+// Tracks Sonnet usage per user per period — a real subscription's monthly
+// billing period for Pro/Max, or today's UTC date for a free-tier user (see
+// resolveSonnetPeriod below, shared with resolveSonnetEligibility so the two
+// always agree on what "the current period" is). Free-tier users used to be
+// skipped here entirely (no subscription row meant no periodEnd to key
+// against) — now that this count is actually enforced by
+// resolveSonnetEligibility, it has to be tracked for them too, not just
+// Pro/Max. Must never throw: a tracking failure should never break the
+// actual chat response, so every error path here just logs.
 async function trackSonnetUsage(userId: string) {
   try {
     const sb = getSupabaseAdmin();
@@ -85,13 +91,7 @@ async function trackSonnetUsage(userId: string) {
       console.error("Usage tracking skipped — Supabase admin client unavailable");
       return;
     }
-    const { periodEnd } = await getSubscription(sb, userId);
-    if (!periodEnd) {
-      // No subscription (or no current_period_end yet) for this user — there's
-      // no billing period to key usage against, so skip rather than invent one.
-      console.log("Usage tracking skipped — no current_period_end for user:", userId);
-      return;
-    }
+    const { periodEnd } = await resolveSonnetPeriod(sb, userId);
     await bumpUsage(sb, userId, periodEnd, "sonnet_count");
   } catch (err) {
     console.error("Usage tracking threw:", err);
@@ -421,6 +421,52 @@ async function resolveOpusEligibility(
   }
 }
 
+// Free-tier Sonnet messages are capped at 10/day. This can't reuse
+// resolveOpusEligibility's periodEnd verbatim: that reset is tied to a real
+// subscription's monthly current_period_end, and a free-tier user has no
+// subscription row at all to key against. What IS reused is the underlying
+// mechanism bumpUsage/getUsageRow already implement — an opaque "period"
+// marker stored alongside a count, reset to zero the moment the marker no
+// longer matches "now" — just with today's UTC calendar date standing in
+// as that marker for a free user, instead of a billing period end. Active
+// subscribers (Pro or Max) never touch this: Sonnet is unlimited for them,
+// exactly as advertised.
+const FREE_SONNET_DAILY_LIMIT = 10;
+
+function todayUTC(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// Shared by the eligibility check below and trackSonnetUsage's own bump, so
+// both always agree on what "the current period" is for this user.
+async function resolveSonnetPeriod(
+  sb: any,
+  userId: string
+): Promise<{ periodEnd: string; isActiveSubscriber: boolean }> {
+  const { status, periodEnd } = await getSubscription(sb, userId);
+  if (status === "active" && periodEnd) return { periodEnd, isActiveSubscriber: true };
+  return { periodEnd: todayUTC(), isActiveSubscriber: false };
+}
+
+// Unlike Opus (a scarce, costly perk worth being strict about), Sonnet is
+// this app's core chat feature — failure here fails OPEN (allows the
+// message through) rather than closed, so a transient DB hiccup can never
+// be the reason a legitimate free user is locked out of basic chat.
+async function resolveSonnetEligibility(userId: string): Promise<{ allowed: boolean }> {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return { allowed: true };
+    const { periodEnd, isActiveSubscriber } = await resolveSonnetPeriod(sb, userId);
+    if (isActiveSubscriber) return { allowed: true };
+    const usage = await getUsageRow(sb, userId);
+    const currentCount = usage && usage.period_end === periodEnd ? usage.sonnet_count ?? 0 : 0;
+    return { allowed: currentCount < FREE_SONNET_DAILY_LIMIT };
+  } catch (err) {
+    console.error("Sonnet eligibility check threw — failing open:", err);
+    return { allowed: true };
+  }
+}
+
 // Forces Claude to always return valid structured JSON via tool_use instead
 // of prompt-based prose, eliminating the recurring "malformed JSON leaking
 // into the visible reply" bug at the source rather than patching another
@@ -582,6 +628,26 @@ export async function POST(req: Request) {
       // turns that don't touch memory at all.
       const autoMemoryEnabled = await isAutoMemoryEnabled(userId);
       await persistMemories(sb, userId, actions, existingMemories, autoMemoryEnabled);
+    }
+
+    // Free-tier daily Sonnet cap — checked unconditionally before any model
+    // call, including when useOpus was requested but the user isn't
+    // actually eligible for it and would otherwise silently fall back to
+    // Sonnet below, since that fallback is still subject to the same cap.
+    // Active subscribers always pass immediately (see
+    // resolveSonnetEligibility). Anonymous requests (no userId) aren't
+    // gated here — there's no per-user row to track them against, same
+    // boundary every other per-user check in this route already has.
+    if (userId) {
+      const sonnetEligibility = await resolveSonnetEligibility(userId);
+      if (!sonnetEligibility.allowed) {
+        return NextResponse.json({
+          actions: [],
+          reply:
+            "You've hit today's limit of 10 free messages — it resets tomorrow, or upgrade to Pro for unlimited Sonnet messages any time.",
+          conversationId: null,
+        });
+      }
     }
 
     // Claude Sonnet 5 — meaningfully stronger reasoning and instruction-following
