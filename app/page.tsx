@@ -4273,6 +4273,18 @@ export default function Home(){
   const[onboarding,setOnboarding]=useState(false);
   const[activeModal,setActiveModal]=useState<string|null>(null);
 
+  // Starts null so server-render and the client's pre-hydration render are
+  // identical (both show the placeholder) — same pattern LiveClock already
+  // uses for the same reason. The header subtitle and the calendar view's
+  // fallback day label both called new Date().toLocaleDateString(...)
+  // directly in JSX; on this statically-prerendered page that bakes in
+  // whatever date was true at BUILD time, which then mismatches the
+  // client's real current date at hydration (React error #418) from the
+  // moment of deploy onward. Setting the real date only inside an effect,
+  // client-side, after hydration completes, avoids the mismatch entirely.
+  const[clientToday,setClientToday]=useState<Date|null>(null);
+  useEffect(()=>{setClientToday(new Date());},[]);
+
   // Lock body scroll when drawer or modal is open. overflow:hidden alone
   // doesn't reliably block touch-scroll bleed-through to the page behind an
   // open drawer on mobile browsers (notably iOS Safari) — pinning the body
@@ -4766,7 +4778,7 @@ export default function Home(){
             fontSize:18,color:C.navy,letterSpacing:"-0.5px"}}>{t("appName")}</p>
           <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,
             color:C.muted,letterSpacing:"2px",textTransform:"uppercase",marginTop:2}}>
-            {new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
+            {clientToday?clientToday.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}):""}
           </p>
         </div>
         <div style={{display:"flex",gap:8}}>
@@ -4976,7 +4988,7 @@ export default function Home(){
             </div>
             <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,
               color:C.muted,marginBottom:10}}>
-              {selDay?.label||new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}
+              {selDay?.label||(clientToday?clientToday.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"}):"")}
             </p>
 
             {(()=>{
