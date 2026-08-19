@@ -3645,9 +3645,6 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     <i className="ti ti-send" style={{fontSize:15}} aria-hidden="true"/>
                   </button>
                 </div>
-                <p style={{fontSize:10,color:C.muted2,textAlign:"center",marginTop:8}}>
-                  Powered by Claude AI · Confirms before making changes
-                </p>
               </div>
             </div>
           </div>
