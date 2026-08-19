@@ -4258,11 +4258,62 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
   );
 }
 
+// ── Sign-in gate ─────────────────────────────────────────────────────────────
+// Shown instead of the app on a returning device with no authenticated user
+// (post-sign-out, or any device where docket-onboarded is already true) — a
+// lighter-weight sibling to OnboardingScreen's step 0 rather than reusing the
+// full first-time wizard, since re-picking goals and plan tier makes no sense
+// for someone who's already been through onboarding once.
+function SignInGate({dark,onUserChange,onOpenModal}:{
+  dark:boolean;
+  onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
+  onOpenModal:(m:string)=>void;
+}){
+  const C=getC(dark);
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:200,display:"flex",
+      alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{position:"absolute",inset:0,
+        background:dark?"rgba(8,10,20,0.92)":"rgba(237,232,245,0.92)",
+        backdropFilter:"blur(20px)"}}/>
+      <div className="glass" style={{position:"relative",width:"100%",maxWidth:440,
+        borderRadius:28,maxHeight:"90vh",display:"flex",flexDirection:"column",overflow:"hidden",
+        boxShadow:"0 40px 120px rgba(0,0,0,0.3)"}}>
+        <div style={{textAlign:"center",padding:"28px 24px 0",flexShrink:0}}>
+          <div style={{width:52,height:52,borderRadius:14,margin:"0 auto 14px",
+            background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            boxShadow:"0 12px 36px rgba(76,95,213,0.5)"}}>
+            <i className="ti ti-lock" style={{fontSize:22,color:"white"}} aria-hidden="true"/>
+          </div>
+          <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:22,fontWeight:800,
+            color:C.navy,letterSpacing:"-0.5px",marginBottom:6}}>
+            Sign in to continue
+          </h1>
+          <p style={{fontSize:13,color:C.muted,lineHeight:1.5}}>
+            An account keeps your Docket synced and secure — sign back in to pick up where you left off.
+          </p>
+        </div>
+        <div style={{flex:1,overflowY:"auto",padding:"12px 0 28px"}}>
+          <AuthForm dark={dark} onUserChange={onUserChange} onOpenLegal={onOpenModal}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Page ────────────────────────────────────────────────────────────────
 export default function Home(){
   const[isDrawerOpen,setIsDrawerOpen]=useState(false);
   const[currentView,setCurrentView]=useState<View>("daily");
   const[isLoaded,setIsLoaded]=useState(false);
+  // True once the initial Supabase session check has resolved (found a
+  // session, found none, or Supabase isn't configured) — distinguishes
+  // "still checking, don't judge yet" from "confirmed no real user," so the
+  // top-level auth gate below can show a brief loading state instead of
+  // flashing the sign-in screen at a user whose session just hasn't
+  // restored yet.
+  const[authChecked,setAuthChecked]=useState(false);
   const[taskFilter,setTaskFilter]=useState<Filter>("all");
   const[editingTask,setEditingTask]=useState<Task|null>(null);
   const[isAddingTask,setIsAddingTask]=useState(false);
@@ -4361,13 +4412,13 @@ export default function Home(){
       window.history.replaceState({},"",window.location.pathname);
     }
     const visited=localStorage.getItem("docket-onboarded");
-    const savedName=localStorage.getItem("docket-user-name");
+    // Guest mode is gone — this key used to restore a fake {name,
+    // email:"Guest"} identity with no real Supabase account behind it.
+    // Clear it unconditionally so a stale key from before that removal can
+    // never resurface it.
+    localStorage.removeItem("docket-user-name");
     const savedNotif=localStorage.getItem("docket-notif");
     if(savedNotif==="true") setNotifEnabled(true);
-    // Show onboarding name as guest display if no Supabase user
-    if(savedName&&!user){
-      setUser({name:savedName,email:"Guest",avatar:undefined});
-    }
     // Check for existing Supabase session
     const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -4375,13 +4426,14 @@ export default function Home(){
       (async()=>{
         try{
           const sb=await getSupabaseClient();
-          if(!sb)return;
+          if(!sb){setAuthChecked(true);return;}
           const{data:{session}}=await sb.auth.getSession();
           if(session?.user){
             const u=session.user;
             const displayName=u.user_metadata?.full_name||u.email?.split("@")[0]||"User";
             setUser({name:displayName,email:u.email||"",avatar:u.user_metadata?.avatar_url,id:u.id});
           }
+          setAuthChecked(true);
           sb.auth.onAuthStateChange((event,session)=>{
             if(session?.user){
               const u=session.user;
@@ -4414,8 +4466,10 @@ export default function Home(){
               localStorage.removeItem(STORAGE_ROUTINES);
             }
           });
-        }catch(e){ console.log("Supabase session check failed",e); }
+        }catch(e){ console.log("Supabase session check failed",e); setAuthChecked(true); }
       })();
+    }else{
+      setAuthChecked(true);
     }
     setTasks(t?JSON.parse(t):defaultTasks());
     setRoutines(r?JSON.parse(r):defaultRoutines());
@@ -4723,12 +4777,6 @@ export default function Home(){
 
   function completeOnboarding(goals:string[]){
     localStorage.setItem("docket-onboarded","true");
-    // The new flow authenticates via real Supabase accounts (set on `user`
-    // during onboarding's sign-in step already) — no guest placeholder to
-    // create here. Clear any stale guest-name key from a pre-auth-onboarding
-    // visit so a future reload can't briefly flash a "Guest" display name
-    // before the real Supabase session finishes restoring.
-    localStorage.removeItem("docket-user-name");
     const welcomeTasks:Task[]=[];
     if(goals.includes("health")) welcomeTasks.push({id:Date.now()+1,title:"Start a daily exercise habit",category:"fitness",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
     if(goals.includes("study")) welcomeTasks.push({id:Date.now()+2,title:"Set a daily study goal",category:"study",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
@@ -4738,6 +4786,38 @@ export default function Home(){
     if(goals.includes("work")) welcomeTasks.push({id:Date.now()+6,title:"Set this week's career goal",category:"career",priority:"medium",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]});
     if(welcomeTasks.length>0) setTasks(welcomeTasks);
     setOnboarding(false);
+  }
+
+  // ── Top-level auth gate ───────────────────────────────────────────────────
+  // No guest/local-only access, ever. A first-time visitor is already fully
+  // gated by the non-dismissible OnboardingScreen (its step 0 requires real
+  // sign-in before `next()` unlocks), so this only applies to a RETURNING
+  // device — `onboarding` is false, meaning docket-onboarded is already
+  // true, but there's no authenticated user (fresh sign-out, or a session
+  // that never restored). Checked on user?.id specifically, never on
+  // user truthiness alone and never on billing/tier state — cancelling a
+  // subscription must drop someone to Free while still signed in, not touch
+  // this gate at all.
+  if(!onboarding&&!user?.id&&!authChecked){
+    return(
+      <AppCtx.Provider value={{dark,lang,t,dir}}>
+        <div style={{position:"fixed",inset:0,zIndex:200,display:"flex",
+          alignItems:"center",justifyContent:"center",background:dark?"#0a0d16":"#EDE8F5"}}>
+          <div style={{width:36,height:36,borderRadius:"50%",
+            border:`3px solid ${dark?"rgba(255,255,255,0.15)":"rgba(42,54,153,0.15)"}`,
+            borderTopColor:C.primary,animation:"spin 0.8s linear infinite"}}/>
+          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        </div>
+      </AppCtx.Provider>
+    );
+  }
+  if(!onboarding&&!user?.id){
+    return(
+      <AppCtx.Provider value={{dark,lang,t,dir}}>
+        <SignInGate dark={dark} onUserChange={setUser} onOpenModal={setActiveModal}/>
+        {activeModal&&<InfoModal modal={activeModal} onClose={()=>setActiveModal(null)} dark={dark} user={user} onUserChange={setUser} onNavigate={setActiveModal} isPro={isPro} subPeriodEnd={subPeriodEnd} subTier={subTier}/>}
+      </AppCtx.Provider>
+    );
   }
 
   return(
