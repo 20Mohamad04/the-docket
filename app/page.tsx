@@ -4276,7 +4276,6 @@ function SignInGate({dark,onUserChange,onOpenModal}:{
   onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
   onOpenModal:(m:string)=>void;
 }){
-  const C=getC(dark);
   return(
     <div style={{position:"fixed",inset:0,zIndex:200,display:"flex",
       alignItems:"center",justifyContent:"center",padding:20}}>
@@ -4286,22 +4285,10 @@ function SignInGate({dark,onUserChange,onOpenModal}:{
       <div className="glass" style={{position:"relative",width:"100%",maxWidth:440,
         borderRadius:28,maxHeight:"90vh",display:"flex",flexDirection:"column",overflow:"hidden",
         boxShadow:"0 40px 120px rgba(0,0,0,0.3)"}}>
-        <div style={{textAlign:"center",padding:"28px 24px 0",flexShrink:0}}>
-          <div style={{width:52,height:52,borderRadius:14,margin:"0 auto 14px",
-            background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
-            display:"flex",alignItems:"center",justifyContent:"center",
-            boxShadow:"0 12px 36px rgba(76,95,213,0.5)"}}>
-            <i className="ti ti-lock" style={{fontSize:22,color:"white"}} aria-hidden="true"/>
-          </div>
-          <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:22,fontWeight:800,
-            color:C.navy,letterSpacing:"-0.5px",marginBottom:6}}>
-            Sign in to continue
-          </h1>
-          <p style={{fontSize:13,color:C.muted,lineHeight:1.5}}>
-            An account keeps your Docket synced and secure — sign back in to pick up where you left off.
-          </p>
-        </div>
-        <div style={{flex:1,overflowY:"auto",padding:"12px 0 28px"}}>
+        {/* No heading of our own here — AuthForm renders its own
+            "Welcome / Sign in to sync your data" header, so a second one
+            above it would just repeat the same message. */}
+        <div style={{flex:1,overflowY:"auto",padding:"24px 0 28px"}}>
           <AuthForm dark={dark} onUserChange={onUserChange} onOpenLegal={onOpenModal}/>
         </div>
       </div>
