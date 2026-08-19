@@ -1635,10 +1635,10 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
             {isPro ? (
               <button className="sq-btn" onClick={async()=>{
                   try{
+                    const authHeaders=await getAuthHeader();
                     const res=await fetch("/api/stripe/portal",{
                       method:"POST",
-                      headers:{"Content-Type":"application/json"},
-                      body:JSON.stringify({userId:user?.id||""})
+                      headers:{"Content-Type":"application/json",...authHeaders}
                     });
                     const data=await res.json();
                     if(data.url) window.location.href=data.url;
@@ -1654,10 +1654,11 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
             ) : (
               <button className="sq-btn" onClick={async()=>{
                   try{
+                    const authHeaders=await getAuthHeader();
                     const res=await fetch("/api/stripe/checkout",{
                       method:"POST",
-                      headers:{"Content-Type":"application/json"},
-                      body:JSON.stringify({email:user?.email||"",userId:user?.id||""})
+                      headers:{"Content-Type":"application/json",...authHeaders},
+                      body:JSON.stringify({})
                     });
                     const data=await res.json();
                     if(data.url) window.location.href=data.url;
@@ -1835,16 +1836,16 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
   // Premium modals
   if(modal==="subscription"){
     async function handleSubCheckout(tier:"pro"|"max"){
-      // user can be truthy for a guest (a local display name with no real
-      // Supabase account, id undefined) — gate on user.id specifically so a
-      // guest is sent to sign in instead of reaching checkout with a fake
-      // "Guest" email Stripe will reject.
+      // The top-level auth gate means this modal should never be reachable
+      // without a real signed-in user, but this stays as a defensive guard
+      // for the edge case of a sign-out happening while it's open.
       if(!user?.id){onClose();setTimeout(()=>onNavigate?.("login"),100);return;}
       try{
+        const authHeaders=await getAuthHeader();
         const res=await fetch("/api/stripe/checkout",{
           method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({email:user.email,userId:user.id,tier})
+          headers:{"Content-Type":"application/json",...authHeaders},
+          body:JSON.stringify({tier})
         });
         const data=await res.json();
         if(data.url) window.location.href=data.url;
@@ -3999,10 +4000,11 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
     // they finish the Stripe flow, cancel, or just close that tab.
     onComplete(goals);
     try{
+      const authHeaders=await getAuthHeader();
       const res=await fetch("/api/stripe/checkout",{
         method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({email:user?.email||"",userId:user?.id||"",tier})
+        headers:{"Content-Type":"application/json",...authHeaders},
+        body:JSON.stringify({tier})
       });
       const data=await res.json();
       if(data.url) window.location.href=data.url;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-07-29.dahlia" as any,
@@ -16,11 +16,37 @@ function getSupabaseAdmin() {
   return createClient(url, key);
 }
 
+// Same pattern as app/api/ask/route.ts — verifies the caller's own Supabase
+// access token instead of trusting a client-sent userId, which this route
+// used to: anyone who knew or guessed a user's UUID could POST it here,
+// fully unauthenticated, and get back a Stripe billing-portal URL for that
+// user's own subscription.
+function getSupabaseForToken(accessToken: string): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return null;
+  return createClient(url, anonKey, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: { persistSession: false },
+  });
+}
+
+async function authenticateRequest(req: Request): Promise<string | null> {
+  const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization");
+  const token = authHeader?.match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!token) return null;
+  const sb = getSupabaseForToken(token);
+  if (!sb) return null;
+  const { data, error } = await sb.auth.getUser(token);
+  if (error || !data?.user) return null;
+  return data.user.id;
+}
+
 export async function POST(req: Request) {
   try {
-    const { userId } = await req.json();
+    const userId = await authenticateRequest(req);
     if (!userId) {
-      return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const sb = getSupabaseAdmin();
