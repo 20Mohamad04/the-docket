@@ -3174,33 +3174,40 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
     }finally{setLoading(false);}
   }
 
-  // Locks background scroll while the history sidebar is open, mirroring
-  // the position:fixed pinning technique the app-level Drawer/modal lock
-  // uses (see the top-level App component) — a separate effect since this
-  // sidebar is scoped to the chat panel, not one of the app-level overlays
-  // that lock already covers. The two can't actually be open at once in
-  // practice (the chat's own full-viewport backdrop blocks reaching the
-  // Drawer toggle or anything that opens a modal while it's up), so there's
-  // no real risk of the two effects fighting over document.body.style.
-  const historyScrollLockY=React.useRef(0);
+  // Locks background scroll while the chat panel is open, mirroring the
+  // position:fixed pinning technique the app-level Drawer/modal lock uses
+  // (see the top-level App component) — a separate effect since the chat
+  // panel is scoped to Chatbot, not one of the app-level overlays that lock
+  // already covers. The two can't actually be open at once in practice (the
+  // chat's own full-viewport backdrop blocks reaching the Drawer toggle or
+  // anything that opens a modal while it's up), so there's no real risk of
+  // the two effects fighting over document.body.style.
+  //
+  // Gated on `open` (the whole chat panel), not just `historyOpen` (its
+  // sidebar) — that was the original scope here, which meant scrolling the
+  // message list to its top/bottom bled straight through to the page behind
+  // it any time the panel was open with the sidebar closed, i.e. normal
+  // chat use. `open` is a strict superset of `historyOpen` (the sidebar can
+  // only be open while the panel itself is), so one condition covers both.
+  const chatScrollLockY=React.useRef(0);
   useEffect(()=>{
-    if(historyOpen){
-      historyScrollLockY.current=window.scrollY;
+    if(open){
+      chatScrollLockY.current=window.scrollY;
       document.body.style.position="fixed";
-      document.body.style.top=`-${historyScrollLockY.current}px`;
+      document.body.style.top=`-${chatScrollLockY.current}px`;
       document.body.style.width="100%";
     }else{
       document.body.style.position="";
       document.body.style.top="";
       document.body.style.width="";
-      window.scrollTo(0,historyScrollLockY.current);
+      window.scrollTo(0,chatScrollLockY.current);
     }
     return()=>{
       document.body.style.position="";
       document.body.style.top="";
       document.body.style.width="";
     };
-  },[historyOpen]);
+  },[open]);
 
   const fetchConversations=React.useCallback(async()=>{
     if(!user?.id)return;
