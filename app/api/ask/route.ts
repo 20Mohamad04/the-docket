@@ -1,5 +1,33 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+// Same pattern as app/api/conversations/_lib.ts and app/api/memories/_lib.ts
+// — duplicated rather than shared, matching this codebase's convention of
+// small, self-contained per-route-group helpers. Verifies the caller's own
+// Supabase access token (a genuine round-trip via getUser(jwt)) rather than
+// trusting a client-sent userId, which this route used to do — anyone could
+// otherwise POST an arbitrary user's UUID and rack up their Opus/Sonnet
+// usage or write fake conversation history under their account.
+function getSupabaseForToken(accessToken: string): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return null;
+  return createClient(url, anonKey, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: { persistSession: false },
+  });
+}
+
+async function authenticateRequest(req: Request): Promise<string | null> {
+  const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization");
+  const token = authHeader?.match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!token) return null;
+  const sb = getSupabaseForToken(token);
+  if (!sb) return null;
+  const { data, error } = await sb.auth.getUser(token);
+  if (error || !data?.user) return null;
+  return data.user.id;
+}
 
 // Keep in sync with opusLimitForTier in app/page.tsx — that copy is
 // display-only ("N left"); this is the one that actually enforces the limit.
@@ -113,9 +141,10 @@ async function trackOpusUsage(userId: string, periodEnd: string) {
 // ── Phase 1: persistent chat history ────────────────────────────────────
 // Best-effort, like usage tracking above — a persistence failure must never
 // break the actual chat response, so every error path here just logs.
-// Uses the same service-role client + client-sent-userId pattern as the
-// rest of this route (see trackSonnetUsage etc.) rather than RLS: ownership
-// is enforced manually below instead. The four /api/conversations routes
+// Uses the same service-role client as the rest of this route (see
+// trackSonnetUsage etc.), with userId taken from the verified token rather
+// than RLS: ownership is enforced manually below instead. The four
+// /api/conversations routes
 // take the opposite approach (a user-scoped client so Postgres RLS on
 // conversations/chat_messages genuinely applies) since they have no other
 // reason to need this route's elevated privileges.
@@ -590,18 +619,23 @@ function parseGroqResponse(raw: string): { actions: any[]; reply: string } {
 
 export async function POST(req: Request) {
   try {
-    const { system, messages, userId, useOpus, conversationId } = await req.json();
+    const authedUserId = await authenticateRequest(req);
+    if (!authedUserId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    // Re-declared with an explicit non-nullable type: TS's control-flow
+    // narrowing above doesn't persist into the nested function declarations
+    // below (persistIfPossible etc.), which close over this binding.
+    const userId: string = authedUserId;
+
+    const { system, messages, useOpus, conversationId } = await req.json();
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     const groqKey = process.env.GROQ_API_KEY;
 
     // The client always sends the current turn as the last element of
-    // `messages` (see buildApiMessages in page.tsx) — persistence is
-    // skipped entirely for anonymous users (no userId), matching how usage
-    // tracking above already skips them, since conversations.user_id is
-    // NOT NULL.
+    // `messages` (see buildApiMessages in page.tsx).
     async function persistIfPossible(reply: string): Promise<string | null> {
-      if (!userId) return null;
       const lastMessage = messages?.[messages.length - 1];
       if (!lastMessage || lastMessage.role !== "user") return null;
       return persistTurn({
@@ -615,11 +649,10 @@ export async function POST(req: Request) {
     // Fetched once up front (not per-branch) since both the Claude and Groq
     // paths need the enriched system prompt, and persistMemories below
     // reuses this exact list rather than re-querying.
-    const existingMemories = userId ? await fetchUserMemories(userId) : [];
+    const existingMemories = await fetchUserMemories(userId);
     const enrichedSystem = `${system ?? ""}${buildMemorySystemAddition(existingMemories)}`;
 
     async function persistMemoriesIfPossible(actions: any[]): Promise<void> {
-      if (!userId) return;
       if (!Array.isArray(actions) || !actions.some((a) => a?.type === "remember")) return;
       const sb = getSupabaseAdmin();
       if (!sb) return;
@@ -635,10 +668,8 @@ export async function POST(req: Request) {
     // actually eligible for it and would otherwise silently fall back to
     // Sonnet below, since that fallback is still subject to the same cap.
     // Active subscribers always pass immediately (see
-    // resolveSonnetEligibility). Anonymous requests (no userId) aren't
-    // gated here — there's no per-user row to track them against, same
-    // boundary every other per-user check in this route already has.
-    if (userId) {
+    // resolveSonnetEligibility).
+    {
       const sonnetEligibility = await resolveSonnetEligibility(userId);
       if (!sonnetEligibility.allowed) {
         return NextResponse.json({
@@ -660,7 +691,7 @@ export async function POST(req: Request) {
       let opusFallback = false;
       let opusPeriodEnd: string | null = null;
 
-      if (useOpus && userId) {
+      if (useOpus) {
         const eligibility = await resolveOpusEligibility(userId);
         if (eligibility.allowed) {
           model = "claude-opus-4-8";
@@ -741,16 +772,14 @@ export async function POST(req: Request) {
         toolUseBlock.input?.reply ?? "I had trouble processing that — could you try rephrasing?";
       const reply = rawReply.replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n");
 
-      if (userId) {
-        if (model === "claude-opus-4-8" && opusPeriodEnd) {
-          await trackOpusUsage(userId, opusPeriodEnd);
-        } else {
-          // Sonnet's usage tracking stays exactly as it was in Phase 1 —
-          // track only, no enforcement — whether we ended up on Sonnet
-          // because useOpus was never set, because the caller wasn't
-          // genuinely Pro, or because of an Opus-limit fallback.
-          await trackSonnetUsage(userId);
-        }
+      if (model === "claude-opus-4-8" && opusPeriodEnd) {
+        await trackOpusUsage(userId, opusPeriodEnd);
+      } else {
+        // Sonnet's usage tracking stays exactly as it was in Phase 1 —
+        // track only, no enforcement — whether we ended up on Sonnet
+        // because useOpus was never set, because the caller wasn't
+        // genuinely Pro, or because of an Opus-limit fallback.
+        await trackSonnetUsage(userId);
       }
 
       const persistedConversationId = await persistIfPossible(reply);

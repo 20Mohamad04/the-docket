@@ -2740,11 +2740,10 @@ function buildApiMessages(msgs:{role:"user"|"assistant";content:string;imageData
 
 const CHATBOT_GREETING="Hi! I'm your Docket assistant. Tell me what you need — I'll find the best slot in your schedule and confirm before adding anything.";
 
-// The four /api/conversations routes authenticate via the caller's own
-// Supabase access token (unlike /api/ask, which still trusts a client-sent
-// userId) so that Postgres RLS on conversations/chat_messages actually
-// applies — see the routes' own comments for why. This is the one place
-// that token gets attached to a request.
+// Every authenticated API route (/api/ask, /api/speak, /api/conversations,
+// /api/memories, /api/stripe/checkout, /api/stripe/portal) verifies this
+// same bearer token server-side rather than trusting a client-sent userId —
+// this is the one place it gets attached to a request.
 async function getAuthHeader():Promise<Record<string,string>>{
   const sb=await getSupabaseClient();
   if(!sb) return{};
@@ -3147,12 +3146,17 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
     setMessages([...newMsgs,{role:"assistant" as const,content:"Working on it…"}]);
     setLoading(true);
     try{
+      const authHeaders=await getAuthHeader();
       const res=await fetch("/api/ask",{method:"POST",
-        headers:{"Content-Type":"application/json"},
+        headers:{"Content-Type":"application/json",...authHeaders},
         body:JSON.stringify({system:systemPrompt,messages:buildApiMessages(newMsgs.slice(-20)),
-          ...(user?.id?{userId:user.id}:{}),
           ...(selectedModel==="opus"?{useOpus:true}:{}),
           ...(conversationId?{conversationId}:{})})});
+      if(res.status===401){
+        setMessages([...newMsgs,{role:"assistant",content:"Your session's expired — please sign in again to keep chatting."}]);
+        setLoading(false);
+        return;
+      }
       const data=await res.json();
       // The route always returns clean {actions, reply} directly now —
       // Claude via forced tool_choice, Groq via server-side recovery — so

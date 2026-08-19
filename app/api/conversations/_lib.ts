@@ -5,10 +5,10 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 // conversations/chat_messages genuinely applies (auth.uid() resolves to
 // this user), the same way it already does for tasks/routines when the
 // browser talks to Supabase directly. This is what makes these routes
-// trustworthy without re-implementing ownership checks by hand, unlike
-// /api/ask (which already trusts a client-sent userId for usage/
-// subscription tracking and keeps doing the same for chat persistence, for
-// consistency within that one route).
+// trustworthy without re-implementing ownership checks by hand. /api/ask
+// still uses a service-role client (see its own auth check for why: it
+// needs to write on the caller's behalf via a verified-but-not-RLS-scoped
+// userId), but verifies the same bearer token before trusting that id.
 function getSupabaseForToken(accessToken: string): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
