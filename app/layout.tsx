@@ -32,9 +32,15 @@ export default function RootLayout({
             above, instead of only starting once the CSS has downloaded and
             been parsed enough to discover the @font-face src — collapses
             what would otherwise be two serialized network hops into one.
-            No crossOrigin — that was only needed for the CDN's cross-origin
-            request; this is same-origin now. */}
-        <link rel="preload" as="font" type="font/woff2"
+            crossOrigin="anonymous" is required here even though this is
+            same-origin now — font requests (as="font") are always made in
+            anonymous/CORS mode by the browser regardless of origin, so
+            without this attribute the preload's credentials mode doesn't
+            match the actual @font-face request, the browser treats them as
+            two different resources, and it fetches the font twice while
+            logging "preloaded but not used" (confirmed via the console
+            warnings this produced after the crossOrigin was dropped). */}
+        <link rel="preload" as="font" type="font/woff2" crossOrigin="anonymous"
           href="/tabler/fonts/tabler-icons.woff2?v3.19.0"/>
       </head>
       <body>{children}</body>
