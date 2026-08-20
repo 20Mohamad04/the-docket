@@ -2,9 +2,20 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-07-29.dahlia" as any,
-});
+// Constructed lazily (on first request), not at module scope — the Stripe
+// SDK throws synchronously if the key is missing, and a module-scope throw
+// runs at import/build time, failing the entire production build over one
+// missing secret instead of just this route. Deferring it to request time
+// means a missing key surfaces as a normal 500 from the try/catch below.
+let stripe: Stripe | null = null;
+function getStripe(): Stripe {
+  if (!stripe) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2026-07-29.dahlia" as any,
+    });
+  }
+  return stripe;
+}
 
 // Same pattern as app/api/ask/route.ts — verifies the caller's own Supabase
 // access token instead of trusting a client-sent userId/email, which this
@@ -44,7 +55,7 @@ export async function POST(req: Request) {
     const priceId = resolvedTier === "max" ? process.env.STRIPE_PRICE_ID_MAX : process.env.STRIPE_PRICE_ID;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://planner-docket-git-main-mohamad0420.vercel.app";
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [{ price: priceId!, quantity: 1 }],

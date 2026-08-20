@@ -2,9 +2,21 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-07-29.dahlia" as any,
-});
+// Constructed lazily (on first request), not at module scope — the Stripe
+// SDK throws synchronously if the key is missing, and a module-scope throw
+// runs at import/build time, failing the entire production build over one
+// missing secret instead of just this route. Deferring it to request time
+// means a missing key surfaces as a normal error response instead (see the
+// try/catch around each usage below).
+let stripe: Stripe | null = null;
+function getStripe(): Stripe {
+  if (!stripe) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2026-07-29.dahlia" as any,
+    });
+  }
+  return stripe;
+}
 
 // Service-role client — bypasses RLS. Server-only; never expose this key to
 // the client. Returns null if the env vars aren't configured so the webhook
@@ -42,7 +54,7 @@ export async function POST(req: Request) {
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+    event = getStripe().webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch (err: any) {
     console.error("Webhook signature error:", err.message);
     return NextResponse.json({ error: err.message }, { status: 400 });
@@ -78,7 +90,7 @@ export async function POST(req: Request) {
           let tier: "pro" | "max" = "pro";
           let status = "active";
           if (session.subscription) {
-            const sub = await stripe.subscriptions.retrieve(session.subscription as string);
+            const sub = await getStripe().subscriptions.retrieve(session.subscription as string);
             currentPeriodEnd = periodEndISO(sub);
             tier = resolveTier(sub);
             status = sub.status;
