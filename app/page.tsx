@@ -4464,14 +4464,8 @@ export default function Home(){
   const dayLabels=DAY_LABELS_LANG[lang]??DAY_LABELS;
 
   useEffect(()=>{
-    // Load Tabler Icons CSS
-    if(!document.querySelector('[data-tabler-css]')){
-      const link=document.createElement('link');
-      link.rel='stylesheet';
-      link.href='https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css';
-      link.setAttribute('data-tabler-css','1');
-      document.head.appendChild(link);
-    }
+    // Tabler Icons CSS now loads via a <link> in app/layout.tsx's <head>
+    // instead of being injected here — see that file for why.
     const t=localStorage.getItem(STORAGE_TASKS);
     const r=localStorage.getItem(STORAGE_ROUTINES);
     const urlParams=new URLSearchParams(window.location.search);
