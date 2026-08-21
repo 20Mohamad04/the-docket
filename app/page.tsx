@@ -2,14 +2,6 @@
 import React, { useState, useEffect, useCallback, createContext, useContext } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import ReactMarkdown from "react-markdown";
-import dynamic from "next/dynamic";
-
-// R3F/three/postprocessing must never land in the main bundle — this is the
-// framework-idiomatic equivalent of the old FlowingOrb's `await import("three")`
-// inside a useEffect, just adapted for a declarative JSX component tree
-// instead of an imperative one. Must be called at module scope (not inside
-// FlowingOrb's render) for Next's preloading to work.
-const FlowingOrbCanvasLazy=dynamic(()=>import("./FlowingOrbCanvas"),{ssr:false});
 
 type Category = "study"|"legal"|"trading"|"finance"|"business"|"career"|"health"|"driving"|"admin"|"property"|"content"|"personal"|"family"|"faith"|"fitness"|"nutrition"|"mental"|"travel"|"technology"|"creative"|"social"|"volunteering"|"language"|"reading"|"music"|"sports"|"cooking"|"shopping"|"events"|"medical"|"insurance"|"tax"|"debt"|"savings"|"investment"|"side_hustle"|"networking"|"interview"|"project"|"research"|"writing"|"design"|"marketing"|"sales"|"customer"|"hr"|"legal_work"|"compliance"|"environment"|"community"|"charity"|"education"|"childcare"|"pets"|"home"|"vehicle"|"utilities"|"subscriptions"|"other";
 type Priority = "urgent"|"high"|"medium";
@@ -2450,194 +2442,89 @@ function TimelineRow({item,onCheck}:{
   );
 }
 
-// ── Flowing energy orb (React Three Fiber — particle nebula cloud + bloom) ──
-// A sphere of glowing colored points with per-particle spring physics and
-// noise-based displacement, plus an inner core glow and outer atmosphere glow
-// mesh, rendered declaratively via R3F with real EffectComposer/Bloom
-// post-processing (see FlowingOrbCanvas.tsx). "uAmplitude" (originally
-// driven by voice audio in the source this was adapted from) is instead
-// driven by whether the AI is actively thinking, so the orb visibly
-// intensifies and expands while a response is being generated.
-
-// Cheap, synchronous WebGL feature-detection using nothing but a throwaway
-// canvas — deliberately NOT importing three/R3F to run this check. Lets
-// FlowingOrb skip the dynamic import (and the R3F/three/postprocessing
-// bundle chunk) entirely when WebGL is unavailable, rather than attempting
-// it and relying on error handling to recover.
-function detectWebGL():boolean{
-  if(typeof document==="undefined") return false;
-  try{
-    const canvas=document.createElement("canvas");
-    return !!(canvas.getContext("webgl2")||canvas.getContext("webgl"));
-  }catch{
-    return false;
-  }
-}
-
-// Catches synchronous render-phase failures from the dynamically-loaded
-// canvas tree — including a failed dynamic import, and (per R3F's own
-// internal error handling) errors thrown while rendering the 3D scene graph
-// itself, which R3F re-throws into its own top-level render specifically so
-// an ancestor boundary like this one can catch them.
+// ── Chat blob (pure CSS/SVG — no WebGL) ─────────────────────────────────────
+// Replaces the old FlowingOrb (React Three Fiber + real WebGL bloom
+// rendering), which is now deleted entirely along with FlowingOrbCanvas.tsx
+// and the R3F/three/postprocessing dependencies — WebGL broke repeatedly on
+// iOS Safari earlier this session and was already permanently disabled in
+// favor of a CSS fallback (ORB_R3F_DISABLED) before this replacement, so
+// nothing here is a regression from what was actually shipping.
 //
-// What this does NOT catch: WebGL context/renderer creation failing inside
-// R3F's Canvas. That happens inside an async configure() call with no
-// awaiting caller, so a failure there becomes an unhandled promise
-// rejection — invisible to both this boundary and to a plain try/catch.
-// detectWebGL() above sidesteps that for the common case (WebGL genuinely
-// unavailable) by never attempting Canvas mount at all; the
-// unhandledrejection listener in FlowingOrb below is the narrowly-scoped
-// backstop for the rarer case where basic context creation succeeds here
-// but the real renderer construction still fails.
-class OrbErrorBoundary extends React.Component<{onError:()=>void;children:React.ReactNode},{hasError:boolean}>{
-  constructor(props:{onError:()=>void;children:React.ReactNode}){
-    super(props);
-    this.state={hasError:false};
-  }
-  static getDerivedStateFromError(){
-    return{hasError:true};
-  }
-  componentDidCatch(error:unknown){
-    console.error("FlowingOrb: R3F canvas render failed —",error);
-    this.props.onError();
-  }
-  render(){
-    if(this.state.hasError) return null;
-    return this.props.children;
-  }
-}
-
-// After several rounds of fixes (preventDefault, composer-only remount on
-// restore) made no measurable difference to recovery on iOS Safari, WebGL
-// failure there is being treated as a platform-level limitation, not
-// something reliably fixable from app code — so instead of continuing to
-// chase native recovery, repeated failure now permanently retires WebGL
-// for the rest of the session in favor of the CSS fallback. Tracked at
-// module level (not component state) so both the recent-failure window and
-// the give-up decision survive even if FlowingOrb itself gets remounted —
-// once given up, every future mount goes straight to the CSS fallback
-// rather than re-attempting WebGL and risking another failure cycle.
+// Also now doubles as the chat's open/close control (see its two call sites
+// in Chatbot below) instead of being purely decorative — the corner instance
+// opens the chat, the header instance (while open) closes it.
 //
-// There are three independent ways WebGL can fail here — a direct
-// 'webglcontextlost' event, a React render-phase error caught by
-// OrbErrorBoundary, and an async WebGLRenderer-setup failure caught via the
-// scoped unhandledrejection listener below — and on this device the actual
-// failures were going through paths other than context-loss, so the
-// give-up counter never incremented and it kept retrying indefinitely. All
-// three now feed the same counter via giveUpOnWebGL, regardless of which
-// one fires.
-let orbGaveUpOnWebGL=false;
-let recentWebGLFailureTimestamps:number[]=[];
-const WEBGL_FAILURE_GIVE_UP_THRESHOLD=2;
-const WEBGL_FAILURE_WINDOW_MS=60_000;
-
-// TEMPORARY, deliberate rollback — not abandoning the R3F/bloom rebuild,
-// pausing it. Several rounds of fixes for iOS Safari WebGL context loss
-// (preventDefault, composer-only remount, then the give-up-after-repeated-
-// failure policy above) didn't resolve real-world flickering, which is
-// worse than just always showing the CSS fallback. Setting this to true
-// skips the WebGL/R3F attempt entirely — canvasFailed starts true below —
-// without deleting any of FlowingOrbCanvas.tsx or this failure-handling
-// code, so this is a one-line flip back to false to pick the feature back
-// up later.
-const ORB_R3F_DISABLED=true;
-
-const FlowingOrb=React.forwardRef<{setAmplitude:(v:number|null)=>void},{size?:number;active?:boolean}>(
-  function FlowingOrb({size=52,active=false},ref){
-  const activeRef=React.useRef(active);
-  // When non-null, this overrides the automatic idle/thinking pulse — the
-  // Chatbot sets this every animation frame from real TTS audio amplitude
-  // while speech is playing, and clears it (null) when speech ends so the
-  // orb falls back to its normal idle/thinking behavior.
-  const manualAmpRef=React.useRef<number|null>(null);
-  const[webglAvailable]=useState(detectWebGL);
-  const[canvasFailed,setCanvasFailed]=useState(ORB_R3F_DISABLED||orbGaveUpOnWebGL);
-  useEffect(()=>{activeRef.current=active;},[active]);
-  React.useImperativeHandle(ref,()=>({
-    setAmplitude:(v:number|null)=>{manualAmpRef.current=v;},
-  }),[]);
-
-  const attempting=webglAvailable&&!canvasFailed;
-
-  // Shared by all three WebGL failure paths (context loss, OrbErrorBoundary,
-  // the unhandledrejection backstop below) — see the module comment above.
-  // Always falls back for the current mount immediately (previously the
-  // context-loss path only did this once the threshold was already hit,
-  // so a single loss left the orb rendering nothing instead of showing the
-  // CSS fallback); additionally marks the give-up as permanent once 2
-  // failures land within the window, rather than any single one, so one
-  // rare/isolated failure doesn't retire WebGL for the whole session.
-  const giveUpOnWebGL=React.useCallback(()=>{
-    const now=Date.now();
-    recentWebGLFailureTimestamps=recentWebGLFailureTimestamps.filter(
-      (t)=>now-t<WEBGL_FAILURE_WINDOW_MS,
-    );
-    recentWebGLFailureTimestamps.push(now);
-    if(recentWebGLFailureTimestamps.length>=WEBGL_FAILURE_GIVE_UP_THRESHOLD){
-      orbGaveUpOnWebGL=true;
-    }
-    setCanvasFailed(true);
-  },[]);
-
-  // See OrbErrorBoundary's comment above — this is the backstop for a WebGL
-  // context/renderer creation failure specifically, which surfaces as an
-  // unhandled promise rejection rather than a catchable render error.
-  // Scoped to Three's actual context-creation error message so this can't
-  // swallow unrelated app errors.
-  useEffect(()=>{
-    if(!attempting) return;
-    function onRejection(e:PromiseRejectionEvent){
-      const message=e.reason instanceof Error?e.reason.message:String(e.reason??"");
-      if(message.includes("WebGL context")){
-        console.error("FlowingOrb: WebGL context/renderer creation failed —",e.reason);
-        giveUpOnWebGL();
-        e.preventDefault();
-      }
-    }
-    window.addEventListener("unhandledrejection",onRejection);
-    return()=>window.removeEventListener("unhandledrejection",onRejection);
-  },[attempting,giveUpOnWebGL]);
-
-  if(!attempting){
-    // WebGL unavailable (disabled, unsupported, or blocked) — this fallback
-    // needs to hold its own visually, not just be "better than nothing",
-    // since some real visitors will land here too. Multiple independently
-    // animated blurred blobs, blended with "screen", approximate the additive
-    // glow of the WebGL version using nothing but CSS — works everywhere.
+// The multiple-blurred-circles-blended-with-"screen" technique is the same
+// one the old CSS fallback used; new here is an SVG "goo" filter (blur, then
+// sharpen the alpha channel via a color matrix, then composite) wrapping
+// them, which merges what would otherwise read as three separate fuzzy
+// circles into one seamless organic blob. Cheap, broadly supported, no
+// WebGL — but genuinely untested on real iOS hardware yet. If it ever
+// misbehaves there, the fix is just deleting the <filter> and the
+// filter:url(...) line that references it; the blurred circles underneath
+// still work fine on their own.
+const ChatBlob=React.forwardRef<{setAmplitude:(v:number|null)=>void},
+  {size?:number;active?:boolean;onClick?:()=>void;title?:string}>(
+  function ChatBlob({size=52,active=false,onClick,title},ref){
+    // Voice-amplitude reactivity (fed every animation frame from real TTS
+    // audio while a reply is playing — see speak() in Chatbot) is applied
+    // imperatively via this ref, not React state, so 60fps updates never
+    // trigger a re-render — same intent as the old FlowingOrb's
+    // manualAmpRef, just a direct style write instead of a value read
+    // inside a WebGL render loop.
+    const ampElRef=React.useRef<HTMLDivElement>(null);
+    React.useImperativeHandle(ref,()=>({
+      setAmplitude:(v:number|null)=>{
+        const el=ampElRef.current;
+        if(el) el.style.transform=v!=null?`scale(${1+v*0.25})`:"scale(1)";
+      },
+    }),[]);
+    // Unique per mount so two simultaneous instances (corner + header, both
+    // visible at once while the panel is open) never collide on the same
+    // <filter> id.
+    const gooId=React.useId().replace(/[^a-zA-Z0-9]/g,"");
     return(
-      <div style={{width:size,height:size,borderRadius:"50%",flexShrink:0,overflow:"hidden",position:"relative",
-        background:"radial-gradient(circle at 50% 50%, #241058, #120a30 80%)",
-        boxShadow:"0 0 24px rgba(139,92,246,0.5), 0 0 46px rgba(6,182,212,0.25)"}}>
-        <style>{`
-          @keyframes fallbackBlob1{0%,100%{transform:translate(-10%,-10%) scale(1)}50%{transform:translate(15%,10%) scale(1.3)}}
-          @keyframes fallbackBlob2{0%,100%{transform:translate(15%,15%) scale(1.1)}50%{transform:translate(-10%,-15%) scale(0.9)}}
-          @keyframes fallbackBlob3{0%,100%{transform:translate(0%,20%) scale(1)}50%{transform:translate(-20%,-5%) scale(1.2)}}
-          @keyframes fallbackSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        `}</style>
-        <div style={{position:"absolute",inset:"-30%",animation:"fallbackSpin 20s linear infinite"}}>
-          <div style={{position:"absolute",width:"70%",height:"70%",left:"15%",top:"5%",borderRadius:"50%",
-            background:"radial-gradient(circle,#d946ef,transparent 70%)",filter:"blur(4px)",
-            animation:"fallbackBlob1 6s ease-in-out infinite",mixBlendMode:"screen"}}/>
-          <div style={{position:"absolute",width:"65%",height:"65%",left:"20%",top:"25%",borderRadius:"50%",
-            background:"radial-gradient(circle,#3b82f6,transparent 70%)",filter:"blur(4px)",
-            animation:"fallbackBlob2 7s ease-in-out infinite",mixBlendMode:"screen"}}/>
-          <div style={{position:"absolute",width:"60%",height:"60%",left:"10%",top:"30%",borderRadius:"50%",
-            background:"radial-gradient(circle,#8b5cf6,transparent 70%)",filter:"blur(4px)",
-            animation:"fallbackBlob3 8s ease-in-out infinite",mixBlendMode:"screen"}}/>
+      <div onClick={onClick} title={title}
+        style={{width:size,height:size,flexShrink:0,cursor:onClick?"pointer":"default"}}>
+        <div ref={ampElRef} style={{width:"100%",height:"100%",transition:"transform 0.1s ease-out"}}>
+          <div style={{width:"100%",height:"100%",borderRadius:"50%",position:"relative",overflow:"hidden",
+            animation:`chatBlobBreathe ${active?"1.6s":"3.6s"} ease-in-out infinite`,
+            background:"radial-gradient(circle at 50% 50%,#2A1660,#120A30 80%)",
+            boxShadow:active
+              ?"0 0 28px rgba(134,112,232,0.8), 0 0 54px rgba(76,95,213,0.4)"
+              :"0 0 18px rgba(134,112,232,0.45), 0 0 36px rgba(76,95,213,0.22)"}}>
+            <style>{`
+              @keyframes chatBlobBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+              @keyframes chatBlobMove1{0%,100%{transform:translate(-10%,-10%) scale(1)}50%{transform:translate(14%,10%) scale(1.3)}}
+              @keyframes chatBlobMove2{0%,100%{transform:translate(14%,14%) scale(1.05)}50%{transform:translate(-10%,-14%) scale(0.85)}}
+              @keyframes chatBlobMove3{0%,100%{transform:translate(0%,18%) scale(1)}50%{transform:translate(-18%,-6%) scale(1.2)}}
+              @keyframes chatBlobSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+            `}</style>
+            <svg width="0" height="0" style={{position:"absolute"}} aria-hidden="true">
+              <filter id={`chatBlobGoo${gooId}`}>
+                <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+                <feColorMatrix in="blur" mode="matrix"
+                  values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9" result="goo"/>
+                <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+              </filter>
+            </svg>
+            <div style={{position:"absolute",inset:"-30%",
+              animation:`chatBlobSpin ${active?"9s":"20s"} linear infinite`,
+              filter:`url(#chatBlobGoo${gooId})`}}>
+              <div style={{position:"absolute",width:"70%",height:"70%",left:"15%",top:"5%",borderRadius:"50%",
+                background:"radial-gradient(circle,#A78BFA,transparent 70%)",
+                animation:`chatBlobMove1 ${active?"3s":"6s"} ease-in-out infinite`,mixBlendMode:"screen"}}/>
+              <div style={{position:"absolute",width:"65%",height:"65%",left:"20%",top:"25%",borderRadius:"50%",
+                background:"radial-gradient(circle,#6677E8,transparent 70%)",
+                animation:`chatBlobMove2 ${active?"3.5s":"7s"} ease-in-out infinite`,mixBlendMode:"screen"}}/>
+              <div style={{position:"absolute",width:"60%",height:"60%",left:"10%",top:"30%",borderRadius:"50%",
+                background:"radial-gradient(circle,#8670E8,transparent 70%)",
+                animation:`chatBlobMove3 ${active?"4s":"8s"} ease-in-out infinite`,mixBlendMode:"screen"}}/>
+            </div>
+          </div>
         </div>
       </div>
     );
-  }
-
-  return(
-    <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",flexShrink:0,
-      boxShadow:"0 0 24px rgba(139,92,246,0.5), 0 0 46px rgba(6,182,212,0.25)"}}>
-      <OrbErrorBoundary onError={giveUpOnWebGL}>
-        <FlowingOrbCanvasLazy size={size} activeRef={activeRef} manualAmpRef={manualAmpRef}
-          onContextLost={giveUpOnWebGL}/>
-      </OrbErrorBoundary>
-    </div>
-  );
   });
 
 // react-markdown renders bare <p>/<ul>/<ol>/<li>/<strong> tags with browser
@@ -3366,24 +3253,21 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
   }
 
   return(<>
-      {/* Orb FAB button */}
-      <button onClick={()=>setOpen(o=>!o)}
-        style={{position:"fixed",bottom:30,right:102,width:60,height:60,
-          borderRadius:"50%",border:"none",cursor:"pointer",zIndex:40,
-          background:"transparent",padding:0}}>
-        <div style={{width:60,height:60,borderRadius:"50%",position:"relative",
-          background:"linear-gradient(145deg,#B8A8FF 0%,#8670E8 40%,#4C5FD5 100%)",
-          boxShadow:open
-            ?"0 0 0 4px rgba(134,112,232,0.3), 0 12px 36px rgba(76,95,213,0.7)"
-            :"0 12px 36px rgba(76,95,213,0.7), 0 4px 10px rgba(0,0,0,0.3)",
-          display:"flex",alignItems:"center",justifyContent:"center",
-          animation:!open?"orbPulse 3s ease-in-out infinite":"none",
-          transition:"all 0.3s"}}>
-          <style>{`@keyframes orbPulse{0%,100%{box-shadow:0 0 0 0 rgba(134,112,232,0.4),0 12px 36px rgba(76,95,213,0.7)}50%{box-shadow:0 0 0 12px rgba(134,112,232,0),0 12px 36px rgba(76,95,213,0.7)}}`}</style>
-          <i className={`ti ${open?"ti-x":"ti-sparkles"}`}
-            style={{fontSize:24,color:"white",transition:"all 0.2s"}} aria-hidden="true"/>
+      {/* Corner blob — only rendered while closed. The header's own blob
+          instance (below, inside the panel) takes over as the close
+          control once open, per Round 1's two-instance approach: rather
+          than one element visually traveling between the corner and the
+          panel header (a true shared-element morph — a Round 2 idea if
+          this feels good), the panel itself plays a scale+fade-in
+          animation anchored at this corner, so opening still reads as
+          "the blob expands into the panel" without the added risk of
+          animating a single element's position AND size AND merging it
+          into the panel shape all at once. */}
+      {!open&&(
+        <div style={{position:"fixed",bottom:30,right:102,zIndex:40}}>
+          <ChatBlob size={60} onClick={()=>setOpen(true)} title="Open Docket AI"/>
         </div>
-      </button>
+      )}
 
       {open&&(
         <>
@@ -3420,7 +3304,19 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               // treatment once the background tone is settled.
               background:panelBg,
               border:expanded?"none":`1px solid ${C.border}`,
-              boxShadow:expanded?"none":"0 32px 80px rgba(0,0,0,0.45)"}}>
+              boxShadow:expanded?"none":"0 32px 80px rgba(0,0,0,0.45)",
+              // Round 1 of the blob-replaces-orb work: rather than the blob
+              // itself visually traveling into the panel (a true morph —
+              // deferred to Round 2, only if this feels good on device),
+              // the panel plays its own scale+fade-in on mount, anchored at
+              // the bottom-right corner where the blob sits, so opening
+              // still reads as "expanding from the blob" without the extra
+              // risk of animating one element's position+size+shape at
+              // once. Only fires on a genuine open — toggling `expanded`
+              // afterward doesn't remount this block, so no replay.
+              transformOrigin:"bottom right",
+              animation:"chatPanelExpandIn 0.32s cubic-bezier(0.34,1.56,0.64,1)"}}>
+              <style>{`@keyframes chatPanelExpandIn{0%{opacity:0;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}`}</style>
 
               {/* History sidebar — slides out from the left, clipped to this
                   chat panel's own bounds (its parent has overflow:hidden),
@@ -3583,20 +3479,19 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     <i className={`ti ${expanded?"ti-minimize":"ti-maximize"}`}
                       style={{fontSize:13}} aria-hidden="true"/>
                   </button>
-                  <button onClick={()=>{stopSpeaking();setOpen(false);setExpanded(false);}}
-                    style={{width:28,height:28,borderRadius:8,border:inputBtnBorder,
-                      background:inputBtnBg,cursor:"pointer",color:C.muted,
-                      display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <i className="ti ti-x" style={{fontSize:13}} aria-hidden="true"/>
-                  </button>
+                  {/* X removed — the blob below is now the close control. */}
                 </div>
 
-                {/* Animated flowing energy orb — mount point left exactly as-is;
-                    replaced with the character in a later phase. */}
+                {/* The blob doubles as the close control while open (was
+                    the X button above) — tapping it does the same full
+                    close as the old X did (stop any playing speech, close
+                    the panel, drop out of expanded mode). */}
                 <div style={{flexShrink:0,
                   filter:"drop-shadow(0 0 16px rgba(134,112,232,0.6)) drop-shadow(0 0 30px rgba(76,95,213,0.3))",
                   transition:"all 0.3s"}}>
-                  <FlowingOrb ref={orbRef} size={expanded?42:34} active={loading}/>
+                  <ChatBlob ref={orbRef} size={expanded?42:34} active={loading}
+                    onClick={()=>{stopSpeaking();setOpen(false);setExpanded(false);}}
+                    title="Close"/>
                 </div>
               </div>
 
