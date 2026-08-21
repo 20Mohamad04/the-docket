@@ -3406,24 +3406,29 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               // Rim-lit frame (Group A restyle) — a gradient border via the
               // padding-box/border-box double-background trick (the fill
               // color occupies the padding-box, a soft directional gradient
-              // occupies the border-box and only shows through the 1px
-              // border ring) instead of a flat single-color border, plus a
-              // stacked box-shadow: the original soft lift shadow, a thin
-              // inset top highlight to suggest light catching the inner
-              // edge, and a very low-opacity ambient ring in the app's own
-              // brand blue/purple rather than a generic glow. Kept
-              // deliberately subtle — flat single background/border in
-              // expanded (fullscreen) mode, where there's no visible border
-              // for a gradient to show through anyway.
+              // occupies the border-box and only shows through the border
+              // ring) instead of a flat single-color border, plus a stacked
+              // box-shadow: the original soft lift shadow, an inset top
+              // highlight to suggest light catching the inner edge, a
+              // tight colored ring right at the edge (the actual "rim"),
+              // and a wider ambient glow — both tinted with the app's own
+              // brand blue/purple rather than a generic glow. Bumped up a
+              // full pass from the first version, which read as too subtle
+              // to register as an intentional effect; still capped at
+              // moderate opacities so it doesn't tip into a neon-glow look.
+              // Flat single background/border in expanded (fullscreen)
+              // mode, where there's no visible border for a gradient to
+              // show through anyway.
               background:expanded
                 ?(dark?"#0E1020":"#F0EFFC")
-                :`${dark?"#0E1020":"#F0EFFC"} padding-box, linear-gradient(160deg, rgba(255,255,255,${dark?0.16:0.55}) 0%, rgba(255,255,255,${dark?0.03:0.18}) 45%, rgba(0,0,0,${dark?0.3:0.05}) 100%) border-box`,
-              border:expanded?"none":"1px solid transparent",
+                :`${dark?"#0E1020":"#F0EFFC"} padding-box, linear-gradient(160deg, rgba(255,255,255,${dark?0.32:0.75}) 0%, rgba(255,255,255,${dark?0.08:0.3}) 45%, rgba(0,0,0,${dark?0.45:0.12}) 100%) border-box`,
+              border:expanded?"none":"2px solid transparent",
               boxShadow:expanded?"none":[
-                "0 32px 80px rgba(0,0,0,0.4)",
-                `inset 0 1px 0 rgba(255,255,255,${dark?0.08:0.5})`,
-                `0 0 0 1px rgba(255,255,255,${dark?0.03:0.06})`,
-                `0 0 28px rgba(76,95,213,${dark?0.1:0.06})`,
+                "0 32px 80px rgba(0,0,0,0.45)",
+                `inset 0 1.5px 0 rgba(255,255,255,${dark?0.18:0.75})`,
+                `0 0 0 1.5px rgba(255,255,255,${dark?0.09:0.16})`,
+                `0 0 0 4px rgba(76,95,213,${dark?0.18:0.14})`,
+                `0 0 40px rgba(76,95,213,${dark?0.22:0.14})`,
               ].join(", ")}}>
 
               {/* History sidebar — slides out from the left, clipped to this
@@ -3536,8 +3541,20 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   regardless of theme — they're over the panel's own
                   background now, which is light in light mode. */}
               <div style={{
-                padding:expanded?"16px 24px 12px":"10px 20px 8px",
-                display:"flex",flexDirection:"row",alignItems:"center",gap:12,
+                // Expanded (fullscreen) padding tightened to match
+                // non-expanded's vertical rhythm — with the title text gone,
+                // the taller 16/12 padding just left extra empty height
+                // above the messages for no reason. justifyContent:center
+                // in expanded mode also stops the orb from reading as
+                // "stranded at the far left with a large dead gap before
+                // the corner buttons" — centering it makes the empty space
+                // on either side look like deliberate framing instead of
+                // leftover layout, without adding any placeholder content
+                // (Group B fills this properly later).
+                padding:expanded?"10px 24px 8px":"10px 20px 8px",
+                display:"flex",flexDirection:"row",
+                justifyContent:expanded?"center":"flex-start",
+                alignItems:"center",gap:12,
                 position:"relative",flexShrink:0}}>
                 {/* Control buttons */}
                 <div style={{position:"absolute",top:10,right:10,display:"flex",gap:8}}>
