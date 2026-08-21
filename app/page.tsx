@@ -3405,30 +3405,39 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",
               // Rim-lit frame (Group A restyle) — a gradient border via the
               // padding-box/border-box double-background trick (the fill
-              // color occupies the padding-box, a soft directional gradient
-              // occupies the border-box and only shows through the border
-              // ring) instead of a flat single-color border, plus a stacked
-              // box-shadow: the original soft lift shadow, an inset top
-              // highlight to suggest light catching the inner edge, a
-              // tight colored ring right at the edge (the actual "rim"),
-              // and a wider ambient glow — both tinted with the app's own
-              // brand blue/purple rather than a generic glow. Bumped up a
-              // full pass from the first version, which read as too subtle
-              // to register as an intentional effect; still capped at
-              // moderate opacities so it doesn't tip into a neon-glow look.
+              // color occupies the padding-box, a soft gradient occupies
+              // the border-box and only shows through the border ring)
+              // instead of a flat single-color border, plus a stacked
+              // box-shadow: the original outward lift shadow (unrelated to
+              // the rim — this is the card floating above the page, kept
+              // as-is), an inset top highlight suggesting light catching
+              // the inner edge, a thin inset ring hugging the border, and
+              // an inset colored glow (tight + wide layers) that reads as
+              // the rim's own light bleeding INTO the panel rather than
+              // radiating out into the page — same overall intensity as
+              // the previous outward version, just flipped direction.
+              // Gradient angle changed from a diagonal 160deg (implying an
+              // external light source hitting the panel) to a vertical
+              // 180deg (brightest at top, fading down) so the border
+              // highlight reads as part of the same top-lit/inward logic
+              // as the inset shadow layers, not a separate directional cue.
+              // Glow color: soft white-gold (201,168,76 — the same gold
+              // already used for the Pro/crown accent elsewhere in the
+              // app), not the brand blue/purple — see the commit message
+              // for the other 2 options considered.
               // Flat single background/border in expanded (fullscreen)
               // mode, where there's no visible border for a gradient to
               // show through anyway.
               background:expanded
                 ?(dark?"#0E1020":"#F0EFFC")
-                :`${dark?"#0E1020":"#F0EFFC"} padding-box, linear-gradient(160deg, rgba(255,255,255,${dark?0.32:0.75}) 0%, rgba(255,255,255,${dark?0.08:0.3}) 45%, rgba(0,0,0,${dark?0.45:0.12}) 100%) border-box`,
+                :`${dark?"#0E1020":"#F0EFFC"} padding-box, linear-gradient(180deg, rgba(255,255,255,${dark?0.32:0.75}) 0%, rgba(255,255,255,${dark?0.08:0.3}) 45%, rgba(0,0,0,${dark?0.45:0.12}) 100%) border-box`,
               border:expanded?"none":"2px solid transparent",
               boxShadow:expanded?"none":[
                 "0 32px 80px rgba(0,0,0,0.45)",
                 `inset 0 1.5px 0 rgba(255,255,255,${dark?0.18:0.75})`,
-                `0 0 0 1.5px rgba(255,255,255,${dark?0.09:0.16})`,
-                `0 0 0 4px rgba(76,95,213,${dark?0.18:0.14})`,
-                `0 0 40px rgba(76,95,213,${dark?0.22:0.14})`,
+                `inset 0 0 0 1.5px rgba(255,255,255,${dark?0.09:0.16})`,
+                `inset 0 0 10px 2px rgba(201,168,76,${dark?0.22:0.16})`,
+                `inset 0 0 44px rgba(201,168,76,${dark?0.26:0.16})`,
               ].join(", ")}}>
 
               {/* History sidebar — slides out from the left, clipped to this
@@ -3532,15 +3541,19 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 )}
               </div>
 
-              {/* Header strip — purely structural now: no background/title of
-                  its own, just a mount point for the orb (Group B replaces
-                  it) and an anchor for the control buttons. Button colors
-                  are theme-aware (inputBtnBg/inputBtnBorder, the same pair
-                  the input row's own attach/mic buttons use) since they no
+              {/* Header strip — no purple, no title text, but filled with the
+                  same solid color as the panel itself (not transparent) so
+                  it reads as one continuous surface with the message area
+                  below it instead of showing the page through a see-through
+                  gap. Same fill in both expanded and non-expanded — just a
+                  mount point for the orb (Group B replaces it) and an
+                  anchor for the control buttons. Button colors are
+                  theme-aware (inputBtnBg/inputBtnBorder, the same pair the
+                  input row's own attach/mic buttons use) since they no
                   longer sit on a dark purple bar that guaranteed contrast
-                  regardless of theme — they're over the panel's own
-                  background now, which is light in light mode. */}
+                  regardless of theme. */}
               <div style={{
+                background:dark?"#0E1020":"#F0EFFC",
                 // Expanded (fullscreen) padding tightened to match
                 // non-expanded's vertical rhythm — with the title text gone,
                 // the taller 16/12 padding just left extra empty height
