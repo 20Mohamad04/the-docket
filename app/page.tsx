@@ -2840,6 +2840,25 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
       vv.removeEventListener("scroll",updateFromViewport);
     };
   },[open,updateFromViewport]);
+  // ── TEMPORARY: panel background-tone comparison scaffolding ─────────────
+  // Lets the panel's whole surface (header + messages + input strip) be
+  // switched between a few candidate tones via ?bg=A|B|C in the URL,
+  // without a redeploy per option, while the actual tone is still being
+  // decided. Defaults to "A" (the current tone) both server- and
+  // client-side, then reads the real query param in an effect after mount
+  // — same pattern as clientToday elsewhere in this file — so there's no
+  // hydration mismatch, just a possible one-frame flip to B/C right after
+  // mount if requested. DELETE this whole block (state + effect + the two
+  // *_BG_TONES maps + the panelBg usages below) once a tone is picked and
+  // hardcoded.
+  const[bgOption,setBgOption]=useState<"A"|"B"|"C">("A");
+  useEffect(()=>{
+    const v=new URLSearchParams(window.location.search).get("bg");
+    if(v==="A"||v==="B"||v==="C") setBgOption(v);
+  },[]);
+  const DARK_BG_TONES={A:"#0E1020",B:"#14131C",C:"#12102A"} as const;
+  const LIGHT_BG_TONES={A:"#F0EFFC",B:"#F7F6F3",C:"#F2F3F7"} as const;
+  const panelBg=dark?DARK_BG_TONES[bgOption]:LIGHT_BG_TONES[bgOption];
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;imageDataUrl?:string;opusFallback?:boolean}[]>([
     {role:"assistant",content:CHATBOT_GREETING},
   ]);
@@ -3403,42 +3422,15 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 :(visibleHeight!=null?`${visibleHeight-40}px`:"calc(100vh - 40px)"),
               borderRadius:expanded?0:24,
               display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",
-              // Rim-lit frame (Group A restyle) — a gradient border via the
-              // padding-box/border-box double-background trick (the fill
-              // color occupies the padding-box, a soft gradient occupies
-              // the border-box and only shows through the border ring)
-              // instead of a flat single-color border, plus a stacked
-              // box-shadow: the original outward lift shadow (unrelated to
-              // the rim — this is the card floating above the page, kept
-              // as-is), an inset top highlight suggesting light catching
-              // the inner edge, a thin inset ring hugging the border, and
-              // an inset colored glow (tight + wide layers) that reads as
-              // the rim's own light bleeding INTO the panel rather than
-              // radiating out into the page — same overall intensity as
-              // the previous outward version, just flipped direction.
-              // Gradient angle changed from a diagonal 160deg (implying an
-              // external light source hitting the panel) to a vertical
-              // 180deg (brightest at top, fading down) so the border
-              // highlight reads as part of the same top-lit/inward logic
-              // as the inset shadow layers, not a separate directional cue.
-              // Glow color: soft white-gold (201,168,76 — the same gold
-              // already used for the Pro/crown accent elsewhere in the
-              // app), not the brand blue/purple — see the commit message
-              // for the other 2 options considered.
-              // Flat single background/border in expanded (fullscreen)
-              // mode, where there's no visible border for a gradient to
-              // show through anyway.
-              background:expanded
-                ?(dark?"#0E1020":"#F0EFFC")
-                :`${dark?"#0E1020":"#F0EFFC"} padding-box, linear-gradient(180deg, rgba(255,255,255,${dark?0.32:0.75}) 0%, rgba(255,255,255,${dark?0.08:0.3}) 45%, rgba(0,0,0,${dark?0.45:0.12}) 100%) border-box`,
-              border:expanded?"none":"2px solid transparent",
-              boxShadow:expanded?"none":[
-                "0 32px 80px rgba(0,0,0,0.45)",
-                `inset 0 1.5px 0 rgba(255,255,255,${dark?0.18:0.75})`,
-                `inset 0 0 0 1.5px rgba(255,255,255,${dark?0.09:0.16})`,
-                `inset 0 0 10px 2px rgba(201,168,76,${dark?0.22:0.16})`,
-                `inset 0 0 44px rgba(201,168,76,${dark?0.26:0.16})`,
-              ].join(", ")}}>
+              // Reverted to a plain, clean floating card — three rim-lit
+              // passes (outward glow, then inward glow, then a gold retint)
+              // never read as an intentional premium effect on a real
+              // device in either theme, and the panel background itself is
+              // being rethought anyway (see panelBg above). Revisit edge
+              // treatment once the background tone is settled.
+              background:panelBg,
+              border:expanded?"none":`1px solid ${C.border}`,
+              boxShadow:expanded?"none":"0 32px 80px rgba(0,0,0,0.45)"}}>
 
               {/* History sidebar — slides out from the left, clipped to this
                   chat panel's own bounds (its parent has overflow:hidden),
@@ -3553,7 +3545,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   longer sit on a dark purple bar that guaranteed contrast
                   regardless of theme. */}
               <div style={{
-                background:dark?"#0E1020":"#F0EFFC",
+                background:panelBg,
                 // Expanded (fullscreen) padding tightened to match
                 // non-expanded's vertical rhythm — with the title text gone,
                 // the taller 16/12 padding just left extra empty height
@@ -3614,7 +3606,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               {/* Messages */}
               <div style={{flex:1,overflowY:"auto",padding:"16px",
                 display:"flex",flexDirection:"column",gap:10,
-                background:dark?"#0E1020":"#F0EFFC"}}>
+                background:panelBg}}>
                 {messages.map((m,i)=>(
                   <div key={i} style={{
                     maxWidth:expanded?"60%":"85%",padding:"12px 16px",
@@ -3671,11 +3663,14 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 <div ref={messagesEndRef}/>
               </div>
 
-              {/* Input */}
+              {/* Input — same panelBg as the header/messages above it now
+                  (was a separate translucent tint + top border, which is
+                  exactly the two-zone seam being removed) so the whole
+                  panel reads as one continuous surface. backdropFilter
+                  dropped too — it did nothing useful once this stopped
+                  being translucent. */}
               <div style={{padding:"12px 16px 16px",
-                background:dark?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.8)",
-                borderTop:`1px solid ${dark?"rgba(255,255,255,0.08)":C.border}`,
-                backdropFilter:"blur(10px)",flexShrink:0}}>
+                background:panelBg,flexShrink:0}}>
                 {pendingImage&&(
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,
                     padding:"6px 10px",borderRadius:12,
