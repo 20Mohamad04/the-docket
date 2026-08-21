@@ -3688,11 +3688,22 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 {imageError&&(
                   <p style={{fontSize:11,color:C.urgent,marginBottom:8}}>{imageError}</p>
                 )}
-                <div style={{display:"flex",gap:8,alignItems:"center",
+                {/* Chosen fill: a solid, elevated surface (unchanged
+                    approach, refined values) rather than anything
+                    translucent — it sits directly over the gradient panel
+                    background now, and a see-through pill would pick up
+                    whatever glow/color is behind it inconsistently as the
+                    conversation scrolls. Border softened to a low-contrast
+                    hairline (was a much more visible 1.5px C.border) and
+                    the shadow widened/softened, with a faint brand-blue
+                    tint in light mode — reads as "premium lifted pill"
+                    rather than "boxed input," while still being clearly
+                    Docket's own palette, not a ChatGPT reskin. */}
+                <div style={{display:"flex",gap:10,alignItems:"center",
                   background:dark?"#1A1D3E":"#FFFFFF",
-                  borderRadius:16,padding:"6px 6px 6px 14px",
-                  border:`1.5px solid ${C.border}`,
-                  boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
+                  borderRadius:24,padding:"8px 8px 8px 18px",
+                  border:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
+                  boxShadow:dark?"0 8px 24px rgba(0,0,0,0.35)":"0 8px 24px rgba(76,95,213,0.12)"}}>
                   <input value={input} onChange={e=>setInput(e.target.value)}
                     onKeyDown={e=>e.key==="Enter"&&send()}
                     // Optimistic early re-measure for when this blur means
@@ -3718,14 +3729,20 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                       background:"transparent",color:C.navy,fontFamily:"inherit"}}/>
                   {isPro&&(
                     <div style={{position:"relative",flexShrink:0}}>
+                      {/* De-boxed — minimal inline text + chevron (like
+                          ChatGPT's model switcher), no border/filled
+                          background. Labels are display-only renames
+                          (Sonnet->Nova, Opus->Vega); selectedModel's actual
+                          values ("sonnet"|"opus") and everything routing on
+                          them are untouched. */}
                       <button onClick={()=>setModelMenuOpen(v=>!v)}
                         className="pill-btn"
                         title="Choose which model sends your next messages"
                         style={{display:"flex",alignItems:"center",gap:4,height:36,
-                          padding:"0 10px",borderRadius:18,whiteSpace:"nowrap",
-                          border:inputBtnBorder,background:inputBtnBg,color:C.navy,
+                          padding:"0 6px",whiteSpace:"nowrap",
+                          border:"none",background:"transparent",color:C.muted,
                           fontSize:11,fontWeight:700,fontFamily:"inherit"}}>
-                        {selectedModel==="opus"?"Opus 4.8":"Sonnet 5"}
+                        {selectedModel==="opus"?"Vega":"Nova"}
                         <i className="ti ti-chevron-down" style={{fontSize:12,
                           transform:modelMenuOpen?"rotate(180deg)":"none",transition:"transform 0.15s"}} aria-hidden="true"/>
                       </button>
@@ -3742,7 +3759,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                               padding:"10px 14px",border:"none",cursor:"pointer",fontSize:12.5,fontWeight:600,
                               background:selectedModel==="sonnet"?(dark?"rgba(255,255,255,0.06)":"#F0EFFC"):"transparent",
                               color:C.navy,textAlign:"left",fontFamily:"inherit"}}>
-                            Sonnet 5
+                            Nova
                             {selectedModel==="sonnet"&&<i className="ti ti-check" style={{fontSize:13,color:C.primary}} aria-hidden="true"/>}
                           </button>
                           <button onClick={()=>{setSelectedModel("opus");setModelMenuOpen(false);}}
@@ -3751,7 +3768,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                               border:"none",borderTop:`1px solid ${dark?"rgba(255,255,255,0.08)":C.border}`,
                               background:selectedModel==="opus"?(dark?"rgba(255,255,255,0.06)":"#F0EFFC"):"transparent",
                               color:C.navy,textAlign:"left",fontFamily:"inherit"}}>
-                            <span>Opus 4.8{opusCount!=null?` — ${Math.max(0,opusLimitForTier(tier)-opusCount)} left`:""}</span>
+                            <span>Vega{opusCount!=null?` — ${Math.max(0,opusLimitForTier(tier)-opusCount)} left`:""}</span>
                             {selectedModel==="opus"&&<i className="ti ti-check" style={{fontSize:13,color:C.primary,marginLeft:8}} aria-hidden="true"/>}
                           </button>
                         </div>
@@ -3771,12 +3788,18 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                         setImageError(err?.message||"Couldn't process that image.");
                       }
                     }}/>
+                  {/* Idle state de-boxed (no border/fill, just a muted
+                      icon) to match the cleaner toolbar look — toggled/
+                      active states (image attached, mic listening) keep
+                      their filled accent color so they're still clearly
+                      "on," they just no longer have a permanent border/fill
+                      while idle. */}
                   <button onClick={()=>fileInputRef.current?.click()} title="Attach an image"
                     className="pill-btn"
                     style={{width:36,height:36,
-                      background:pendingImage?C.primary:inputBtnBg,
+                      background:pendingImage?C.primary:"transparent",
                       color:pendingImage?"white":C.muted,
-                      border:pendingImage?"1.5px solid transparent":inputBtnBorder,cursor:"pointer",
+                      border:pendingImage?"1.5px solid transparent":"none",cursor:"pointer",
                       flexShrink:0}}>
                     <i className="ti ti-paperclip" style={{fontSize:15}} aria-hidden="true"/>
                   </button>
@@ -3784,22 +3807,26 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     <button onClick={toggleMic} title={listening?"Stop listening":"Speak your message"}
                       className="pill-btn"
                       style={{width:36,height:36,
-                        background:listening?"#E14D4D":inputBtnBg,
+                        background:listening?"#E14D4D":"transparent",
                         color:listening?"white":C.muted,
-                        border:listening?"1.5px solid #E14D4D":inputBtnBorder,cursor:"pointer",
+                        border:listening?"1.5px solid #E14D4D":"none",cursor:"pointer",
                         flexShrink:0,animation:listening?"micPulse 1.2s ease-in-out infinite":"none"}}>
                       <i className="ti ti-microphone" style={{fontSize:15}} aria-hidden="true"/>
                     </button>
                   )}
                   <style>{`@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(225,77,77,0.5)}50%{box-shadow:0 0 0 8px rgba(225,77,77,0)}}`}</style>
+                  {/* Kept as the accent button (filled brand gradient) once
+                    there's something to send, matching attach/mic's new
+                    transparent/borderless idle state otherwise instead of
+                    the old boxed inputBtnBg/inputBtnBorder fallback. */}
                   <button onClick={send} disabled={loading||(!input.trim()&&!pendingImage)}
                     className="pill-btn"
                     style={{width:36,height:36,
                       background:(input.trim()||pendingImage)
                         ?"linear-gradient(145deg,#6677E8,#4C5FD5)"
-                        :inputBtnBg,
+                        :"transparent",
                       color:(input.trim()||pendingImage)?"white":C.muted,
-                      border:(input.trim()||pendingImage)?"1.5px solid transparent":inputBtnBorder,cursor:"pointer",
+                      border:(input.trim()||pendingImage)?"1.5px solid transparent":"none",cursor:"pointer",
                       opacity:loading||(!input.trim()&&!pendingImage)?0.5:1,flexShrink:0}}>
                     <i className="ti ti-send" style={{fontSize:15}} aria-hidden="true"/>
                   </button>
