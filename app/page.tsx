@@ -2840,25 +2840,48 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
       vv.removeEventListener("scroll",updateFromViewport);
     };
   },[open,updateFromViewport]);
-  // ── TEMPORARY: panel background-tone comparison scaffolding ─────────────
+  // ── TEMPORARY: panel background gradient comparison scaffolding ─────────
   // Lets the panel's whole surface (header + messages + input strip) be
-  // switched between a few candidate tones via ?bg=A|B|C in the URL,
-  // without a redeploy per option, while the actual tone is still being
-  // decided. Defaults to "A" (the current tone) both server- and
-  // client-side, then reads the real query param in an effect after mount
-  // — same pattern as clientToday elsewhere in this file — so there's no
-  // hydration mismatch, just a possible one-frame flip to B/C right after
-  // mount if requested. DELETE this whole block (state + effect + the two
-  // *_BG_TONES maps + the panelBg usages below) once a tone is picked and
-  // hardcoded.
-  const[bgOption,setBgOption]=useState<"A"|"B"|"C">("A");
+  // switched between a few candidate CSS gradient backgrounds via
+  // ?bg=G1|G2|G3 in the URL, without a redeploy per option, while the
+  // actual background is still being decided. Defaults to "G1" both
+  // server- and client-side, then reads the real query param in an effect
+  // after mount — same pattern as clientToday elsewhere in this file — so
+  // there's no hydration mismatch, just a possible one-frame flip to G2/G3
+  // right after mount if requested. Each map value is a full CSS
+  // `background` shorthand string — one or more comma-separated
+  // radial/linear gradients, with a solid color as the final layer — pure
+  // CSS, no images, so it stays crisp at any panel size (percentage-based
+  // gradient extents) and costs nothing to render. DELETE this whole block
+  // (state + effect + the two *_BG_GRADIENTS maps + the panelBg usages
+  // below) once a background is picked and hardcoded.
+  const[bgOption,setBgOption]=useState<"G1"|"G2"|"G3">("G1");
   useEffect(()=>{
     const v=new URLSearchParams(window.location.search).get("bg");
-    if(v==="A"||v==="B"||v==="C") setBgOption(v);
+    if(v==="G1"||v==="G2"||v==="G3") setBgOption(v);
   },[]);
-  const DARK_BG_TONES={A:"#0E1020",B:"#14131C",C:"#12102A"} as const;
-  const LIGHT_BG_TONES={A:"#F0EFFC",B:"#F7F6F3",C:"#F2F3F7"} as const;
-  const panelBg=dark?DARK_BG_TONES[bgOption]:LIGHT_BG_TONES[bgOption];
+  const DARK_BG_GRADIENTS={
+    // G1 — Top glow: soft blue-violet radial glow from top-center, echoing
+    // the orb, fading into the deep indigo base toward the bottom.
+    G1:"radial-gradient(ellipse 140% 70% at 50% 0%, rgba(134,112,232,0.28) 0%, rgba(76,95,213,0.12) 35%, rgba(14,16,32,0) 70%), #0E1020",
+    // G2 — Corner aurora: diffuse purple glow top-left, fainter blue glow
+    // bottom-right, over the same dark base.
+    G2:"radial-gradient(ellipse 90% 70% at 15% 10%, rgba(134,112,232,0.24) 0%, rgba(14,16,32,0) 60%), radial-gradient(ellipse 90% 70% at 90% 100%, rgba(76,95,213,0.16) 0%, rgba(14,16,32,0) 60%), #0E1020",
+    // G3 — Vertical wash: lighter indigo at top easing to near-black at
+    // the bottom, plus a whisper-faint violet radial at the very top.
+    G3:"radial-gradient(ellipse 100% 40% at 50% 0%, rgba(134,112,232,0.08) 0%, rgba(0,0,0,0) 60%), linear-gradient(180deg, #1B1830 0%, #120F22 45%, #08060F 100%)",
+  } as const;
+  const LIGHT_BG_GRADIENTS={
+    // G1 — Top glow: faint lilac/violet radial glow from the top, fading
+    // to the off-white base.
+    G1:"radial-gradient(ellipse 140% 70% at 50% 0%, rgba(134,112,232,0.14) 0%, rgba(255,255,255,0) 65%), #FAFAF8",
+    // G2 — Corner aurora: very soft lilac top-left, fainter blue
+    // bottom-right, over the same off-white base.
+    G2:"radial-gradient(ellipse 90% 70% at 15% 10%, rgba(134,112,232,0.12) 0%, rgba(255,255,255,0) 60%), radial-gradient(ellipse 90% 70% at 90% 100%, rgba(76,95,213,0.08) 0%, rgba(255,255,255,0) 60%), #FAFAF8",
+    // G3 — Vertical wash: subtle pale-lilac at top easing to white.
+    G3:"linear-gradient(180deg, #F1EFFA 0%, #FAFAFA 60%, #FDFDFC 100%)",
+  } as const;
+  const panelBg=dark?DARK_BG_GRADIENTS[bgOption]:LIGHT_BG_GRADIENTS[bgOption];
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;imageDataUrl?:string;opusFallback?:boolean}[]>([
     {role:"assistant",content:CHATBOT_GREETING},
   ]);
@@ -3545,7 +3568,14 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   longer sit on a dark purple bar that guaranteed contrast
                   regardless of theme. */}
               <div style={{
-                background:panelBg,
+                // Transparent — the gradient lives on the outer panel frame
+                // (which spans the panel's full height) so it reads as one
+                // continuous background behind header+messages+input,
+                // instead of each section independently repainting its own
+                // copy of the same gradient relative to its own (much
+                // shorter) box, which would create visible seams/repeated
+                // glows at each section boundary.
+                background:"transparent",
                 // Expanded (fullscreen) padding tightened to match
                 // non-expanded's vertical rhythm — with the title text gone,
                 // the taller 16/12 padding just left extra empty height
@@ -3603,10 +3633,12 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 </div>
               </div>
 
-              {/* Messages */}
+              {/* Messages — transparent, see the header strip's comment
+                  above on why (single continuous gradient on the outer
+                  frame, not repainted per-section). */}
               <div style={{flex:1,overflowY:"auto",padding:"16px",
                 display:"flex",flexDirection:"column",gap:10,
-                background:panelBg}}>
+                background:"transparent"}}>
                 {messages.map((m,i)=>(
                   <div key={i} style={{
                     maxWidth:expanded?"60%":"85%",padding:"12px 16px",
@@ -3663,14 +3695,15 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 <div ref={messagesEndRef}/>
               </div>
 
-              {/* Input — same panelBg as the header/messages above it now
-                  (was a separate translucent tint + top border, which is
-                  exactly the two-zone seam being removed) so the whole
-                  panel reads as one continuous surface. backdropFilter
-                  dropped too — it did nothing useful once this stopped
-                  being translucent. */}
+              {/* Input — transparent now too (was a separate translucent
+                  tint + top border, which is exactly the two-zone seam
+                  being removed), same reasoning as the header/messages
+                  above: one continuous gradient on the outer frame shows
+                  through all three sections instead of each repainting its
+                  own copy. backdropFilter dropped too — it did nothing
+                  useful once this stopped being its own translucent layer. */}
               <div style={{padding:"12px 16px 16px",
-                background:panelBg,flexShrink:0}}>
+                background:"transparent",flexShrink:0}}>
                 {pendingImage&&(
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,
                     padding:"6px 10px",borderRadius:12,
