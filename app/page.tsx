@@ -3403,9 +3403,28 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 :(visibleHeight!=null?`${visibleHeight-40}px`:"calc(100vh - 40px)"),
               borderRadius:expanded?0:24,
               display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",
-              background:dark?"#0E1020":"#F0EFFC",
-              border:expanded?"none":`1px solid ${C.border}`,
-              boxShadow:expanded?"none":"0 32px 80px rgba(0,0,0,0.45)"}}>
+              // Rim-lit frame (Group A restyle) — a gradient border via the
+              // padding-box/border-box double-background trick (the fill
+              // color occupies the padding-box, a soft directional gradient
+              // occupies the border-box and only shows through the 1px
+              // border ring) instead of a flat single-color border, plus a
+              // stacked box-shadow: the original soft lift shadow, a thin
+              // inset top highlight to suggest light catching the inner
+              // edge, and a very low-opacity ambient ring in the app's own
+              // brand blue/purple rather than a generic glow. Kept
+              // deliberately subtle — flat single background/border in
+              // expanded (fullscreen) mode, where there's no visible border
+              // for a gradient to show through anyway.
+              background:expanded
+                ?(dark?"#0E1020":"#F0EFFC")
+                :`${dark?"#0E1020":"#F0EFFC"} padding-box, linear-gradient(160deg, rgba(255,255,255,${dark?0.16:0.55}) 0%, rgba(255,255,255,${dark?0.03:0.18}) 45%, rgba(0,0,0,${dark?0.3:0.05}) 100%) border-box`,
+              border:expanded?"none":"1px solid transparent",
+              boxShadow:expanded?"none":[
+                "0 32px 80px rgba(0,0,0,0.4)",
+                `inset 0 1px 0 rgba(255,255,255,${dark?0.08:0.5})`,
+                `0 0 0 1px rgba(255,255,255,${dark?0.03:0.06})`,
+                `0 0 28px rgba(76,95,213,${dark?0.1:0.06})`,
+              ].join(", ")}}>
 
               {/* History sidebar — slides out from the left, clipped to this
                   chat panel's own bounds (its parent has overflow:hidden),
@@ -3422,7 +3441,15 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   width:expanded?320:260,
                   background:dark?"#16192A":"#FFFFFF",
                   borderRight:`1px solid ${C.border}`,
-                  boxShadow:"8px 0 32px rgba(0,0,0,0.25)",
+                  // Only painted while actually open — defensive against a
+                  // reported faint shading strip down the panel's left edge
+                  // that didn't reproduce in an isolated Chromium test
+                  // (overflow:hidden correctly clipped both the translated
+                  // sidebar and its shadow there), but could still be a
+                  // Safari-specific compositing/clip quirk I can't test
+                  // from here. If nothing's painted when closed, there's
+                  // nothing to bleed regardless of the exact mechanism.
+                  boxShadow:historyOpen?"8px 0 32px rgba(0,0,0,0.25)":"none",
                   transform:historyOpen?"translateX(0)":"translateX(-100%)",
                   transition:"transform 0.22s cubic-bezier(0.34,1.56,0.64,1)",
                   display:"flex",flexDirection:"column",overflow:"hidden"}}>
@@ -3500,9 +3527,15 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 )}
               </div>
 
-              {/* Orb header */}
+              {/* Header strip — purely structural now: no background/title of
+                  its own, just a mount point for the orb (Group B replaces
+                  it) and an anchor for the control buttons. Button colors
+                  are theme-aware (inputBtnBg/inputBtnBorder, the same pair
+                  the input row's own attach/mic buttons use) since they no
+                  longer sit on a dark purple bar that guaranteed contrast
+                  regardless of theme — they're over the panel's own
+                  background now, which is light in light mode. */}
               <div style={{
-                background:"linear-gradient(135deg,#1A1040 0%,#2A1060 50%,#1A2080 100%)",
                 padding:expanded?"16px 24px 12px":"10px 20px 8px",
                 display:"flex",flexDirection:"row",alignItems:"center",gap:12,
                 position:"relative",flexShrink:0}}>
@@ -3510,50 +3543,41 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 <div style={{position:"absolute",top:10,right:10,display:"flex",gap:8}}>
                   <button onClick={()=>setHistoryOpen(o=>!o)}
                     title="Chat history"
-                    style={{width:28,height:28,borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",
-                      background:historyOpen?"rgba(255,255,255,0.24)":"rgba(255,255,255,0.1)",
-                      cursor:"pointer",color:"white",
+                    style={{width:28,height:28,borderRadius:8,border:inputBtnBorder,
+                      background:historyOpen?(dark?"rgba(76,95,213,0.35)":"rgba(76,95,213,0.18)"):inputBtnBg,
+                      cursor:"pointer",color:C.muted,
                       display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <i className="ti ti-history" style={{fontSize:13}} aria-hidden="true"/>
                   </button>
                   <button onClick={()=>{setVoiceOn(v=>{const next=!v;voiceOnRef.current=next;if(!next)stopSpeaking();return next;});}}
                     title={voiceOn?"Mute voice replies":"Unmute voice replies"}
-                    style={{width:28,height:28,borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",
-                      background:"rgba(255,255,255,0.1)",cursor:"pointer",color:"white",
+                    style={{width:28,height:28,borderRadius:8,border:inputBtnBorder,
+                      background:inputBtnBg,cursor:"pointer",color:C.muted,
                       display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <i className={`ti ${voiceOn?"ti-volume":"ti-volume-off"}`}
                       style={{fontSize:13}} aria-hidden="true"/>
                   </button>
                   <button onClick={()=>setExpanded(e=>!e)}
-                    style={{width:28,height:28,borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",
-                      background:"rgba(255,255,255,0.1)",cursor:"pointer",color:"white",
+                    style={{width:28,height:28,borderRadius:8,border:inputBtnBorder,
+                      background:inputBtnBg,cursor:"pointer",color:C.muted,
                       display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <i className={`ti ${expanded?"ti-minimize":"ti-maximize"}`}
                       style={{fontSize:13}} aria-hidden="true"/>
                   </button>
                   <button onClick={()=>{stopSpeaking();setOpen(false);setExpanded(false);}}
-                    style={{width:28,height:28,borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",
-                      background:"rgba(255,255,255,0.1)",cursor:"pointer",color:"white",
+                    style={{width:28,height:28,borderRadius:8,border:inputBtnBorder,
+                      background:inputBtnBg,cursor:"pointer",color:C.muted,
                       display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <i className="ti ti-x" style={{fontSize:13}} aria-hidden="true"/>
                   </button>
                 </div>
 
-                {/* Animated flowing energy orb */}
+                {/* Animated flowing energy orb — mount point left exactly as-is;
+                    replaced with the character in a later phase. */}
                 <div style={{flexShrink:0,
                   filter:"drop-shadow(0 0 16px rgba(134,112,232,0.6)) drop-shadow(0 0 30px rgba(76,95,213,0.3))",
                   transition:"all 0.3s"}}>
                   <FlowingOrb ref={orbRef} size={expanded?42:34} active={loading}/>
-                </div>
-
-                <div style={{textAlign:"left",minWidth:0}}>
-                  <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
-                    fontSize:expanded?16:14,color:"white",letterSpacing:"-0.3px",lineHeight:1.2}}>
-                    Ask Docket
-                  </p>
-                  <p style={{fontSize:expanded?11:9.5,color:"rgba(255,255,255,0.6)"}}>
-                    Your AI scheduling assistant
-                  </p>
                 </div>
               </div>
 
