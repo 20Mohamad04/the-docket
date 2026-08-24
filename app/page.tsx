@@ -4911,15 +4911,23 @@ export default function Home(){
     const now=new Date();
     const dayIdx=(now.getDay()+6)%7;
     const monday=new Date(now);monday.setDate(now.getDate()-dayIdx);
-    // Starts 14 days before the current week's Monday, not at it — the
-    // back arrow used to have nowhere to go, since this array previously
-    // only ever generated the current week forward through the next 2
-    // weeks. Forward reach (20 days past Monday) is unchanged; this just
-    // adds real range behind today. See the mount effect below for why
-    // today still needs to be the default visible position despite the
-    // list now starting 2 weeks earlier.
-    const start=new Date(monday);start.setDate(monday.getDate()-14);
-    return Array.from({length:35},(_,i)=>{
+    // Starts ~6 months (183 days) before the current week's Monday, not at
+    // it. The previous fix (14 days back) helped but was still a fixed
+    // window with a hard edge a few weeks back — a planner needs real
+    // history, so this is a generously large fixed range rather than a
+    // slightly-less-small one. Considered making the range grow
+    // dynamically as the user scrolls back (extending the array near the
+    // scroll edge) instead of a fixed window, but that needs careful
+    // scroll-position preservation across a prepend (a classically fiddly
+    // problem — get it slightly wrong and the list visibly jumps) for a
+    // planner where "several months of history" already comfortably
+    // covers realistic use. Not pursuing it unless this bound ever proves
+    // insufficient in practice. Forward reach (20 days past Monday) is
+    // unchanged. See the mount effect below for why today still needs to
+    // be the default visible position despite the list starting so much
+    // earlier.
+    const start=new Date(monday);start.setDate(monday.getDate()-183);
+    return Array.from({length:204},(_,i)=>{
       const d=new Date(start);d.setDate(start.getDate()+i);
       const key=["sun","mon","tue","wed","thu","fri","sat"][d.getDay()];
       return{key,date:d.toISOString().slice(0,10),dayNum:d.getDate(),
