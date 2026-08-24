@@ -1865,9 +1865,10 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
         ],
         cta:"Continue Free",onClick:onClose,ctaStyle:{background:"transparent",color:C.navy,border:`1.5px solid ${C.border}`}},
       {id:"pro",name:"Pro",icon:"ti-crown",accent:C.primary,price:"£4.99",priceSuffix:"/month",
-        badge:"MOST POPULAR",
+        // Plain text label only now, not a frame/badge — see the card
+        // render below for why (was conflicting with the selection frame).
+        recommended:true,
         disclosure:"7 days free, then £4.99/month. Renews automatically until cancelled.",
-        highlight:true,
         iconBg:"linear-gradient(145deg,#6677E8,#4C5FD5)",iconShadow:"0 4px 14px rgba(76,95,213,0.4)",
         features:[
           {icon:"ti-message-circle",label:"Sonnet messages",value:"Unlimited"},
@@ -1933,39 +1934,20 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
               return(
               <div key={plan.id} onClick={()=>setSelectedTier(plan.id as "free"|"pro"|"max")}
                 style={{position:"relative",display:"flex",flexDirection:"column",cursor:"pointer",
-                borderRadius:18,padding:plan.highlight?"26px 18px 20px":"20px 18px",
-                // plan.highlight (Pro's "recommended" styling — purple
-                // border/tint/badge) and `selected` (this card is the one
-                // that'll actually be checked out) are deliberately
-                // separate signals now, not the same thing: previously
-                // there was no selection state at all, only this static
-                // highlight, so tapping any card besides the CTA button did
-                // nothing and gave no feedback. The selected ring below
-                // layers on top of whichever border the card already has,
-                // and the checkmark badge is a different shape/position
-                // than the "MOST POPULAR" ribbon, so a selected-but-not-
-                // recommended card (e.g. Max) and a recommended-but-not-
-                // selected card never look the same.
-                border:plan.highlight?`2px solid ${C.primary}`:`1.5px solid ${C.border}`,
-                background:plan.highlight
-                  ?"linear-gradient(160deg,rgba(76,95,213,0.1),rgba(134,112,232,0.05))"
-                  :(dark?"rgba(255,255,255,0.02)":"#FAFAFC"),
-                boxShadow:[
-                  plan.highlight?"0 16px 40px rgba(76,95,213,0.25)":"none",
-                  selected?"0 0 0 3px rgba(46,139,87,0.45)":"none",
-                ].join(", ")}}>
-                {selected&&(
-                  <div title="Selected" style={{position:"absolute",top:10,right:10,width:22,height:22,
-                    borderRadius:"50%",background:C.sage,display:"flex",alignItems:"center",
-                    justifyContent:"center",boxShadow:"0 2px 8px rgba(46,139,87,0.5)",zIndex:1}}>
-                    <i className="ti ti-check" style={{fontSize:13,color:"white"}} aria-hidden="true"/>
-                  </div>
-                )}
-                {plan.badge&&(
-                  <div style={{position:"absolute",top:-11,left:"50%",transform:"translateX(-50%)",
-                    background:"linear-gradient(135deg,#4C5FD5,#8670E8)",padding:"4px 14px",borderRadius:50,
-                    fontSize:9.5,fontWeight:800,color:"white",letterSpacing:"0.5px",
-                    boxShadow:"0 4px 12px rgba(76,95,213,0.4)",whiteSpace:"nowrap"}}>{plan.badge}</div>
+                borderRadius:18,padding:"20px 18px",
+                // One signal now, not two competing ones: the blue frame is
+                // driven ONLY by selection (selectedTier, pre-set to "pro"
+                // so it shows on load). "Recommended" is plain text below,
+                // with no border/background/badge of its own, so it can
+                // never visually compete with — or get mistaken for — the
+                // selection frame, including when Pro is both recommended
+                // and selected at once.
+                border:selected?`2px solid ${C.primary}`:`1.5px solid ${C.border}`,
+                background:dark?"rgba(255,255,255,0.02)":"#FAFAFC",
+                boxShadow:selected?"0 16px 40px rgba(76,95,213,0.25)":"none"}}>
+                {plan.recommended&&(
+                  <p style={{textAlign:"center",fontSize:9.5,fontWeight:700,letterSpacing:0.5,
+                    textTransform:"uppercase",color:C.muted2,marginBottom:8}}>Recommended</p>
                 )}
                 <div style={{width:44,height:44,borderRadius:12,margin:"0 auto 12px",
                   background:plan.iconBg,border:plan.iconBorder,
@@ -1974,7 +1956,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                   <i className={`ti ${plan.icon}`} style={{fontSize:21,color:plan.iconBorder?C.muted:"white"}} aria-hidden="true"/>
                 </div>
                 <p style={{textAlign:"center",fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
-                  fontSize:16,color:plan.highlight?C.primary:C.navy,marginBottom:4}}>{plan.name}</p>
+                  fontSize:16,color:C.navy,marginBottom:4}}>{plan.name}</p>
                 <div style={{textAlign:"center",marginBottom:plan.disclosure?4:14}}>
                   <span style={{fontSize:23,fontWeight:800,fontFamily:"'Space Grotesk',sans-serif",color:C.navy}}>{plan.price}</span>
                   <span style={{fontSize:11,color:C.muted}}>{plan.priceSuffix}</span>
