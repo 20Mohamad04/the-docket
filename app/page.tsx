@@ -2483,12 +2483,38 @@ const ChatBlob=React.forwardRef<{setAmplitude:(v:number|null)=>void},
     // visible at once while the panel is open) never collide on the same
     // <filter> id.
     const gooId=React.useId().replace(/[^a-zA-Z0-9]/g,"");
+    // Every looping animation's name/duration is now a FIXED string,
+    // never built from `active` — changing any part of an element's
+    // `animation` value (even just the duration) makes the browser treat
+    // it as a new animation and restart it from 0%, regardless of whether
+    // the component re-rendered or remounted. Since `active` used to be
+    // interpolated directly into these five animation strings, every
+    // loading-state flip (twice per message: start and end) restarted all
+    // five, which read as the blob stuttering/jumping on every send and
+    // receive. Speed is now changed via the Web Animations API instead
+    // (below) — adjusting playbackRate on the already-running animations,
+    // which speeds up or slows down the same ongoing timeline with no
+    // restart.
+    const breatheRef=React.useRef<HTMLDivElement>(null);
+    const spinRef=React.useRef<HTMLDivElement>(null);
+    const move1Ref=React.useRef<HTMLDivElement>(null);
+    const move2Ref=React.useRef<HTMLDivElement>(null);
+    const move3Ref=React.useRef<HTMLDivElement>(null);
+    useEffect(()=>{
+      const rate=active?2.2:1;
+      for(const r of [breatheRef,spinRef,move1Ref,move2Ref,move3Ref]){
+        const el=r.current;
+        if(!el) continue;
+        for(const anim of el.getAnimations()) anim.playbackRate=rate;
+      }
+    },[active]);
     return(
       <div onClick={onClick} title={title}
         style={{width:size,height:size,flexShrink:0,cursor:onClick?"pointer":"default"}}>
         <div ref={ampElRef} style={{width:"100%",height:"100%",transition:"transform 0.1s ease-out"}}>
-          <div style={{width:"100%",height:"100%",borderRadius:"50%",position:"relative",overflow:"hidden",
-            animation:`chatBlobBreathe ${active?"1.6s":"3.6s"} ease-in-out infinite`,
+          <div ref={breatheRef} style={{width:"100%",height:"100%",borderRadius:"50%",position:"relative",overflow:"hidden",
+            animation:"chatBlobBreathe 3.6s ease-in-out infinite",
+            transition:"box-shadow 0.3s ease",
             background:"radial-gradient(circle at 50% 50%,#2A1660,#120A30 80%)",
             boxShadow:active
               ?"0 0 28px rgba(134,112,232,0.8), 0 0 54px rgba(76,95,213,0.4)"
@@ -2500,26 +2526,37 @@ const ChatBlob=React.forwardRef<{setAmplitude:(v:number|null)=>void},
               @keyframes chatBlobMove3{0%,100%{transform:translate(0%,18%) scale(1)}50%{transform:translate(-18%,-6%) scale(1.2)}}
               @keyframes chatBlobSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
             `}</style>
+            {/* Goo filter — was reading as three separate fuzzy circles
+                instead of one blob. Two real bugs, not a device limitation:
+                the trailing feComposite atop re-composited the original
+                SHARP circle graphics back on top of the merged/blurred
+                shape, undoing the exact softening the blur+contrast steps
+                produced (removed below — the color-matrix result is now
+                the filter's own output, the standard recipe). Also
+                stdDeviation=6 was too weak to bridge the gap between the
+                three small circles at this element size — raised to 12,
+                with the color-matrix contrast retuned to match, and an
+                explicit filter region added (SVG's default -10%/120% region
+                risked clipping the wider blur). */}
             <svg width="0" height="0" style={{position:"absolute"}} aria-hidden="true">
-              <filter id={`chatBlobGoo${gooId}`}>
-                <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+              <filter id={`chatBlobGoo${gooId}`} x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur"/>
                 <feColorMatrix in="blur" mode="matrix"
-                  values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9" result="goo"/>
-                <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+                  values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 28 -12" result="goo"/>
               </filter>
             </svg>
-            <div style={{position:"absolute",inset:"-30%",
-              animation:`chatBlobSpin ${active?"9s":"20s"} linear infinite`,
+            <div ref={spinRef} style={{position:"absolute",inset:"-30%",
+              animation:"chatBlobSpin 20s linear infinite",
               filter:`url(#chatBlobGoo${gooId})`}}>
-              <div style={{position:"absolute",width:"70%",height:"70%",left:"15%",top:"5%",borderRadius:"50%",
+              <div ref={move1Ref} style={{position:"absolute",width:"70%",height:"70%",left:"15%",top:"5%",borderRadius:"50%",
                 background:"radial-gradient(circle,#A78BFA,transparent 70%)",
-                animation:`chatBlobMove1 ${active?"3s":"6s"} ease-in-out infinite`,mixBlendMode:"screen"}}/>
-              <div style={{position:"absolute",width:"65%",height:"65%",left:"20%",top:"25%",borderRadius:"50%",
+                animation:"chatBlobMove1 6s ease-in-out infinite",mixBlendMode:"screen"}}/>
+              <div ref={move2Ref} style={{position:"absolute",width:"65%",height:"65%",left:"20%",top:"25%",borderRadius:"50%",
                 background:"radial-gradient(circle,#6677E8,transparent 70%)",
-                animation:`chatBlobMove2 ${active?"3.5s":"7s"} ease-in-out infinite`,mixBlendMode:"screen"}}/>
-              <div style={{position:"absolute",width:"60%",height:"60%",left:"10%",top:"30%",borderRadius:"50%",
+                animation:"chatBlobMove2 7s ease-in-out infinite",mixBlendMode:"screen"}}/>
+              <div ref={move3Ref} style={{position:"absolute",width:"60%",height:"60%",left:"10%",top:"30%",borderRadius:"50%",
                 background:"radial-gradient(circle,#8670E8,transparent 70%)",
-                animation:`chatBlobMove3 ${active?"4s":"8s"} ease-in-out infinite`,mixBlendMode:"screen"}}/>
+                animation:"chatBlobMove3 8s ease-in-out infinite",mixBlendMode:"screen"}}/>
             </div>
           </div>
         </div>
