@@ -3453,15 +3453,25 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   WebkitBackdropFilter:"blur(28px)",
                   background:dark?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.20)",
                   borderRight:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
-                  // Right edge (the one actually visible, facing into the
-                  // panel) rounded to match the outer panel's own 24px
-                  // corner language — was 0 (hard square cut) on every
-                  // corner. Left corners stay square: in non-expanded mode
-                  // they're already clipped into the outer panel's own
-                  // rounded shape by its overflow:hidden, and in expanded
-                  // (fullscreen) mode the outer panel itself is square too,
-                  // so square left corners are correct in both states.
-                  borderRadius:"0 24px 24px 0",
+                  // Uniform 24px in non-expanded mode — square left corners
+                  // there read as inconsistent (some edges rounded, some
+                  // not) even though the parent's own overflow:hidden +
+                  // radius:24 was already implicitly rounding them; being
+                  // explicit about it here doesn't fight that clip (verified
+                  // in a repro: one clean curve, no double-curve or gap).
+                  // Stays conditional in expanded/fullscreen, though, where
+                  // the outer panel's own radius drops to 0 (borderRadius:
+                  // expanded?0:24, further up): a uniform 24 there would
+                  // round the sidebar's left corners against a panel with
+                  // NO rounding to match, exposing a quarter-circle notch of
+                  // plain, un-blurred, un-veiled panel gradient underneath.
+                  // Confirmed this in the same repro — subtle in dark mode
+                  // only because the panel's gradient tone happens to sit
+                  // close to the sidebar's blurred-veil tone there, not
+                  // something to rely on staying invisible. Right corners
+                  // stay rounded in both states — unchanged from before,
+                  // already correct.
+                  borderRadius:expanded?"0 24px 24px 0":"24px",
                   // Only painted while actually open — defensive against a
                   // reported faint shading strip down the panel's left edge
                   // that didn't reproduce in an isolated Chromium test
