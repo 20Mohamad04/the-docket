@@ -1339,6 +1339,14 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
   const[authMsg,setAuthMsg]=useState("");
   const[cameFromAuth,setCameFromAuth]=useState(false);
   const[openFaq,setOpenFaq]=useState<string|null>(null);
+  // Which pricing card is currently selected in the subscription modal —
+  // declared up here (not inside the modal==="subscription" branch below)
+  // since InfoModal can navigate between modal values without unmounting
+  // (e.g. login -> terms via onNavigate), so a hook inside a conditional
+  // branch keyed on `modal` would violate the rules of hooks the moment
+  // `modal` changed away from "subscription" without a full remount.
+  // Defaults to "pro", matching the existing "recommended" default.
+  const[selectedTier,setSelectedTier]=useState<"free"|"pro"|"max">("pro");
   // Independently reads the same usage table (sonnet_count/opus_count) that
   // powers the "Opus — N left" indicator in the chat input, so the Usage
   // card's numbers always agree with it. Pro-only — usage tracking never
@@ -1920,14 +1928,39 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
             </div>
           )}
           <div className="pricing-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:16}}>
-            {plans.map(plan=>(
-              <div key={plan.id} style={{position:"relative",display:"flex",flexDirection:"column",
+            {plans.map(plan=>{
+              const selected=selectedTier===plan.id;
+              return(
+              <div key={plan.id} onClick={()=>setSelectedTier(plan.id as "free"|"pro"|"max")}
+                style={{position:"relative",display:"flex",flexDirection:"column",cursor:"pointer",
                 borderRadius:18,padding:plan.highlight?"26px 18px 20px":"20px 18px",
+                // plan.highlight (Pro's "recommended" styling — purple
+                // border/tint/badge) and `selected` (this card is the one
+                // that'll actually be checked out) are deliberately
+                // separate signals now, not the same thing: previously
+                // there was no selection state at all, only this static
+                // highlight, so tapping any card besides the CTA button did
+                // nothing and gave no feedback. The selected ring below
+                // layers on top of whichever border the card already has,
+                // and the checkmark badge is a different shape/position
+                // than the "MOST POPULAR" ribbon, so a selected-but-not-
+                // recommended card (e.g. Max) and a recommended-but-not-
+                // selected card never look the same.
                 border:plan.highlight?`2px solid ${C.primary}`:`1.5px solid ${C.border}`,
                 background:plan.highlight
                   ?"linear-gradient(160deg,rgba(76,95,213,0.1),rgba(134,112,232,0.05))"
                   :(dark?"rgba(255,255,255,0.02)":"#FAFAFC"),
-                boxShadow:plan.highlight?"0 16px 40px rgba(76,95,213,0.25)":"none"}}>
+                boxShadow:[
+                  plan.highlight?"0 16px 40px rgba(76,95,213,0.25)":"none",
+                  selected?"0 0 0 3px rgba(46,139,87,0.45)":"none",
+                ].join(", ")}}>
+                {selected&&(
+                  <div title="Selected" style={{position:"absolute",top:10,right:10,width:22,height:22,
+                    borderRadius:"50%",background:C.sage,display:"flex",alignItems:"center",
+                    justifyContent:"center",boxShadow:"0 2px 8px rgba(46,139,87,0.5)",zIndex:1}}>
+                    <i className="ti ti-check" style={{fontSize:13,color:"white"}} aria-hidden="true"/>
+                  </div>
+                )}
                 {plan.badge&&(
                   <div style={{position:"absolute",top:-11,left:"50%",transform:"translateX(-50%)",
                     background:"linear-gradient(135deg,#4C5FD5,#8670E8)",padding:"4px 14px",borderRadius:50,
@@ -1966,7 +1999,8 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                   {plan.cta}
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
           <p style={{display:"flex",alignItems:"center",justifyContent:"center",flexWrap:"wrap",gap:4,
             fontSize:11,color:C.muted2,marginTop:6}}>
