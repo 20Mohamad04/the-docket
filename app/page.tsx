@@ -3384,8 +3384,15 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               <div onClick={e=>e.stopPropagation()}
                 style={{position:"absolute",top:0,left:0,bottom:0,zIndex:10,
                   width:expanded?320:260,
-                  background:dark?"#16192A":"#FFFFFF",
-                  borderRight:`1px solid ${C.border}`,
+                  // Reuses the panel's own gradient (not a separate solid
+                  // slab) so the sidebar reads as part of the same surface
+                  // it slides over, matching the Group A restyle's "one
+                  // continuous gradient behind everything" approach instead
+                  // of the old opaque #16192A/#FFFFFF fill that stood apart
+                  // from it. Hairline + shadow still provide the visual
+                  // separation of a sheet sliding on top.
+                  background:panelBg,
+                  borderRight:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
                   // Only painted while actually open — defensive against a
                   // reported faint shading strip down the panel's left edge
                   // that didn't reproduce in an isolated Chromium test
@@ -3398,30 +3405,34 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   transform:historyOpen?"translateX(0)":"translateX(-100%)",
                   transition:"transform 0.22s cubic-bezier(0.34,1.56,0.64,1)",
                   display:"flex",flexDirection:"column",overflow:"hidden"}}>
-                <div style={{padding:"14px 14px 10px",borderBottom:`1px solid ${C.border}`,
+                <div style={{padding:"16px 16px 12px",
+                  borderBottom:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
                   display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
                   <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:13,color:C.navy}}>
                     Chat history
                   </p>
-                  <button onClick={()=>setHistoryOpen(false)}
-                    style={{width:24,height:24,borderRadius:7,border:"none",background:"transparent",
-                      cursor:"pointer",color:C.muted,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <i className="ti ti-x" style={{fontSize:13}} aria-hidden="true"/>
+                  <button onClick={()=>setHistoryOpen(false)} className="pill-btn"
+                    style={{width:28,height:28,border:"none",background:"transparent",
+                      cursor:"pointer",color:C.muted}}>
+                    <i className="ti ti-x" style={{fontSize:14}} aria-hidden="true"/>
                   </button>
                 </div>
 
-                <div style={{padding:"10px 10px 6px",flexShrink:0}}>
+                <div style={{padding:"12px 12px 8px",flexShrink:0}}>
+                  {/* Same gradient as the send button, not a separate one —
+                      one "primary action" token reused across the panel
+                      instead of two similar-but-different gradients. */}
                   <button onClick={startNewChat}
-                    style={{width:"100%",padding:"9px 12px",borderRadius:10,fontSize:12.5,fontWeight:600,
+                    style={{width:"100%",padding:"10px 14px",borderRadius:12,fontSize:12.5,fontWeight:600,
                       border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:8,
-                      background:"linear-gradient(135deg,#4C5FD5,#2A3699)",color:"white",
-                      boxShadow:"0 4px 14px rgba(76,95,213,0.3)"}}>
+                      background:"linear-gradient(145deg,#6677E8,#4C5FD5)",color:"white",
+                      boxShadow:"0 6px 18px rgba(76,95,213,0.28)"}}>
                     <i className="ti ti-plus" style={{fontSize:14}} aria-hidden="true"/>
                     New chat
                   </button>
                 </div>
 
-                <div style={{flex:1,overflowY:"auto",padding:"4px 8px"}}>
+                <div style={{flex:1,overflowY:"auto",padding:"6px 10px"}}>
                   {!user?.id?(
                     <p style={{fontSize:11.5,color:C.muted,padding:"16px 10px",textAlign:"center"}}>
                       Sign in to save and view your chat history.
@@ -3434,8 +3445,8 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     </p>
                   ):conversations.map(c=>(
                     <div key={c.id} onClick={()=>openConversation(c.id)}
-                      style={{display:"flex",alignItems:"center",gap:6,padding:"9px 10px",borderRadius:10,
-                        cursor:loadingConversationId?"default":"pointer",marginBottom:2,
+                      style={{display:"flex",alignItems:"center",gap:6,padding:"10px 12px",borderRadius:12,
+                        cursor:loadingConversationId?"default":"pointer",marginBottom:4,
                         opacity:loadingConversationId&&loadingConversationId!==c.id?0.5:1,
                         background:conversationId===c.id?(dark?"rgba(76,95,213,0.18)":"rgba(76,95,213,0.1)"):"transparent"}}
                       onMouseEnter={e=>{if(conversationId!==c.id)e.currentTarget.style.background=C.surface2;}}
@@ -3448,7 +3459,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                       <button onClick={e=>deleteConversation(c.id,e)}
                         disabled={deletingId===c.id}
                         title="Delete conversation"
-                        style={{width:24,height:24,borderRadius:7,border:"none",background:"transparent",
+                        style={{width:24,height:24,borderRadius:8,border:"none",background:"transparent",
                           cursor:"pointer",color:C.muted2,flexShrink:0,display:"flex",
                           alignItems:"center",justifyContent:"center"}}
                         onMouseEnter={e=>{e.currentTarget.style.color=C.urgent;}}
@@ -3461,9 +3472,10 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 </div>
 
                 {conversations.length>0&&(
-                  <div style={{padding:"8px 10px 12px",borderTop:`1px solid ${C.border}`,flexShrink:0}}>
+                  <div style={{padding:"10px 12px 14px",
+                    borderTop:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,flexShrink:0}}>
                     <button onClick={clearAllHistory} disabled={clearingAll}
-                      style={{width:"100%",padding:"8px",borderRadius:9,fontSize:11.5,fontWeight:600,
+                      style={{width:"100%",padding:"10px",borderRadius:10,fontSize:11.5,fontWeight:600,
                         border:"1px solid rgba(217,79,61,0.3)",background:"rgba(217,79,61,0.08)",
                         color:C.urgent,cursor:clearingAll?"default":"pointer",opacity:clearingAll?0.6:1}}>
                       {clearingAll?"Clearing…":"Clear all history"}
@@ -3507,30 +3519,34 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 justifyContent:expanded?"center":"flex-start",
                 alignItems:"center",gap:12,
                 position:"relative",flexShrink:0}}>
-                {/* Control buttons */}
-                <div style={{position:"absolute",top:10,right:10,display:"flex",gap:8}}>
+                {/* Control buttons — sized/shaped to match the input row's
+                    attach/mic/send (36px, fully round via pill-btn, 15px
+                    icons, transparent+borderless idle, border only when a
+                    button has a real "on" state to signal). Previously
+                    28px/radius-8/always-boxed via inputBtnBg+inputBtnBorder
+                    — the pre-restyle toolbar language that never got
+                    updated when the input row moved to the de-boxed look. */}
+                <div style={{position:"absolute",top:10,right:10,display:"flex",gap:10}}>
                   <button onClick={()=>setHistoryOpen(o=>!o)}
-                    title="Chat history"
-                    style={{width:28,height:28,borderRadius:8,border:inputBtnBorder,
-                      background:historyOpen?(dark?"rgba(76,95,213,0.35)":"rgba(76,95,213,0.18)"):inputBtnBg,
-                      cursor:"pointer",color:C.muted,
-                      display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <i className="ti ti-history" style={{fontSize:13}} aria-hidden="true"/>
+                    title="Chat history" className="pill-btn"
+                    style={{width:36,height:36,
+                      background:historyOpen?(dark?"rgba(76,95,213,0.35)":"rgba(76,95,213,0.18)"):"transparent",
+                      border:historyOpen?inputBtnBorder:"none",
+                      cursor:"pointer",color:historyOpen?C.primary:C.muted}}>
+                    <i className="ti ti-history" style={{fontSize:15}} aria-hidden="true"/>
                   </button>
                   <button onClick={()=>{setVoiceOn(v=>{const next=!v;voiceOnRef.current=next;if(!next)stopSpeaking();return next;});}}
-                    title={voiceOn?"Mute voice replies":"Unmute voice replies"}
-                    style={{width:28,height:28,borderRadius:8,border:inputBtnBorder,
-                      background:inputBtnBg,cursor:"pointer",color:C.muted,
-                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    title={voiceOn?"Mute voice replies":"Unmute voice replies"} className="pill-btn"
+                    style={{width:36,height:36,background:"transparent",border:"none",
+                      cursor:"pointer",color:C.muted}}>
                     <i className={`ti ${voiceOn?"ti-volume":"ti-volume-off"}`}
-                      style={{fontSize:13}} aria-hidden="true"/>
+                      style={{fontSize:15}} aria-hidden="true"/>
                   </button>
-                  <button onClick={()=>setExpanded(e=>!e)}
-                    style={{width:28,height:28,borderRadius:8,border:inputBtnBorder,
-                      background:inputBtnBg,cursor:"pointer",color:C.muted,
-                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <button onClick={()=>setExpanded(e=>!e)} className="pill-btn"
+                    style={{width:36,height:36,background:"transparent",border:"none",
+                      cursor:"pointer",color:C.muted}}>
                     <i className={`ti ${expanded?"ti-minimize":"ti-maximize"}`}
-                      style={{fontSize:13}} aria-hidden="true"/>
+                      style={{fontSize:15}} aria-hidden="true"/>
                   </button>
                   {/* X removed — the blob below is now the close control. */}
                 </div>
@@ -3661,7 +3677,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     // reports the resize), just gives it a head start
                     // instead of waiting solely on that event's own timing.
                     onBlur={updateFromViewport}
-                    placeholder="Ask me anything…"
+                    placeholder="Ask Docket…"
                     // minWidth:0 overrides the browser's non-zero intrinsic
                     // min-width for text inputs, which flex:1 alone doesn't
                     // touch — without it, this row's fixed-width siblings
