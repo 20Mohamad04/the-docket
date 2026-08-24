@@ -4787,6 +4787,37 @@ export default function Home(){
   const restoreTask=useCallback((id:number)=>{
     setTasks(p=>p.map(t=>t.id===id?{...t,deleted:false,done:false}:t));
   },[]);
+  const[clearingArchive,setClearingArchive]=useState(false);
+  // Deletes every finished/deleted task — nothing live is touched, since
+  // the filter matches exactly what the archive view itself shows
+  // (t.done||t.deleted). deleteTask above is a soft delete (only ever sets
+  // deleted:true, never actually removes anything), and the tasks
+  // cloud-sync effect only ever upserts — unlike the routines one right
+  // below it, tasks has no "detect removed IDs and delete them from
+  // Supabase" step at all. Filtering local state alone would look cleared
+  // but not stay that way: the very next loadCloudData() (any reload, or
+  // signing in elsewhere) does a full cloud-wins replace of tasks, which
+  // would silently bring every "cleared" item back. So this explicitly
+  // deletes the same rows from Supabase too, scoped to just the archived
+  // IDs, rather than building out generic delete-tracking for all task
+  // removals.
+  async function clearArchive(){
+    if(!window.confirm("Clear all finished and deleted tasks? This permanently removes them and can't be undone."))return;
+    setClearingArchive(true);
+    try{
+      const archivedIds=tasks.filter(t=>t.done||t.deleted).map(t=>t.id);
+      setTasks(p=>p.filter(t=>!(t.done||t.deleted)));
+      if(user?.id&&archivedIds.length>0){
+        const sb=await getSupabaseClient();
+        if(sb){
+          const{error}=await sb.from("tasks").delete().in("id",archivedIds);
+          if(error) console.error("Failed to delete archived tasks from Supabase:",error);
+        }
+      }
+    }finally{
+      setClearingArchive(false);
+    }
+  }
   const addStep=useCallback((taskId:number,text:string)=>{
     setTasks(p=>p.map(t=>t.id!==taskId?t:{...t,checklist:[...t.checklist,{id:Date.now(),text,done:false}]}));
   },[]);
@@ -5295,21 +5326,38 @@ export default function Home(){
         )}
 
                 {/* ── ARCHIVE ────────────────────────────────────────────────────── */}
-        {currentView==="archive"&&(
+        {currentView==="archive"&&(()=>{
+          const archived=tasks.filter(t=>t.done||t.deleted);
+          return(
           <div>
-            <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-              fontSize:26,color:C.navy,marginBottom:20}}>{t("archive")}</p>
-            {tasks.filter(t=>t.done||t.deleted).length===0
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,gap:12}}>
+              <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
+                fontSize:26,color:C.navy}}>{t("archive")}</p>
+              {/* Matches the chat panel's "Clear all history" button —
+                  same destructive-action styling and confirm() pattern
+                  (see clearArchive above), so the two "wipe everything in
+                  this list" actions in the app look and behave the same. */}
+              {archived.length>0&&(
+                <button onClick={clearArchive} disabled={clearingArchive}
+                  style={{padding:"8px 14px",borderRadius:9,fontSize:12,fontWeight:600,flexShrink:0,
+                    border:"1px solid rgba(217,79,61,0.3)",background:"rgba(217,79,61,0.08)",
+                    color:C.urgent,cursor:clearingArchive?"default":"pointer",opacity:clearingArchive?0.6:1}}>
+                  {clearingArchive?"Clearing…":"Clear all"}
+                </button>
+              )}
+            </div>
+            {archived.length===0
               ?<p style={{textAlign:"center",color:C.muted2,padding:"48px 0",
                   fontFamily:"'Space Grotesk',sans-serif",fontWeight:600}}>No archived tasks yet.</p>
-              :tasks.filter(t=>t.done||t.deleted).map(t=>(
+              :archived.map(t=>(
                 <TaskCard key={t.id} task={t}
                   onToggle={()=>toggleTask(t.id)} onDelete={()=>deleteTask(t.id)}
                   onEdit={()=>{}} onAddStep={()=>{}} onToggleStep={()=>{}} onRemoveStep={()=>{}}
                   isArchive onRestore={()=>restoreTask(t.id)}/>
               ))}
           </div>
-        )}
+          );
+        })()}
       </main>
 
       {/* FAB */}
