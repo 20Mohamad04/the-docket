@@ -2789,6 +2789,15 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
   const DARK_PANEL_BG="radial-gradient(ellipse 140% 70% at 50% 0%, rgba(134,112,232,0.28) 0%, rgba(76,95,213,0.12) 35%, rgba(14,16,32,0) 70%), #0E1020";
   const LIGHT_PANEL_BG="radial-gradient(ellipse 140% 70% at 50% 0%, rgba(134,112,232,0.14) 0%, rgba(255,255,255,0) 65%), #FAFAF8";
   const panelBg=dark?DARK_PANEL_BG:LIGHT_PANEL_BG;
+  // Shared with the panel's own border declaration below (non-expanded
+  // only — expanded has no border) so the two can never silently desync.
+  // Absolutely-positioned children are placed relative to their
+  // containing block's padding box, not its border box — with 0 padding
+  // and this border, the panel's padding box sits exactly this many px
+  // inside its true visible edge. The sidebar cancels that with a
+  // matching negative inset (see its own comment further down) rather
+  // than hardcoding "-1px" as an unexplained nudge.
+  const panelBorderWidth=1;
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;imageDataUrl?:string;opusFallback?:boolean}[]>([
     {role:"assistant",content:CHATBOT_GREETING},
   ]);
@@ -3356,7 +3365,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               // being rethought anyway (see panelBg above). Revisit edge
               // treatment once the background tone is settled.
               background:panelBg,
-              border:expanded?"none":`1px solid ${C.border}`,
+              border:expanded?"none":`${panelBorderWidth}px solid ${C.border}`,
               boxShadow:expanded?"none":"0 32px 80px rgba(0,0,0,0.45)",
               // Round 1 of the blob-replaces-orb work: rather than the blob
               // itself visually traveling into the panel (a true morph —
@@ -3405,8 +3414,23 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   pointerEvents:historyOpen?"auto":"none",
                   transition:"opacity 0.22s"}}/>
               <div onClick={e=>e.stopPropagation()}
-                style={{position:"absolute",top:0,left:0,bottom:0,zIndex:10,
-                  width:expanded?320:260,
+                style={{position:"absolute",zIndex:10,
+                  // Cancels the padding-box inset caused by the panel's own
+                  // border (see panelBorderWidth above) — top:0/left:0/
+                  // bottom:0 alone would sit exactly panelBorderWidth px
+                  // inside the panel's true visible edge, not flush with
+                  // it, since absolutely-positioned children are placed
+                  // relative to the containing block's padding box. Only
+                  // needed in non-expanded mode, which is the only state
+                  // where the panel actually has a border — expanded's
+                  // panel border is "none" (0 width), so there's nothing to
+                  // cancel there, and applying this unconditionally would
+                  // introduce a 1px overhang past the panel's own edge in
+                  // fullscreen where none existed before.
+                  top:expanded?0:-panelBorderWidth,
+                  left:expanded?0:-panelBorderWidth,
+                  bottom:expanded?0:-panelBorderWidth,
+                  width:(expanded?320:260)+(expanded?0:panelBorderWidth),
                   // Transparent-ish veil, not a repainted copy of panelBg —
                   // the same call already made for the input pill (see its
                   // own comment a bit further down), refined twice now: a
@@ -3453,25 +3477,24 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   WebkitBackdropFilter:"blur(28px)",
                   background:dark?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.20)",
                   borderRight:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
-                  // Uniform 24px in non-expanded mode — square left corners
-                  // there read as inconsistent (some edges rounded, some
-                  // not) even though the parent's own overflow:hidden +
-                  // radius:24 was already implicitly rounding them; being
-                  // explicit about it here doesn't fight that clip (verified
-                  // in a repro: one clean curve, no double-curve or gap).
-                  // Stays conditional in expanded/fullscreen, though, where
-                  // the outer panel's own radius drops to 0 (borderRadius:
-                  // expanded?0:24, further up): a uniform 24 there would
-                  // round the sidebar's left corners against a panel with
-                  // NO rounding to match, exposing a quarter-circle notch of
-                  // plain, un-blurred, un-veiled panel gradient underneath.
-                  // Confirmed this in the same repro — subtle in dark mode
-                  // only because the panel's gradient tone happens to sit
-                  // close to the sidebar's blurred-veil tone there, not
-                  // something to rely on staying invisible. Right corners
-                  // stay rounded in both states — unchanged from before,
-                  // already correct.
-                  borderRadius:expanded?"0 24px 24px 0":"24px",
+                  // Left corners (the ones that coincide with the panel's
+                  // own edge) are declared square (0) — deliberately NOT
+                  // 24, and NOT conditional on `expanded`. With the sidebar
+                  // now genuinely flush (see top/left/bottom above), the
+                  // panel's own overflow:hidden + border-radius is the only
+                  // thing that should ever define this shape: it curves the
+                  // sidebar's square corner to match in non-expanded mode
+                  // (radius 24) and leaves it square in expanded mode
+                  // (radius 0), correctly in both cases, from one source of
+                  // truth. Declaring a second, independently-matching 24px
+                  // radius here (the previous approach) was exactly what
+                  // produced a visible double-curve once the sidebar wasn't
+                  // pixel-perfect flush — one curve, one owner, avoids that
+                  // whole class of bug regardless of future offset changes.
+                  // Right corners are an internal edge the panel's clip
+                  // never touches, so they stay independently rounded in
+                  // both states, unchanged from before.
+                  borderRadius:"0 24px 24px 0",
                   // Only painted while actually open — defensive against a
                   // reported faint shading strip down the panel's left edge
                   // that didn't reproduce in an isolated Chromium test
