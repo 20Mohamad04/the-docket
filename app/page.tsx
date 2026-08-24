@@ -3399,23 +3399,42 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   width:expanded?320:260,
                   // Transparent-ish veil, not a repainted copy of panelBg —
                   // the same call already made for the input pill (see its
-                  // own comment a bit further down), refined once more: a
-                  // flat color matching the gradient's own base endpoint
-                  // was the wrong fix too, since that endpoint is only what
-                  // the *bottom* half of the panel converges to (the ellipse
+                  // own comment a bit further down), refined twice now: a
+                  // flat color matching the gradient's own base endpoint was
+                  // also wrong, since that endpoint is only what the
+                  // *bottom* half of the panel converges to (the ellipse
                   // reaches full transparency 49% down the box) — the top,
                   // where the glow is strongest AND horizontally centered
                   // right where the sidebar sits, looked nothing like it.
-                  // A low-alpha veil lets the panel's actual gradient show
-                  // through at every point, correct by construction, with
-                  // no formula to keep in sync or scale to get wrong. Kept
-                  // deliberately subtle in dark mode — the dim overlay
-                  // beside it is already gone from underneath this element
-                  // (see above), so the veil only has the gradient itself
-                  // to sit over, not 40% black on top of it too; going much
-                  // above ~0.04 here risked lifting the violet glow into a
-                  // milky grey and losing the panel's whole color character.
-                  background:dark?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.50)",
+                  // A veil lets the panel's actual gradient show through at
+                  // every point, correct by construction, with no formula
+                  // to keep in sync or scale to get wrong.
+                  //
+                  // A veil alone at low alpha (0.04/0.50) turned out to be a
+                  // real legibility bug, not just a tuning issue: message
+                  // bubbles and text scrolling behind the sidebar were
+                  // visibly mixing with the sidebar's own content instead of
+                  // being hidden by it. Fixed with backdrop-filter blur
+                  // below, not by raising the veil alpha — a smooth
+                  // gradient survives a blur essentially unchanged (colour
+                  // is low-frequency), while the high-frequency detail in
+                  // bubbles/text behind it is destroyed, which is exactly
+                  // the separation needed: gradient continuity for the
+                  // colour match, blur for the content the sidebar has to
+                  // occlude. Verified via a standalone repro (mirroring
+                  // this exact ancestor chain — overflow:hidden + border-
+                  // radius panel, absolutely-positioned sidebar) with a
+                  // marker drawn at the sidebar's measured right edge:
+                  // fully illegible on the sidebar's side of that edge, at
+                  // every scroll position, with no bleed either direction.
+                  // Not verified on actual Safari/iOS from this
+                  // environment — WebKit has a known history of
+                  // backdrop-filter misbehaving under nested overflow:
+                  // hidden + border-radius ancestors, and that can't be
+                  // ruled out here without a real device test.
+                  backdropFilter:"blur(28px)",
+                  WebkitBackdropFilter:"blur(28px)",
+                  background:dark?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.55)",
                   borderRight:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
                   // Right edge (the one actually visible, facing into the
                   // panel) rounded to match the outer panel's own 24px
