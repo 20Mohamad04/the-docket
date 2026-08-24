@@ -4930,6 +4930,61 @@ export default function Home(){
     }
   },[currentView]);
 
+  const dayScrollElRef=React.useRef<HTMLDivElement|null>(null);
+  const dayTrackRef=React.useRef<HTMLDivElement|null>(null);
+  const dayDragRef=React.useRef<{startX:number;startLeft:number;max:number;range:number}|null>(null);
+  const[dayScrollMetrics,setDayScrollMetrics]=useState({left:0,max:1,client:1});
+  const[viewedDate,setViewedDate]=useState<string|null>(null);
+
+  // Drives both the slider thumb and the "where am I" date label from the
+  // day-picker's actual scrollLeft — one native scroll listener feeds both,
+  // rather than syncing slider state and scroll state back and forth.
+  // Covers swipe/touch scrolling, the arrow buttons (scrollBy smooth-scroll
+  // still fires scroll events throughout the animation), and dragging the
+  // slider itself (which sets scrollLeft directly, see the pointer handlers
+  // below) — all three end up going through this one listener. rAF-throttled
+  // since native scroll events fire far more often than once per frame.
+  // useLayoutEffect (not useEffect) so the thumb has its real size/position
+  // before first paint instead of flashing at a default 50% width.
+  React.useLayoutEffect(()=>{
+    if(currentView!=="daily")return;
+    const el=dayScrollElRef.current;
+    if(!el)return;
+    let raf=0;
+    const step=Math.max(1,el.scrollWidth/Math.max(1,weekDates.length));
+    const update=()=>{
+      raf=0;
+      const max=Math.max(1,el.scrollWidth-el.clientWidth);
+      setDayScrollMetrics({left:el.scrollLeft,max,client:el.clientWidth});
+      const idx=Math.min(weekDates.length-1,Math.max(0,
+        Math.round((el.scrollLeft+el.clientWidth/2)/step-0.5)));
+      setViewedDate(weekDates[idx]?.date??null);
+    };
+    const onScroll=()=>{if(!raf)raf=requestAnimationFrame(update);};
+    el.addEventListener("scroll",onScroll,{passive:true});
+    update();
+    return()=>{el.removeEventListener("scroll",onScroll);if(raf)cancelAnimationFrame(raf);};
+  },[currentView,weekDates.length]);
+
+  function dayTrackPointerDown(e:React.PointerEvent<HTMLDivElement>){
+    const track=dayTrackRef.current,el=dayScrollElRef.current;
+    if(!track||!el)return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const rect=track.getBoundingClientRect();
+    const max=Math.max(1,el.scrollWidth-el.clientWidth);
+    const thumbFrac=Math.max(0.06,Math.min(1,el.clientWidth/Math.max(1,el.scrollWidth)));
+    const thumbPx=thumbFrac*rect.width;
+    const range=Math.max(1,rect.width-thumbPx);
+    dayDragRef.current={startX:e.clientX,startLeft:el.scrollLeft,max,range};
+  }
+  function dayTrackPointerMove(e:React.PointerEvent<HTMLDivElement>){
+    const drag=dayDragRef.current,el=dayScrollElRef.current;
+    if(!drag||!el)return;
+    const dx=e.clientX-drag.startX;
+    el.scrollLeft=Math.min(drag.max,Math.max(0,drag.startLeft+dx*(drag.max/drag.range)));
+  }
+  function dayTrackPointerEnd(){dayDragRef.current=null;}
+
   function getDayItems(dateISO:string,dayKey:string){
     const items:{time:string;label:string;category:string;done:boolean;streak:number;conflict:boolean;routineId?:number;taskId?:number}[]=[];
     routines.filter(r=>(r.days??[]).includes(dayKey)).forEach(r=>{
@@ -4947,6 +5002,7 @@ export default function Home(){
 
   const todayItems=getDayItems(todayISO(),todayDayKey());
   const selDay=weekDates.find(d=>d.date===selectedDate)||weekDates.find(d=>d.key===selectedWeekDay);
+  const viewedDay=weekDates.find(d=>d.date===viewedDate)||selDay;
   const selectedDayItems=getDayItems(selectedDate,selectedWeekDay);
 
   function completeOnboarding(goals:string[]){
@@ -5195,7 +5251,7 @@ export default function Home(){
                   display:"flex",alignItems:"center",justifyContent:"center"}}>
                 <i className="ti ti-chevron-left" style={{fontSize:15}} aria-hidden="true"/>
               </button>
-              <div id="day-picker-scroll"
+              <div id="day-picker-scroll" ref={dayScrollElRef}
                 style={{display:"flex",gap:6,overflowX:"auto",flex:1,
                   scrollbarWidth:"none",msOverflowStyle:"none",
                   padding:"3px 2px 3px",paddingBottom:4}}>
@@ -5244,9 +5300,30 @@ export default function Home(){
                 <i className="ti ti-chevron-right" style={{fontSize:15}} aria-hidden="true"/>
               </button>
             </div>
+            {/* Draggable scrollbar for the day strip above — inset by 40px
+                (32px arrow button + 8px gap) on each side so it lines up
+                exactly under the scrollable area, not the arrows. Pointer
+                Events (not separate mouse/touch handlers) cover mouse,
+                touch and pen in one code path; setPointerCapture keeps
+                pointermove/pointerup targeting this element even once the
+                finger/cursor drifts outside its bounds mid-drag. */}
+            <div ref={dayTrackRef}
+              onPointerDown={dayTrackPointerDown}
+              onPointerMove={dayTrackPointerMove}
+              onPointerUp={dayTrackPointerEnd}
+              onPointerCancel={dayTrackPointerEnd}
+              style={{position:"relative",height:16,margin:"0 40px 10px",
+                display:"flex",alignItems:"center",cursor:"pointer",touchAction:"none"}}>
+              <div style={{position:"absolute",left:0,right:0,height:5,borderRadius:3,
+                background:dark?"rgba(255,255,255,0.08)":"rgba(15,23,42,0.07)"}}/>
+              <div style={{position:"absolute",height:5,borderRadius:3,background:C.primary,
+                opacity:0.85,pointerEvents:"none",
+                left:`${dayScrollMetrics.max>0?(dayScrollMetrics.left/dayScrollMetrics.max)*(1-Math.max(0.06,Math.min(1,dayScrollMetrics.client/(dayScrollMetrics.client+dayScrollMetrics.max))))*100:0}%`,
+                width:`${Math.max(0.06,Math.min(1,dayScrollMetrics.client/(dayScrollMetrics.client+dayScrollMetrics.max)))*100}%`}}/>
+            </div>
             <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,
               color:C.muted,marginBottom:10}}>
-              {selDay?.label||(clientToday?clientToday.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"}):"")}
+              {viewedDay?.label||(clientToday?clientToday.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"}):"")}
             </p>
 
             {(()=>{
