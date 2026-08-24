@@ -3390,7 +3390,17 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               <div onClick={()=>setHistoryOpen(false)}
                 style={{position:"absolute",top:0,right:0,bottom:0,
                   left:expanded?320:260,zIndex:9,
-                  background:"rgba(0,0,0,0.4)",
+                  // Theme-aware — 40% black was only ever tuned for dark
+                  // mode, where the panel is already deep-toned enough that
+                  // it reads as "subtly inactive." In light mode the same
+                  // 0.4 drags the panel to a grey-mauve that the sidebar
+                  // (undimmed, sitting above this layer) doesn't share,
+                  // which was most of the remaining light-mode mismatch —
+                  // the veil below was never going to close a gap this
+                  // large by itself. Lighter in light mode since the same
+                  // "this area is inactive" signal needs far less darkening
+                  // over a near-white base to read clearly.
+                  background:dark?"rgba(0,0,0,0.4)":"rgba(0,0,0,0.14)",
                   opacity:historyOpen?1:0,
                   pointerEvents:historyOpen?"auto":"none",
                   transition:"opacity 0.22s"}}/>
@@ -3432,9 +3442,16 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   // backdrop-filter misbehaving under nested overflow:
                   // hidden + border-radius ancestors, and that can't be
                   // ruled out here without a real device test.
+                  // Light-mode veil dropped 0.55 -> 0.20 — 0.55 over an
+                  // already-light blurred gradient landed near-white, the
+                  // same flat-card problem in a different disguise. Dark
+                  // mode's 0.08 is untouched (see the dim-overlay comment
+                  // above for the other, larger half of the light-mode fix:
+                  // the overlay beside the sidebar was carrying most of the
+                  // gap, not this veil).
                   backdropFilter:"blur(28px)",
                   WebkitBackdropFilter:"blur(28px)",
-                  background:dark?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.55)",
+                  background:dark?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.20)",
                   borderRight:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
                   // Right edge (the one actually visible, facing into the
                   // panel) rounded to match the outer panel's own 24px
