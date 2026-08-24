@@ -3375,8 +3375,21 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   chat panel's own bounds (its parent has overflow:hidden),
                   not the whole app, unlike the main Drawer it borrows its
                   visual language from. */}
+              {/* Excludes the sidebar's own width instead of covering the
+                  whole panel (inset:0, as it did before) — under the
+                  sidebar's footprint this dim was purely decorative, not
+                  functional: clicks on the sidebar are already stopped via
+                  e.stopPropagation() on the sidebar itself below, so the
+                  overlay was never actually needed there for click-to-close.
+                  Now that the sidebar shows the real panel gradient through
+                  a translucent veil (see below) instead of a flat repaint,
+                  leaving the dim underneath it would just be muddying the
+                  exact gradient the veil is trying to reveal cleanly —
+                  cutting it out keeps that gradient saturated, which also
+                  sharpens the contrast against the dimmed area beside it. */}
               <div onClick={()=>setHistoryOpen(false)}
-                style={{position:"absolute",inset:0,zIndex:9,
+                style={{position:"absolute",top:0,right:0,bottom:0,
+                  left:expanded?320:260,zIndex:9,
                   background:"rgba(0,0,0,0.4)",
                   opacity:historyOpen?1:0,
                   pointerEvents:historyOpen?"auto":"none",
@@ -3384,21 +3397,25 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               <div onClick={e=>e.stopPropagation()}
                 style={{position:"absolute",top:0,left:0,bottom:0,zIndex:10,
                   width:expanded?320:260,
-                  // Solid surface, not a repainted copy of panelBg — the
-                  // same call already made for the input pill (see its own
-                  // comment a bit further down): a gradient positioned as a
-                  // percentage of its own box renders at a different scale
-                  // in a 260-320px sidebar than in the ~400px+ (or
-                  // fullscreen) outer panel, so "reusing the same formula"
-                  // doesn't actually read as one continuous surface — it's
-                  // two independently-scaled repaints that happen to share
-                  // a formula. This is opaque control chrome sitting on top
-                  // of the panel, not a window into it, so it gets the
-                  // pill's solid-elevated-surface treatment instead: a flat
-                  // fill near panelBg's own base color (its gradient's
-                  // darkest/lightest stop), so it still reads as the same
-                  // color family without trying to extend the live glow.
-                  background:dark?"#0E1020":"#FAFAF8",
+                  // Transparent-ish veil, not a repainted copy of panelBg —
+                  // the same call already made for the input pill (see its
+                  // own comment a bit further down), refined once more: a
+                  // flat color matching the gradient's own base endpoint
+                  // was the wrong fix too, since that endpoint is only what
+                  // the *bottom* half of the panel converges to (the ellipse
+                  // reaches full transparency 49% down the box) — the top,
+                  // where the glow is strongest AND horizontally centered
+                  // right where the sidebar sits, looked nothing like it.
+                  // A low-alpha veil lets the panel's actual gradient show
+                  // through at every point, correct by construction, with
+                  // no formula to keep in sync or scale to get wrong. Kept
+                  // deliberately subtle in dark mode — the dim overlay
+                  // beside it is already gone from underneath this element
+                  // (see above), so the veil only has the gradient itself
+                  // to sit over, not 40% black on top of it too; going much
+                  // above ~0.04 here risked lifting the violet glow into a
+                  // milky grey and losing the panel's whole color character.
+                  background:dark?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.50)",
                   borderRight:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
                   // Right edge (the one actually visible, facing into the
                   // panel) rounded to match the outer panel's own 24px
