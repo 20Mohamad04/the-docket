@@ -4937,34 +4937,45 @@ export default function Home(){
   const[viewedDate,setViewedDate]=useState<string|null>(null);
 
   // Drives both the slider thumb and the "where am I" date label from the
-  // day-picker's actual scrollLeft — one native scroll listener feeds both,
-  // rather than syncing slider state and scroll state back and forth.
-  // Covers swipe/touch scrolling, the arrow buttons (scrollBy smooth-scroll
-  // still fires scroll events throughout the animation), and dragging the
-  // slider itself (which sets scrollLeft directly, see the pointer handlers
-  // below) — all three end up going through this one listener. rAF-throttled
-  // since native scroll events fire far more often than once per frame.
-  // useLayoutEffect (not useEffect) so the thumb has its real size/position
-  // before first paint instead of flashing at a default 50% width.
+  // day-picker's actual scroll position. Deliberately NOT a native "scroll"
+  // event listener: verified via a standalone repro that setting scrollLeft
+  // programmatically (as the slider drag below does) — and scrolling more
+  // generally — doesn't reliably dispatch a "scroll" event promptly in
+  // every browser context (iOS Safari in particular is documented to fire
+  // "scroll" only sparsely during momentum touch-scrolling). Relying on
+  // that event left the thumb stuck at its initial default forever, which
+  // is exactly what happened on real-device testing. Polling scrollLeft on
+  // every animation frame instead sidesteps the question of whether/when a
+  // "scroll" event fires — it just reads the live value directly — and
+  // only calls setState when a value actually changed, so it costs a few
+  // property reads on frames where nothing moved, not a re-render.
   React.useLayoutEffect(()=>{
     if(currentView!=="daily")return;
-    const el=dayScrollElRef.current;
-    if(!el)return;
     let raf=0;
-    const step=Math.max(1,el.scrollWidth/Math.max(1,weekDates.length));
-    const update=()=>{
-      raf=0;
+    let lastLeft=-1,lastMax=-1,lastClient=-1,lastIdx=-1;
+    const measure=()=>{
+      const el=dayScrollElRef.current;
+      if(!el)return;
       const max=Math.max(1,el.scrollWidth-el.clientWidth);
-      setDayScrollMetrics({left:el.scrollLeft,max,client:el.clientWidth});
+      const client=el.clientWidth;
+      const left=el.scrollLeft;
+      if(left!==lastLeft||max!==lastMax||client!==lastClient){
+        lastLeft=left;lastMax=max;lastClient=client;
+        setDayScrollMetrics({left,max,client});
+      }
+      const step=Math.max(1,el.scrollWidth/Math.max(1,weekDates.length));
       const idx=Math.min(weekDates.length-1,Math.max(0,
-        Math.round((el.scrollLeft+el.clientWidth/2)/step-0.5)));
-      setViewedDate(weekDates[idx]?.date??null);
+        Math.round((left+client/2)/step-0.5)));
+      if(idx!==lastIdx){
+        lastIdx=idx;
+        setViewedDate(weekDates[idx]?.date??null);
+      }
     };
-    const onScroll=()=>{if(!raf)raf=requestAnimationFrame(update);};
-    el.addEventListener("scroll",onScroll,{passive:true});
-    update();
-    return()=>{el.removeEventListener("scroll",onScroll);if(raf)cancelAnimationFrame(raf);};
-  },[currentView,weekDates.length]);
+    const tick=()=>{measure();raf=requestAnimationFrame(tick);};
+    measure();
+    raf=requestAnimationFrame(tick);
+    return()=>cancelAnimationFrame(raf);
+  },[currentView]);
 
   function dayTrackPointerDown(e:React.PointerEvent<HTMLDivElement>){
     const track=dayTrackRef.current,el=dayScrollElRef.current;
