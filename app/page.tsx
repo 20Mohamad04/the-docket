@@ -4880,15 +4880,34 @@ export default function Home(){
     const now=new Date();
     const dayIdx=(now.getDay()+6)%7;
     const monday=new Date(now);monday.setDate(now.getDate()-dayIdx);
-    // Generate 14 days (2 weeks) starting from Monday
-    return Array.from({length:21},(_,i)=>{
-      const d=new Date(monday);d.setDate(monday.getDate()+i);
+    // Starts 14 days before the current week's Monday, not at it — the
+    // back arrow used to have nowhere to go, since this array previously
+    // only ever generated the current week forward through the next 2
+    // weeks. Forward reach (20 days past Monday) is unchanged; this just
+    // adds real range behind today. See the mount effect below for why
+    // today still needs to be the default visible position despite the
+    // list now starting 2 weeks earlier.
+    const start=new Date(monday);start.setDate(monday.getDate()-14);
+    return Array.from({length:35},(_,i)=>{
+      const d=new Date(start);d.setDate(start.getDate()+i);
       const key=["sun","mon","tue","wed","thu","fri","sat"][d.getDay()];
       return{key,date:d.toISOString().slice(0,10),dayNum:d.getDate(),
         label:d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}),
         month:d.toLocaleDateString("en-GB",{month:"short"})};
     });
   })();
+
+  // weekDates now starts 2 weeks before today (see above), so without this
+  // the day-picker strip would default to showing that earlier range on
+  // load/view-switch instead of today — re-centers on today's chip
+  // whenever the Daily view becomes active. Runs after paint (useEffect,
+  // not useLayoutEffect), so the chip already exists in the DOM from this
+  // same render by the time it fires.
+  useEffect(()=>{
+    if(currentView==="daily"){
+      document.getElementById("day-picker-today")?.scrollIntoView({inline:"start",block:"nearest"});
+    }
+  },[currentView]);
 
   function getDayItems(dateISO:string,dayKey:string){
     const items:{time:string;label:string;category:string;done:boolean;streak:number;conflict:boolean;routineId?:number;taskId?:number}[]=[];
@@ -5166,7 +5185,8 @@ export default function Home(){
                   const highOnDay=routines.filter(r=>r.intensity==="high"&&(r.days??[]).includes(day.key));
                   const hasConflict=highOnDay.length>1;
                   return(
-                    <button key={day.date} className="day-chip" onClick={()=>{
+                    <button key={day.date} id={isToday?"day-picker-today":undefined}
+                      className="day-chip" onClick={()=>{
                         setSelectedWeekDay(day.key);
                         setSelectedDate(day.date);
                       }}
