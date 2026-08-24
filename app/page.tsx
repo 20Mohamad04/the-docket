@@ -3384,15 +3384,31 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               <div onClick={e=>e.stopPropagation()}
                 style={{position:"absolute",top:0,left:0,bottom:0,zIndex:10,
                   width:expanded?320:260,
-                  // Reuses the panel's own gradient (not a separate solid
-                  // slab) so the sidebar reads as part of the same surface
-                  // it slides over, matching the Group A restyle's "one
-                  // continuous gradient behind everything" approach instead
-                  // of the old opaque #16192A/#FFFFFF fill that stood apart
-                  // from it. Hairline + shadow still provide the visual
-                  // separation of a sheet sliding on top.
-                  background:panelBg,
+                  // Solid surface, not a repainted copy of panelBg — the
+                  // same call already made for the input pill (see its own
+                  // comment a bit further down): a gradient positioned as a
+                  // percentage of its own box renders at a different scale
+                  // in a 260-320px sidebar than in the ~400px+ (or
+                  // fullscreen) outer panel, so "reusing the same formula"
+                  // doesn't actually read as one continuous surface — it's
+                  // two independently-scaled repaints that happen to share
+                  // a formula. This is opaque control chrome sitting on top
+                  // of the panel, not a window into it, so it gets the
+                  // pill's solid-elevated-surface treatment instead: a flat
+                  // fill near panelBg's own base color (its gradient's
+                  // darkest/lightest stop), so it still reads as the same
+                  // color family without trying to extend the live glow.
+                  background:dark?"#0E1020":"#FAFAF8",
                   borderRight:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
+                  // Right edge (the one actually visible, facing into the
+                  // panel) rounded to match the outer panel's own 24px
+                  // corner language — was 0 (hard square cut) on every
+                  // corner. Left corners stay square: in non-expanded mode
+                  // they're already clipped into the outer panel's own
+                  // rounded shape by its overflow:hidden, and in expanded
+                  // (fullscreen) mode the outer panel itself is square too,
+                  // so square left corners are correct in both states.
+                  borderRadius:"0 24px 24px 0",
                   // Only painted while actually open — defensive against a
                   // reported faint shading strip down the panel's left edge
                   // that didn't reproduce in an isolated Chromium test
@@ -3401,7 +3417,19 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   // Safari-specific compositing/clip quirk I can't test
                   // from here. If nothing's painted when closed, there's
                   // nothing to bleed regardless of the exact mechanism.
-                  boxShadow:historyOpen?"8px 0 32px rgba(0,0,0,0.25)":"none",
+                  // Dialect matched to the input pill's shadow (tinted in
+                  // light mode, since a colored shadow barely reads against
+                  // a dark background there; flat black in dark mode, same
+                  // as the pill's own dark variant) rather than the outer
+                  // panel's flat-black-in-both-themes dialect it had
+                  // before — offset/blur kept as a horizontal spread
+                  // (appropriate for a left-anchored sliding sheet) instead
+                  // of copying the pill's own all-around vertical values,
+                  // which were sized for a 36px-tall pill, not a full-height
+                  // panel.
+                  boxShadow:historyOpen
+                    ?(dark?"8px 0 28px rgba(0,0,0,0.3)":"8px 0 28px rgba(76,95,213,0.16)")
+                    :"none",
                   transform:historyOpen?"translateX(0)":"translateX(-100%)",
                   transition:"transform 0.22s cubic-bezier(0.34,1.56,0.64,1)",
                   display:"flex",flexDirection:"column",overflow:"hidden"}}>
