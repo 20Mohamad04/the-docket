@@ -2846,6 +2846,17 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
     panelWidthNonExpanded-panelBorderWidth-headerButtonGroupRightInset-headerButtonGroupWidth;
   const sidebarWidthNonExpanded=
     headerButtonGroupLeftNonExpanded-sidebarInset-sidebarWidthGap;
+  // Where the card's own right edge actually sits (its left inset plus
+  // its own width), per mode — the dim overlay's cutout (further down)
+  // needs to match this exactly, not a copy of the width value on its
+  // own. Previously the dim overlay used the sidebar's old flush values
+  // (0/260, 0/320) directly; once the sidebar became an inset, narrower
+  // floating card, that cutout no longer lined up with the card's real
+  // edge, leaving an undimmed strip of raw panel background between the
+  // card and where the dim actually started — full height, hard-edged,
+  // which is what actually read as "a leftover flush sheet behind the
+  // card," not a missing bottom gap on the card itself.
+  const sidebarRightEdge=sidebarInset+(expanded?320:sidebarWidthNonExpanded);
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;imageDataUrl?:string;opusFallback?:boolean}[]>([
     {role:"assistant",content:CHATBOT_GREETING},
   ]);
@@ -3446,7 +3457,18 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   sharpens the contrast against the dimmed area beside it. */}
               <div onClick={()=>setHistoryOpen(false)}
                 style={{position:"absolute",top:0,right:0,bottom:0,
-                  left:expanded?320:260,zIndex:9,
+                  // Matches the floating card's actual right edge
+                  // (sidebarRightEdge, above) — not the card's own width
+                  // on its own, and not the old flush-sheet values (260/
+                  // 320) this used to hardcode. Deliberately still full
+                  // height (top:0/bottom:0), not inset to match the
+                  // card's own top/bottom: this scrim's job is dimming
+                  // the entire message area beside the card for its full
+                  // height, not being shaped like the card itself — it
+                  // was never "the old sidebar," just a boundary value
+                  // that had gone stale relative to the card's new,
+                  // narrower geometry.
+                  left:sidebarRightEdge,zIndex:9,
                   // Theme-aware — 40% black was only ever tuned for dark
                   // mode, where the panel is already deep-toned enough that
                   // it reads as "subtly inactive." In light mode the same
