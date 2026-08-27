@@ -2789,22 +2789,63 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
   const DARK_PANEL_BG="radial-gradient(ellipse 140% 70% at 50% 0%, rgba(134,112,232,0.28) 0%, rgba(76,95,213,0.12) 35%, rgba(14,16,32,0) 70%), #0E1020";
   const LIGHT_PANEL_BG="radial-gradient(ellipse 140% 70% at 50% 0%, rgba(134,112,232,0.14) 0%, rgba(255,255,255,0) 65%), #FAFAF8";
   const panelBg=dark?DARK_PANEL_BG:LIGHT_PANEL_BG;
-  // Shared with the panel's own border declaration below (non-expanded
-  // only — expanded has no border) so the two can never silently desync.
-  // Absolutely-positioned children are placed relative to their
-  // containing block's padding box, not its border box — with 0 padding
-  // and this border, the panel's padding box sits exactly this many px
-  // inside its true visible edge. The sidebar cancels that with a
-  // matching negative inset (see its own comment further down) rather
-  // than hardcoding "-1px" as an unexplained nudge.
+  // Feeds the panel's own border declaration below (non-expanded only —
+  // expanded has no border). No longer also feeds the sidebar's position —
+  // that usage (a negative inset to cancel this border's padding-box
+  // offset) is obsolete now that the sidebar is an inset floating card,
+  // not a sheet flush to the panel's edge; still declared here since the
+  // panel's own border still needs a value.
   const panelBorderWidth=1;
-  // Shared between the sidebar's outer (shape/shadow) and middle (clip)
-  // layers — see the three-layer split further down. Declared once here
-  // rather than as two independent literal strings so they can't quietly
-  // drift apart; both copies need to stay identical for the middle
-  // layer's overflow:hidden to clip exactly to the shape the outer layer
-  // is painting.
-  const sidebarRadius="0 24px 24px 0";
+  // Shared between the sidebar's outer (shape/shadow) and inner (clip)
+  // layers — declared once here rather than as two independent literal
+  // strings so they can't quietly drift apart; both copies need to stay
+  // identical for the inner layer's overflow:hidden to clip exactly to
+  // the shape the outer layer is painting. Uniform on all four corners —
+  // as a flush sheet this was "0 24px 24px 0" (only the right edge was
+  // ever a free corner; the other three coincided with the panel's own
+  // edge and were shaped by ITS clip). Now that the sidebar is an inset
+  // floating card touching the panel nowhere, none of its corners
+  // coincide with the panel's clip anymore, so all four need their own
+  // radius — the flush-sheet reasoning doesn't apply to a floating card
+  // at all, this isn't a tuned value carried over.
+  const sidebarRadius=24;
+  // How far the floating sidebar card sits from the panel's top/left/
+  // bottom edges — the visible gap that reads as "floating on top of
+  // the panel," not touching it. Doesn't apply to the right edge: that's
+  // an internal edge (the card's own width), not a gap to the panel.
+  const sidebarInset=12;
+  // The card's non-expanded width is derived from where the header's
+  // history/mute/expand button group actually sits, not picked by eye —
+  // insetting the card (above) pushed its right edge into that group at
+  // the old fixed 260px width, discovered on real-device testing. Mirrors
+  // the header controls' own real geometry (top:10,right:10 / 36px
+  // buttons / 10px gaps — see the control-buttons div further down) so
+  // this stays correct automatically if that geometry ever changes,
+  // rather than encoding a number that only happened to clear it once.
+  // headerButtonGroupWidth: 3 buttons at 36px + 2 gaps at 10px between them.
+  const headerButtonGroupWidth=3*36+2*10;
+  // headerButtonGroupRightInset: the button group's own `right:10`.
+  const headerButtonGroupRightInset=10;
+  // sidebarWidthGap: breathing room between the card's right edge and
+  // where the button group begins — reuses sidebarInset's own value so
+  // there's one "standard gap" constant in play, not two similar-but-
+  // different numbers.
+  const sidebarWidthGap=sidebarInset;
+  // Non-expanded panel width mirrors the panel's own declared cap
+  // (`min(400px, calc(100vw - 40px))` below) — 400 is what actually
+  // renders on any realistic desktop viewport, where 100vw-40 comfortably
+  // exceeds it; this derivation only needs to hold in that normal case,
+  // not track the rare narrow-viewport clamp exactly.
+  const panelWidthNonExpanded=400;
+  // Button group's left edge, measured from the panel's own left edge
+  // (the same coordinate space the sidebar's own left/width live in):
+  // panel width, minus the panel's own border (only in non-expanded —
+  // see panelBorderWidth), minus the button group's right:10, minus the
+  // group's own width.
+  const headerButtonGroupLeftNonExpanded=
+    panelWidthNonExpanded-panelBorderWidth-headerButtonGroupRightInset-headerButtonGroupWidth;
+  const sidebarWidthNonExpanded=
+    headerButtonGroupLeftNonExpanded-sidebarInset-sidebarWidthGap;
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;imageDataUrl?:string;opusFallback?:boolean}[]>([
     {role:"assistant",content:CHATBOT_GREETING},
   ]);
@@ -3420,87 +3461,76 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   opacity:historyOpen?1:0,
                   pointerEvents:historyOpen?"auto":"none",
                   transition:"opacity 0.22s"}}/>
-              {/* Dropped translucency entirely — blur, veil, and the
-                  outer/middle/inner split all existed to make a see-
-                  through sidebar work over the panel's live gradient, and
-                  every problem in this whole thread (the gradient-scale
-                  mismatch, veil tuning, blur, the corner bug) was
-                  downstream of that one choice, including the backdrop-
-                  filter theory now disproven by real-device testing. An
-                  opaque sidebar has none of those failure modes and is
-                  visually indistinguishable to a user. Two layers, not
-                  three, since backdrop-filter (the reason for the middle/
-                  inner split) is gone — OUTER still needs to stay separate
-                  from the overflow:hidden+radius layer for an unrelated,
-                  still-real reason: an outset box-shadow is clipped by
-                  its own element's overflow:hidden, which is standard,
-                  deterministic CSS behavior in every engine, not part of
-                  the disproven bug theory.
-                  OUTER — shape, shadow, border, position/slide. No
-                    overflow:hidden, so its own outset shadow isn't
-                    clipped.
-                  INNER — owns overflow:hidden + the SAME radius (so it
-                    clips content to match the curve), the opaque
-                    background, and is the flex container for the actual
-                    header/new-chat/list/footer content directly — no
-                    separate content-wrapper needed without a blur layer
-                    to stack above. */}
+              {/* Restructured from a flush sheet to an inset floating
+                  card — the flush version could only ever have two free
+                  corners (the right edge), since the other three
+                  coincided with the panel's own edge and were shaped by
+                  ITS clip, not the sidebar's own radius. No radius value
+                  fixes that; it needed to stop touching the panel's edges
+                  instead. Two layers, not one, for a reason unrelated to
+                  that: an outset box-shadow is clipped by its own
+                  element's overflow:hidden, standard CSS behavior in
+                  every engine — so OUTER (shape, shadow, border,
+                  position/slide, no overflow:hidden) stays separate from
+                  INNER (overflow:hidden + the same radius + the opaque
+                  background + the flex container for the actual content). */}
               <div onClick={e=>e.stopPropagation()}
                 style={{position:"absolute",zIndex:10,
-                  // Cancels the padding-box inset caused by the panel's own
-                  // border (see panelBorderWidth above) — top:0/left:0/
-                  // bottom:0 alone would sit exactly panelBorderWidth px
-                  // inside the panel's true visible edge, not flush with
-                  // it, since absolutely-positioned children are placed
-                  // relative to the containing block's padding box. Only
-                  // needed in non-expanded mode, which is the only state
-                  // where the panel actually has a border — expanded's
-                  // panel border is "none" (0 width), so there's nothing to
-                  // cancel there, and applying this unconditionally would
-                  // introduce a 1px overhang past the panel's own edge in
-                  // fullscreen where none existed before. Lives on this
-                  // OUTER layer specifically, since it's the positioned
-                  // element now — the inner layer below is a plain inset:0
-                  // relative to this box, so the offset is applied exactly
-                  // once, not re-applied at each nesting level.
-                  top:expanded?0:-panelBorderWidth,
-                  left:expanded?0:-panelBorderWidth,
-                  bottom:expanded?0:-panelBorderWidth,
-                  width:(expanded?320:260)+(expanded?0:panelBorderWidth),
-                  borderRight:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
+                  // Gap to the panel's top/left/bottom edges — what makes
+                  // this read as a card floating on top of the panel
+                  // rather than a sheet sliding out of it. Uniform across
+                  // expanded/non-expanded now (unlike the old flush
+                  // version's panelBorderWidth-based offset, which only
+                  // applied in non-expanded mode since only that mode had
+                  // a panel border to cancel) — an inset floating card
+                  // doesn't care whether the panel happens to have a
+                  // border, it was never touching that edge to begin with.
+                  top:sidebarInset,
+                  left:sidebarInset,
+                  bottom:sidebarInset,
+                  // Non-expanded: derived from the button group's real
+                  // position (see sidebarWidthNonExpanded above), not a
+                  // fixed 260 — that was measured to overlap the button
+                  // group by ~12-13px once the card was inset. Expanded:
+                  // stays a fixed 320, unchanged — the panel is 100vw
+                  // there, so the button group (anchored to the panel's
+                  // own right edge) sits far to the right of a 320px-wide
+                  // card at any realistic viewport (the same derivation,
+                  // run with an expanded panel width, only starts to bind
+                  // under ~480px viewports — narrower than any real
+                  // desktop/tablet this mode targets), so deriving it too
+                  // would just be tracking a dimension that isn't at risk.
+                  width:expanded?320:sidebarWidthNonExpanded,
+                  border:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
                   // Declared here AND on the inner clip layer below — not
                   // a stray duplicate, see sidebarRadius above: this copy
                   // shapes the outer's own border/shadow, the inner copy
-                  // makes its overflow:hidden actually clip to match. Left
-                  // corners square, right corners curved — left coincides
-                  // with the panel's own edge and is shaped entirely by
-                  // the panel's own overflow:hidden + border-radius (its
-                  // clip), which stays the single source of truth for that
-                  // corner; right is an internal edge the panel's clip
-                  // never touches, so it's rounded here independently.
+                  // makes its overflow:hidden actually clip to match.
+                  // Uniform on all four corners now — none of them
+                  // coincide with the panel's own clip anymore now that
+                  // the card is inset, so there's no longer a "left
+                  // corners are the panel's job" side to leave square.
                   borderRadius:sidebarRadius,
-                  // Only painted while actually open — defensive against a
-                  // reported faint shading strip down the panel's left edge
-                  // that didn't reproduce in an isolated Chromium test
-                  // (the outer PANEL's overflow:hidden correctly clipped
-                  // both the translated sidebar and its shadow there — a
-                  // different clipping relationship from the one the
-                  // outer/inner split fixes, which is the sidebar clipping
-                  // its OWN shadow via its OWN overflow:hidden; that one
-                  // doesn't apply here since overflow:hidden no longer
-                  // lives on this shadow-bearing element at all). Dialect
+                  // The shadow does more work now than it used to — with
+                  // no shared edge with the panel, it's the primary signal
+                  // that this card is floating above the surface rather
+                  // than a flat rectangle sitting in a hole cut into it.
+                  // Spread to a soft, mostly-even glow (was an asymmetric
+                  // horizontal-only spread, appropriate for a sheet
+                  // anchored to one edge; a floating card wants shadow on
+                  // all sides). Only painted while actually open —
+                  // defensive against a reported faint shading strip down
+                  // the panel's left edge that didn't reproduce in an
+                  // isolated Chromium test, but could still be a Safari-
+                  // specific compositing/clip quirk untestable from here;
+                  // if nothing's painted when closed, there's nothing to
+                  // bleed regardless of the exact mechanism. Dialect
                   // matched to the input pill's shadow (tinted in light
                   // mode, since a colored shadow barely reads against a
                   // dark background there; flat black in dark mode, same
-                  // as the pill's own dark variant) rather than the outer
-                  // panel's flat-black-in-both-themes dialect it had
-                  // before — offset/blur kept as a horizontal spread
-                  // (appropriate for a left-anchored sliding sheet) instead
-                  // of copying the pill's own all-around vertical values,
-                  // which were sized for a 36px-tall pill, not a full-height
-                  // panel.
+                  // as the pill's own dark variant).
                   boxShadow:historyOpen
-                    ?(dark?"8px 0 28px rgba(0,0,0,0.3)":"8px 0 28px rgba(76,95,213,0.16)")
+                    ?(dark?"0 12px 32px rgba(0,0,0,0.4)":"0 12px 32px rgba(76,95,213,0.2)")
                     :"none",
                   transform:historyOpen?"translateX(0)":"translateX(-100%)",
                   transition:"transform 0.22s cubic-bezier(0.34,1.56,0.64,1)"}}>
