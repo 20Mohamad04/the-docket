@@ -3555,8 +3555,14 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                       the wrapping div's overflow:hidden to be clipped to
                       the curve, per the three-layer split explained above. */}
                   <div style={{position:"absolute",inset:0,
-                    backdropFilter:"blur(28px)",
-                    WebkitBackdropFilter:"blur(28px)",
+                    // TEMP DIAGNOSTIC — backdrop-filter commented out to
+                    // test on real Edge/Windows whether it's the actual
+                    // cause of the square-corner bug, isolated from the
+                    // three-layer restructure. Nothing else changed. Revert
+                    // once confirmed either way — this intentionally
+                    // reintroduces the legibility issue the blur was fixing.
+                    // backdropFilter:"blur(28px)",
+                    // WebkitBackdropFilter:"blur(28px)",
                     background:dark?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.20)"}}/>
                   {/* position:relative (not static) is required, not
                       decorative — position:absolute siblings (the blur
