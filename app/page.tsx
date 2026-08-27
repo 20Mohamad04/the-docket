@@ -3554,7 +3554,22 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   boxShadow:historyOpen
                     ?(dark?"0 12px 32px rgba(0,0,0,0.4)":"0 12px 32px rgba(76,95,213,0.2)")
                     :"none",
-                  transform:historyOpen?"translateX(0)":"translateX(-100%)",
+                  // translateX(-100%) alone shifts by the card's own
+                  // width, measured from its resting position — but that
+                  // resting position is already left:sidebarInset (12px)
+                  // in, not left:0. So closing only ever moved the card
+                  // exactly far enough to line its own right edge back up
+                  // with x:0 minus nothing extra — leaving a
+                  // sidebarInset-wide sliver of the card's own right edge
+                  // inside the panel's visible, unclipped area at all
+                  // times, regardless of historyOpen. Confirmed on a real
+                  // device: an opaque strip of the card's own background,
+                  // full height, sitting near the panel's left edge even
+                  // with history closed. Subtracting sidebarInset again
+                  // moves the card exactly that much further, landing its
+                  // right edge precisely at x:0 (fully behind the panel's
+                  // own clip) instead of x:sidebarInset.
+                  transform:historyOpen?"translateX(0)":`translateX(calc(-100% - ${sidebarInset}px))`,
                   transition:"transform 0.22s cubic-bezier(0.34,1.56,0.64,1)"}}>
                 {/* Fully opaque — alpha 1.0, no transparency anywhere in
                     this layer. Colour picked by sampling what the panel's
