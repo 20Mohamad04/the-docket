@@ -2798,6 +2798,13 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
   // matching negative inset (see its own comment further down) rather
   // than hardcoding "-1px" as an unexplained nudge.
   const panelBorderWidth=1;
+  // Shared between the sidebar's outer (shape/shadow) and middle (clip)
+  // layers — see the three-layer split further down. Declared once here
+  // rather than as two independent literal strings so they can't quietly
+  // drift apart; both copies need to stay identical for the middle
+  // layer's overflow:hidden to clip exactly to the shape the outer layer
+  // is painting.
+  const sidebarRadius="0 24px 24px 0";
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;imageDataUrl?:string;opusFallback?:boolean}[]>([
     {role:"assistant",content:CHATBOT_GREETING},
   ]);
@@ -3413,6 +3420,38 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   opacity:historyOpen?1:0,
                   pointerEvents:historyOpen?"auto":"none",
                   transition:"opacity 0.22s"}}/>
+              {/* Split into three layers to route around a real Chromium/
+                  Blink bug (confirmed present on Edge/Windows, not
+                  reproducible in this environment's sandboxed Chromium —
+                  it's compositing-path-dependent, not a WebKit-only
+                  thing as first assumed): backdrop-filter's rendered blur
+                  can ignore its OWN element's border-radius, particularly
+                  when that same element also has overflow:hidden and/or a
+                  box-shadow. Confirmed via source inspection (not just a
+                  repro) that the radius was declared correctly, once, on
+                  the right element, with nothing overriding it — so the
+                  bug isn't a code mistake in the old single-div version,
+                  it's this specific property combination being unreliable
+                  on some Chromium builds/GPU paths. The fix sidesteps the
+                  combination entirely rather than trying to work around it
+                  in place:
+                  OUTER (this div) — shape, shadow, border, position/slide.
+                    Has border-radius (so ITS OWN border/box-shadow paint
+                    with curved corners — box-shadow reliably respects
+                    radius, that part was never buggy) but deliberately NO
+                    overflow:hidden and NO backdrop-filter, so there's
+                    nothing here for an outset shadow to be clipped by.
+                  MIDDLE (clip layer) — owns overflow:hidden + the SAME
+                    radius, so IT does the content clipping. No
+                    backdrop-filter on this element either — clipping
+                    ordinary content via overflow:hidden+radius is a
+                    reliable path in every engine; it's specifically
+                    backdrop-filter's own blur output ignoring a radius on
+                    ITS OWN element that's unreliable.
+                  INNER (blur layer) — backdrop-filter + veil only, no
+                    radius of its own at all. It's clipped to the curve by
+                    the middle layer's overflow:hidden, never by its own
+                    radius, so it can never hit the buggy combination. */}
               <div onClick={e=>e.stopPropagation()}
                 style={{position:"absolute",zIndex:10,
                   // Cancels the padding-box inset caused by the panel's own
@@ -3426,86 +3465,40 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   // panel border is "none" (0 width), so there's nothing to
                   // cancel there, and applying this unconditionally would
                   // introduce a 1px overhang past the panel's own edge in
-                  // fullscreen where none existed before.
+                  // fullscreen where none existed before. Lives on this
+                  // OUTER layer specifically, since it's the positioned
+                  // element now — the middle/inner layers below are plain
+                  // inset:0 relative to this box, so the offset is applied
+                  // exactly once, not re-applied at each nesting level.
                   top:expanded?0:-panelBorderWidth,
                   left:expanded?0:-panelBorderWidth,
                   bottom:expanded?0:-panelBorderWidth,
                   width:(expanded?320:260)+(expanded?0:panelBorderWidth),
-                  // Transparent-ish veil, not a repainted copy of panelBg —
-                  // the same call already made for the input pill (see its
-                  // own comment a bit further down), refined twice now: a
-                  // flat color matching the gradient's own base endpoint was
-                  // also wrong, since that endpoint is only what the
-                  // *bottom* half of the panel converges to (the ellipse
-                  // reaches full transparency 49% down the box) — the top,
-                  // where the glow is strongest AND horizontally centered
-                  // right where the sidebar sits, looked nothing like it.
-                  // A veil lets the panel's actual gradient show through at
-                  // every point, correct by construction, with no formula
-                  // to keep in sync or scale to get wrong.
-                  //
-                  // A veil alone at low alpha (0.04/0.50) turned out to be a
-                  // real legibility bug, not just a tuning issue: message
-                  // bubbles and text scrolling behind the sidebar were
-                  // visibly mixing with the sidebar's own content instead of
-                  // being hidden by it. Fixed with backdrop-filter blur
-                  // below, not by raising the veil alpha — a smooth
-                  // gradient survives a blur essentially unchanged (colour
-                  // is low-frequency), while the high-frequency detail in
-                  // bubbles/text behind it is destroyed, which is exactly
-                  // the separation needed: gradient continuity for the
-                  // colour match, blur for the content the sidebar has to
-                  // occlude. Verified via a standalone repro (mirroring
-                  // this exact ancestor chain — overflow:hidden + border-
-                  // radius panel, absolutely-positioned sidebar) with a
-                  // marker drawn at the sidebar's measured right edge:
-                  // fully illegible on the sidebar's side of that edge, at
-                  // every scroll position, with no bleed either direction.
-                  // Not verified on actual Safari/iOS from this
-                  // environment — WebKit has a known history of
-                  // backdrop-filter misbehaving under nested overflow:
-                  // hidden + border-radius ancestors, and that can't be
-                  // ruled out here without a real device test.
-                  // Light-mode veil dropped 0.55 -> 0.20 — 0.55 over an
-                  // already-light blurred gradient landed near-white, the
-                  // same flat-card problem in a different disguise. Dark
-                  // mode's 0.08 is untouched (see the dim-overlay comment
-                  // above for the other, larger half of the light-mode fix:
-                  // the overlay beside the sidebar was carrying most of the
-                  // gap, not this veil).
-                  backdropFilter:"blur(28px)",
-                  WebkitBackdropFilter:"blur(28px)",
-                  background:dark?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.20)",
                   borderRight:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
-                  // Left corners (the ones that coincide with the panel's
-                  // own edge) are declared square (0) — deliberately NOT
-                  // 24, and NOT conditional on `expanded`. With the sidebar
-                  // now genuinely flush (see top/left/bottom above), the
-                  // panel's own overflow:hidden + border-radius is the only
-                  // thing that should ever define this shape: it curves the
-                  // sidebar's square corner to match in non-expanded mode
-                  // (radius 24) and leaves it square in expanded mode
-                  // (radius 0), correctly in both cases, from one source of
-                  // truth. Declaring a second, independently-matching 24px
-                  // radius here (the previous approach) was exactly what
-                  // produced a visible double-curve once the sidebar wasn't
-                  // pixel-perfect flush — one curve, one owner, avoids that
-                  // whole class of bug regardless of future offset changes.
-                  // Right corners are an internal edge the panel's clip
-                  // never touches, so they stay independently rounded in
-                  // both states, unchanged from before.
-                  borderRadius:"0 24px 24px 0",
+                  // Declared here AND on the middle clip layer below — not
+                  // a stray duplicate, see sidebarRadius above: this copy
+                  // shapes the outer's own border/shadow, the middle copy
+                  // makes its overflow:hidden actually clip to match. Left
+                  // corners square, right corners curved — left coincides
+                  // with the panel's own edge and is shaped entirely by
+                  // the panel's own overflow:hidden + border-radius (its
+                  // clip), which stays the single source of truth for that
+                  // corner; right is an internal edge the panel's clip
+                  // never touches, so it's rounded here independently.
+                  borderRadius:sidebarRadius,
                   // Only painted while actually open — defensive against a
                   // reported faint shading strip down the panel's left edge
                   // that didn't reproduce in an isolated Chromium test
-                  // (overflow:hidden correctly clipped both the translated
-                  // sidebar and its shadow there), but could still be a
-                  // Safari-specific compositing/clip quirk I can't test
-                  // from here. If nothing's painted when closed, there's
-                  // nothing to bleed regardless of the exact mechanism.
-                  // Dialect matched to the input pill's shadow (tinted in
-                  // light mode, since a colored shadow barely reads against
-                  // a dark background there; flat black in dark mode, same
+                  // (the outer PANEL's overflow:hidden correctly clipped
+                  // both the translated sidebar and its shadow there — a
+                  // different clipping relationship from the one this
+                  // three-layer split fixes, which is the sidebar clipping
+                  // its OWN shadow via its OWN overflow:hidden; that one
+                  // doesn't apply here since overflow:hidden no longer
+                  // lives on this shadow-bearing element at all). Dialect
+                  // matched to the input pill's shadow (tinted in light
+                  // mode, since a colored shadow barely reads against a
+                  // dark background there; flat black in dark mode, same
                   // as the pill's own dark variant) rather than the outer
                   // panel's flat-black-in-both-themes dialect it had
                   // before — offset/blur kept as a horizontal spread
@@ -3517,8 +3510,66 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     ?(dark?"8px 0 28px rgba(0,0,0,0.3)":"8px 0 28px rgba(76,95,213,0.16)")
                     :"none",
                   transform:historyOpen?"translateX(0)":"translateX(-100%)",
-                  transition:"transform 0.22s cubic-bezier(0.34,1.56,0.64,1)",
-                  display:"flex",flexDirection:"column",overflow:"hidden"}}>
+                  transition:"transform 0.22s cubic-bezier(0.34,1.56,0.64,1)"}}>
+                <div style={{position:"absolute",inset:0,borderRadius:sidebarRadius,overflow:"hidden"}}>
+                  {/* Transparent-ish veil, not a repainted copy of panelBg —
+                      the same call already made for the input pill (see its
+                      own comment a bit further down), refined twice now: a
+                      flat color matching the gradient's own base endpoint was
+                      also wrong, since that endpoint is only what the
+                      *bottom* half of the panel converges to (the ellipse
+                      reaches full transparency 49% down the box) — the top,
+                      where the glow is strongest AND horizontally centered
+                      right where the sidebar sits, looked nothing like it.
+                      A veil lets the panel's actual gradient show through at
+                      every point, correct by construction, with no formula
+                      to keep in sync or scale to get wrong.
+
+                      A veil alone at low alpha (0.04/0.50) turned out to be a
+                      real legibility bug, not just a tuning issue: message
+                      bubbles and text scrolling behind the sidebar were
+                      visibly mixing with the sidebar's own content instead of
+                      being hidden by it. Fixed with backdrop-filter blur
+                      here, not by raising the veil alpha — a smooth
+                      gradient survives a blur essentially unchanged (colour
+                      is low-frequency), while the high-frequency detail in
+                      bubbles/text behind it is destroyed, which is exactly
+                      the separation needed: gradient continuity for the
+                      colour match, blur for the content the sidebar has to
+                      occlude. Verified via a standalone repro (mirroring
+                      this exact ancestor chain — overflow:hidden + border-
+                      radius panel, absolutely-positioned sidebar) with a
+                      marker drawn at the sidebar's measured right edge:
+                      fully illegible on the sidebar's side of that edge, at
+                      every scroll position, with no bleed either direction.
+
+                      Light-mode veil dropped 0.55 -> 0.20 — 0.55 over an
+                      already-light blurred gradient landed near-white, the
+                      same flat-card problem in a different disguise. Dark
+                      mode's 0.08 is untouched (see the dim-overlay comment
+                      above for the other, larger half of the light-mode fix:
+                      the overlay beside the sidebar was carrying most of the
+                      gap, not this veil).
+
+                      No border-radius of its own — deliberately relies on
+                      the wrapping div's overflow:hidden to be clipped to
+                      the curve, per the three-layer split explained above. */}
+                  <div style={{position:"absolute",inset:0,
+                    backdropFilter:"blur(28px)",
+                    WebkitBackdropFilter:"blur(28px)",
+                    background:dark?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.20)"}}/>
+                  {/* position:relative (not static) is required, not
+                      decorative — position:absolute siblings (the blur
+                      layer above) paint ABOVE non-positioned in-flow
+                      content by default regardless of DOM order or a
+                      z-index:0 on the absolute element, so without this,
+                      the blur would silently render on top of the actual
+                      sidebar content instead of behind it. This makes the
+                      content a "positioned, z-index:auto" participant too,
+                      so the two stack by DOM order — this one, coming
+                      second, paints on top. */}
+                  <div style={{position:"relative",zIndex:1,
+                    display:"flex",flexDirection:"column",height:"100%",overflow:"hidden"}}>
                 <div style={{padding:"16px 16px 12px",
                   borderBottom:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
                   display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
@@ -3596,6 +3647,8 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     </button>
                   </div>
                 )}
+                  </div>
+                </div>
               </div>
 
               {/* Header strip — no purple, no title text, but filled with the
