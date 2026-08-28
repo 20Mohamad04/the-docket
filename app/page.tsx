@@ -2733,6 +2733,24 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
   // and the panel falls back to its plain vh/bottom values below).
   const[keyboardInset,setKeyboardInset]=useState(0);
   const[visibleHeight,setVisibleHeight]=useState<number|null>(null);
+  // Chat history card width — measured at runtime, not derived from an
+  // assumed panel width. cardWidthNonExpanded/cardWidthExpanded (declared
+  // further down) assumed the panel actually renders at
+  // panelWidthNonExpanded/panelWidthExpandedMin — real-device testing
+  // showed the panel can render meaningfully wider than that assumption
+  // at some viewports, throwing off every value derived from it (the
+  // dim overlay's cutout landing hundreds of px too far left, painting
+  // over the card itself, not just the area beside it). Fixed by
+  // measuring the header button group's actual rendered position
+  // relative to the panel via refs, instead of computing where it
+  // "should" be from a guessed panel width. null until the first
+  // measurement lands (see the layout effect below); the static
+  // cardWidthNonExpanded/cardWidthExpanded values still exist, but only
+  // as the first-paint fallback before that measurement is available,
+  // not as the source of truth.
+  const[measuredCardWidth,setMeasuredCardWidth]=useState<number|null>(null);
+  const chatPanelRef=React.useRef<HTMLDivElement|null>(null);
+  const historyButtonGroupRef=React.useRef<HTMLDivElement|null>(null);
   // Declared here (rather than down by its own lock effect below) so
   // updateFromViewport just below can reference it — see that function's
   // own comment for why.
@@ -2823,29 +2841,72 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
   // reuses cardInset's own value rather than introducing a second,
   // similar-but-different "gap" number.
   const cardWidthGap=cardInset;
-  // panelWidthNonExpanded mirrors the panel's own declared cap
-  // (`min(400px, calc(100vw - 40px))` below) — 400 is what actually
-  // renders on any realistic desktop viewport. panelWidthExpandedMin is a
-  // defensible minimum viewport width for expanded/fullscreen mode (well
-  // below any real desktop/tablet), used only so the expanded card width
-  // is derived the same way as non-expanded instead of being a bare
-  // literal justified solely in a comment.
+  // panelWidthNonExpanded/panelWidthExpandedMin were the previous source
+  // of truth for the card's width — both wrong: real-device testing found
+  // the panel rendering meaningfully wider than either assumption at some
+  // viewports (the panel's own width is `min(400px, calc(100vw - 40px))`,
+  // a CSS expression that depends on the actual viewport and can't be
+  // reliably mirrored by a static JS number). Every value derived from
+  // that assumption was off by the same amount, including the dim
+  // overlay's cutout — it landed hundreds of px too far left on the real
+  // device, painting over the card itself instead of just the area
+  // beside it. Kept only as the first-paint fallback (see cardWidth
+  // below) before the real measurement lands, not as the real answer.
   const panelWidthNonExpanded=400;
   const panelWidthExpandedMin=480;
-  const cardWidthNonExpanded=
+  const cardWidthNonExpandedFallback=
     panelWidthNonExpanded-panelBorderWidth-headerButtonRightInset-headerButtonGroupWidth
     -cardInset-cardWidthGap;
-  const cardWidthExpanded=
+  const cardWidthExpandedFallback=
     panelWidthExpandedMin-headerButtonRightInset-headerButtonGroupWidth
     -cardInset-cardWidthGap; // no border term — expanded panel has none
-  const cardWidth=expanded?cardWidthExpanded:cardWidthNonExpanded;
-  // Card's actual right edge, for the dim overlay's cutout below.
+  // Real source of truth: measuredCardWidth, set by the layout effect
+  // below from the header button group's actual rendered position
+  // relative to the actual rendered panel — both read fresh via
+  // getBoundingClientRect(), so this is correct regardless of what the
+  // panel's real width happens to be at the current viewport, zoom, or
+  // OS display scale, none of which a static number can track. Falls
+  // back to the old assumption-based value only for the first paint,
+  // before that measurement has had a chance to run.
+  const cardWidth=measuredCardWidth
+    ??(expanded?cardWidthExpandedFallback:cardWidthNonExpandedFallback);
+  // Card's actual right edge, for the dim overlay's cutout below. Derived
+  // from cardWidth (now measured, not assumed), so this inherits the fix
+  // automatically rather than needing its own separate measurement.
   const cardRightEdge=cardInset+cardWidth;
   // Closed-state translate distance: the card's own width (100%) plus its
   // own left inset plus its shadow's blur radius — clears the card fully
   // off-screen including the halo its own shadow would otherwise still
   // cast into the panel's visible area while "closed."
   const cardCloseDistance=`calc(100% + ${cardInset}px + ${cardShadowBlur}px)`;
+  // Measures the header button group's real position relative to the
+  // real panel, on both refs' current rendered boxes — not derived from
+  // any assumption about panel width. A single ResizeObserver on the
+  // panel itself (not the button group) covers every case that needs to
+  // trigger a re-measurement — window resize, the expanded/non-expanded
+  // toggle, and the existing visualViewport-driven keyboard-inset height
+  // changes — without wiring each of those up separately: all three
+  // change the panel's own rendered box size, which is exactly what
+  // ResizeObserver watches, for any reason it happens. (The button group
+  // itself isn't a useful observe() target: its own size never changes
+  // as the panel resizes — it's a fixed-size flex item pinned by
+  // right:10 — only its position relative to the panel does, and
+  // ResizeObserver only fires on size changes, not position changes.)
+  React.useLayoutEffect(()=>{
+    const panelEl=chatPanelRef.current;
+    const buttonGroupEl=historyButtonGroupRef.current;
+    if(!panelEl||!buttonGroupEl)return;
+    const measure=()=>{
+      const panelRect=panelEl.getBoundingClientRect();
+      const buttonGroupRect=buttonGroupEl.getBoundingClientRect();
+      const buttonGroupLeftRelative=buttonGroupRect.left-panelRect.left;
+      setMeasuredCardWidth(buttonGroupLeftRelative-cardInset-cardWidthGap);
+    };
+    measure();
+    const ro=new ResizeObserver(measure);
+    ro.observe(panelEl);
+    return()=>ro.disconnect();
+  },[]);
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;imageDataUrl?:string;opusFallback?:boolean}[]>([
     {role:"assistant",content:CHATBOT_GREETING},
   ]);
@@ -3396,7 +3457,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
             // directly. `top`/`left` only ever toggle between 0 and "auto",
             // which CSS can't meaningfully tween anyway.
             transition:"right 0.3s cubic-bezier(0.34,1.56,0.64,1)"}}>
-            <div style={{
+            <div ref={chatPanelRef} style={{
               width:expanded?"100vw":"min(400px, calc(100vw - 40px))",
               height:expanded
                 ?(visibleHeight!=null?`${visibleHeight}px`:"100vh")
@@ -3613,7 +3674,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     28px/radius-8/always-boxed via inputBtnBg+inputBtnBorder
                     — the pre-restyle toolbar language that never got
                     updated when the input row moved to the de-boxed look. */}
-                <div style={{position:"absolute",top:10,right:10,display:"flex",gap:10}}>
+                <div ref={historyButtonGroupRef} style={{position:"absolute",top:10,right:10,display:"flex",gap:10}}>
                   <button onClick={()=>setHistoryOpen(o=>!o)}
                     title="Chat history" className="pill-btn"
                     style={{width:36,height:36,
