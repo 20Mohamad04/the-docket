@@ -2790,73 +2790,62 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
   const LIGHT_PANEL_BG="radial-gradient(ellipse 140% 70% at 50% 0%, rgba(134,112,232,0.14) 0%, rgba(255,255,255,0) 65%), #FAFAF8";
   const panelBg=dark?DARK_PANEL_BG:LIGHT_PANEL_BG;
   // Feeds the panel's own border declaration below (non-expanded only —
-  // expanded has no border). No longer also feeds the sidebar's position —
-  // that usage (a negative inset to cancel this border's padding-box
-  // offset) is obsolete now that the sidebar is an inset floating card,
-  // not a sheet flush to the panel's edge; still declared here since the
-  // panel's own border still needs a value.
+  // expanded has no border). Independent of the chat history card's own
+  // constants further down — this one predates it and the panel's own
+  // border still needs a value regardless of how the card is built.
   const panelBorderWidth=1;
-  // Shared between the sidebar's outer (shape/shadow) and inner (clip)
-  // layers — declared once here rather than as two independent literal
-  // strings so they can't quietly drift apart; both copies need to stay
-  // identical for the inner layer's overflow:hidden to clip exactly to
-  // the shape the outer layer is painting. Uniform on all four corners —
-  // as a flush sheet this was "0 24px 24px 0" (only the right edge was
-  // ever a free corner; the other three coincided with the panel's own
-  // edge and were shaped by ITS clip). Now that the sidebar is an inset
-  // floating card touching the panel nowhere, none of its corners
-  // coincide with the panel's clip anymore, so all four need their own
-  // radius — the flush-sheet reasoning doesn't apply to a floating card
-  // at all, this isn't a tuned value carried over.
-  const sidebarRadius=24;
-  // How far the floating sidebar card sits from the panel's top/left/
-  // bottom edges — the visible gap that reads as "floating on top of
-  // the panel," not touching it. Doesn't apply to the right edge: that's
-  // an internal edge (the card's own width), not a gap to the panel.
-  const sidebarInset=12;
-  // The card's non-expanded width is derived from where the header's
-  // history/mute/expand button group actually sits, not picked by eye —
-  // insetting the card (above) pushed its right edge into that group at
-  // the old fixed 260px width, discovered on real-device testing. Mirrors
-  // the header controls' own real geometry (top:10,right:10 / 36px
-  // buttons / 10px gaps — see the control-buttons div further down) so
-  // this stays correct automatically if that geometry ever changes,
-  // rather than encoding a number that only happened to clear it once.
-  // headerButtonGroupWidth: 3 buttons at 36px + 2 gaps at 10px between them.
-  const headerButtonGroupWidth=3*36+2*10;
-  // headerButtonGroupRightInset: the button group's own `right:10`.
-  const headerButtonGroupRightInset=10;
-  // sidebarWidthGap: breathing room between the card's right edge and
-  // where the button group begins — reuses sidebarInset's own value so
-  // there's one "standard gap" constant in play, not two similar-but-
-  // different numbers.
-  const sidebarWidthGap=sidebarInset;
-  // Non-expanded panel width mirrors the panel's own declared cap
+
+  // ── Chat history card — rebuilt from scratch as a single positioned
+  // div (see its render further down) after a dozen incremental patches
+  // to the previous two/three-layer version each fixed one real, verified
+  // bug and revealed another leftover surface underneath. Every value
+  // below is a named constant derived from the card's actual real
+  // geometry or the header button group's actual real geometry — nothing
+  // here is picked by eye.
+  const cardInset=12; // gap from the panel's top/left/bottom edges
+  const cardRadius=24; // uniform corner radius, all four corners, both modes
+  // Blur radius of the card's own floating shadow (see cardShadow below).
+  // Reused in the closed-state translate distance too, so the two can
+  // never drift out of sync with each other.
+  const cardShadowBlur=32;
+  // Real geometry of the header's history/mute/expand button group (see
+  // the control-buttons div further down: top:10,right:10, 36px buttons,
+  // 10px gaps) — the card's width is derived from this so it always
+  // clears the buttons, rather than a fixed number that only happens to
+  // clear them at one size.
+  const headerButtonSize=36;
+  const headerButtonGap=10;
+  const headerButtonCount=3;
+  const headerButtonRightInset=10; // the button group's own `right:10`
+  const headerButtonGroupWidth=
+    headerButtonCount*headerButtonSize+(headerButtonCount-1)*headerButtonGap;
+  // Breathing room between the card's right edge and the button group —
+  // reuses cardInset's own value rather than introducing a second,
+  // similar-but-different "gap" number.
+  const cardWidthGap=cardInset;
+  // panelWidthNonExpanded mirrors the panel's own declared cap
   // (`min(400px, calc(100vw - 40px))` below) — 400 is what actually
-  // renders on any realistic desktop viewport, where 100vw-40 comfortably
-  // exceeds it; this derivation only needs to hold in that normal case,
-  // not track the rare narrow-viewport clamp exactly.
+  // renders on any realistic desktop viewport. panelWidthExpandedMin is a
+  // defensible minimum viewport width for expanded/fullscreen mode (well
+  // below any real desktop/tablet), used only so the expanded card width
+  // is derived the same way as non-expanded instead of being a bare
+  // literal justified solely in a comment.
   const panelWidthNonExpanded=400;
-  // Button group's left edge, measured from the panel's own left edge
-  // (the same coordinate space the sidebar's own left/width live in):
-  // panel width, minus the panel's own border (only in non-expanded —
-  // see panelBorderWidth), minus the button group's right:10, minus the
-  // group's own width.
-  const headerButtonGroupLeftNonExpanded=
-    panelWidthNonExpanded-panelBorderWidth-headerButtonGroupRightInset-headerButtonGroupWidth;
-  const sidebarWidthNonExpanded=
-    headerButtonGroupLeftNonExpanded-sidebarInset-sidebarWidthGap;
-  // Where the card's own right edge actually sits (its left inset plus
-  // its own width), per mode — the dim overlay's cutout (further down)
-  // needs to match this exactly, not a copy of the width value on its
-  // own. Previously the dim overlay used the sidebar's old flush values
-  // (0/260, 0/320) directly; once the sidebar became an inset, narrower
-  // floating card, that cutout no longer lined up with the card's real
-  // edge, leaving an undimmed strip of raw panel background between the
-  // card and where the dim actually started — full height, hard-edged,
-  // which is what actually read as "a leftover flush sheet behind the
-  // card," not a missing bottom gap on the card itself.
-  const sidebarRightEdge=sidebarInset+(expanded?320:sidebarWidthNonExpanded);
+  const panelWidthExpandedMin=480;
+  const cardWidthNonExpanded=
+    panelWidthNonExpanded-panelBorderWidth-headerButtonRightInset-headerButtonGroupWidth
+    -cardInset-cardWidthGap;
+  const cardWidthExpanded=
+    panelWidthExpandedMin-headerButtonRightInset-headerButtonGroupWidth
+    -cardInset-cardWidthGap; // no border term — expanded panel has none
+  const cardWidth=expanded?cardWidthExpanded:cardWidthNonExpanded;
+  // Card's actual right edge, for the dim overlay's cutout below.
+  const cardRightEdge=cardInset+cardWidth;
+  // Closed-state translate distance: the card's own width (100%) plus its
+  // own left inset plus its shadow's blur radius — clears the card fully
+  // off-screen including the halo its own shadow would otherwise still
+  // cast into the panel's visible area while "closed."
+  const cardCloseDistance=`calc(100% + ${cardInset}px + ${cardShadowBlur}px)`;
   const[messages,setMessages]=useState<{role:"user"|"assistant";content:string;imageDataUrl?:string;opusFallback?:boolean}[]>([
     {role:"assistant",content:CHATBOT_GREETING},
   ]);
@@ -3439,159 +3428,70 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               animation:"chatPanelExpandIn 0.32s cubic-bezier(0.34,1.56,0.64,1)"}}>
               <style>{`@keyframes chatPanelExpandIn{0%{opacity:0;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}`}</style>
 
-              {/* History sidebar — slides out from the left, clipped to this
-                  chat panel's own bounds (its parent has overflow:hidden),
-                  not the whole app, unlike the main Drawer it borrows its
-                  visual language from. */}
-              {/* Excludes the sidebar's own width instead of covering the
-                  whole panel (inset:0, as it did before) — under the
-                  sidebar's footprint this dim was purely decorative, not
-                  functional: clicks on the sidebar are already stopped via
-                  e.stopPropagation() on the sidebar itself below, so the
-                  overlay was never actually needed there for click-to-close.
-                  Now that the sidebar shows the real panel gradient through
-                  a translucent veil (see below) instead of a flat repaint,
-                  leaving the dim underneath it would just be muddying the
-                  exact gradient the veil is trying to reveal cleanly —
-                  cutting it out keeps that gradient saturated, which also
-                  sharpens the contrast against the dimmed area beside it. */}
+              {/* Chat history — dim overlay + one card, rebuilt from
+                  scratch (see the plan in conversation history) after a
+                  dozen incremental patches each fixed one real, verified
+                  bug and revealed another leftover surface underneath. */}
               <div onClick={()=>setHistoryOpen(false)}
                 style={{position:"absolute",top:0,right:0,bottom:0,
-                  // Matches the floating card's actual right edge
-                  // (sidebarRightEdge, above) — not the card's own width
-                  // on its own, and not the old flush-sheet values (260/
-                  // 320) this used to hardcode. Deliberately still full
-                  // height (top:0/bottom:0), not inset to match the
-                  // card's own top/bottom: this scrim's job is dimming
-                  // the entire message area beside the card for its full
-                  // height, not being shaped like the card itself — it
-                  // was never "the old sidebar," just a boundary value
-                  // that had gone stale relative to the card's new,
-                  // narrower geometry.
-                  left:sidebarRightEdge,zIndex:9,
-                  // Theme-aware — 40% black was only ever tuned for dark
-                  // mode, where the panel is already deep-toned enough that
-                  // it reads as "subtly inactive." In light mode the same
-                  // 0.4 drags the panel to a grey-mauve that the sidebar
-                  // (undimmed, sitting above this layer) doesn't share,
-                  // which was most of the remaining light-mode mismatch —
-                  // the veil below was never going to close a gap this
-                  // large by itself. Lighter in light mode since the same
-                  // "this area is inactive" signal needs far less darkening
-                  // over a near-white base to read clearly.
+                  // Card's actual right edge (cardRightEdge, above) — not
+                  // a copy of its width alone, and not a hardcoded value.
+                  // Deliberately still full height (top:0/bottom:0), not
+                  // inset to match the card's own top/bottom: this scrim's
+                  // job is dimming the entire message area beside the
+                  // card for its full height, not being shaped like the
+                  // card itself.
+                  left:cardRightEdge,zIndex:9,
+                  // Theme-aware — 40% black reads as "subtly inactive"
+                  // over the already deep-toned dark panel; the same 0.4
+                  // in light mode drags it to a grey-mauve the undimmed
+                  // card doesn't share, so light mode uses less darkening.
                   background:dark?"rgba(0,0,0,0.4)":"rgba(0,0,0,0.14)",
                   opacity:historyOpen?1:0,
                   pointerEvents:historyOpen?"auto":"none",
                   transition:"opacity 0.22s"}}/>
-              {/* Restructured from a flush sheet to an inset floating
-                  card — the flush version could only ever have two free
-                  corners (the right edge), since the other three
-                  coincided with the panel's own edge and were shaped by
-                  ITS clip, not the sidebar's own radius. No radius value
-                  fixes that; it needed to stop touching the panel's edges
-                  instead. Two layers, not one, for a reason unrelated to
-                  that: an outset box-shadow is clipped by its own
-                  element's overflow:hidden, standard CSS behavior in
-                  every engine — so OUTER (shape, shadow, border,
-                  position/slide, no overflow:hidden) stays separate from
-                  INNER (overflow:hidden + the same radius + the opaque
-                  background + the flex container for the actual content). */}
+              {/* The card — one positioned div, nothing nested purely for
+                  structure. overflow:hidden clips its content to its own
+                  rounded shape; the shadow is filter:drop-shadow(), not
+                  box-shadow, specifically because box-shadow is clipped
+                  by its own element's overflow:hidden in every engine
+                  (verified directly in a repro before writing this) —
+                  drop-shadow is a post-composite filter effect and isn't
+                  subject to the element's own overflow, so it's the only
+                  way to get a real floating shadow out of a single div
+                  that also needs to clip its own content. */}
               <div onClick={e=>e.stopPropagation()}
                 style={{position:"absolute",zIndex:10,
-                  // Gap to the panel's top/left/bottom edges — what makes
-                  // this read as a card floating on top of the panel
-                  // rather than a sheet sliding out of it. Uniform across
-                  // expanded/non-expanded now (unlike the old flush
-                  // version's panelBorderWidth-based offset, which only
-                  // applied in non-expanded mode since only that mode had
-                  // a panel border to cancel) — an inset floating card
-                  // doesn't care whether the panel happens to have a
-                  // border, it was never touching that edge to begin with.
-                  top:sidebarInset,
-                  left:sidebarInset,
-                  bottom:sidebarInset,
-                  // Non-expanded: derived from the button group's real
-                  // position (see sidebarWidthNonExpanded above), not a
-                  // fixed 260 — that was measured to overlap the button
-                  // group by ~12-13px once the card was inset. Expanded:
-                  // stays a fixed 320, unchanged — the panel is 100vw
-                  // there, so the button group (anchored to the panel's
-                  // own right edge) sits far to the right of a 320px-wide
-                  // card at any realistic viewport (the same derivation,
-                  // run with an expanded panel width, only starts to bind
-                  // under ~480px viewports — narrower than any real
-                  // desktop/tablet this mode targets), so deriving it too
-                  // would just be tracking a dimension that isn't at risk.
-                  width:expanded?320:sidebarWidthNonExpanded,
+                  top:cardInset,left:cardInset,bottom:cardInset,width:cardWidth,
                   border:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
-                  // Declared here AND on the inner clip layer below — not
-                  // a stray duplicate, see sidebarRadius above: this copy
-                  // shapes the outer's own border/shadow, the inner copy
-                  // makes its overflow:hidden actually clip to match.
-                  // Uniform on all four corners now — none of them
-                  // coincide with the panel's own clip anymore now that
-                  // the card is inset, so there's no longer a "left
-                  // corners are the panel's job" side to leave square.
-                  borderRadius:sidebarRadius,
-                  // The shadow does more work now than it used to — with
-                  // no shared edge with the panel, it's the primary signal
-                  // that this card is floating above the surface rather
-                  // than a flat rectangle sitting in a hole cut into it.
-                  // Spread to a soft, mostly-even glow (was an asymmetric
-                  // horizontal-only spread, appropriate for a sheet
-                  // anchored to one edge; a floating card wants shadow on
-                  // all sides). Only painted while actually open —
-                  // defensive against a reported faint shading strip down
-                  // the panel's left edge that didn't reproduce in an
-                  // isolated Chromium test, but could still be a Safari-
-                  // specific compositing/clip quirk untestable from here;
-                  // if nothing's painted when closed, there's nothing to
-                  // bleed regardless of the exact mechanism. Dialect
-                  // matched to the input pill's shadow (tinted in light
-                  // mode, since a colored shadow barely reads against a
-                  // dark background there; flat black in dark mode, same
-                  // as the pill's own dark variant).
-                  boxShadow:historyOpen
-                    ?(dark?"0 12px 32px rgba(0,0,0,0.4)":"0 12px 32px rgba(76,95,213,0.2)")
-                    :"none",
-                  // translateX(-100%) alone shifts by the card's own
-                  // width, measured from its resting position — but that
-                  // resting position is already left:sidebarInset (12px)
-                  // in, not left:0. So closing only ever moved the card
-                  // exactly far enough to line its own right edge back up
-                  // with x:0 minus nothing extra — leaving a
-                  // sidebarInset-wide sliver of the card's own right edge
-                  // inside the panel's visible, unclipped area at all
-                  // times, regardless of historyOpen. Confirmed on a real
-                  // device: an opaque strip of the card's own background,
-                  // full height, sitting near the panel's left edge even
-                  // with history closed. Subtracting sidebarInset again
-                  // moves the card exactly that much further, landing its
-                  // right edge precisely at x:0 (fully behind the panel's
-                  // own clip) instead of x:sidebarInset.
-                  transform:historyOpen?"translateX(0)":`translateX(calc(-100% - ${sidebarInset}px))`,
-                  transition:"transform 0.22s cubic-bezier(0.34,1.56,0.64,1)"}}>
-                {/* Fully opaque — alpha 1.0, no transparency anywhere in
-                    this layer. Colour picked by sampling what the panel's
-                    gradient actually renders in the sidebar's own top-fold
-                    area (x:10-240, y:5-80 of the panel box, where the
-                    header/controls sit and attention is highest), not the
-                    gradient's declared endpoint colour — that endpoint is
-                    only what the *bottom* half of the panel converges to
-                    (the ellipse reaches full transparency 49% down the
-                    box), which was the original mismatch: the gradient
-                    never actually reaches that endpoint in the visible
-                    top region. Computed by replicating the CSS radial-
-                    gradient spec's own interpolation + compositing math
-                    (exact, deterministic — not a rendering-engine detail)
-                    over a grid of points in that region and averaging;
-                    cross-checked against the independently-established
-                    "49% down the box" fact from earlier in this
-                    investigation, which the same formula reproduces
-                    exactly. */}
-                <div style={{position:"absolute",inset:0,borderRadius:sidebarRadius,overflow:"hidden",
+                  borderRadius:cardRadius,
                   background:dark?"#1E2043":"#F2F1F7",
-                  display:"flex",flexDirection:"column"}}>
+                  overflow:"hidden",
+                  display:"flex",flexDirection:"column",
+                  // Dialect matched to the input pill's own shadow (tinted
+                  // in light mode, since a colored shadow barely reads
+                  // against a dark background there; flat black in dark
+                  // mode). Only rendered while actually open — the closed-
+                  // state transform (below) already clears the card and
+                  // this shadow's own blur radius well behind the panel's
+                  // clip, so this is a belt-and-suspenders redundancy, not
+                  // load-bearing, kept because it was already how this
+                  // worked and changing it wasn't asked for.
+                  filter:historyOpen
+                    ?(dark?`drop-shadow(0 12px ${cardShadowBlur}px rgba(0,0,0,0.4))`
+                          :`drop-shadow(0 12px ${cardShadowBlur}px rgba(76,95,213,0.2))`)
+                    :"none",
+                  // Closed state must clear the card's own width, its own
+                  // left inset (it doesn't rest at left:0), and its
+                  // shadow's blur radius — see cardCloseDistance above.
+                  // translateX(-100%) alone only clears the width, leaving
+                  // a cardInset-wide sliver of the card's own opaque
+                  // background permanently visible inside the panel
+                  // regardless of historyOpen (confirmed on a real device
+                  // and via getBoundingClientRect + elementFromPoint in a
+                  // repro before this fix).
+                  transform:historyOpen?"translateX(0)":`translateX(calc(-1 * ${cardCloseDistance}))`,
+                  transition:"transform 0.22s cubic-bezier(0.34,1.56,0.64,1)"}}>
                 <div style={{padding:"16px 16px 12px",
                   borderBottom:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
                   display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
@@ -3669,7 +3569,6 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     </button>
                   </div>
                 )}
-                </div>
               </div>
 
               {/* Header strip — no purple, no title text, but filled with the
