@@ -3522,11 +3522,17 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   // very top/bottom of the shared edge, leaving a tiny
                   // undimmed wedge of panel background in the corner.
                   borderRadius:`${cardRadius}px 0 0 ${cardRadius}px`,
-                  // Theme-aware — 40% black reads as "subtly inactive"
-                  // over the already deep-toned dark panel; the same 0.4
-                  // in light mode drags it to a grey-mauve the undimmed
-                  // card doesn't share, so light mode uses less darkening.
-                  background:dark?"rgba(0,0,0,0.4)":"rgba(0,0,0,0.14)",
+                  // Both values dropped from their originals (0.4/0.14) —
+                  // those were chosen back when the card itself was
+                  // translucent and the dim needed to carry real contrast
+                  // to separate it from what showed through behind it. The
+                  // card is fully opaque now, so the dim only needs to
+                  // signal "this area is inactive," not create contrast
+                  // against a translucent neighbor. Real-device feedback
+                  // at 0.14 in light mode: reads as a heavy grey wash
+                  // across the whole message area, flattening the content
+                  // behind it rather than just de-emphasising it.
+                  background:dark?"rgba(0,0,0,0.25)":"rgba(0,0,0,0.06)",
                   opacity:historyOpen?1:0,
                   pointerEvents:historyOpen?"auto":"none",
                   transition:"opacity 0.22s"}}/>
