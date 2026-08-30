@@ -3494,15 +3494,34 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   dozen incremental patches each fixed one real, verified
                   bug and revealed another leftover surface underneath. */}
               <div onClick={()=>setHistoryOpen(false)}
-                style={{position:"absolute",top:0,right:0,bottom:0,
+                style={{position:"absolute",
+                  // top/bottom now match the card's own inset (same
+                  // cardInset constant, not a copy of its value) instead
+                  // of spanning the panel's full height. Real-device
+                  // measurement found the dim's old top:0/bottom:0
+                  // protruding exactly cardInset px above and below the
+                  // card — a hard-square-cornered rectangle poking out
+                  // past the card's own rounded top/bottom edge, which is
+                  // what was actually being reported as a leftover
+                  // surface behind the card. The horizontal fix (left:
+                  // cardRightEdge) was already correct; this was the
+                  // missing vertical half of the same alignment.
+                  top:cardInset,bottom:cardInset,right:0,
                   // Card's actual right edge (cardRightEdge, above) — not
                   // a copy of its width alone, and not a hardcoded value.
-                  // Deliberately still full height (top:0/bottom:0), not
-                  // inset to match the card's own top/bottom: this scrim's
-                  // job is dimming the entire message area beside the
-                  // card for its full height, not being shaped like the
-                  // card itself.
                   left:cardRightEdge,zIndex:9,
+                  // Rounded only on the left corners (touching the card's
+                  // own rounded right corners, an internal edge the
+                  // panel's clip never reaches) — right corners stay
+                  // square since they touch the panel's own right edge,
+                  // where the panel's own overflow:hidden + border-radius
+                  // already shapes them, the same way the card's own left
+                  // corners used to rely on the panel's clip back when it
+                  // was a flush sheet. Without this, the dim's square
+                  // left corner would sit outside the card's curve at the
+                  // very top/bottom of the shared edge, leaving a tiny
+                  // undimmed wedge of panel background in the corner.
+                  borderRadius:`${cardRadius}px 0 0 ${cardRadius}px`,
                   // Theme-aware — 40% black reads as "subtly inactive"
                   // over the already deep-toned dark panel; the same 0.4
                   // in light mode drags it to a grey-mauve the undimmed
