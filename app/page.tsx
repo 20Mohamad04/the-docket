@@ -3529,10 +3529,12 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   // card is fully opaque now, so the dim only needs to
                   // signal "this area is inactive," not create contrast
                   // against a translucent neighbor. Real-device feedback
-                  // at 0.14 in light mode: reads as a heavy grey wash
-                  // across the whole message area, flattening the content
-                  // behind it rather than just de-emphasising it.
-                  background:dark?"rgba(0,0,0,0.25)":"rgba(0,0,0,0.06)",
+                  // at 0.06 in light mode: still flattening the panel's
+                  // gradient and washing out the message bubble across the
+                  // whole message area, so light mode goes fully
+                  // transparent — the element stays in the DOM (click-to-
+                  // close still needs it) and dark mode is untouched.
+                  background:dark?"rgba(0,0,0,0.25)":"transparent",
                   opacity:historyOpen?1:0,
                   pointerEvents:historyOpen?"auto":"none",
                   transition:"opacity 0.22s"}}/>
