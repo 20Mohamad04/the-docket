@@ -10,6 +10,12 @@ type View = "daily"|"all"|"calendar"|"archive";
 type Filter = "all"|"ongoing"|"milestone"|"done"|Category;
 type Lang = "en"|"ar"|"fr"|"tr"|"ur";
 
+// Bottom nav bar's fixed footprint (see its render inside Chatbot below) —
+// the FAB's bottom offset in Home derives from these two constants so the
+// two floating elements can't drift out of sync if the bar's size changes.
+const BOTTOM_NAV_BOTTOM=20;
+const BOTTOM_NAV_HEIGHT=60; // 44px icon row + 8px vertical padding * 2
+
 interface Step { id:number; text:string; done:boolean; }
 interface Task {
   id:number; title:string; category:Category; priority:Priority;
@@ -2710,8 +2716,9 @@ function formatConversationTime(iso:string):string{
   return date.toLocaleDateString("en-GB",{day:"numeric",month:"short",...(sameYear?{}:{year:"numeric"})});
 }
 
-function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
-  user?:{id?:string}|null;isPro?:boolean;tier?:string|null;}){
+function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrentView,onOpenModal}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
+  user?:{id?:string}|null;isPro?:boolean;tier?:string|null;
+  currentView:View;setCurrentView:(v:View)=>void;onOpenModal:(m:string)=>void;}){
   const{t,dark}=useApp();
   const C=getC(dark);
   // C.border/C.surface2 are near-transparent tints meant for subtle layering
@@ -2722,6 +2729,13 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier}:{tasks:Task[];routine
   const inputBtnBorder=dark?"1.5px solid rgba(255,255,255,0.18)":"1.5px solid rgba(76,95,213,0.28)";
   const[open,setOpen]=useState(false);
   const[expanded,setExpanded]=useState(false);
+  const[moreOpen,setMoreOpen]=useState(false);
+  useEffect(()=>{
+    if(!moreOpen)return;
+    function onKey(e:KeyboardEvent){ if(e.key==="Escape") setMoreOpen(false); }
+    document.addEventListener("keydown",onKey);
+    return()=>document.removeEventListener("keydown",onKey);
+  },[moreOpen]);
   // iOS Safari doesn't shrink the layout viewport when the on-screen
   // keyboard opens — only the visual viewport shrinks/scrolls — so this
   // panel's bottom-anchored position:fixed and vh-based height (both
@@ -3424,19 +3438,85 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
   }
 
   return(<>
-      {/* Corner blob — only rendered while closed. The header's own blob
-          instance (below, inside the panel) takes over as the close
-          control once open, per Round 1's two-instance approach: rather
-          than one element visually traveling between the corner and the
-          panel header (a true shared-element morph — a Round 2 idea if
-          this feels good), the panel itself plays a scale+fade-in
-          animation anchored at this corner, so opening still reads as
-          "the blob expands into the panel" without the added risk of
-          animating a single element's position AND size AND merging it
-          into the panel shape all at once. */}
-      {!open&&(
-        <div style={{position:"fixed",bottom:30,right:102,zIndex:40}}>
-          <ChatBlob size={60} onClick={()=>setOpen(true)} title="Open Docket AI"/>
+      {/* Bottom nav bar — floating pill, centred at the bottom of the
+          screen, coexists with the drawer for now. Hosts the four
+          view-switcher icons plus the chat orb, which is reparented here
+          from its old standalone bottom-right corner spot (moved, not
+          recreated — same ChatBlob component/ref/animations as before).
+          The orb slot itself still only renders while the chat panel is
+          closed (`!open`): the header's own ChatBlob instance (below,
+          inside the panel) takes over as the close control once open,
+          exactly as it did before this move. Hidden entirely while the
+          chat panel is fullscreen (`expanded`) since the panel covers the
+          whole screen anyway. */}
+      {!expanded&&(
+        <div style={{position:"fixed",bottom:BOTTOM_NAV_BOTTOM,left:"50%",
+          transform:"translateX(-50%)",zIndex:40,
+          display:"flex",alignItems:"center",gap:2,padding:"8px 10px",
+          borderRadius:999,background:dark?"#1E2043":"#FFFFFF",
+          border:`0.5px solid ${C.border}`,
+          boxShadow:"0 12px 32px rgba(0,0,0,0.22)"}}>
+          <button onClick={()=>setCurrentView("daily")} title="Daily Routine"
+            style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
+              border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
+            <i className="ti ti-list-check" style={{fontSize:21,
+              color:currentView==="daily"?C.accent:C.muted}} aria-hidden="true"/>
+          </button>
+          <button onClick={()=>setCurrentView("calendar")} title="Calendar"
+            style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
+              border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
+            <i className="ti ti-calendar" style={{fontSize:21,
+              color:currentView==="calendar"?C.accent:C.muted}} aria-hidden="true"/>
+          </button>
+          <div style={{width:0.5,height:26,background:C.border,flexShrink:0,margin:"0 2px"}}/>
+          {!open&&(
+            <div style={{flexShrink:0}}>
+              <ChatBlob size={44} onClick={()=>setOpen(true)} title="Open Docket AI"/>
+            </div>
+          )}
+          <div style={{width:0.5,height:26,background:C.border,flexShrink:0,margin:"0 2px"}}/>
+          <button onClick={()=>setCurrentView("all")} title="All Tasks"
+            style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
+              border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
+            <i className="ti ti-checkbox" style={{fontSize:21,
+              color:currentView==="all"?C.accent:C.muted}} aria-hidden="true"/>
+          </button>
+          <div style={{position:"relative",flexShrink:0}}>
+            <button onClick={()=>setMoreOpen(v=>!v)} title="More"
+              style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
+                border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
+              <i className="ti ti-dots" style={{fontSize:21,
+                color:moreOpen?C.accent:C.muted}} aria-hidden="true"/>
+            </button>
+            {moreOpen&&(<>
+              <div onClick={()=>setMoreOpen(false)}
+                style={{position:"fixed",inset:0,zIndex:41}}/>
+              <div style={{position:"absolute",bottom:"calc(100% + 12px)",right:0,
+                minWidth:230,background:dark?"#1E2043":"#FFFFFF",
+                border:`0.5px solid ${C.border}`,borderRadius:16,
+                boxShadow:"0 12px 32px rgba(0,0,0,0.25)",overflow:"hidden",zIndex:42}}>
+                {[
+                  {label:"Finished & Deleted",icon:"ti-archive",action:()=>setCurrentView("archive")},
+                  {label:"Subscription",icon:"ti-crown",action:()=>onOpenModal("subscription")},
+                  {label:"Widgets & Shortcuts",icon:"ti-layout-grid",action:()=>onOpenModal("widgets")},
+                  {label:"Siri & Shortcuts",icon:"ti-microphone",action:()=>onOpenModal("siri")},
+                  {label:"Help & Feedback",icon:"ti-help-circle",action:()=>onOpenModal("help")},
+                  {label:"Privacy & Permissions",icon:"ti-shield-lock",action:()=>onOpenModal("privacy")},
+                  {label:"Terms & Conditions",icon:"ti-file-description",action:()=>onOpenModal("terms")},
+                ].map(item=>(
+                  <button key={item.label}
+                    onClick={()=>{item.action();setMoreOpen(false);}}
+                    style={{display:"flex",width:"100%",alignItems:"center",gap:10,
+                      padding:"11px 14px",border:"none",cursor:"pointer",
+                      background:"transparent",color:C.navy,textAlign:"left",
+                      fontSize:13,fontWeight:500,fontFamily:"inherit"}}>
+                    <i className={`ti ${item.icon}`} style={{fontSize:16,flexShrink:0,color:C.muted2}} aria-hidden="true"/>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </>)}
+          </div>
         </div>
       )}
 
@@ -4603,6 +4683,9 @@ function SignInGate({dark,onUserChange,onOpenModal}:{
 export default function Home(){
   const[isDrawerOpen,setIsDrawerOpen]=useState(false);
   const[currentView,setCurrentView]=useState<View>("daily");
+  // Shared by the drawer's nav and the bottom nav bar so both close the
+  // settings panel the same way when switching views.
+  const handleSetView=(v:View)=>{setCurrentView(v);setShowSettings(false);};
   const[isLoaded,setIsLoaded]=useState(false);
   // True once the initial Supabase session check has resolved (found a
   // session, found none, or Supabase isn't configured) — distinguishes
@@ -5307,7 +5390,7 @@ export default function Home(){
       </div>
 
       <Drawer isOpen={isDrawerOpen} onClose={()=>setIsDrawerOpen(false)}
-        currentView={currentView} setView={(v)=>{setCurrentView(v);setShowSettings(false);}}
+        currentView={currentView} setView={handleSetView}
         onOpenModal={setActiveModal} user={user} onUserChange={setUser}/>
 
       {/* Nav */}
@@ -5629,9 +5712,12 @@ export default function Home(){
         })()}
       </main>
 
-      {/* FAB */}
+      {/* FAB — floats just above the bottom nav bar (BOTTOM_NAV_BOTTOM +
+          BOTTOM_NAV_HEIGHT is the bar's own footprint, +14px clearance)
+          instead of sharing its old bottom-right corner with it. */}
       <button onClick={()=>setIsAddingTask(true)}
-        className="pill-btn" style={{position:"fixed",bottom:30,right:30,width:60,height:60,
+        className="pill-btn" style={{position:"fixed",
+          bottom:BOTTOM_NAV_BOTTOM+BOTTOM_NAV_HEIGHT+14,right:30,width:60,height:60,
           color:"white",
           background:"linear-gradient(145deg,#8BAAFF 0%,#4C5FD5 40%,#1A2566 100%)",
           boxShadow:"0 12px 36px rgba(76,95,213,0.7), 0 4px 10px rgba(0,0,0,0.3)",
@@ -5639,7 +5725,8 @@ export default function Home(){
           <i className="ti ti-plus" style={{fontSize:28,color:"white"}} aria-hidden="true"/>
         </button>
 
-      <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions} user={user} isPro={isPro} tier={subTier}/>
+      <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions} user={user} isPro={isPro} tier={subTier}
+        currentView={currentView} setCurrentView={handleSetView} onOpenModal={setActiveModal}/>
 
       {isAddingTask&&<TaskModal onClose={()=>setIsAddingTask(false)} onSave={addTask}/>}
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
