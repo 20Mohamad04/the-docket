@@ -10,6 +10,19 @@ type View = "daily"|"all"|"calendar"|"archive";
 type Filter = "all"|"ongoing"|"milestone"|"done"|Category;
 type Lang = "en"|"ar"|"fr"|"tr"|"ur";
 
+// Bottom nav bar's fixed footprint. The chat panel's own bottom offset and
+// available height are both derived from these, so the panel always clears
+// the bar by BOTTOM_NAV_GAP instead of floating over it, and the two can't
+// drift apart if the bar's size or offset changes.
+const BOTTOM_NAV_BOTTOM=20;
+const BOTTOM_NAV_HEIGHT=60; // 44px icon row + 8px vertical padding * 2
+const BOTTOM_NAV_GAP=12;
+// Where the non-expanded chat panel's bottom edge sits, and how much total
+// vertical room it gives back when sizing itself to the viewport (its own
+// bottom offset plus a matching margin above it).
+const CHAT_PANEL_BOTTOM=BOTTOM_NAV_BOTTOM+BOTTOM_NAV_HEIGHT+BOTTOM_NAV_GAP;
+const CHAT_PANEL_VMARGIN=CHAT_PANEL_BOTTOM+20;
+
 interface Step { id:number; text:string; done:boolean; }
 interface Task {
   id:number; title:string; category:Category; priority:Priority;
@@ -2228,20 +2241,17 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
 }
 
 
-function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChange}:{
-  isOpen:boolean;onClose:()=>void;currentView:View;setView:(v:View)=>void;
+function Drawer({isOpen,onClose,onOpenModal,user,onUserChange}:{
+  isOpen:boolean;onClose:()=>void;
   onOpenModal:(m:string)=>void;
   user:{name:string;email:string;avatar?:string;id?:string}|null;
   onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
 }){
   const{t,dark}=useApp();
   const C=getC(dark);
-  const navItems:{key:View;label:string;icon:string}[]=[
-    {key:"daily",label:"Daily Routine",icon:"ti-calendar-week"},
-    {key:"all",label:"All Tasks",icon:"ti-checkbox"},
-    {key:"calendar",label:"Calendar",icon:"ti-calendar"},
-    {key:"archive",label:"Finished & Deleted",icon:"ti-archive"},
-  ];
+  // The Navigation section (Daily Routine, All Tasks, Calendar, Finished &
+  // Deleted) lived here until the bottom nav bar took over — the first three
+  // are bar items now and Finished & Deleted is in its More popover.
   const accountItems:{label:string;icon:string;modal:string}[]=[
     {label:"Subscription",icon:"ti-crown",modal:"subscription"},
   ];
@@ -2252,22 +2262,6 @@ function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChang
     {label:"Privacy & Permissions",icon:"ti-shield-lock",modal:"privacy"},
     {label:"Terms & Conditions",icon:"ti-file-description",modal:"terms"},
   ];
-  function NavBtn({item}:{item:{key:View;label:string;icon:string}}){
-    const active=currentView===item.key;
-    return(
-      <button onClick={()=>{setView(item.key);onClose();}}
-        style={{display:"flex",alignItems:"center",gap:10,width:"100%",
-          textAlign:"left",padding:"11px 12px",borderRadius:10,
-          fontSize:13.5,fontWeight:600,border:"none",cursor:"pointer",marginBottom:2,
-          background:active?"linear-gradient(135deg,#4C5FD5,#2A3699)":"transparent",
-          color:active?"white":C.muted,
-          boxShadow:active?"0 4px 14px rgba(76,95,213,0.35)":"none"}}>
-        <i className={`ti ${item.icon}`} style={{fontSize:17,flexShrink:0,
-          color:active?"rgba(255,255,255,0.8)":C.muted2}} aria-hidden="true"/>
-        {item.label}
-      </button>
-    );
-  }
   function ActionBtn({label,icon,modal}:{label:string;icon:string;modal:string}){
     return(
       <button onClick={()=>{onOpenModal(modal);onClose();}}
@@ -2354,12 +2348,6 @@ function Drawer({isOpen,onClose,currentView,setView,onOpenModal,user,onUserChang
         )}
 
         <div style={{padding:"10px 12px 6px"}}>
-          <p style={{fontSize:9,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
-            textTransform:"uppercase",padding:"4px 12px 6px"}}>Navigation</p>
-          {navItems.map(item=><NavBtn key={item.key} item={item}/>)}
-        </div>
-        <div style={{height:1,background:C.border,margin:"4px 16px"}}/>
-        <div style={{padding:"6px 12px"}}>
           <p style={{fontSize:9,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
             textTransform:"uppercase",padding:"4px 12px 6px"}}>Account</p>
           {accountItems.map(item=><ActionBtn key={item.label} {...item}/>)}
@@ -2710,10 +2698,10 @@ function formatConversationTime(iso:string):string{
   return date.toLocaleDateString("en-GB",{day:"numeric",month:"short",...(sameYear?{}:{year:"numeric"})});
 }
 
-function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrentView,onOpenModal,onAddTask}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
+function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrentView,onOpenModal,onAddTask,onToggleDark}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
   user?:{id?:string}|null;isPro?:boolean;tier?:string|null;
   currentView:View;setCurrentView:(v:View)=>void;onOpenModal:(m:string)=>void;
-  onAddTask:()=>void;}){
+  onAddTask:()=>void;onToggleDark:()=>void;}){
   const{t,dark}=useApp();
   const C=getC(dark);
   // C.border/C.surface2 are near-transparent tints meant for subtle layering
@@ -2757,6 +2745,15 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   // Bar taps that do something else should also dismiss the popover —
   // otherwise it hangs around over the view that just changed underneath it.
   function goToView(v:View){ closeMore(); setCurrentView(v); }
+  // The bar's orb is now a toggle: it stays in the bar while the chat is
+  // open (the panel sits above the bar rather than over it), so it has to
+  // close as well as open. Closing does what the panel header's own orb
+  // instance does — stop any playing speech and drop out of expanded mode.
+  function toggleChat(){
+    closeMore();
+    if(open){stopSpeaking();setOpen(false);setExpanded(false);}
+    else setOpen(true);
+  }
   useEffect(()=>{
     if(!moreOpen)return;
     const id=requestAnimationFrame(()=>setMoreShown(true));
@@ -3496,8 +3493,15 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           this move. Hidden entirely while the chat panel is fullscreen
           (`expanded`) since the panel covers the whole screen anyway. */}
       {!expanded&&(
-        <div style={{position:"fixed",bottom:20,left:"50%",
-          transform:"translateX(-50%)",zIndex:40,
+        <div style={{position:"fixed",bottom:BOTTOM_NAV_BOTTOM,left:"50%",
+          transform:"translateX(-50%)",
+          // Above the chat's own click-outside catcher (58) while the chat
+          // is open. The panel no longer covers the bar, so the bar has to
+          // stay tappable next to it — otherwise that catcher swallows
+          // every bar tap, and the orb would "close" the chat through it
+          // rather than through toggleChat (skipping stopSpeaking, leaving
+          // a spoken reply still playing).
+          zIndex:open?59:40,
           display:"flex",alignItems:"center",gap:2,padding:"8px 10px",
           borderRadius:999,background:dark?"#1E2043":"#FFFFFF",
           border:`0.5px solid ${C.border}`,
@@ -3514,12 +3518,26 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
             <i className="ti ti-calendar" style={{fontSize:21,
               color:currentView==="calendar"?C.accent:C.muted}} aria-hidden="true"/>
           </button>
+          {/* Theme toggle — shows the mode it switches TO, so the icon is
+              the sun while dark. Not a view, so it has no active state. */}
+          <button onClick={()=>{closeMore();onToggleDark();}}
+            title={dark?"Switch to light mode":"Switch to dark mode"}
+            style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
+              border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
+            <i className={dark?"ti ti-sun":"ti ti-moon"}
+              style={{fontSize:21,color:C.muted}} aria-hidden="true"/>
+          </button>
           <div style={{width:0.5,height:26,background:C.border,flexShrink:0,margin:"0 2px"}}/>
-          {!open&&(
-            <div style={{flexShrink:0}}>
-              <ChatBlob size={44} onClick={()=>{closeMore();setOpen(true);}} title="Open Docket AI"/>
-            </div>
-          )}
+          {/* Always rendered now, open or not — the panel sits above the bar
+              rather than over it, so the orb stays reachable and doubles as
+              the close control. `active` mirrors the panel header's own
+              instance so it pulses while a reply is generating; the
+              amplitude ref stays exclusive to that header instance, since a
+              single ref can't drive two mounted blobs. */}
+          <div style={{flexShrink:0}}>
+            <ChatBlob size={44} active={loading} onClick={toggleChat}
+              title={open?"Close Docket AI":"Open Docket AI"}/>
+          </div>
           <div style={{width:0.5,height:26,background:C.border,flexShrink:0,margin:"0 2px"}}/>
           <button onClick={()=>goToView("all")} title="All Tasks"
             style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
@@ -3534,13 +3552,18 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               <i className="ti ti-dots" style={{fontSize:21,
                 color:moreShown?C.accent:C.muted}} aria-hidden="true"/>
             </button>
+            {/* Opens above the bar, right edge anchored to the More
+                button's own right edge, sliding up. Deliberately NOT
+                placed to the right of the bar: the bar is ~353px wide and
+                centred, so a 230px popover beside it only fits from about
+                853px of viewport up — off screen on any phone. Anchored
+                here it clears at every width (its right edge lands ~56px
+                inside the bar's, leaving the full popover on screen even
+                at 375px), with no viewport breakpoint to maintain.
+                pointerEvents drops while it animates out, so a tap during
+                the exit falls through to the backdrop instead of hitting a
+                menu item on its way off screen. */}
             {moreOpen&&(
-              // right:0 anchors the popover's right edge to the More
-              // button's own right edge (it now reads as right-anchored
-              // rather than centred, since the + sits to its right).
-              // pointerEvents drops while it's animating out so a tap
-              // during the exit falls through to the backdrop instead of
-              // hitting a menu item on its way off screen.
               <div style={{position:"absolute",bottom:"calc(100% + 12px)",right:0,
                 minWidth:230,background:dark?"#1E2043":"#FFFFFF",
                 border:`0.5px solid ${C.border}`,borderRadius:16,
@@ -3590,7 +3613,11 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           <div onClick={()=>{setOpen(false);setExpanded(false);}}
             style={{position:"fixed",inset:0,zIndex:58,background:"transparent"}}/>
           <div style={{position:"fixed",
-            bottom:(expanded?0:20)+keyboardInset,right:expanded?0:20,
+            // Non-expanded: sits above the floating bar (CHAT_PANEL_BOTTOM
+            // is derived from the bar's own offset + height + gap) instead
+            // of overlapping it. Expanded still pins to 0 and covers
+            // everything, bar included.
+            bottom:(expanded?0:CHAT_PANEL_BOTTOM)+keyboardInset,right:expanded?0:20,
             top:expanded?0:"auto",left:expanded?0:"auto",
             zIndex:60,
             // Scoped to `right` only — that's the sole property still
@@ -3604,12 +3631,19 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
             transition:"right 0.3s cubic-bezier(0.34,1.56,0.64,1)"}}>
             <div ref={chatPanelRef} style={{
               width:expanded?"100vw":"min(400px, calc(100vw - 40px))",
+              // Same shape as before (600px cap, otherwise fit the visible
+              // viewport) — but the room it gives back is now
+              // CHAT_PANEL_VMARGIN, not a flat 40. The old 40 was the old
+              // bottom:20 plus a matching 20 above; now that the panel
+              // starts CHAT_PANEL_BOTTOM up to clear the bar, keeping 40
+              // here would push its top edge off screen by exactly the
+              // difference on any viewport short enough to hit the cap.
               height:expanded
                 ?(visibleHeight!=null?`${visibleHeight}px`:"100vh")
-                :(visibleHeight!=null?`${Math.min(600,visibleHeight-40)}px`:"min(600px, calc(100vh - 40px))"),
+                :(visibleHeight!=null?`${Math.min(600,visibleHeight-CHAT_PANEL_VMARGIN)}px`:`min(600px, calc(100vh - ${CHAT_PANEL_VMARGIN}px))`),
               maxHeight:expanded
                 ?(visibleHeight!=null?`${visibleHeight}px`:"100vh")
-                :(visibleHeight!=null?`${visibleHeight-40}px`:"calc(100vh - 40px)"),
+                :(visibleHeight!=null?`${visibleHeight-CHAT_PANEL_VMARGIN}px`:`calc(100vh - ${CHAT_PANEL_VMARGIN}px)`),
               borderRadius:expanded?0:24,
               display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",
               // Reverted to a plain, clean floating card — three rim-lit
@@ -5455,7 +5489,6 @@ export default function Home(){
       </div>
 
       <Drawer isOpen={isDrawerOpen} onClose={()=>setIsDrawerOpen(false)}
-        currentView={currentView} setView={handleSetView}
         onOpenModal={setActiveModal} user={user} onUserChange={setUser}/>
 
       {/* Nav */}
@@ -5782,7 +5815,7 @@ export default function Home(){
           no separate floating add-task button any more. */}
       <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions} user={user} isPro={isPro} tier={subTier}
         currentView={currentView} setCurrentView={handleSetView} onOpenModal={setActiveModal}
-        onAddTask={()=>setIsAddingTask(true)}/>
+        onAddTask={()=>setIsAddingTask(true)} onToggleDark={()=>setDark(d=>!d)}/>
 
       {isAddingTask&&<TaskModal onClose={()=>setIsAddingTask(false)} onSave={addTask}/>}
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
