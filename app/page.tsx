@@ -10,12 +10,6 @@ type View = "daily"|"all"|"calendar"|"archive";
 type Filter = "all"|"ongoing"|"milestone"|"done"|Category;
 type Lang = "en"|"ar"|"fr"|"tr"|"ur";
 
-// Bottom nav bar's fixed footprint (see its render inside Chatbot below) —
-// the FAB's bottom offset in Home derives from these two constants so the
-// two floating elements can't drift out of sync if the bar's size changes.
-const BOTTOM_NAV_BOTTOM=20;
-const BOTTOM_NAV_HEIGHT=60; // 44px icon row + 8px vertical padding * 2
-
 interface Step { id:number; text:string; done:boolean; }
 interface Task {
   id:number; title:string; category:Category; priority:Priority;
@@ -2716,9 +2710,10 @@ function formatConversationTime(iso:string):string{
   return date.toLocaleDateString("en-GB",{day:"numeric",month:"short",...(sameYear?{}:{year:"numeric"})});
 }
 
-function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrentView,onOpenModal}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
+function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrentView,onOpenModal,onAddTask}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
   user?:{id?:string}|null;isPro?:boolean;tier?:string|null;
-  currentView:View;setCurrentView:(v:View)=>void;onOpenModal:(m:string)=>void;}){
+  currentView:View;setCurrentView:(v:View)=>void;onOpenModal:(m:string)=>void;
+  onAddTask:()=>void;}){
   const{t,dark}=useApp();
   const C=getC(dark);
   // C.border/C.surface2 are near-transparent tints meant for subtle layering
@@ -2729,13 +2724,51 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   const inputBtnBorder=dark?"1.5px solid rgba(255,255,255,0.18)":"1.5px solid rgba(76,95,213,0.28)";
   const[open,setOpen]=useState(false);
   const[expanded,setExpanded]=useState(false);
+  // More popover, split across two states so it can animate both ways:
+  // `moreOpen` controls mounting and stays true for the whole exit
+  // transition, `moreShown` is the value the CSS transitions toward.
+  // Opening mounts it hidden and flips it shown on the next frame — setting
+  // both in one commit paints it already-open, leaving nothing to animate
+  // from.
+  const MORE_ANIM_MS=200;
   const[moreOpen,setMoreOpen]=useState(false);
+  const[moreShown,setMoreShown]=useState(false);
+  const moreExitTimer=React.useRef<number|null>(null);
+  function openMore(){
+    if(moreExitTimer.current!=null){
+      // Re-opened mid-exit: still mounted, so just reverse the transition
+      // instead of waiting for the pending unmount to land.
+      window.clearTimeout(moreExitTimer.current);
+      moreExitTimer.current=null;
+      setMoreShown(true);
+      return;
+    }
+    setMoreOpen(true);
+  }
+  function closeMore(){
+    if(!moreOpen||moreExitTimer.current!=null)return;
+    setMoreShown(false);
+    moreExitTimer.current=window.setTimeout(()=>{
+      moreExitTimer.current=null;
+      setMoreOpen(false);
+    },MORE_ANIM_MS);
+  }
+  function toggleMore(){ if(moreOpen&&moreShown)closeMore(); else openMore(); }
+  // Bar taps that do something else should also dismiss the popover —
+  // otherwise it hangs around over the view that just changed underneath it.
+  function goToView(v:View){ closeMore(); setCurrentView(v); }
   useEffect(()=>{
     if(!moreOpen)return;
-    function onKey(e:KeyboardEvent){ if(e.key==="Escape") setMoreOpen(false); }
+    const id=requestAnimationFrame(()=>setMoreShown(true));
+    return()=>cancelAnimationFrame(id);
+  },[moreOpen]);
+  useEffect(()=>()=>{ if(moreExitTimer.current!=null)window.clearTimeout(moreExitTimer.current); },[]);
+  useEffect(()=>{
+    if(!moreOpen)return;
+    function onKey(e:KeyboardEvent){ if(e.key==="Escape") closeMore(); }
     document.addEventListener("keydown",onKey);
     return()=>document.removeEventListener("keydown",onKey);
-  },[moreOpen]);
+  },[moreOpen]);// eslint-disable-line react-hooks/exhaustive-deps
   // iOS Safari doesn't shrink the layout viewport when the on-screen
   // keyboard opens — only the visual viewport shrinks/scrolls — so this
   // panel's bottom-anchored position:fixed and vh-based height (both
@@ -3438,31 +3471,44 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
   }
 
   return(<>
+      {/* Tap-outside backdrop for the More popover. Lives OUT here rather
+          than inside the bar: the bar's own translateX(-50%) makes it a
+          containing block for every position:fixed descendant, so an
+          inset:0 backdrop nested inside it resolved to the bar's own ~260px
+          pill instead of the viewport — which is why tapping anywhere else
+          on screen never dismissed the popover (re-tapping More appeared to
+          work only because the bar-sized backdrop happened to cover it).
+          Sits just under the bar's z-index so the bar's own buttons keep
+          taking their own taps; each of those handlers dismisses the
+          popover itself. */}
+      {moreOpen&&!expanded&&(
+        <div onClick={closeMore} style={{position:"fixed",inset:0,zIndex:39}}/>
+      )}
       {/* Bottom nav bar — floating pill, centred at the bottom of the
-          screen, coexists with the drawer for now. Hosts the four
-          view-switcher icons plus the chat orb, which is reparented here
-          from its old standalone bottom-right corner spot (moved, not
-          recreated — same ChatBlob component/ref/animations as before).
-          The orb slot itself still only renders while the chat panel is
-          closed (`!open`): the header's own ChatBlob instance (below,
-          inside the panel) takes over as the close control once open,
-          exactly as it did before this move. Hidden entirely while the
-          chat panel is fullscreen (`expanded`) since the panel covers the
-          whole screen anyway. */}
+          screen, coexists with the drawer for now. Hosts the view-switcher
+          icons, the chat orb and the add-task action, both of the latter
+          reparented here from their old standalone bottom-right corner
+          spots (moved, not recreated — the orb is the same ChatBlob
+          component/ref/animations as before). The orb slot itself still
+          only renders while the chat panel is closed (`!open`): the
+          header's own ChatBlob instance (below, inside the panel) takes
+          over as the close control once open, exactly as it did before
+          this move. Hidden entirely while the chat panel is fullscreen
+          (`expanded`) since the panel covers the whole screen anyway. */}
       {!expanded&&(
-        <div style={{position:"fixed",bottom:BOTTOM_NAV_BOTTOM,left:"50%",
+        <div style={{position:"fixed",bottom:20,left:"50%",
           transform:"translateX(-50%)",zIndex:40,
           display:"flex",alignItems:"center",gap:2,padding:"8px 10px",
           borderRadius:999,background:dark?"#1E2043":"#FFFFFF",
           border:`0.5px solid ${C.border}`,
           boxShadow:"0 12px 32px rgba(0,0,0,0.22)"}}>
-          <button onClick={()=>setCurrentView("daily")} title="Daily Routine"
+          <button onClick={()=>goToView("daily")} title="Daily Routine"
             style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
               border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
             <i className="ti ti-list-check" style={{fontSize:21,
               color:currentView==="daily"?C.accent:C.muted}} aria-hidden="true"/>
           </button>
-          <button onClick={()=>setCurrentView("calendar")} title="Calendar"
+          <button onClick={()=>goToView("calendar")} title="Calendar"
             style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
               border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
             <i className="ti ti-calendar" style={{fontSize:21,
@@ -3471,30 +3517,39 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           <div style={{width:0.5,height:26,background:C.border,flexShrink:0,margin:"0 2px"}}/>
           {!open&&(
             <div style={{flexShrink:0}}>
-              <ChatBlob size={44} onClick={()=>setOpen(true)} title="Open Docket AI"/>
+              <ChatBlob size={44} onClick={()=>{closeMore();setOpen(true);}} title="Open Docket AI"/>
             </div>
           )}
           <div style={{width:0.5,height:26,background:C.border,flexShrink:0,margin:"0 2px"}}/>
-          <button onClick={()=>setCurrentView("all")} title="All Tasks"
+          <button onClick={()=>goToView("all")} title="All Tasks"
             style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
               border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
             <i className="ti ti-checkbox" style={{fontSize:21,
               color:currentView==="all"?C.accent:C.muted}} aria-hidden="true"/>
           </button>
           <div style={{position:"relative",flexShrink:0}}>
-            <button onClick={()=>setMoreOpen(v=>!v)} title="More"
+            <button onClick={toggleMore} title="More"
               style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
                 border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
               <i className="ti ti-dots" style={{fontSize:21,
-                color:moreOpen?C.accent:C.muted}} aria-hidden="true"/>
+                color:moreShown?C.accent:C.muted}} aria-hidden="true"/>
             </button>
-            {moreOpen&&(<>
-              <div onClick={()=>setMoreOpen(false)}
-                style={{position:"fixed",inset:0,zIndex:41}}/>
+            {moreOpen&&(
+              // right:0 anchors the popover's right edge to the More
+              // button's own right edge (it now reads as right-anchored
+              // rather than centred, since the + sits to its right).
+              // pointerEvents drops while it's animating out so a tap
+              // during the exit falls through to the backdrop instead of
+              // hitting a menu item on its way off screen.
               <div style={{position:"absolute",bottom:"calc(100% + 12px)",right:0,
                 minWidth:230,background:dark?"#1E2043":"#FFFFFF",
                 border:`0.5px solid ${C.border}`,borderRadius:16,
-                boxShadow:"0 12px 32px rgba(0,0,0,0.25)",overflow:"hidden",zIndex:42}}>
+                boxShadow:"0 12px 32px rgba(0,0,0,0.25)",overflow:"hidden",zIndex:42,
+                transformOrigin:"bottom right",
+                opacity:moreShown?1:0,
+                transform:moreShown?"translateY(0)":"translateY(10px)",
+                pointerEvents:moreShown?"auto":"none",
+                transition:`opacity ${MORE_ANIM_MS}ms ease, transform ${MORE_ANIM_MS}ms ease`}}>
                 {[
                   {label:"Finished & Deleted",icon:"ti-archive",action:()=>setCurrentView("archive")},
                   {label:"Subscription",icon:"ti-crown",action:()=>onOpenModal("subscription")},
@@ -3505,7 +3560,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   {label:"Terms & Conditions",icon:"ti-file-description",action:()=>onOpenModal("terms")},
                 ].map(item=>(
                   <button key={item.label}
-                    onClick={()=>{item.action();setMoreOpen(false);}}
+                    onClick={()=>{item.action();closeMore();}}
                     style={{display:"flex",width:"100%",alignItems:"center",gap:10,
                       padding:"11px 14px",border:"none",cursor:"pointer",
                       background:"transparent",color:C.navy,textAlign:"left",
@@ -3515,8 +3570,18 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   </button>
                 ))}
               </div>
-            </>)}
+            )}
           </div>
+          {/* Add-task, the bar's primary action — was the standalone
+              floating FAB, now the bar's rightmost item. Same icon and same
+              handler as before, restyled as a bar item and given the accent
+              colour so it reads as the primary action rather than a fifth
+              nav destination. */}
+          <button onClick={()=>{closeMore();onAddTask();}} title="Add task"
+            style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
+              border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
+            <i className="ti ti-plus" style={{fontSize:23,color:C.accent}} aria-hidden="true"/>
+          </button>
         </div>
       )}
 
@@ -5712,21 +5777,12 @@ export default function Home(){
         })()}
       </main>
 
-      {/* FAB — floats just above the bottom nav bar (BOTTOM_NAV_BOTTOM +
-          BOTTOM_NAV_HEIGHT is the bar's own footprint, +14px clearance)
-          instead of sharing its old bottom-right corner with it. */}
-      <button onClick={()=>setIsAddingTask(true)}
-        className="pill-btn" style={{position:"fixed",
-          bottom:BOTTOM_NAV_BOTTOM+BOTTOM_NAV_HEIGHT+14,right:30,width:60,height:60,
-          color:"white",
-          background:"linear-gradient(145deg,#8BAAFF 0%,#4C5FD5 40%,#1A2566 100%)",
-          boxShadow:"0 12px 36px rgba(76,95,213,0.7), 0 4px 10px rgba(0,0,0,0.3)",
-          zIndex:40}}>
-          <i className="ti ti-plus" style={{fontSize:28,color:"white"}} aria-hidden="true"/>
-        </button>
-
+      {/* The floating FAB used to live here — it's now the bottom nav bar's
+          rightmost item (see the bar's render inside Chatbot), so there's
+          no separate floating add-task button any more. */}
       <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions} user={user} isPro={isPro} tier={subTier}
-        currentView={currentView} setCurrentView={handleSetView} onOpenModal={setActiveModal}/>
+        currentView={currentView} setCurrentView={handleSetView} onOpenModal={setActiveModal}
+        onAddTask={()=>setIsAddingTask(true)}/>
 
       {isAddingTask&&<TaskModal onClose={()=>setIsAddingTask(false)} onSave={addTask}/>}
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
