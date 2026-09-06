@@ -22,6 +22,15 @@ const BOTTOM_NAV_GAP=12;
 // bottom offset plus a matching margin above it).
 const CHAT_PANEL_BOTTOM=BOTTOM_NAV_BOTTOM+BOTTOM_NAV_HEIGHT+BOTTOM_NAV_GAP;
 const CHAT_PANEL_VMARGIN=CHAT_PANEL_BOTTOM+20;
+// Avatar card — the floating panel the top-left avatar opens, replacing the
+// old slide-in drawer. Its top offset is derived from the nav's own padding
+// and button size so it always hangs just under the avatar it belongs to.
+const NAV_PAD=22;
+const AVATAR_BTN=52;
+const AVATAR_CARD_GAP=8;
+const AVATAR_CARD_TOP=NAV_PAD+AVATAR_BTN+AVATAR_CARD_GAP;
+const AVATAR_CARD_WIDTH=280;
+const CARD_ANIM_MS=200;
 
 interface Step { id:number; text:string; done:boolean; }
 interface Task {
@@ -1337,7 +1346,7 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
   );
 }
 
-// ── Drawer ───────────────────────────────────────────────────────────────────
+// ── Info Modal ───────────────────────────────────────────────────────────────
 function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPeriodEnd,subTier}:{
   modal:string;onClose:()=>void;dark:boolean;
   user:{name:string;email:string;avatar?:string;id?:string}|null;
@@ -2241,130 +2250,6 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
 }
 
 
-function Drawer({isOpen,onClose,onOpenModal,user,onUserChange}:{
-  isOpen:boolean;onClose:()=>void;
-  onOpenModal:(m:string)=>void;
-  user:{name:string;email:string;avatar?:string;id?:string}|null;
-  onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
-}){
-  const{t,dark}=useApp();
-  const C=getC(dark);
-  // The Navigation section (Daily Routine, All Tasks, Calendar, Finished &
-  // Deleted) lived here until the bottom nav bar took over — the first three
-  // are bar items now and Finished & Deleted is in its More popover.
-  const accountItems:{label:string;icon:string;modal:string}[]=[
-    {label:"Subscription",icon:"ti-crown",modal:"subscription"},
-  ];
-  const supportItems:{label:string;icon:string;modal:string}[]=[
-    {label:"Widgets & Shortcuts",icon:"ti-layout-grid",modal:"widgets"},
-    {label:"Siri & Shortcuts",icon:"ti-microphone",modal:"siri"},
-    {label:"Help & Feedback",icon:"ti-help-circle",modal:"help"},
-    {label:"Privacy & Permissions",icon:"ti-shield-lock",modal:"privacy"},
-    {label:"Terms & Conditions",icon:"ti-file-description",modal:"terms"},
-  ];
-  function ActionBtn({label,icon,modal}:{label:string;icon:string;modal:string}){
-    return(
-      <button onClick={()=>{onOpenModal(modal);onClose();}}
-        style={{display:"flex",alignItems:"center",gap:10,width:"100%",
-          textAlign:"left",padding:"10px 12px",borderRadius:10,
-          fontSize:13,fontWeight:500,border:"none",cursor:"pointer",
-          background:"transparent",color:C.muted,marginBottom:1,transition:"all 0.12s"}}
-        onMouseEnter={e=>{e.currentTarget.style.background=C.surface2;e.currentTarget.style.color=C.navy;}}
-        onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color=C.muted;}}>
-        <i className={`ti ${icon}`} style={{fontSize:16,flexShrink:0,color:C.muted2}} aria-hidden="true"/>
-        {label}
-      </button>
-    );
-  }
-  return(
-    <>
-      {isOpen&&<div onClick={onClose} style={{position:"fixed",inset:0,
-        background:"rgba(0,0,0,0.45)",backdropFilter:"blur(4px)",zIndex:70}}/>}
-      <aside style={{position:"fixed",top:0,left:0,bottom:0,width:264,
-        background:dark?"#16192A":"#FFFFFF",
-        boxShadow:"8px 0 40px rgba(0,0,0,0.3)",zIndex:71,overflowY:"auto",
-        transform:isOpen?"translateX(0)":"translateX(-100%)",
-        transition:"transform 0.22s cubic-bezier(0.34,1.56,0.64,1)",
-        display:"flex",flexDirection:"column"}}>
-        {/* User profile section */}
-        {user?(
-          <div style={{padding:"16px 16px 12px",borderBottom:`1px solid ${C.border}`}}>
-            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
-              <div style={{width:44,height:44,borderRadius:"50%",flexShrink:0,
-                background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
-                display:"flex",alignItems:"center",justifyContent:"center",
-                overflow:"hidden",boxShadow:"0 4px 12px rgba(76,95,213,0.35)"}}>
-                {user.avatar
-                  ?<img src={user.avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-                  :<i className="ti ti-user" style={{fontSize:20,color:"white"}} aria-hidden="true"/>}
-              </div>
-              <div style={{flex:1,minWidth:0}}>
-                <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-                  fontSize:14,color:C.navy,overflow:"hidden",textOverflow:"ellipsis",
-                  whiteSpace:"nowrap"}}>{user.name}</p>
-                <p style={{fontSize:11,color:C.muted,overflow:"hidden",textOverflow:"ellipsis",
-                  whiteSpace:"nowrap"}}>{user.email}</p>
-              </div>
-            </div>
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>{onOpenModal("login");onClose();}}
-                style={{flex:1,padding:"8px",borderRadius:9,fontSize:12,fontWeight:600,
-                  border:`1px solid ${C.border}`,background:C.surface2,
-                  color:C.navy,cursor:"pointer",display:"flex",alignItems:"center",
-                  justifyContent:"center",gap:5}}>
-                <i className="ti ti-user-edit" style={{fontSize:13}} aria-hidden="true"/>
-                Profile
-              </button>
-              {user.id&&(
-              <button onClick={async()=>{
-                  const sb=await getSupabaseClient();
-                  if(sb) await sb.auth.signOut();
-                  onUserChange(null);
-                  onClose();
-                }}
-                style={{flex:1,padding:"8px",borderRadius:9,fontSize:12,fontWeight:600,
-                  border:`1px solid rgba(217,79,61,0.3)`,
-                  background:"rgba(217,79,61,0.08)",
-                  color:C.urgent,cursor:"pointer",display:"flex",alignItems:"center",
-                  justifyContent:"center",gap:5}}>
-                <i className="ti ti-logout" style={{fontSize:13}} aria-hidden="true"/>
-                Sign out
-              </button>
-              )}
-            </div>
-          </div>
-        ):(
-          <div style={{padding:"12px 16px",borderBottom:`1px solid ${C.border}`}}>
-            <button onClick={()=>{onOpenModal("login");onClose();}}
-              style={{width:"100%",padding:"10px",borderRadius:10,fontSize:13,fontWeight:600,
-                background:"linear-gradient(135deg,#4C5FD5,#2A3699)",color:"white",
-                border:"none",cursor:"pointer",display:"flex",alignItems:"center",
-                justifyContent:"center",gap:8,
-                boxShadow:"0 4px 14px rgba(76,95,213,0.35)"}}>
-              <i className="ti ti-user-circle" style={{fontSize:16}} aria-hidden="true"/>
-              Sign in / Create account
-            </button>
-          </div>
-        )}
-
-        <div style={{padding:"10px 12px 6px"}}>
-          <p style={{fontSize:9,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
-            textTransform:"uppercase",padding:"4px 12px 6px"}}>Account</p>
-          {accountItems.map(item=><ActionBtn key={item.label} {...item}/>)}
-        </div>
-        <div style={{height:1,background:C.border,margin:"4px 16px"}}/>
-        <div style={{padding:"6px 12px"}}>
-          <p style={{fontSize:9,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
-            textTransform:"uppercase",padding:"4px 12px 6px"}}>Support</p>
-          {supportItems.map(item=><ActionBtn key={item.label} {...item}/>)}
-        </div>
-        <div style={{marginTop:"auto",padding:"14px 20px",borderTop:`1px solid ${C.border}`}}>
-          <p style={{fontSize:10,color:C.muted2,textAlign:"center"}}>The Docket v1.0</p>
-        </div>
-      </aside>
-    </>
-  );
-}
 
 // ── All Tasks Sidebar ────────────────────────────────────────────────────────
 function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFilter:(f:Filter)=>void;}){
@@ -2698,10 +2583,9 @@ function formatConversationTime(iso:string):string{
   return date.toLocaleDateString("en-GB",{day:"numeric",month:"short",...(sameYear?{}:{year:"numeric"})});
 }
 
-function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrentView,onOpenModal,onAddTask,onToggleDark}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
+function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrentView,onAddTask}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
   user?:{id?:string}|null;isPro?:boolean;tier?:string|null;
-  currentView:View;setCurrentView:(v:View)=>void;onOpenModal:(m:string)=>void;
-  onAddTask:()=>void;onToggleDark:()=>void;}){
+  currentView:View;setCurrentView:(v:View)=>void;onAddTask:()=>void;}){
   const{t,dark}=useApp();
   const C=getC(dark);
   // C.border/C.surface2 are near-transparent tints meant for subtle layering
@@ -2712,60 +2596,14 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   const inputBtnBorder=dark?"1.5px solid rgba(255,255,255,0.18)":"1.5px solid rgba(76,95,213,0.28)";
   const[open,setOpen]=useState(false);
   const[expanded,setExpanded]=useState(false);
-  // More popover, split across two states so it can animate both ways:
-  // `moreOpen` controls mounting and stays true for the whole exit
-  // transition, `moreShown` is the value the CSS transitions toward.
-  // Opening mounts it hidden and flips it shown on the next frame — setting
-  // both in one commit paints it already-open, leaving nothing to animate
-  // from.
-  const MORE_ANIM_MS=200;
-  const[moreOpen,setMoreOpen]=useState(false);
-  const[moreShown,setMoreShown]=useState(false);
-  const moreExitTimer=React.useRef<number|null>(null);
-  function openMore(){
-    if(moreExitTimer.current!=null){
-      // Re-opened mid-exit: still mounted, so just reverse the transition
-      // instead of waiting for the pending unmount to land.
-      window.clearTimeout(moreExitTimer.current);
-      moreExitTimer.current=null;
-      setMoreShown(true);
-      return;
-    }
-    setMoreOpen(true);
-  }
-  function closeMore(){
-    if(!moreOpen||moreExitTimer.current!=null)return;
-    setMoreShown(false);
-    moreExitTimer.current=window.setTimeout(()=>{
-      moreExitTimer.current=null;
-      setMoreOpen(false);
-    },MORE_ANIM_MS);
-  }
-  function toggleMore(){ if(moreOpen&&moreShown)closeMore(); else openMore(); }
-  // Bar taps that do something else should also dismiss the popover —
-  // otherwise it hangs around over the view that just changed underneath it.
-  function goToView(v:View){ closeMore(); setCurrentView(v); }
-  // The bar's orb is now a toggle: it stays in the bar while the chat is
-  // open (the panel sits above the bar rather than over it), so it has to
-  // close as well as open. Closing does what the panel header's own orb
-  // instance does — stop any playing speech and drop out of expanded mode.
+  // The bar's orb is a toggle: it stays in the bar while the chat is open
+  // (the panel sits above the bar rather than over it), so it has to close
+  // as well as open. Closing does what the panel header's own orb instance
+  // does — stop any playing speech and drop out of expanded mode.
   function toggleChat(){
-    closeMore();
     if(open){stopSpeaking();setOpen(false);setExpanded(false);}
     else setOpen(true);
   }
-  useEffect(()=>{
-    if(!moreOpen)return;
-    const id=requestAnimationFrame(()=>setMoreShown(true));
-    return()=>cancelAnimationFrame(id);
-  },[moreOpen]);
-  useEffect(()=>()=>{ if(moreExitTimer.current!=null)window.clearTimeout(moreExitTimer.current); },[]);
-  useEffect(()=>{
-    if(!moreOpen)return;
-    function onKey(e:KeyboardEvent){ if(e.key==="Escape") closeMore(); }
-    document.addEventListener("keydown",onKey);
-    return()=>document.removeEventListener("keydown",onKey);
-  },[moreOpen]);// eslint-disable-line react-hooks/exhaustive-deps
   // iOS Safari doesn't shrink the layout viewport when the on-screen
   // keyboard opens — only the visual viewport shrinks/scrolls — so this
   // panel's bottom-anchored position:fixed and vh-based height (both
@@ -3353,13 +3191,13 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
   }
 
   // Locks background scroll while the chat panel is open, mirroring the
-  // position:fixed pinning technique the app-level Drawer/modal lock uses
-  // (see the top-level App component) — a separate effect since the chat
+  // position:fixed pinning technique the app-level avatar-card/modal lock
+  // uses (see the top-level App component) — a separate effect since the chat
   // panel is scoped to Chatbot, not one of the app-level overlays that lock
   // already covers. The two can't actually be open at once in practice (the
-  // chat's own full-viewport backdrop blocks reaching the Drawer toggle or
-  // anything that opens a modal while it's up), so there's no real risk of
-  // the two effects fighting over document.body.style.
+  // chat's own full-viewport backdrop sits over the nav, so the avatar button
+  // and anything else that opens a modal is unreachable while it's up), so
+  // there's no real risk of the two effects fighting over document.body.style.
   //
   // Gated on `open` (the whole chat panel), not just `historyOpen` (its
   // sidebar) — that was the original scope here, which meant scrolling the
@@ -3468,30 +3306,16 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
   }
 
   return(<>
-      {/* Tap-outside backdrop for the More popover. Lives OUT here rather
-          than inside the bar: the bar's own translateX(-50%) makes it a
-          containing block for every position:fixed descendant, so an
-          inset:0 backdrop nested inside it resolved to the bar's own ~260px
-          pill instead of the viewport — which is why tapping anywhere else
-          on screen never dismissed the popover (re-tapping More appeared to
-          work only because the bar-sized backdrop happened to cover it).
-          Sits just under the bar's z-index so the bar's own buttons keep
-          taking their own taps; each of those handlers dismisses the
-          popover itself. */}
-      {moreOpen&&!expanded&&(
-        <div onClick={closeMore} style={{position:"fixed",inset:0,zIndex:39}}/>
-      )}
       {/* Bottom nav bar — floating pill, centred at the bottom of the
-          screen, coexists with the drawer for now. Hosts the view-switcher
-          icons, the chat orb and the add-task action, both of the latter
-          reparented here from their old standalone bottom-right corner
-          spots (moved, not recreated — the orb is the same ChatBlob
-          component/ref/animations as before). The orb slot itself still
-          only renders while the chat panel is closed (`!open`): the
-          header's own ChatBlob instance (below, inside the panel) takes
-          over as the close control once open, exactly as it did before
-          this move. Hidden entirely while the chat panel is fullscreen
-          (`expanded`) since the panel covers the whole screen anyway. */}
+          screen. Two view-switchers, the chat orb dead centre, then All
+          Tasks and Add Task, the last of these reparented here from the
+          old standalone floating FAB. The orb is the same ChatBlob
+          component/ref/animations as ever, just mounted here, and it now
+          renders whether the chat is open or closed — the panel sits above
+          the bar rather than over it, so the orb stays reachable and
+          doubles as the close control. Hidden entirely while the chat
+          panel is fullscreen (`expanded`), which covers the screen
+          anyway. */}
       {!expanded&&(
         <div style={{position:"fixed",bottom:BOTTOM_NAV_BOTTOM,left:"50%",
           transform:"translateX(-50%)",
@@ -3505,102 +3329,39 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           display:"flex",alignItems:"center",gap:2,padding:"8px 10px",
           borderRadius:999,background:dark?"#1E2043":"#FFFFFF",
           border:`0.5px solid ${C.border}`,
-          boxShadow:"0 12px 32px rgba(0,0,0,0.22)"}}>
-          <button onClick={()=>goToView("daily")} title="Daily Routine"
+          boxShadow:dark?"0 2px 14px rgba(0,0,0,0.45)":"0 2px 12px rgba(0,0,0,0.08)"}}>
+          <button onClick={()=>setCurrentView("daily")} title="Daily Routine"
             style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
               border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
             <i className="ti ti-list-check" style={{fontSize:21,
               color:currentView==="daily"?C.accent:C.muted}} aria-hidden="true"/>
           </button>
-          <button onClick={()=>goToView("calendar")} title="Calendar"
+          <button onClick={()=>setCurrentView("calendar")} title="Calendar"
             style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
               border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
             <i className="ti ti-calendar" style={{fontSize:21,
               color:currentView==="calendar"?C.accent:C.muted}} aria-hidden="true"/>
           </button>
-          {/* Theme toggle — shows the mode it switches TO, so the icon is
-              the sun while dark. Not a view, so it has no active state. */}
-          <button onClick={()=>{closeMore();onToggleDark();}}
-            title={dark?"Switch to light mode":"Switch to dark mode"}
-            style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
-              border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
-            <i className={dark?"ti ti-sun":"ti ti-moon"}
-              style={{fontSize:21,color:C.muted}} aria-hidden="true"/>
-          </button>
-          <div style={{width:0.5,height:26,background:C.border,flexShrink:0,margin:"0 2px"}}/>
-          {/* Always rendered now, open or not — the panel sits above the bar
-              rather than over it, so the orb stays reachable and doubles as
-              the close control. `active` mirrors the panel header's own
-              instance so it pulses while a reply is generating; the
-              amplitude ref stays exclusive to that header instance, since a
-              single ref can't drive two mounted blobs. */}
+          <div style={{width:1,height:22,background:C.border,flexShrink:0,margin:"0 2px"}}/>
+          {/* `active` mirrors the panel header's own instance so it pulses
+              while a reply is generating; the amplitude ref stays exclusive
+              to that header instance, since a single ref can't drive two
+              mounted blobs. */}
           <div style={{flexShrink:0}}>
             <ChatBlob size={44} active={loading} onClick={toggleChat}
               title={open?"Close Docket AI":"Open Docket AI"}/>
           </div>
-          <div style={{width:0.5,height:26,background:C.border,flexShrink:0,margin:"0 2px"}}/>
-          <button onClick={()=>goToView("all")} title="All Tasks"
+          <div style={{width:1,height:22,background:C.border,flexShrink:0,margin:"0 2px"}}/>
+          <button onClick={()=>setCurrentView("all")} title="All Tasks"
             style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
               border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
             <i className="ti ti-checkbox" style={{fontSize:21,
               color:currentView==="all"?C.accent:C.muted}} aria-hidden="true"/>
           </button>
-          <div style={{position:"relative",flexShrink:0}}>
-            <button onClick={toggleMore} title="More"
-              style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
-                border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
-              <i className="ti ti-dots" style={{fontSize:21,
-                color:moreShown?C.accent:C.muted}} aria-hidden="true"/>
-            </button>
-            {/* Opens above the bar, right edge anchored to the More
-                button's own right edge, sliding up. Deliberately NOT
-                placed to the right of the bar: the bar is ~353px wide and
-                centred, so a 230px popover beside it only fits from about
-                853px of viewport up — off screen on any phone. Anchored
-                here it clears at every width (its right edge lands ~56px
-                inside the bar's, leaving the full popover on screen even
-                at 375px), with no viewport breakpoint to maintain.
-                pointerEvents drops while it animates out, so a tap during
-                the exit falls through to the backdrop instead of hitting a
-                menu item on its way off screen. */}
-            {moreOpen&&(
-              <div style={{position:"absolute",bottom:"calc(100% + 12px)",right:0,
-                minWidth:230,background:dark?"#1E2043":"#FFFFFF",
-                border:`0.5px solid ${C.border}`,borderRadius:16,
-                boxShadow:"0 12px 32px rgba(0,0,0,0.25)",overflow:"hidden",zIndex:42,
-                transformOrigin:"bottom right",
-                opacity:moreShown?1:0,
-                transform:moreShown?"translateY(0)":"translateY(10px)",
-                pointerEvents:moreShown?"auto":"none",
-                transition:`opacity ${MORE_ANIM_MS}ms ease, transform ${MORE_ANIM_MS}ms ease`}}>
-                {[
-                  {label:"Finished & Deleted",icon:"ti-archive",action:()=>setCurrentView("archive")},
-                  {label:"Subscription",icon:"ti-crown",action:()=>onOpenModal("subscription")},
-                  {label:"Widgets & Shortcuts",icon:"ti-layout-grid",action:()=>onOpenModal("widgets")},
-                  {label:"Siri & Shortcuts",icon:"ti-microphone",action:()=>onOpenModal("siri")},
-                  {label:"Help & Feedback",icon:"ti-help-circle",action:()=>onOpenModal("help")},
-                  {label:"Privacy & Permissions",icon:"ti-shield-lock",action:()=>onOpenModal("privacy")},
-                  {label:"Terms & Conditions",icon:"ti-file-description",action:()=>onOpenModal("terms")},
-                ].map(item=>(
-                  <button key={item.label}
-                    onClick={()=>{item.action();closeMore();}}
-                    style={{display:"flex",width:"100%",alignItems:"center",gap:10,
-                      padding:"11px 14px",border:"none",cursor:"pointer",
-                      background:"transparent",color:C.navy,textAlign:"left",
-                      fontSize:13,fontWeight:500,fontFamily:"inherit"}}>
-                    <i className={`ti ${item.icon}`} style={{fontSize:16,flexShrink:0,color:C.muted2}} aria-hidden="true"/>
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          {/* Add-task, the bar's primary action — was the standalone
-              floating FAB, now the bar's rightmost item. Same icon and same
-              handler as before, restyled as a bar item and given the accent
-              colour so it reads as the primary action rather than a fifth
-              nav destination. */}
-          <button onClick={()=>{closeMore();onAddTask();}} title="Add task"
+          {/* Add-task — an action, not a view, so it never takes the active
+              state; it stays accent-coloured as the bar's primary action.
+              Same handler as the old standalone floating FAB. */}
+          <button onClick={onAddTask} title="Add task"
             style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
               border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
             <i className="ti ti-plus" style={{fontSize:23,color:C.accent}} aria-hidden="true"/>
@@ -4780,11 +4541,16 @@ function SignInGate({dark,onUserChange,onOpenModal}:{
 
 // ── Main Page ────────────────────────────────────────────────────────────────
 export default function Home(){
-  const[isDrawerOpen,setIsDrawerOpen]=useState(false);
+  // Avatar card (replaces the old drawer AND the old settings panel), split
+  // across two states so it can animate both ways: `avatarOpen` controls
+  // mounting and stays true through the exit transition, `avatarShown` is
+  // what the CSS transitions toward. Opening mounts it hidden and flips it
+  // shown on the next frame, so there's a painted "from" state to animate
+  // out of — same pattern the chat's own popovers use.
+  const[avatarOpen,setAvatarOpen]=useState(false);
+  const[avatarShown,setAvatarShown]=useState(false);
+  const avatarExitTimer=React.useRef<number|null>(null);
   const[currentView,setCurrentView]=useState<View>("daily");
-  // Shared by the drawer's nav and the bottom nav bar so both close the
-  // settings panel the same way when switching views.
-  const handleSetView=(v:View)=>{setCurrentView(v);setShowSettings(false);};
   const[isLoaded,setIsLoaded]=useState(false);
   // True once the initial Supabase session check has resolved (found a
   // session, found none, or Supabase isn't configured) — distinguishes
@@ -4804,7 +4570,6 @@ export default function Home(){
   const[prayerEnabled,setPrayerEnabled]=useState(false);
   const[undoStack,setUndoStack]=useState<{tasks:Task[];routines:Routine[]}[]>([]);
   const[prayerStatus,setPrayerStatus]=useState<"idle"|"loading"|"done"|"error">("idle");
-  const[showSettings,setShowSettings]=useState(false);
   const[dark,setDark]=useState(false);
   const[lang,setLang]=useState<Lang>("en");
   const[onboarding,setOnboarding]=useState(false);
@@ -4822,14 +4587,50 @@ export default function Home(){
   const[clientToday,setClientToday]=useState<Date|null>(null);
   useEffect(()=>{setClientToday(new Date());},[]);
 
-  // Lock body scroll when drawer or modal is open. overflow:hidden alone
-  // doesn't reliably block touch-scroll bleed-through to the page behind an
-  // open drawer on mobile browsers (notably iOS Safari) — pinning the body
+  function openAvatarCard(){
+    if(avatarExitTimer.current!=null){
+      // Re-opened mid-exit: still mounted, so just reverse the transition
+      // rather than waiting for the pending unmount to land.
+      window.clearTimeout(avatarExitTimer.current);
+      avatarExitTimer.current=null;
+      setAvatarShown(true);
+      return;
+    }
+    setAvatarOpen(true);
+  }
+  function closeAvatarCard(){
+    if(!avatarOpen||avatarExitTimer.current!=null)return;
+    setAvatarShown(false);
+    avatarExitTimer.current=window.setTimeout(()=>{
+      avatarExitTimer.current=null;
+      setAvatarOpen(false);
+    },CARD_ANIM_MS);
+  }
+  function toggleAvatarCard(){ if(avatarOpen&&avatarShown)closeAvatarCard(); else openAvatarCard(); }
+  // Card items that navigate or open a modal dismiss the card on the way.
+  function cardGoToView(v:View){ closeAvatarCard(); setCurrentView(v); }
+  function cardOpenModal(m:string){ closeAvatarCard(); setActiveModal(m); }
+  useEffect(()=>{
+    if(!avatarOpen)return;
+    const id=requestAnimationFrame(()=>setAvatarShown(true));
+    return()=>cancelAnimationFrame(id);
+  },[avatarOpen]);
+  useEffect(()=>()=>{ if(avatarExitTimer.current!=null)window.clearTimeout(avatarExitTimer.current); },[]);
+  useEffect(()=>{
+    if(!avatarOpen)return;
+    function onKey(e:KeyboardEvent){ if(e.key==="Escape") closeAvatarCard(); }
+    document.addEventListener("keydown",onKey);
+    return()=>document.removeEventListener("keydown",onKey);
+  },[avatarOpen]);// eslint-disable-line react-hooks/exhaustive-deps
+
+  // Lock body scroll while the avatar card or a modal is open. overflow:hidden
+  // alone doesn't reliably block touch-scroll bleed-through to the page behind
+  // an open overlay on mobile browsers (notably iOS Safari) — pinning the body
   // with position:fixed at its current scroll offset, then restoring both
   // the position and the scroll offset on unlock, does.
   const scrollLockY=React.useRef(0);
   useEffect(()=>{
-    const locked=isDrawerOpen||!!activeModal||onboarding;
+    const locked=avatarOpen||!!activeModal||onboarding;
     if(locked){
       scrollLockY.current=window.scrollY;
       document.body.style.position="fixed";
@@ -4846,7 +4647,7 @@ export default function Home(){
       document.body.style.top="";
       document.body.style.width="";
     };
-  },[isDrawerOpen,activeModal,onboarding]);
+  },[avatarOpen,activeModal,onboarding]);
   const[user,setUser]=useState<{name:string;email:string;avatar?:string;id?:string}|null>(null);
   const[showWelcome,setShowWelcome]=useState(false);
   const[welcomeMsg,setWelcomeMsg]=useState("");
@@ -5389,6 +5190,31 @@ export default function Home(){
   const viewedDay=weekDates.find(d=>d.date===viewedDate)||selDay;
   const selectedDayItems=getDayItems(selectedDate,selectedWeekDay);
 
+  // Shared row/control styling for the avatar card's items.
+  const cardRowStyle:React.CSSProperties={display:"flex",width:"100%",alignItems:"center",gap:11,
+    padding:"11px 14px",border:"none",background:"transparent",color:C.navy,
+    textAlign:"left",fontSize:13,fontWeight:500,fontFamily:"inherit",cursor:"pointer"};
+  const cardIconStyle:React.CSSProperties={fontSize:16,flexShrink:0,color:C.muted2,width:16};
+  function cardSwitchStyle(on:boolean):React.CSSProperties{
+    return{width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",flexShrink:0,
+      background:on?"linear-gradient(135deg,#5DE8A0,#2E8B57)":C.border,
+      position:"relative",transition:"all 0.25s",
+      boxShadow:on?"0 4px 12px rgba(46,139,87,0.4)":"none"};
+  }
+  function cardKnobStyle(on:boolean):React.CSSProperties{
+    return{position:"absolute",top:3,left:on?23:3,width:18,height:18,borderRadius:"50%",
+      background:"white",transition:"left 0.25s",boxShadow:"0 2px 6px rgba(0,0,0,0.25)"};
+  }
+
+  // Same sequence the drawer's own sign-out button used before the avatar
+  // card replaced it.
+  async function handleCardSignOut(){
+    closeAvatarCard();
+    const sb=await getSupabaseClient();
+    if(sb) await sb.auth.signOut();
+    setUser(null);
+  }
+
   function completeOnboarding(goals:string[]){
     localStorage.setItem("docket-onboarded","true");
     // Also record completion on the account itself (user_metadata, same
@@ -5488,17 +5314,19 @@ export default function Home(){
         <div className="orb orb-3"/>
       </div>
 
-      <Drawer isOpen={isDrawerOpen} onClose={()=>setIsDrawerOpen(false)}
-        onOpenModal={setActiveModal} user={user} onUserChange={setUser}/>
-
       {/* Nav */}
       <nav style={{position:"relative",zIndex:10,display:"flex",justifyContent:"space-between",
-        alignItems:"center",padding:"22px 22px 14px"}}>
-        <button onClick={()=>{setIsDrawerOpen(true);setShowSettings(false);}} className="sq-btn nav-btn"
-          style={{width:52,height:52,color:"white",
+        alignItems:"center",padding:`${NAV_PAD}px ${NAV_PAD}px 14px`}}>
+        {/* The avatar took the hamburger's slot (and its styling weight) when
+            the drawer was deleted — it opens the avatar card below. */}
+        <button onClick={toggleAvatarCard} className="sq-btn nav-btn" title="Account & settings"
+          style={{width:AVATAR_BTN,height:AVATAR_BTN,color:"white",overflow:"hidden",
             background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
             boxShadow:"0 8px 28px rgba(76,95,213,0.6), 0 3px 8px rgba(0,0,0,0.25)"}}>
-          <i className="ti ti-layout-sidebar" style={{fontSize:22,color:"white"}} aria-hidden="true"/></button>
+          {user?.avatar
+            ?<img src={user.avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+            :<i className="ti ti-user" style={{fontSize:22,color:"white"}} aria-hidden="true"/>}
+        </button>
         <div style={{textAlign:"center"}}>
           <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
             fontSize:18,color:C.navy,letterSpacing:"-0.5px"}}>{t("appName")}</p>
@@ -5507,115 +5335,171 @@ export default function Home(){
             {clientToday?clientToday.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}):""}
           </p>
         </div>
-        <div style={{display:"flex",gap:8}}>
-          <button onClick={()=>setShowSettings(s=>!s)} className="sq-btn nav-btn"
-            style={{width:52,height:52,fontSize:22,cursor:"pointer",
-              background:"linear-gradient(145deg,#9B7FE8 0%,#6B4FD8 45%,#3A1A9E 100%)",
-              boxShadow:"0 8px 28px rgba(107,79,216,0.55), 0 3px 8px rgba(0,0,0,0.25)"}} title="Settings">
-            <i className="ti ti-adjustments-horizontal" style={{fontSize:22,color:"white"}} aria-hidden="true"/></button>
-        </div>
+        {/* Spacer matching the avatar's footprint — the settings button that
+            used to sit here moved into the avatar card, and without something
+            of equal width the space-between layout would pull the centred
+            title off centre. */}
+        <div className="nav-btn" style={{width:AVATAR_BTN,height:AVATAR_BTN,flexShrink:0}} aria-hidden="true"/>
       </nav>
 
-      {/* Settings Panel */}
-      {showSettings&&(
-        <>
-        <div onClick={()=>setShowSettings(false)}
-          style={{position:"fixed",inset:0,zIndex:14,background:"rgba(20,20,35,0.25)",backdropFilter:"blur(3px)"}}/>
-        <div style={{position:"fixed",top:88,left:0,right:0,zIndex:15,maxWidth:1100,margin:"0 auto",
-          padding:"0 20px 16px",maxHeight:"calc(100vh - 100px)",overflowY:"auto"}}>
-          <div style={{borderRadius:20,padding:"24px 26px",
-            background:dark?"#181B2E":"#FFFFFF",
-            border:`1px solid ${C.border}`,
-            boxShadow:"0 24px 60px rgba(0,0,0,0.35)"}}>
-            <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-              fontSize:16,color:C.navy,marginBottom:14}}>{t("settings")}</p>
+      {/* Avatar card — replaces both the old slide-in drawer and the old
+          settings panel. A floating card hung under the avatar that opened
+          it, not an edge drawer: anchored top-left, capped at
+          AVATAR_CARD_WIDTH so it fits a 393px phone, and scrolling
+          internally when its rows outrun the viewport. Sits above the chat
+          panel (60) but below modals (200), in the z-index slots the drawer
+          used to hold. */}
+      {avatarOpen&&(<>
+        <div onClick={closeAvatarCard}
+          style={{position:"fixed",inset:0,zIndex:70,background:"rgba(0,0,0,0.35)",
+            opacity:avatarShown?1:0,transition:`opacity ${CARD_ANIM_MS}ms ease`}}/>
+        <div style={{position:"fixed",top:AVATAR_CARD_TOP,left:20,zIndex:71,
+          width:`min(${AVATAR_CARD_WIDTH}px, calc(100vw - 40px))`,
+          background:dark?"#1E2043":"#FFFFFF",
+          borderRadius:16,border:`0.5px solid ${C.border}`,
+          boxShadow:dark?"0 8px 32px rgba(0,0,0,0.5)":"0 8px 32px rgba(0,0,0,0.12)",
+          overflow:"hidden",transformOrigin:"top left",
+          opacity:avatarShown?1:0,
+          transform:avatarShown?"scale(1)":"scale(0.96)",
+          pointerEvents:avatarShown?"auto":"none",
+          transition:`opacity ${CARD_ANIM_MS}ms ease, transform ${CARD_ANIM_MS}ms ease`}}>
+          {/* The card clips its own corners, so the scroll lives on an inner
+              wrapper — the full row list runs past a short viewport. */}
+          <div style={{maxHeight:`calc(100vh - ${AVATAR_CARD_TOP+20}px)`,overflowY:"auto"}}>
 
-            {/* Dark mode */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
-              padding:"12px 0",borderBottom:`1px solid ${C.border}`}}>
-              <div>
-                <p style={{fontWeight:600,fontSize:14,color:C.navy}}>{t("darkMode")}</p>
-                <p style={{fontSize:12,color:C.muted,marginTop:2}}>{t("darkDesc")}</p>
+            {/* Identity — the whole row is the way into the profile/login
+                modal, which is where account management lives. */}
+            <button onClick={()=>cardOpenModal("login")}
+              style={{...cardRowStyle,padding:"14px",gap:10}}>
+              <div style={{width:38,height:38,borderRadius:"50%",flexShrink:0,overflow:"hidden",
+                background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+                display:"flex",alignItems:"center",justifyContent:"center"}}>
+                {user?.avatar
+                  ?<img src={user.avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                  :<i className="ti ti-user" style={{fontSize:18,color:"white"}} aria-hidden="true"/>}
               </div>
-              <button onClick={()=>setDark(d=>!d)}
-                style={{width:52,height:28,borderRadius:14,border:"none",cursor:"pointer",
-                  background:dark?"linear-gradient(135deg,#5DE8A0,#2E8B57)":C.border,
-                  position:"relative",transition:"all 0.25s",flexShrink:0,
-                  boxShadow:dark?"0 4px 12px rgba(46,139,87,0.4)":"none"}}>
-                <span style={{position:"absolute",top:4,left:dark?26:4,width:20,height:20,
-                  borderRadius:"50%",background:"white",transition:"left 0.25s",
-                  boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}/>
+              {/* <span>s, not <p>s — a button's content model is phrasing
+                  content only, and this whole row is the button. */}
+              <div style={{flex:1,minWidth:0}}>
+                {user?(<>
+                  <span style={{display:"block",fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
+                    fontSize:13.5,color:C.navy,overflow:"hidden",textOverflow:"ellipsis",
+                    whiteSpace:"nowrap"}}>{user.name}</span>
+                  <span style={{display:"block",fontSize:11,color:C.muted,overflow:"hidden",
+                    textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user.email}</span>
+                </>):(
+                  <span style={{display:"block",fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
+                    fontSize:13.5,color:C.navy}}>Sign in / Create account</span>
+                )}
+              </div>
+              <i className="ti ti-chevron-right" style={{fontSize:15,flexShrink:0,color:C.muted2}} aria-hidden="true"/>
+            </button>
+
+            <div style={{height:1,background:C.border}}/>
+            <button onClick={()=>cardGoToView("archive")} style={cardRowStyle}>
+              <i className="ti ti-archive" style={cardIconStyle} aria-hidden="true"/>
+              {t("archive")}
+            </button>
+            <button onClick={()=>cardOpenModal("subscription")} style={cardRowStyle}>
+              <i className="ti ti-crown" style={cardIconStyle} aria-hidden="true"/>
+              Subscription
+            </button>
+
+            <div style={{height:1,background:C.border}}/>
+            {/* Settings rows — same state and handlers the deleted settings
+                panel drove, just laid out compactly. */}
+            <div style={{...cardRowStyle,cursor:"default"}}>
+              <i className="ti ti-moon" style={cardIconStyle} aria-hidden="true"/>
+              <span style={{flex:1}}>{t("darkMode")}</span>
+              <button onClick={()=>setDark(d=>!d)} style={cardSwitchStyle(dark)}
+                title={dark?"Switch to light mode":"Switch to dark mode"}>
+                <span style={cardKnobStyle(dark)}/>
+              </button>
+            </div>
+            <div style={{...cardRowStyle,cursor:"default",alignItems:"flex-start"}}>
+              <i className="ti ti-world" style={{...cardIconStyle,marginTop:2}} aria-hidden="true"/>
+              <div style={{flex:1,minWidth:0}}>
+                <p style={{marginBottom:7}}>{t("language")}</p>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {(Object.entries(LANG_LABELS) as [Lang,string][]).map(([code,label])=>(
+                    <button key={code} onClick={()=>setLang(code)}
+                      style={{padding:"5px 10px",borderRadius:7,
+                        border:`1.5px solid ${lang===code?C.primary:C.border}`,
+                        background:lang===code?C.primary:"transparent",
+                        color:lang===code?"white":C.muted,
+                        fontSize:11.5,fontWeight:600,cursor:"pointer",
+                        fontFamily:code==="ar"||code==="ur"?"'Segoe UI',sans-serif":"inherit"}}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div style={{...cardRowStyle,cursor:"default",alignItems:"flex-start"}}>
+              <i className="ti ti-building-mosque" style={{...cardIconStyle,marginTop:2}} aria-hidden="true"/>
+              <div style={{flex:1,minWidth:0}}>
+                <p>{t("prayerSetting")}</p>
+                {/* One compact status line — this is the only place a denied
+                    location permission ever surfaces. */}
+                {prayerStatus!=="idle"&&(
+                  <p style={{fontSize:10.5,marginTop:3,
+                    color:prayerStatus==="error"?C.urgent:prayerStatus==="done"?C.sage:C.accent}}>
+                    {prayerStatus==="loading"?t("prayerLoading")
+                      :prayerStatus==="done"?t("prayerDone"):t("prayerError")}
+                  </p>
+                )}
+              </div>
+              <button onClick={togglePrayer} style={cardSwitchStyle(prayerEnabled)} title={t("prayerSetting")}>
+                <span style={cardKnobStyle(prayerEnabled)}/>
+              </button>
+            </div>
+            <div style={{...cardRowStyle,cursor:"default"}}>
+              <i className="ti ti-bell" style={cardIconStyle} aria-hidden="true"/>
+              <span style={{flex:1}}>{t("notifSetting")}</span>
+              <button onClick={toggleNotifications} style={cardSwitchStyle(notifEnabled)} title={t("notifSetting")}>
+                <span style={cardKnobStyle(notifEnabled)}/>
               </button>
             </div>
 
-            {/* Language */}
-            <div style={{padding:"12px 0",borderBottom:`1px solid ${C.border}`}}>
-              <p style={{fontWeight:600,fontSize:14,color:C.navy}}>{t("language")}</p>
-              <p style={{fontSize:12,color:C.muted,marginTop:2,marginBottom:10}}>{t("languageDesc")}</p>
-              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                {(Object.entries(LANG_LABELS) as [Lang,string][]).map(([code,label])=>(
-                  <button key={code} onClick={()=>setLang(code)}
-                    style={{padding:"7px 14px",borderRadius:8,border:`1.5px solid ${lang===code?C.primary:C.border}`,
-                      background:lang===code?C.primary:"transparent",
-                      color:lang===code?"white":C.muted,
-                      fontSize:13,fontWeight:600,cursor:"pointer",
-                      fontFamily:code==="ar"||code==="ur"?"'Segoe UI',sans-serif":"inherit"}}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <div style={{height:1,background:C.border}}/>
+            <button onClick={()=>cardOpenModal("widgets")} style={cardRowStyle}>
+              <i className="ti ti-layout-grid" style={cardIconStyle} aria-hidden="true"/>
+              Widgets &amp; Shortcuts
+            </button>
+            <button onClick={()=>cardOpenModal("siri")} style={cardRowStyle}>
+              <i className="ti ti-microphone" style={cardIconStyle} aria-hidden="true"/>
+              Siri &amp; Shortcuts
+            </button>
 
-            {/* Prayer times toggle */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
-              padding:"12px 0",borderBottom:`1px solid ${C.border}`}}>
-              <div>
-                <p style={{fontWeight:600,fontSize:14,color:C.navy}}>{t("prayerSetting")}</p>
-                <p style={{fontSize:12,color:C.muted,marginTop:2}}>{t("prayerDesc")}</p>
-                {prayerStatus==="loading"&&<p style={{fontSize:11,color:C.accent,marginTop:4}}>{t("prayerLoading")}</p>}
-                {prayerStatus==="done"&&<p style={{fontSize:11,color:C.sage,marginTop:4}}>{t("prayerDone")}</p>}
-                {prayerStatus==="error"&&<p style={{fontSize:11,color:C.urgent,marginTop:4}}>{t("prayerError")}</p>}
-              </div>
-              <button onClick={togglePrayer}
-                style={{width:52,height:28,borderRadius:14,border:"none",cursor:"pointer",
-                  background:prayerEnabled?"linear-gradient(135deg,#5DE8A0,#2E8B57)":C.border,
-                  position:"relative",transition:"all 0.25s",flexShrink:0,
-                  boxShadow:prayerEnabled?"0 4px 12px rgba(46,139,87,0.4)":"none"}}>
-                <span style={{position:"absolute",top:4,
-                  left:prayerEnabled?26:4,width:20,height:20,borderRadius:"50%",
-                  background:"white",transition:"left 0.25s",
-                  boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}/>
-              </button>
-            </div>
+            <div style={{height:1,background:C.border}}/>
+            <button onClick={()=>cardOpenModal("help")} style={cardRowStyle}>
+              <i className="ti ti-help-circle" style={cardIconStyle} aria-hidden="true"/>
+              Help &amp; Feedback
+            </button>
+            <button onClick={()=>cardOpenModal("privacy")} style={cardRowStyle}>
+              <i className="ti ti-shield-lock" style={cardIconStyle} aria-hidden="true"/>
+              Privacy &amp; Permissions
+            </button>
+            <button onClick={()=>cardOpenModal("terms")} style={cardRowStyle}>
+              <i className="ti ti-file-description" style={cardIconStyle} aria-hidden="true"/>
+              Terms &amp; Conditions
+            </button>
 
-            {/* Notifications toggle */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
-              padding:"12px 0"}}>
-              <div>
-                <p style={{fontWeight:600,fontSize:14,color:C.navy}}>{t("notifSetting")}</p>
-                <p style={{fontSize:12,color:C.muted,marginTop:2}}>{t("notifDesc")}</p>
-              </div>
-              <button onClick={toggleNotifications}
-                style={{width:52,height:28,borderRadius:14,border:"none",cursor:"pointer",
-                  background:notifEnabled
-                    ?"linear-gradient(135deg,#5DE8A0,#2E8B57)"
-                    :C.border,
-                  position:"relative",transition:"all 0.25s",flexShrink:0,
-                  boxShadow:notifEnabled?"0 4px 12px rgba(46,139,87,0.4)":"none"}}>
-                <span style={{position:"absolute",top:4,
-                  left:notifEnabled?26:4,width:20,height:20,borderRadius:"50%",
-                  background:"white",transition:"left 0.25s",
-                  boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}/>
+            {/* Only a real account can be signed out of — same gating the
+                drawer used. */}
+            {user?.id&&(<>
+              <div style={{height:1,background:C.border}}/>
+              <button onClick={handleCardSignOut} style={{...cardRowStyle,color:C.urgent}}>
+                <i className="ti ti-logout" style={{...cardIconStyle,color:C.urgent}} aria-hidden="true"/>
+                Sign out
               </button>
-            </div>
+            </>)}
           </div>
         </div>
-        </>
-      )}
+      </>)}
 
       {/* Content */}
-      <main onClick={()=>{if(showSettings)setShowSettings(false);}}
-        style={{position:"relative",zIndex:10,maxWidth:1100,margin:"0 auto",padding:"0 20px 100px"}}>
+      <main style={{position:"relative",zIndex:10,maxWidth:1100,margin:"0 auto",padding:"0 20px 100px"}}>
 
         {/* ── DAILY ─────────────────────────────────────────────────────── */}
         {currentView==="daily"&&(
@@ -5814,8 +5698,8 @@ export default function Home(){
           rightmost item (see the bar's render inside Chatbot), so there's
           no separate floating add-task button any more. */}
       <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions} user={user} isPro={isPro} tier={subTier}
-        currentView={currentView} setCurrentView={handleSetView} onOpenModal={setActiveModal}
-        onAddTask={()=>setIsAddingTask(true)} onToggleDark={()=>setDark(d=>!d)}/>
+        currentView={currentView} setCurrentView={setCurrentView}
+        onAddTask={()=>setIsAddingTask(true)}/>
 
       {isAddingTask&&<TaskModal onClose={()=>setIsAddingTask(false)} onSave={addTask}/>}
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
