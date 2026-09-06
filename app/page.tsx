@@ -11,17 +11,20 @@ type Filter = "all"|"ongoing"|"milestone"|"done"|Category;
 type Lang = "en"|"ar"|"fr"|"tr"|"ur";
 
 // Bottom nav bar's fixed footprint. The chat panel's own bottom offset and
-// available height are both derived from these, so the panel always clears
-// the bar by BOTTOM_NAV_GAP instead of floating over it, and the two can't
-// drift apart if the bar's size or offset changes.
+// available height are derived from these plus the bar's measured height, so
+// the panel always clears the bar by BOTTOM_NAV_GAP instead of floating over
+// it, and the two can't drift apart if the bar's size or offset changes.
 const BOTTOM_NAV_BOTTOM=20;
-const BOTTOM_NAV_HEIGHT=60; // 44px icon row + 8px vertical padding * 2
 const BOTTOM_NAV_GAP=12;
-// Where the non-expanded chat panel's bottom edge sits, and how much total
-// vertical room it gives back when sizing itself to the viewport (its own
-// bottom offset plus a matching margin above it).
-const CHAT_PANEL_BOTTOM=BOTTOM_NAV_BOTTOM+BOTTOM_NAV_HEIGHT+BOTTOM_NAV_GAP;
-const CHAT_PANEL_VMARGIN=CHAT_PANEL_BOTTOM+20;
+// FIRST-PAINT FALLBACK ONLY — the bar's real height is measured at runtime
+// (see measuredBarHeight in Chatbot). This counts the 44px icon row plus 8px
+// of padding top and bottom, and that is all a static number can honestly
+// cover: the bar's two hairline borders do NOT render at their nominal 0.5px.
+// The browser snaps each to a whole device pixel, so the real height is
+// devicePixelRatio-dependent — live measurement on a DPR-0.75 display put
+// each border at 1.333px and the bar at 62.67px, which left the panel
+// clearing it by only 9.33px instead of the intended 12.
+const BOTTOM_NAV_HEIGHT_FALLBACK=60;
 // Avatar card — the floating panel the top-left avatar opens, replacing the
 // old slide-in drawer. Its top offset is derived from the nav's own padding
 // and button size so it always hangs just under the avatar it belongs to.
@@ -2596,6 +2599,32 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   const inputBtnBorder=dark?"1.5px solid rgba(255,255,255,0.18)":"1.5px solid rgba(76,95,213,0.28)";
   const[open,setOpen]=useState(false);
   const[expanded,setExpanded]=useState(false);
+  // The bar's real rendered height, measured rather than assumed — the same
+  // lesson the chat history card's width already learned here. A static
+  // constant can't get this right: the bar's 0.5px hairline borders snap up
+  // to a whole device pixel, so its height (and therefore how far up the
+  // panel has to sit to clear it) depends on the display's devicePixelRatio.
+  // Re-attaches on the expanded toggle, which is what mounts and unmounts the
+  // bar; the last measurement is deliberately kept while it's unmounted, so
+  // returning from fullscreen doesn't flash the fallback.
+  const barRef=React.useRef<HTMLDivElement|null>(null);
+  const[measuredBarHeight,setMeasuredBarHeight]=useState<number|null>(null);
+  React.useLayoutEffect(()=>{
+    const el=barRef.current;
+    if(!el)return;
+    const measure=()=>setMeasuredBarHeight(el.getBoundingClientRect().height);
+    measure();
+    const ro=new ResizeObserver(measure);
+    ro.observe(el);
+    return()=>ro.disconnect();
+  },[expanded]);
+  const barHeight=measuredBarHeight??BOTTOM_NAV_HEIGHT_FALLBACK;
+  // Non-expanded panel: bottom edge one gap above the bar's real top edge,
+  // and the vertical room it gives back when sizing itself is that offset
+  // plus a matching margin above.
+  const chatPanelBottom=BOTTOM_NAV_BOTTOM+barHeight+BOTTOM_NAV_GAP;
+  const chatPanelVMargin=chatPanelBottom+20;
+
   // The bar's orb is a toggle: it stays in the bar while the chat is open
   // (the panel sits above the bar rather than over it), so it has to close
   // as well as open. Closing does what the panel header's own orb instance
@@ -3317,7 +3346,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           panel is fullscreen (`expanded`), which covers the screen
           anyway. */}
       {!expanded&&(
-        <div style={{position:"fixed",bottom:BOTTOM_NAV_BOTTOM,left:"50%",
+        <div ref={barRef} style={{position:"fixed",bottom:BOTTOM_NAV_BOTTOM,left:"50%",
           transform:"translateX(-50%)",
           // Above the chat's own click-outside catcher (58) while the chat
           // is open. The panel no longer covers the bar, so the bar has to
@@ -3374,11 +3403,11 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           <div onClick={()=>{setOpen(false);setExpanded(false);}}
             style={{position:"fixed",inset:0,zIndex:58,background:"transparent"}}/>
           <div style={{position:"fixed",
-            // Non-expanded: sits above the floating bar (CHAT_PANEL_BOTTOM
-            // is derived from the bar's own offset + height + gap) instead
+            // Non-expanded: sits above the floating bar (chatPanelBottom is
+            // the bar's own offset + its MEASURED height + the gap) instead
             // of overlapping it. Expanded still pins to 0 and covers
             // everything, bar included.
-            bottom:(expanded?0:CHAT_PANEL_BOTTOM)+keyboardInset,right:expanded?0:20,
+            bottom:(expanded?0:chatPanelBottom)+keyboardInset,right:expanded?0:20,
             top:expanded?0:"auto",left:expanded?0:"auto",
             zIndex:60,
             // Scoped to `right` only — that's the sole property still
@@ -3393,18 +3422,18 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
             <div ref={chatPanelRef} style={{
               width:expanded?"100vw":"min(400px, calc(100vw - 40px))",
               // Same shape as before (600px cap, otherwise fit the visible
-              // viewport) — but the room it gives back is now
-              // CHAT_PANEL_VMARGIN, not a flat 40. The old 40 was the old
-              // bottom:20 plus a matching 20 above; now that the panel
-              // starts CHAT_PANEL_BOTTOM up to clear the bar, keeping 40
-              // here would push its top edge off screen by exactly the
-              // difference on any viewport short enough to hit the cap.
+              // viewport) — but the room it gives back is chatPanelVMargin,
+              // not a flat 40. The old 40 was the old bottom:20 plus a
+              // matching 20 above; now that the panel starts chatPanelBottom
+              // up to clear the bar, keeping 40 here would push its top edge
+              // off screen by exactly the difference on any viewport short
+              // enough to hit the cap.
               height:expanded
                 ?(visibleHeight!=null?`${visibleHeight}px`:"100vh")
-                :(visibleHeight!=null?`${Math.min(600,visibleHeight-CHAT_PANEL_VMARGIN)}px`:`min(600px, calc(100vh - ${CHAT_PANEL_VMARGIN}px))`),
+                :(visibleHeight!=null?`${Math.min(600,visibleHeight-chatPanelVMargin)}px`:`min(600px, calc(100vh - ${chatPanelVMargin}px))`),
               maxHeight:expanded
                 ?(visibleHeight!=null?`${visibleHeight}px`:"100vh")
-                :(visibleHeight!=null?`${visibleHeight-CHAT_PANEL_VMARGIN}px`:`calc(100vh - ${CHAT_PANEL_VMARGIN}px)`),
+                :(visibleHeight!=null?`${visibleHeight-chatPanelVMargin}px`:`calc(100vh - ${chatPanelVMargin}px)`),
               borderRadius:expanded?0:24,
               display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",
               // Reverted to a plain, clean floating card — three rim-lit
