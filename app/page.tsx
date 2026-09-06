@@ -3407,18 +3407,24 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
             // the bar's own offset + its MEASURED height + the gap) instead
             // of overlapping it. Expanded still pins to 0 and covers
             // everything, bar included.
-            bottom:(expanded?0:chatPanelBottom)+keyboardInset,right:expanded?0:20,
-            top:expanded?0:"auto",left:expanded?0:"auto",
+            bottom:(expanded?0:chatPanelBottom)+keyboardInset,
+            top:expanded?0:"auto",
+            // Centred on the same axis as the bar, by the same method the bar
+            // itself uses, so the two read as one stack rather than the panel
+            // floating off to one side. Expanded still pins all four sides.
+            left:expanded?0:"50%",
+            right:expanded?0:"auto",
+            transform:expanded?"none":"translateX(-50%)",
             zIndex:60,
-            // Scoped to `right` only — that's the sole property still
-            // exclusively driven by the deliberate, discrete `expanded`
-            // toggle. `bottom` is now also driven by keyboardInset, which
-            // visualViewport can update several times through the native
-            // keyboard-open animation; animating it here would make the
-            // panel chase a moving target instead of tracking the keyboard
-            // directly. `top`/`left` only ever toggle between 0 and "auto",
-            // which CSS can't meaningfully tween anyway.
-            transition:"right 0.3s cubic-bezier(0.34,1.56,0.64,1)"}}>
+            // The `right 0.3s` transition that used to live here is gone with
+            // the right-anchoring it animated: `right` now only ever toggles
+            // between 0 and "auto", which CSS can't tween, so it animated
+            // nothing. Every remaining property here is either discrete
+            // (`top`/`left`/`transform` on the expanded toggle) or driven by
+            // keyboardInset, which visualViewport updates repeatedly through
+            // the native keyboard animation — animating that would make the
+            // panel chase a moving target instead of tracking the keyboard.
+            }}>
             <div ref={chatPanelRef} style={{
               width:expanded?"100vw":"min(400px, calc(100vw - 40px))",
               // Same shape as before (600px cap, otherwise fit the visible
@@ -3445,16 +3451,18 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               background:panelBg,
               border:expanded?"none":`${panelBorderWidth}px solid ${C.border}`,
               boxShadow:expanded?"none":"0 32px 80px rgba(0,0,0,0.45)",
-              // Round 1 of the blob-replaces-orb work: rather than the blob
-              // itself visually traveling into the panel (a true morph —
-              // deferred to Round 2, only if this feels good on device),
-              // the panel plays its own scale+fade-in on mount, anchored at
-              // the bottom-right corner where the blob sits, so opening
-              // still reads as "expanding from the blob" without the extra
-              // risk of animating one element's position+size+shape at
-              // once. Only fires on a genuine open — toggling `expanded`
-              // afterward doesn't remount this block, so no replay.
-              transformOrigin:"bottom right",
+              // Rather than the blob itself visually traveling into the panel
+              // (a true morph), the panel plays its own scale+fade-in on
+              // mount, anchored where the blob sits, so opening still reads
+              // as "expanding from the blob" without the risk of animating
+              // one element's position+size+shape at once. That anchor is
+              // "bottom center" now, not the "bottom right" it was written
+              // for: the blob moved to the middle of the bar and the panel is
+              // centred over it, so a bottom-right origin would expand from a
+              // corner the orb no longer occupies. Only fires on a genuine
+              // open — toggling `expanded` afterward doesn't remount this
+              // block, so no replay.
+              transformOrigin:"bottom center",
               animation:"chatPanelExpandIn 0.32s cubic-bezier(0.34,1.56,0.64,1)"}}>
               <style>{`@keyframes chatPanelExpandIn{0%{opacity:0;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}`}</style>
 
