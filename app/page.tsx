@@ -25,6 +25,15 @@ const BOTTOM_NAV_GAP=12;
 // each border at 1.333px and the bar at 62.67px, which left the panel
 // clearing it by only 9.33px instead of the intended 12.
 const BOTTOM_NAV_HEIGHT_FALLBACK=60;
+// Chat panel motion. Open/close are keyframed scale+fade on the panel itself;
+// expand/compress are CSS transitions on the real positioning properties,
+// which the dynamic values (a measured bottom offset, a viewport-derived
+// height) rule out doing as keyframes. PANEL_MORPH_EASE is the same
+// overshooting curve the panel already used, kept deliberately.
+const PANEL_OPEN_MS=250;
+const PANEL_CLOSE_MS=200;
+const PANEL_MORPH_MS=300;
+const PANEL_MORPH_EASE="cubic-bezier(0.34,1.56,0.64,1)";
 // Avatar card — the floating panel the top-left avatar opens, replacing the
 // old slide-in drawer. Its top offset is derived from the nav's own padding
 // and button size so it always hangs just under the avatar it belongs to.
@@ -2604,9 +2613,9 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   // constant can't get this right: the bar's 0.5px hairline borders snap up
   // to a whole device pixel, so its height (and therefore how far up the
   // panel has to sit to clear it) depends on the display's devicePixelRatio.
-  // Re-attaches on the expanded toggle, which is what mounts and unmounts the
-  // bar; the last measurement is deliberately kept while it's unmounted, so
-  // returning from fullscreen doesn't flash the fallback.
+  // The bar is mounted for the whole life of this component now (it fades
+  // rather than unmounting while fullscreen), so this attaches once and the
+  // ResizeObserver covers every later change on its own.
   const barRef=React.useRef<HTMLDivElement|null>(null);
   const[measuredBarHeight,setMeasuredBarHeight]=useState<number|null>(null);
   React.useLayoutEffect(()=>{
@@ -2617,7 +2626,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
     const ro=new ResizeObserver(measure);
     ro.observe(el);
     return()=>ro.disconnect();
-  },[expanded]);
+  },[]);
   const barHeight=measuredBarHeight??BOTTOM_NAV_HEIGHT_FALLBACK;
   // Non-expanded panel: bottom edge one gap above the bar's real top edge,
   // and the vertical room it gives back when sizing itself is that offset
@@ -2625,12 +2634,36 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   const chatPanelBottom=BOTTOM_NAV_BOTTOM+barHeight+BOTTOM_NAV_GAP;
   const chatPanelVMargin=chatPanelBottom+20;
 
+  // Closing is a two-step now: `closing` keeps the panel mounted so its exit
+  // animation can play, and the unmount lands after it. Every close path in
+  // the app routes through requestClose so none of them can skip the exit —
+  // the bar's orb, the panel header's orb, and the click-outside catcher.
+  // `expanded` is deliberately NOT reset until the unmount: dropping it up
+  // front would snap a fullscreen panel back to floating geometry and then
+  // animate it out from there.
+  const[closing,setClosing]=useState(false);
+  const closeTimer=React.useRef<number|null>(null);
+  function requestClose(){
+    if(closing)return;
+    stopSpeaking();
+    setClosing(true);
+    // A timeout rather than onAnimationEnd, matching how the avatar card and
+    // the old More popover already finalise their exits here. It also can't
+    // strand the panel: a backgrounded tab freezes the animation timeline, so
+    // animationend may never fire, while a throttled timeout still does.
+    closeTimer.current=window.setTimeout(()=>{
+      closeTimer.current=null;
+      setClosing(false);
+      setOpen(false);
+      setExpanded(false);
+    },PANEL_CLOSE_MS);
+  }
+  useEffect(()=>()=>{ if(closeTimer.current!=null)window.clearTimeout(closeTimer.current); },[]);
   // The bar's orb is a toggle: it stays in the bar while the chat is open
   // (the panel sits above the bar rather than over it), so it has to close
-  // as well as open. Closing does what the panel header's own orb instance
-  // does — stop any playing speech and drop out of expanded mode.
+  // as well as open.
   function toggleChat(){
-    if(open){stopSpeaking();setOpen(false);setExpanded(false);}
+    if(open)requestClose();
     else setOpen(true);
   }
   // iOS Safari doesn't shrink the layout viewport when the on-screen
@@ -3342,10 +3375,16 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           component/ref/animations as ever, just mounted here, and it now
           renders whether the chat is open or closed — the panel sits above
           the bar rather than over it, so the orb stays reachable and
-          doubles as the close control. Hidden entirely while the chat
-          panel is fullscreen (`expanded`), which covers the screen
-          anyway. */}
-      {!expanded&&(
+          doubles as the close control. It stays mounted while the chat is
+          fullscreen and fades instead of unmounting: an instant unmount
+          popped it out of existence at the START of the 0.3s expand, while
+          the panel was still growing, and popped it back at full opacity on
+          compress before the panel had finished shrinking. Fading over the
+          same duration means it's gone by the time the panel covers its
+          spot and back only as the panel clears it. Staying mounted also
+          keeps its height measurement live rather than re-running on every
+          fullscreen toggle. */}
+      {(
         <div ref={barRef} style={{position:"fixed",bottom:BOTTOM_NAV_BOTTOM,left:"50%",
           transform:"translateX(-50%)",
           // Above the chat's own click-outside catcher (58) while the chat
@@ -3355,6 +3394,9 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           // rather than through toggleChat (skipping stopSpeaking, leaving
           // a spoken reply still playing).
           zIndex:open?59:40,
+          opacity:expanded?0:1,
+          pointerEvents:expanded?"none":"auto",
+          transition:`opacity ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`,
           display:"flex",alignItems:"center",gap:2,padding:"8px 10px",
           borderRadius:999,background:dark?"#1E2043":"#FFFFFF",
           border:`0.5px solid ${C.border}`,
@@ -3400,46 +3442,51 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
 
       {open&&(
         <>
-          <div onClick={()=>{setOpen(false);setExpanded(false);}}
+          <div onClick={requestClose}
             style={{position:"fixed",inset:0,zIndex:58,background:"transparent"}}/>
-          <div style={{position:"fixed",
-            // Non-expanded: sits above the floating bar (chatPanelBottom is
-            // the bar's own offset + its MEASURED height + the gap) instead
-            // of overlapping it. Expanded still pins to 0 and covers
-            // everything, bar included.
-            bottom:(expanded?0:chatPanelBottom)+keyboardInset,
-            top:expanded?0:"auto",
-            // Centred on the same axis as the bar, by the same method the bar
-            // itself uses, so the two read as one stack rather than the panel
-            // floating off to one side. Expanded still pins all four sides.
-            left:expanded?0:"50%",
-            right:expanded?0:"auto",
-            transform:expanded?"none":"translateX(-50%)",
-            zIndex:60,
-            // The `right 0.3s` transition that used to live here is gone with
-            // the right-anchoring it animated: `right` now only ever toggles
-            // between 0 and "auto", which CSS can't tween, so it animated
-            // nothing. Every remaining property here is either discrete
-            // (`top`/`left`/`transform` on the expanded toggle) or driven by
-            // keyboardInset, which visualViewport updates repeatedly through
-            // the native keyboard animation — animating that would make the
-            // panel chase a moving target instead of tracking the keyboard.
-            }}>
-            <div ref={chatPanelRef} style={{
+          {/* Full-viewport layer. It exists purely so the box below can be
+              absolutely positioned against the viewport with plain numbers on
+              every side — the previous single wrapper mixed `auto` into its
+              top/right, and `auto` is not interpolatable, so expand/compress
+              could never have tweened from it. pointerEvents:none keeps it
+              from swallowing the click-outside catcher underneath. */}
+          <div style={{position:"fixed",inset:0,zIndex:60,pointerEvents:"none"}}>
+            {/* The morphing box: everything that differs between floating and
+                fullscreen lives here as a transitioned property. */}
+            <div style={{position:"absolute",pointerEvents:"auto",
+              // Non-expanded: sits above the floating bar (chatPanelBottom is
+              // the bar's own offset + its MEASURED height + the gap) instead
+              // of overlapping it. Expanded pins to 0 and covers everything.
+              bottom:expanded?0:chatPanelBottom,
+              // keyboardInset rides on margin, NOT on `bottom`, precisely
+              // because `bottom` is transitioned now: visualViewport updates
+              // the inset repeatedly through the native keyboard animation,
+              // and a transitioned `bottom` would make the panel lag behind a
+              // moving target instead of tracking the keyboard. Margin isn't
+              // in the transition list, so it still applies instantly.
+              marginBottom:keyboardInset,
+              // Centred on the same axis as the bar, by the same method the
+              // bar itself uses, so the two read as one stack.
+              left:expanded?0:"50%",
+              transform:expanded?"none":"translateX(-50%)",
               width:expanded?"100vw":"min(400px, calc(100vw - 40px))",
               // Same shape as before (600px cap, otherwise fit the visible
-              // viewport) — but the room it gives back is chatPanelVMargin,
-              // not a flat 40. The old 40 was the old bottom:20 plus a
-              // matching 20 above; now that the panel starts chatPanelBottom
-              // up to clear the bar, keeping 40 here would push its top edge
-              // off screen by exactly the difference on any viewport short
-              // enough to hit the cap.
+              // viewport) — the room it gives back is chatPanelVMargin.
               height:expanded
                 ?(visibleHeight!=null?`${visibleHeight}px`:"100vh")
                 :(visibleHeight!=null?`${Math.min(600,visibleHeight-chatPanelVMargin)}px`:`min(600px, calc(100vh - ${chatPanelVMargin}px))`),
               maxHeight:expanded
                 ?(visibleHeight!=null?`${visibleHeight}px`:"100vh")
                 :(visibleHeight!=null?`${visibleHeight-chatPanelVMargin}px`:`calc(100vh - ${chatPanelVMargin}px)`),
+              // Expand and compress, both directions off the same list.
+              transition:[`bottom ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`,
+                `left ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`,
+                `transform ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`,
+                `width ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`,
+                `height ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`,
+                `max-height ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`].join(", ")}}>
+            <div ref={chatPanelRef} style={{
+              width:"100%",height:"100%",
               borderRadius:expanded?0:24,
               display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",
               // Reverted to a plain, clean floating card — three rim-lit
@@ -3451,20 +3498,23 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               background:panelBg,
               border:expanded?"none":`${panelBorderWidth}px solid ${C.border}`,
               boxShadow:expanded?"none":"0 32px 80px rgba(0,0,0,0.45)",
+              // The card's own half of the morph — the radius rounding off to
+              // 0 as it fills the screen, in step with the box above it.
+              transition:`border-radius ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`,
               // Rather than the blob itself visually traveling into the panel
-              // (a true morph), the panel plays its own scale+fade-in on
-              // mount, anchored where the blob sits, so opening still reads
-              // as "expanding from the blob" without the risk of animating
-              // one element's position+size+shape at once. That anchor is
-              // "bottom center" now, not the "bottom right" it was written
-              // for: the blob moved to the middle of the bar and the panel is
-              // centred over it, so a bottom-right origin would expand from a
-              // corner the orb no longer occupies. Only fires on a genuine
-              // open — toggling `expanded` afterward doesn't remount this
-              // block, so no replay.
-              transformOrigin:"bottom center",
-              animation:"chatPanelExpandIn 0.32s cubic-bezier(0.34,1.56,0.64,1)"}}>
-              <style>{`@keyframes chatPanelExpandIn{0%{opacity:0;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}`}</style>
+              // (a true morph), the panel plays its own scale+fade on mount
+              // and on the way out, anchored where the blob sits, so opening
+              // reads as "rising from the blob" and closing as sinking back
+              // into it. Origin swaps to the centre while expanded, where
+              // there is no blob beneath it to grow out of.
+              transformOrigin:expanded?"center center":"bottom center",
+              // Swapping the whole shorthand is what restarts the animation
+              // for the exit; `forwards` holds the last frame so the panel
+              // doesn't flash back to full size in the gap before unmount.
+              animation:closing
+                ?`chatPanelOut ${PANEL_CLOSE_MS}ms ease-out forwards`
+                :`chatPanelIn ${PANEL_OPEN_MS}ms ease-out`}}>
+              <style>{`@keyframes chatPanelIn{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}@keyframes chatPanelOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(0.92)}}`}</style>
 
               {/* Chat history — dim overlay + one card, rebuilt from
                   scratch (see the plan in conversation history) after a
@@ -3711,7 +3761,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                   filter:"drop-shadow(0 0 16px rgba(134,112,232,0.6)) drop-shadow(0 0 30px rgba(76,95,213,0.3))",
                   transition:"all 0.3s"}}>
                   <ChatBlob ref={orbRef} size={expanded?42:34} active={loading}
-                    onClick={()=>{stopSpeaking();setOpen(false);setExpanded(false);}}
+                    onClick={requestClose}
                     title="Close"/>
                 </div>
               </div>
@@ -3949,6 +3999,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </>
       )}
