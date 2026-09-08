@@ -295,13 +295,6 @@ const DAY_LABELS:Record<string,string> = {
   mon:"Monday",tue:"Tuesday",wed:"Wednesday",thu:"Thursday",
   fri:"Friday",sat:"Saturday",sun:"Sunday",
 };
-const DAY_LABELS_LANG:Record<Lang,Record<string,string>> = {
-  en:DAY_LABELS,
-  ar:{mon:"الاثنين",tue:"الثلاثاء",wed:"الأربعاء",thu:"الخميس",fri:"الجمعة",sat:"السبت",sun:"الأحد"},
-  fr:{mon:"Lundi",tue:"Mardi",wed:"Mercredi",thu:"Jeudi",fri:"Vendredi",sat:"Samedi",sun:"Dimanche"},
-  tr:{mon:"Pazartesi",tue:"Salı",wed:"Çarşamba",thu:"Perşembe",fri:"Cuma",sat:"Cumartesi",sun:"Pazar"},
-  ur:{mon:"پیر",tue:"منگل",wed:"بدھ",thu:"جمعرات",fri:"جمعہ",sat:"ہفتہ",sun:"اتوار"},
-};
 const CATS:Record<string,{label:string;icon:string}> = {
   health:      {label:"Health & Fitness",    icon:"ti-heart-rate-monitor"},
   fitness:     {label:"Fitness & Exercise",  icon:"ti-run"},
@@ -444,10 +437,6 @@ function fmtDate(d:string){
   if(!d)return "";
   return new Date(d+"T00:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
 }
-function nextWeekday(target:number){
-  const d=new Date(); let diff=(target-d.getDay()+7)%7; if(!diff)diff=7;
-  d.setDate(d.getDate()+diff); return d.toISOString().slice(0,10);
-}
 function computeStreak(r:Routine){
   let streak=0;
   const d=new Date(todayISO()+"T00:00:00");
@@ -542,35 +531,6 @@ function Checkbox({checked,onClick,small}:{checked:boolean;onClick:()=>void;smal
   );
 }
 
-function Modal({children,onClose}:{children:React.ReactNode;onClose:()=>void}){
-  const{dark}=useApp();
-  const C=getC(dark);
-  return(
-    <div onClick={e=>{if(e.target===e.currentTarget)onClose();}}
-      style={{position:"fixed",inset:0,background:"rgba(35,42,77,0.35)",
-        backdropFilter:"blur(2px)",display:"flex",alignItems:"center",
-        justifyContent:"center",zIndex:50,padding:20}}>
-      <div className="glass" style={{borderRadius:22,padding:30,width:"100%",maxWidth:460,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 30px 80px rgba(0,0,0,0.35)"}}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function FieldLabel({children}:{children:React.ReactNode}){
-  const{dark}=useApp();
-  const C=getC(dark);
-  return<label style={{display:"block",fontSize:11,fontWeight:600,
-    color:C.muted,marginBottom:6,letterSpacing:0.3}}>{children}</label>;
-}
-function useInputStyle():React.CSSProperties{
-  const{dark}=useApp();
-  const C=getC(dark);
-  return{width:"100%",padding:"10px 12px",
-    border:`1.5px solid ${C.border}`,borderRadius:9,fontSize:13,
-    background:C.surface2,color:C.navy,outline:"none",fontFamily:"inherit"};
-}
-
 // ── Searchable Category Picker ────────────────────────────────────────────────
 function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
   const{dark}=useApp();
@@ -585,7 +545,6 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
   );
   const selected=CATS[value];
   const s=CAT_STYLES[value]??CAT_STYLE_DEFAULT;
-  const displayLabel=selected?`${selected.icon} ${selected.label}`:value||"Select category";
   return(
     <div style={{position:"relative"}}>
       <div onClick={()=>{setOpen(o=>!o);setCustomMode(false);}}
@@ -768,7 +727,7 @@ function TaskModal({initial,onClose,onSave}:{
   initial?:Partial<Task>;onClose:()=>void;
   onSave:(t:Omit<Task,"id"|"done"|"deleted"|"checklist">)=>void;
 }){
-  const{t,dark}=useApp();
+  const{dark}=useApp();
   const C=getC(dark);
   const[title,setTitle]=useState(initial?.title??"");
   const[category,setCategory]=useState<Category>(initial?.category??"study");
@@ -1560,15 +1519,6 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
     onClose();
   }
 
-  const staticContent:Record<string,{title:string;icon:string;body:string}>={
-    subscription:{title:"The Docket Pro",icon:"ti-crown",body:"£4.99/month · 7-day free trial\n\n✓ Unlimited AI assistant requests\n✓ Sync across all your devices\n✓ Auto prayer times (no setup needed)\n✓ Advanced analytics & insights\n✓ Priority support\n✓ Early access to new features\n\nCancel anytime · No hidden fees\n\nSubscription management will be available once you create an account."},
-    widgets:{title:"Widgets & Shortcuts",icon:"ti-layout-grid",body:"Home screen widgets are coming in a future update.\n\nYou'll be able to see:\n• Today's routine at a glance\n• Upcoming tasks and deadlines\n• Prayer times countdown\n• Quick-add task button\n\nDirectly from your home screen without opening the app."},
-    siri:{title:"Siri & Shortcuts",icon:"ti-microphone",body:"Siri integration is planned for a future release.\n\nYou'll be able to say:\n• 'Add a task to The Docket'\n• 'What's on my Docket today?'\n• 'Mark my gym session as done'\n\nAll hands-free using your voice."},
-    help:{title:"Help & Feedback",icon:"ti-help-circle",body:"Getting started:\n\n• Tap ✦ to open the AI assistant\n• Say what you need in plain English\n• Tap ⚙️ to access Settings\n• Enable prayer times for your location\n\nFor support or feedback:\nsupport@thedocket.app\n\nWe read every message."},
-    privacy:{title:"Privacy & Permissions",icon:"ti-shield-lock",body:"Your privacy matters to us.\n\nData storage: Tasks and routines stay on your device until you create an account.\n\nLocation: Used only for prayer times via Aladhan API. Never stored or shared.\n\nNotifications: Only for scheduled item reminders. Never for marketing.\n\nAI assistant: Processed by Anthropic or Groq. No conversation data is retained after your session ends."},
-    terms:{title:"Terms & Conditions",icon:"ti-file-description",body:"By using The Docket, you agree:\n\n1. The app is provided as-is without warranty\n2. You are responsible for the accuracy of your data\n3. Pro subscriptions are billed monthly\n4. Refunds available within 7 days of purchase\n5. We may update terms with reasonable notice\n6. The AI assistant is a productivity tool, not professional advice\n\nFull terms: thedocket.app/terms"},
-  };
-
   // ── Logged-in profile view ────────────────────────────────────────────────
   if(modal==="login"&&user) return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
@@ -2300,7 +2250,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
 
 // ── All Tasks Sidebar ────────────────────────────────────────────────────────
 function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFilter:(f:Filter)=>void;}){
-  const{t,dark}=useApp();
+  const{dark}=useApp();
   const C=getC(dark);
   const open=tasks.filter(t=>!t.done&&!t.deleted);
   const archived=tasks.filter(t=>t.done||t.deleted);
@@ -2633,13 +2583,12 @@ function formatConversationTime(iso:string):string{
 function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrentView,onAddTask}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
   user?:{id?:string}|null;isPro?:boolean;tier?:string|null;
   currentView:View;setCurrentView:(v:View)=>void;onAddTask:()=>void;}){
-  const{t,dark}=useApp();
+  const{dark}=useApp();
   const C=getC(dark);
-  // C.border/C.surface2 are near-transparent tints meant for subtle layering
-  // over textured surfaces — against the input row's solid white/navy bar
-  // they read as invisible. These give the mic/send/model-selector buttons
-  // an actually-visible idle background+border in both themes.
-  const inputBtnBg=dark?"#2A2F52":"#EEF0FB";
+  // C.border is a near-transparent tint meant for subtle layering over
+  // textured surfaces — against the input row's solid white/navy bar it reads
+  // as invisible. This gives the mic/send/model-selector buttons an
+  // actually-visible idle border in both themes.
   const inputBtnBorder=dark?"1.5px solid rgba(255,255,255,0.18)":"1.5px solid rgba(76,95,213,0.28)";
   const[open,setOpen]=useState(false);
   const[expanded,setExpanded]=useState(false);
@@ -4084,7 +4033,7 @@ const TYPE_STYLE:Record<string,{bg:string;color:string;icon:string}>={
   bank:      {bg:"#EDE0F5",color:"#7a3a9e",icon:"ti-building-bank"},
 };
 
-function CalendarView({tasks,routines,dark,C}:{tasks:Task[];routines:Routine[];dark:boolean;C:ReturnType<typeof getC>}){
+function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:ReturnType<typeof getC>}){
   const now=new Date();
   const[viewMonth,setViewMonth]=useState(now.getMonth());
   const[viewYear,setViewYear]=useState(now.getFullYear());
@@ -4169,7 +4118,6 @@ function CalendarView({tasks,routines,dark,C}:{tasks:Task[];routines:Routine[];d
             const isToday=iso===todayISO();
             const isSelected=selectedDay===String(day);
             const hasTasks=dt.length>0;
-            const hasEvents=events.length>0;
             return(
               <div key={day} onClick={()=>setSelectedDay(isSelected?null:String(day))}
                 style={{minHeight:70,borderRight:`1px solid ${C.border}`,
@@ -4678,7 +4626,9 @@ export default function Home(){
   const[routines,setRoutines]=useState<Routine[]>([]);
   const[notifEnabled,setNotifEnabled]=useState(false);
   const[prayerEnabled,setPrayerEnabled]=useState(false);
-  const[undoStack,setUndoStack]=useState<{tasks:Task[];routines:Routine[]}[]>([]);
+  // Read only through setUndoStack's functional updater (see undoLast), so
+  // the value binding itself is deliberately not taken.
+  const[,setUndoStack]=useState<{tasks:Task[];routines:Routine[]}[]>([]);
   const[prayerStatus,setPrayerStatus]=useState<"idle"|"loading"|"done"|"error">("idle");
   const[dark,setDark]=useState(false);
   const[lang,setLang]=useState<Lang>("en");
@@ -4751,15 +4701,10 @@ export default function Home(){
   const[user,setUser]=useState<{name:string;email:string;avatar?:string;id?:string}|null>(null);
   const[showWelcome,setShowWelcome]=useState(false);
   const[welcomeMsg,setWelcomeMsg]=useState("");
-  const[obStep,setObStep]=useState(0);
-  const[obName,setObName]=useState("");
-  const[obGoals,setObGoals]=useState<string[]>([]);
-  const[obComplete,setObComplete]=useState(false);
 
   const C=getC(dark);
   const dir:("ltr"|"rtl")=RTL_LANGS.includes(lang)?"rtl":"ltr";
   const t=(k:string)=>T[lang]?.[k]??T.en[k]??k;
-  const dayLabels=DAY_LABELS_LANG[lang]??DAY_LABELS;
 
   useEffect(()=>{
     // Tabler Icons CSS now loads via a <link> in app/layout.tsx's <head>
@@ -5285,7 +5230,6 @@ export default function Home(){
     return items.sort((a,b)=>(a.time||"zz").localeCompare(b.time||"zz"));
   }
 
-  const todayItems=getDayItems(todayISO(),todayDayKey());
   const selDay=weekDates.find(d=>d.date===selectedDate)||weekDates.find(d=>d.key===selectedWeekDay);
   const viewedDay=weekDates.find(d=>d.date===viewedDate)||selDay;
   const selectedDayItems=getDayItems(selectedDate,selectedWeekDay);
@@ -5756,7 +5700,7 @@ export default function Home(){
 
         {/* ── CALENDAR ────────────────────────────────────────────────── */}
         {currentView==="calendar"&&(
-          <CalendarView tasks={tasks} routines={routines} dark={dark} C={C}/>
+          <CalendarView tasks={tasks} routines={routines} C={C}/>
         )}
 
                 {/* ── ARCHIVE ────────────────────────────────────────────────────── */}
