@@ -25,20 +25,20 @@ const BOTTOM_NAV_GAP=12;
 // each border at 1.333px and the bar at 62.67px, which left the panel
 // clearing it by only 9.33px instead of the intended 12.
 const BOTTOM_NAV_HEIGHT_FALLBACK=60;
-// Chat panel motion. Open/close are keyframed scale+fade on the panel itself;
-// expand/compress are CSS transitions on the real positioning properties,
-// which the dynamic values (a measured bottom offset, a viewport-derived
-// height) rule out doing as keyframes.
+// Chat panel motion — open and close only. Both are keyframed scale+fade on
+// the panel itself, which animates compositor-friendly properties and leaves
+// layout alone.
 //
-// One easing across all four, and deliberately not the overshooting
-// cubic-bezier(0.34,1.56,0.64,1) the morph used to carry: a curve whose y
-// passes 1 mid-flight makes the panel briefly WIDER and TALLER than the
-// viewport on expand, and undershoot on the way back, which is what read as
-// a wobble at the screen edges. This one decelerates into its target and
-// stops there, so every property lands once.
+// Expand/compress deliberately have NO animation. They were transitioning six
+// layout properties at once (bottom, left, transform, width, height,
+// max-height) plus border-radius on a second element, which forces a layout
+// recalculation every frame and lets each property land on slightly different
+// sub-pixel values as it goes — a wobble no easing curve can fix, since the
+// cause is the layout thrash rather than the timing. The state change is
+// instant now: it reads as a clean snap, and the open/close motion carries
+// the panel's sense of movement on its own.
 const PANEL_OPEN_MS=250;
 const PANEL_CLOSE_MS=200;
-const PANEL_MORPH_MS=300;
 const PANEL_EASE="cubic-bezier(0.4, 0, 0.2, 1)";
 // Avatar card — the floating panel the top-left avatar opens, replacing the
 // old slide-in drawer. Its top offset is derived from the nav's own padding
@@ -237,6 +237,29 @@ const LANG_LABELS:Record<Lang,string> = {
 const RTL_LANGS:Lang[] = ["ar","ur"];
 
 // ── Theme colours (light + dark) ──────────────────────────────────────────────
+// Body scroll lock, shared by the chat panel's own effect and the app-level
+// avatar-card/modal one so the two can't drift apart.
+//
+// Pinning the body with position:fixed is what actually blocks touch-scroll
+// bleed-through on mobile — overflow:hidden alone doesn't — but it also stops
+// the document scrolling, which takes the desktop scrollbar with it. The page
+// then reflows into the ~17px the scrollbar had reserved, a visible sideways
+// jump every time an overlay opens. Holding that width as padding keeps the
+// content still. Measured BEFORE the pin, since pinning is what changes it.
+function lockBodyScroll(scrollY:number){
+  const scrollbarWidth=window.innerWidth-document.documentElement.clientWidth;
+  document.body.style.position="fixed";
+  document.body.style.top=`-${scrollY}px`;
+  document.body.style.width="100%";
+  if(scrollbarWidth>0) document.body.style.paddingRight=`${scrollbarWidth}px`;
+}
+function unlockBodyScroll(){
+  document.body.style.position="";
+  document.body.style.top="";
+  document.body.style.width="";
+  document.body.style.paddingRight="";
+}
+
 function getC(dark:boolean){
   return dark ? {
     navy:"#ECF0FF", primary:"#7C9CF0", accent:"#8BA8FF",
@@ -3278,20 +3301,12 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
   useEffect(()=>{
     if(open){
       chatScrollLockY.current=window.scrollY;
-      document.body.style.position="fixed";
-      document.body.style.top=`-${chatScrollLockY.current}px`;
-      document.body.style.width="100%";
+      lockBodyScroll(chatScrollLockY.current);
     }else{
-      document.body.style.position="";
-      document.body.style.top="";
-      document.body.style.width="";
+      unlockBodyScroll();
       window.scrollTo(0,chatScrollLockY.current);
     }
-    return()=>{
-      document.body.style.position="";
-      document.body.style.top="";
-      document.body.style.width="";
-    };
+    return unlockBodyScroll;
   },[open]);
 
   const fetchConversations=React.useCallback(async()=>{
@@ -3381,15 +3396,12 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           component/ref/animations as ever, just mounted here, and it now
           renders whether the chat is open or closed — the panel sits above
           the bar rather than over it, so the orb stays reachable and
-          doubles as the close control. It stays mounted while the chat is
-          fullscreen and fades instead of unmounting: an instant unmount
-          popped it out of existence at the START of the 0.3s expand, while
-          the panel was still growing, and popped it back at full opacity on
-          compress before the panel had finished shrinking. Fading over the
-          same duration means it's gone by the time the panel covers its
-          spot and back only as the panel clears it. Staying mounted also
-          keeps its height measurement live rather than re-running on every
-          fullscreen toggle. */}
+          doubles as the close control. It hides while the chat is fullscreen
+          by going transparent rather than unmounting, which keeps its height
+          measurement live instead of re-running on every fullscreen toggle.
+          That hide is instant, in step with the panel's own instant
+          expand/compress — a fade would have left the bar visibly catching
+          up after the panel had already arrived. */}
       {(
         <div ref={barRef} style={{position:"fixed",bottom:BOTTOM_NAV_BOTTOM,left:"50%",
           transform:"translateX(-50%)",
@@ -3402,7 +3414,6 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           zIndex:open?59:40,
           opacity:expanded?0:1,
           pointerEvents:expanded?"none":"auto",
-          transition:`opacity ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
           display:"flex",alignItems:"center",gap:2,padding:"8px 10px",
           borderRadius:999,background:dark?"#1E2043":"#FFFFFF",
           border:`0.5px solid ${C.border}`,
@@ -3450,27 +3461,24 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
         <>
           <div onClick={requestClose}
             style={{position:"fixed",inset:0,zIndex:58,background:"transparent"}}/>
-          {/* Full-viewport layer. It exists purely so the box below can be
-              absolutely positioned against the viewport with plain numbers on
-              every side — the previous single wrapper mixed `auto` into its
-              top/right, and `auto` is not interpolatable, so expand/compress
-              could never have tweened from it. pointerEvents:none keeps it
-              from swallowing the click-outside catcher underneath. */}
+          {/* Full-viewport layer giving the box below a clean viewport-sized
+              coordinate space to position against, with pointerEvents:none so
+              it doesn't swallow the click-outside catcher underneath. (It was
+              introduced to make every side of that box a plain interpolatable
+              number for the expand transition; that transition is gone now,
+              but the structure is simpler than what preceded it, so it
+              stays.) */}
           <div style={{position:"fixed",inset:0,zIndex:60,pointerEvents:"none"}}>
-            {/* The morphing box: everything that differs between floating and
-                fullscreen lives here as a transitioned property. */}
+            {/* Floating vs fullscreen. These switch instantly — see the
+                PANEL_* constants for why this deliberately doesn't animate. */}
             <div style={{position:"absolute",pointerEvents:"auto",
               // Non-expanded: sits above the floating bar (chatPanelBottom is
               // the bar's own offset + its MEASURED height + the gap) instead
               // of overlapping it. Expanded pins to 0 and covers everything.
-              bottom:expanded?0:chatPanelBottom,
-              // keyboardInset rides on margin, NOT on `bottom`, precisely
-              // because `bottom` is transitioned now: visualViewport updates
-              // the inset repeatedly through the native keyboard animation,
-              // and a transitioned `bottom` would make the panel lag behind a
-              // moving target instead of tracking the keyboard. Margin isn't
-              // in the transition list, so it still applies instantly.
-              marginBottom:keyboardInset,
+              // keyboardInset folds straight back into `bottom` now that
+              // nothing here is transitioned — it only lived on marginBottom
+              // to keep the keyboard from being chased by a 0.3s tween.
+              bottom:(expanded?0:chatPanelBottom)+keyboardInset,
               // Centred on the same axis as the bar, by the same method the
               // bar itself uses, so the two read as one stack.
               left:expanded?0:"50%",
@@ -3483,14 +3491,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 :(visibleHeight!=null?`${Math.min(600,visibleHeight-chatPanelVMargin)}px`:`min(600px, calc(100vh - ${chatPanelVMargin}px))`),
               maxHeight:expanded
                 ?(visibleHeight!=null?`${visibleHeight}px`:"100vh")
-                :(visibleHeight!=null?`${visibleHeight-chatPanelVMargin}px`:`calc(100vh - ${chatPanelVMargin}px)`),
-              // Expand and compress, both directions off the same list.
-              transition:[`bottom ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
-                `left ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
-                `transform ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
-                `width ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
-                `height ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
-                `max-height ${PANEL_MORPH_MS}ms ${PANEL_EASE}`].join(", ")}}>
+                :(visibleHeight!=null?`${visibleHeight-chatPanelVMargin}px`:`calc(100vh - ${chatPanelVMargin}px)`)}}>
             <div ref={chatPanelRef} style={{
               width:"100%",height:"100%",
               borderRadius:expanded?0:24,
@@ -3504,9 +3505,6 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               background:panelBg,
               border:expanded?"none":`${panelBorderWidth}px solid ${C.border}`,
               boxShadow:expanded?"none":"0 32px 80px rgba(0,0,0,0.45)",
-              // The card's own half of the morph — the radius rounding off to
-              // 0 as it fills the screen, in step with the box above it.
-              transition:`border-radius ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
               // Rather than the blob itself visually traveling into the panel
               // (a true morph), the panel plays its own scale+fade on mount
               // and on the way out, anchored where the blob sits, so opening
@@ -4717,30 +4715,20 @@ export default function Home(){
     return()=>document.removeEventListener("keydown",onKey);
   },[avatarOpen]);// eslint-disable-line react-hooks/exhaustive-deps
 
-  // Lock body scroll while the avatar card or a modal is open. overflow:hidden
-  // alone doesn't reliably block touch-scroll bleed-through to the page behind
-  // an open overlay on mobile browsers (notably iOS Safari) — pinning the body
-  // with position:fixed at its current scroll offset, then restoring both
-  // the position and the scroll offset on unlock, does.
+  // Lock body scroll while the avatar card or a modal is open — see
+  // lockBodyScroll for why pinning is necessary and why it reserves the
+  // scrollbar's width while it holds.
   const scrollLockY=React.useRef(0);
   useEffect(()=>{
     const locked=avatarOpen||!!activeModal||onboarding;
     if(locked){
       scrollLockY.current=window.scrollY;
-      document.body.style.position="fixed";
-      document.body.style.top=`-${scrollLockY.current}px`;
-      document.body.style.width="100%";
+      lockBodyScroll(scrollLockY.current);
     }else{
-      document.body.style.position="";
-      document.body.style.top="";
-      document.body.style.width="";
+      unlockBodyScroll();
       window.scrollTo(0,scrollLockY.current);
     }
-    return()=>{
-      document.body.style.position="";
-      document.body.style.top="";
-      document.body.style.width="";
-    };
+    return unlockBodyScroll;
   },[avatarOpen,activeModal,onboarding]);
   const[user,setUser]=useState<{name:string;email:string;avatar?:string;id?:string}|null>(null);
   const[showWelcome,setShowWelcome]=useState(false);
