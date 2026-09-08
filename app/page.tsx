@@ -29,16 +29,17 @@ const BOTTOM_NAV_HEIGHT_FALLBACK=60;
 // the panel itself, which animates compositor-friendly properties and leaves
 // layout alone.
 //
-// Expand/compress animate by FLIP: the layout switches to its new state
-// instantly, then a transform that makes the panel *look* like it's still in
-// the old one is applied and released, so the whole morph rides on transform
-// alone. Transitioning the layout properties themselves is what produced the
-// earlier wobble — six of them recalculating layout every frame, each landing
-// on slightly different sub-pixel values. transform and border-radius are
-// both cheap enough to animate; nothing else here is transitioned.
+// Expand/compress: position, size and radius all snap instantly, and the only
+// motion is a brief opacity dip that softens the cut. Two earlier approaches
+// are deliberately not here. Transitioning the layout properties recalculated
+// layout every frame and wobbled. FLIP animated a transform instead, which was
+// smooth but scaled the panel's contents with it, warping text for the whole
+// duration — unavoidable without inverse-scaling every child, which puts the
+// per-frame cost straight back. A crossfade has neither problem: nothing
+// interpolates geometry, so nothing can distort or thrash.
 const PANEL_OPEN_MS=250;
 const PANEL_CLOSE_MS=200;
-const PANEL_MORPH_MS=300;
+const PANEL_MORPH_MS=200;
 const PANEL_EASE="cubic-bezier(0.4, 0, 0.2, 1)";
 // Avatar card — the floating panel the top-left avatar opens, replacing the
 // old slide-in drawer. Its top offset is derived from the nav's own padding
@@ -2688,44 +2689,20 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
     },PANEL_CLOSE_MS);
   }
   useEffect(()=>()=>{ if(closeTimer.current!=null)window.clearTimeout(closeTimer.current); },[]);
-  // ── Expand/compress, animated by FLIP ────────────────────────────────────
-  // First: the caller records the panel's box BEFORE React changes anything —
-  // it has to happen in the event handler, since by the time a layout effect
-  // runs the DOM has already moved. Last/Invert/Play then happen below.
-  const positionerRef=React.useRef<HTMLDivElement|null>(null);
-  const flipFromRef=React.useRef<DOMRect|null>(null);
-  function toggleExpanded(){
-    const el=positionerRef.current;
-    flipFromRef.current=el?el.getBoundingClientRect():null;
-    setExpanded(e=>!e);
-  }
+  // Expand/compress crossfade. The layout has already snapped by the time this
+  // runs; the fade is only there so the change doesn't read as a hard cut. It
+  // animates opacity alone — no geometry is interpolated, so the contents
+  // can't warp the way a scaling transform made them.
+  const prevExpandedRef=React.useRef(expanded);
   React.useLayoutEffect(()=>{
-    const el=positionerRef.current;
-    const first=flipFromRef.current;
-    flipFromRef.current=null;
-    // No recorded box means this wasn't a user-driven toggle (mount, or the
-    // expanded reset that rides along with the close) — nothing to animate.
-    if(!el||!first)return;
-    const last=el.getBoundingClientRect();
-    if(!last.width||!last.height)return;
-    const dx=first.left-last.left;
-    const dy=first.top-last.top;
-    const sx=first.width/last.width;
-    const sy=first.height/last.height;
-    // Nothing meaningful moved — don't burn a transition on it.
-    if(Math.abs(dx)<1&&Math.abs(dy)<1&&Math.abs(sx-1)<0.01&&Math.abs(sy-1)<0.01)return;
-    // INVERT — land on the old box with no transition, before the browser
-    // paints, so the layout change is never visible on its own.
-    el.style.transition="none";
-    el.style.transform=`translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
-    // PLAY — next frame, put the transition back and drop the transform so it
-    // animates to its real position. Transform is left as "" rather than
-    // "none" so nothing lingers to interfere with normal rendering.
-    const id=requestAnimationFrame(()=>{
-      el.style.transition=`transform ${PANEL_MORPH_MS}ms ${PANEL_EASE}`;
-      el.style.transform="";
-    });
-    return()=>cancelAnimationFrame(id);
+    const wasExpanded=prevExpandedRef.current;
+    prevExpandedRef.current=expanded;
+    // Nothing actually toggled — this is the mount pass, which belongs to the
+    // open animation.
+    if(wasExpanded===expanded)return;
+    const el=chatPanelRef.current;
+    if(!el)return;
+    el.animate([{opacity:0.7},{opacity:1}],{duration:PANEL_MORPH_MS,easing:"ease-out"});
   },[expanded]);
 
   // The bar's orb is a toggle: it stays in the bar while the chat is open
@@ -3439,8 +3416,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           doubles as the close control. It hides while the chat is fullscreen
           by going transparent rather than unmounting, which keeps its height
           measurement live instead of re-running on every fullscreen toggle.
-          The fade runs over the same duration as the panel's FLIP so the two
-          resolve together. */}
+          That hide is instant, matching the panel's own instant switch. */}
       {(
         <div ref={barRef} style={{position:"fixed",bottom:BOTTOM_NAV_BOTTOM,left:"50%",
           transform:"translateX(-50%)",
@@ -3453,7 +3429,6 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           zIndex:open?59:40,
           opacity:expanded?0:1,
           pointerEvents:expanded?"none":"auto",
-          transition:`opacity ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
           display:"flex",alignItems:"center",gap:2,padding:"8px 10px",
           borderRadius:999,background:dark?"#1E2043":"#FFFFFF",
           border:`0.5px solid ${C.border}`,
@@ -3509,27 +3484,18 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               but the structure is simpler than what preceded it, so it
               stays.) */}
           <div style={{position:"fixed",inset:0,zIndex:60,pointerEvents:"none"}}>
-            {/* Floating vs fullscreen. Every layout property here switches
-                INSTANTLY; the visible motion comes from the FLIP transform
-                above, which is applied and released imperatively on this
-                node. Nothing in this style object may set `transform` or
-                `transition` — those two belong to the FLIP effect, and a
-                React re-render mid-animation would otherwise clobber them. */}
-            <div ref={positionerRef} style={{position:"absolute",pointerEvents:"auto",
+            {/* Floating vs fullscreen. Every property here switches instantly;
+                the only motion is the crossfade above. */}
+            <div style={{position:"absolute",pointerEvents:"auto",
               // Non-expanded: sits above the floating bar (chatPanelBottom is
               // the bar's own offset + its MEASURED height + the gap) instead
               // of overlapping it. Expanded pins to 0 and covers everything.
               bottom:(expanded?0:chatPanelBottom)+keyboardInset,
-              // Centred by auto margins against the full-width layer rather
-              // than by translateX(-50%): the transform property has to stay
-              // free for FLIP to own. Same result, and as a bonus the panel no
-              // longer carries a permanent transform, so `position:fixed`
-              // descendants inside it (the model menu's backdrop) resolve
-              // against the viewport again instead of against the panel.
+              // Centred by auto margins rather than translateX(-50%), which
+              // keeps the panel free of a permanent transform — so
+              // `position:fixed` descendants inside it (the model menu's
+              // backdrop) resolve against the viewport rather than the panel.
               left:0,right:0,marginLeft:"auto",marginRight:"auto",
-              // FLIP's translate+scale maps this box onto its old one only if
-              // it scales from its top-left corner.
-              transformOrigin:"top left",
               width:expanded?"100%":"min(400px, calc(100vw - 40px))",
               // Same shape as before (600px cap, otherwise fit the visible
               // viewport) — the room it gives back is chatPanelVMargin.
@@ -3542,10 +3508,6 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
             <div ref={chatPanelRef} style={{
               width:"100%",height:"100%",
               borderRadius:expanded?0:24,
-              // The one property the FLIP transform can't carry: a scaled
-              // corner radius would distort, so it animates on its own. Cheap
-              // to animate — it repaints, it doesn't reflow.
-              transition:`border-radius ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
               display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",
               // Reverted to a plain, clean floating card — three rim-lit
               // passes (outward glow, then inward glow, then a gold retint)
@@ -3799,7 +3761,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                     <i className={`ti ${voiceOn?"ti-volume":"ti-volume-off"}`}
                       style={{fontSize:15}} aria-hidden="true"/>
                   </button>
-                  <button onClick={toggleExpanded} className="pill-btn"
+                  <button onClick={()=>setExpanded(e=>!e)} className="pill-btn"
                     style={{width:36,height:36,background:"transparent",border:"none",
                       cursor:"pointer",color:C.muted}}>
                     <i className={`ti ${expanded?"ti-minimize":"ti-maximize"}`}
