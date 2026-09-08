@@ -28,12 +28,18 @@ const BOTTOM_NAV_HEIGHT_FALLBACK=60;
 // Chat panel motion. Open/close are keyframed scale+fade on the panel itself;
 // expand/compress are CSS transitions on the real positioning properties,
 // which the dynamic values (a measured bottom offset, a viewport-derived
-// height) rule out doing as keyframes. PANEL_MORPH_EASE is the same
-// overshooting curve the panel already used, kept deliberately.
+// height) rule out doing as keyframes.
+//
+// One easing across all four, and deliberately not the overshooting
+// cubic-bezier(0.34,1.56,0.64,1) the morph used to carry: a curve whose y
+// passes 1 mid-flight makes the panel briefly WIDER and TALLER than the
+// viewport on expand, and undershoot on the way back, which is what read as
+// a wobble at the screen edges. This one decelerates into its target and
+// stops there, so every property lands once.
 const PANEL_OPEN_MS=250;
 const PANEL_CLOSE_MS=200;
 const PANEL_MORPH_MS=300;
-const PANEL_MORPH_EASE="cubic-bezier(0.34,1.56,0.64,1)";
+const PANEL_EASE="cubic-bezier(0.4, 0, 0.2, 1)";
 // Avatar card — the floating panel the top-left avatar opens, replacing the
 // old slide-in drawer. Its top offset is derived from the nav's own padding
 // and button size so it always hangs just under the avatar it belongs to.
@@ -3396,7 +3402,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
           zIndex:open?59:40,
           opacity:expanded?0:1,
           pointerEvents:expanded?"none":"auto",
-          transition:`opacity ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`,
+          transition:`opacity ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
           display:"flex",alignItems:"center",gap:2,padding:"8px 10px",
           borderRadius:999,background:dark?"#1E2043":"#FFFFFF",
           border:`0.5px solid ${C.border}`,
@@ -3479,12 +3485,12 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
                 ?(visibleHeight!=null?`${visibleHeight}px`:"100vh")
                 :(visibleHeight!=null?`${visibleHeight-chatPanelVMargin}px`:`calc(100vh - ${chatPanelVMargin}px)`),
               // Expand and compress, both directions off the same list.
-              transition:[`bottom ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`,
-                `left ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`,
-                `transform ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`,
-                `width ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`,
-                `height ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`,
-                `max-height ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`].join(", ")}}>
+              transition:[`bottom ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
+                `left ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
+                `transform ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
+                `width ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
+                `height ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
+                `max-height ${PANEL_MORPH_MS}ms ${PANEL_EASE}`].join(", ")}}>
             <div ref={chatPanelRef} style={{
               width:"100%",height:"100%",
               borderRadius:expanded?0:24,
@@ -3500,7 +3506,7 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               boxShadow:expanded?"none":"0 32px 80px rgba(0,0,0,0.45)",
               // The card's own half of the morph — the radius rounding off to
               // 0 as it fills the screen, in step with the box above it.
-              transition:`border-radius ${PANEL_MORPH_MS}ms ${PANEL_MORPH_EASE}`,
+              transition:`border-radius ${PANEL_MORPH_MS}ms ${PANEL_EASE}`,
               // Rather than the blob itself visually traveling into the panel
               // (a true morph), the panel plays its own scale+fade on mount
               // and on the way out, anchored where the blob sits, so opening
@@ -3512,8 +3518,8 @@ REMEMBER: You can do ANYTHING the user asks. There is no limit to what you can h
               // for the exit; `forwards` holds the last frame so the panel
               // doesn't flash back to full size in the gap before unmount.
               animation:closing
-                ?`chatPanelOut ${PANEL_CLOSE_MS}ms ease-out forwards`
-                :`chatPanelIn ${PANEL_OPEN_MS}ms ease-out`}}>
+                ?`chatPanelOut ${PANEL_CLOSE_MS}ms ${PANEL_EASE} forwards`
+                :`chatPanelIn ${PANEL_OPEN_MS}ms ${PANEL_EASE}`}}>
               <style>{`@keyframes chatPanelIn{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}@keyframes chatPanelOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(0.92)}}`}</style>
 
               {/* Chat history — dim overlay + one card, rebuilt from
