@@ -1,13 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
-@import "tailwindcss";
-
-@theme {
-  --font-family-display: 'Space Grotesk', sans-serif;
-  --font-family-mono:    'IBM Plex Mono', monospace;
-  --font-family-sans:    'Inter', sans-serif;
-}
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Tailwind was removed (no utility class was ever used), and with it went
+   preflight. Only one of its rules was load-bearing here: `button { font:
+   inherit }`. Every button in the app sets its own background inline but none
+   sets a font-family, so all of them were inheriting Inter through preflight
+   — without this they fall back to the UA's system-ui button font. The rest
+   of preflight was verifiably unused: headings, lists and images all set
+   their own sizing inline, and the `*` reset above already covers box-sizing,
+   margin and padding. */
+button, input, select, textarea { font: inherit; color: inherit; }
 
 html, body {
   min-height: 100%;
