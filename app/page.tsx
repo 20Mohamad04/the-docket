@@ -5361,15 +5361,26 @@ export default function Home(){
       {/* Nav */}
       <nav style={{position:"relative",zIndex:10,display:"flex",justifyContent:"space-between",
         alignItems:"center",padding:`${NAV_PAD}px ${NAV_PAD}px 14px`}}>
-        {/* The avatar took the hamburger's slot (and its styling weight) when
-            the drawer was deleted — it opens the avatar card below. */}
+        {/* The avatar took the hamburger's slot when the drawer was deleted —
+            it opens the avatar card below. It kept the hamburger's solid
+            gradient and glow, which made it the one heavy chrome element left
+            in a UI whose other icons are all see-through; the fallback state
+            now matches the bar's inactive icons instead (transparent, C.muted,
+            21px). A real avatar photo still gets the gradient and glow: the
+            image covers the button, so the gradient only shows if it has
+            transparency, and the glow frames the photo rather than sitting
+            around nothing. */}
         <button onClick={toggleAvatarCard} className="sq-btn nav-btn" title="Account & settings"
-          style={{width:AVATAR_BTN,height:AVATAR_BTN,color:"white",overflow:"hidden",
-            background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
-            boxShadow:"0 8px 28px rgba(76,95,213,0.6), 0 3px 8px rgba(0,0,0,0.25)"}}>
+          style={{width:AVATAR_BTN,height:AVATAR_BTN,overflow:"hidden",
+            background:user?.avatar
+              ?"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)"
+              :"transparent",
+            boxShadow:user?.avatar
+              ?"0 8px 28px rgba(76,95,213,0.6), 0 3px 8px rgba(0,0,0,0.25)"
+              :"none"}}>
           {user?.avatar
             ?<img src={user.avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-            :<i className="ti ti-user" style={{fontSize:22,color:"white"}} aria-hidden="true"/>}
+            :<i className="ti ti-user" style={{fontSize:21,color:C.muted}} aria-hidden="true"/>}
         </button>
         <div style={{textAlign:"center"}}>
           <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
