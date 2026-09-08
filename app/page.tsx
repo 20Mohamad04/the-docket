@@ -29,17 +29,22 @@ const BOTTOM_NAV_HEIGHT_FALLBACK=60;
 // the panel itself, which animates compositor-friendly properties and leaves
 // layout alone.
 //
-// Expand/compress: position, size and radius all snap instantly, and the only
-// motion is a brief opacity dip that softens the cut. Two earlier approaches
-// are deliberately not here. Transitioning the layout properties recalculated
-// layout every frame and wobbled. FLIP animated a transform instead, which was
-// smooth but scaled the panel's contents with it, warping text for the whole
-// duration — unavoidable without inverse-scaling every child, which puts the
-// per-frame cost straight back. A crossfade has neither problem: nothing
-// interpolates geometry, so nothing can distort or thrash.
+// Expand/compress: position, size and radius all snap instantly, then the
+// panel fades in from fully transparent. The cut itself is what sells the
+// change; the fade is the soft reveal after it. It starts at 0 rather than a
+// partial dip because a 0.7 floor over 200ms was measurably firing and still
+// read as nothing at all — 30% of transparency at that speed is below the
+// threshold of noticing, particularly against a light background.
+//
+// Two earlier approaches are deliberately not here. Transitioning the layout
+// properties recalculated layout every frame and wobbled. FLIP animated a
+// transform instead, which was smooth but scaled the panel's contents with
+// it, warping text for the whole duration — unavoidable without
+// inverse-scaling every child, which puts the per-frame cost straight back.
+// Fading interpolates no geometry, so it can neither distort nor thrash.
 const PANEL_OPEN_MS=250;
 const PANEL_CLOSE_MS=200;
-const PANEL_MORPH_MS=200;
+const PANEL_MORPH_MS=300;
 const PANEL_EASE="cubic-bezier(0.4, 0, 0.2, 1)";
 // Avatar card — the floating panel the top-left avatar opens, replacing the
 // old slide-in drawer. Its top offset is derived from the nav's own padding
@@ -2689,10 +2694,10 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
     },PANEL_CLOSE_MS);
   }
   useEffect(()=>()=>{ if(closeTimer.current!=null)window.clearTimeout(closeTimer.current); },[]);
-  // Expand/compress crossfade. The layout has already snapped by the time this
-  // runs; the fade is only there so the change doesn't read as a hard cut. It
-  // animates opacity alone — no geometry is interpolated, so the contents
-  // can't warp the way a scaling transform made them.
+  // Expand/compress fade-in. The layout has already snapped by the time this
+  // runs; the fade is the reveal that follows it. It animates opacity alone —
+  // no geometry is interpolated, so the contents can't warp the way a scaling
+  // transform made them.
   const prevExpandedRef=React.useRef(expanded);
   React.useLayoutEffect(()=>{
     const wasExpanded=prevExpandedRef.current;
@@ -2702,7 +2707,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
     if(wasExpanded===expanded)return;
     const el=chatPanelRef.current;
     if(!el)return;
-    el.animate([{opacity:0.7},{opacity:1}],{duration:PANEL_MORPH_MS,easing:"ease-out"});
+    el.animate([{opacity:0},{opacity:1}],{duration:PANEL_MORPH_MS,easing:"ease-out"});
   },[expanded]);
 
   // The bar's orb is a toggle: it stays in the bar while the chat is open
