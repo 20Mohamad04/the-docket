@@ -5004,19 +5004,45 @@ export default function Home(){
   // load/view-switch instead of today — re-centers on today's chip
   // whenever the Daily view becomes active.
   //
-  // No longer the thing that first positions the strip: the scroll-measuring
-  // layout effect below now does that itself, before its first reading, so
-  // that reading isn't taken at scrollLeft 0. This is kept as a post-paint
-  // backstop for the case where layout isn't settled enough during the layout
-  // effect for scrollIntoView to land — it targets the same position, so when
-  // the earlier scroll worked this is a no-op.
+  // Not the thing that positions the strip on first load — it can't be, since
+  // currentView is already "daily" while the auth gate is still rendering and
+  // the strip doesn't exist yet (see the measuring effect below, which owns
+  // the initial scroll). What this still covers is a genuine view CHANGE:
+  // leaving Daily for Calendar and coming back, where the strip is mounted
+  // and currentView really does change. It targets the same position as the
+  // initial scroll, so on first load it is a harmless no-op.
   useEffect(()=>{
     if(currentView==="daily"){
       document.getElementById("day-picker-today")?.scrollIntoView({inline:"start",block:"nearest"});
     }
   },[currentView]);
 
+  // Callback ref rather than a plain one, so the initial scroll-to-today can
+  // hang off the moment the strip actually mounts.
+  //
+  // It can't hang off an effect keyed on `currentView`: that is already
+  // "daily" on the very first render, so both a useLayoutEffect and a
+  // useEffect fire while the top-level auth gate is still showing its spinner
+  // or sign-in screen, when the strip does not exist. getElementById returns
+  // null, the optional call no-ops, and since currentView never changes
+  // nothing re-runs once the session resolves and the strip finally appears —
+  // which is exactly why the deployed site sat at scrollLeft 0. Local testing
+  // missed it because the auth bypass used for that renders the app on the
+  // first render, so the strip was already there. The bypass hid the bug.
+  //
+  // It also can't hang off the rAF measuring loop below: rAF doesn't run in a
+  // backgrounded tab, so a page loaded in one would never scroll at all.
+  // React invokes this the instant the node is attached — no effect ordering,
+  // no frame scheduling. Children are already in the DOM by then (refs attach
+  // bottom-up), so today's chip is there to scroll to.
   const dayScrollElRef=React.useRef<HTMLDivElement|null>(null);
+  const didInitialDayScrollRef=React.useRef(false);
+  const attachDayScrollEl=React.useCallback((el:HTMLDivElement|null)=>{
+    dayScrollElRef.current=el;
+    if(!el||didInitialDayScrollRef.current)return;
+    didInitialDayScrollRef.current=true;
+    el.querySelector("#day-picker-today")?.scrollIntoView({inline:"start",block:"nearest"});
+  },[]);
   const dayTrackRef=React.useRef<HTMLDivElement|null>(null);
   const dayDragRef=React.useRef<{startX:number;startLeft:number;max:number;range:number}|null>(null);
   const[dayScrollMetrics,setDayScrollMetrics]=useState({left:0,max:1,client:1});
@@ -5040,16 +5066,6 @@ export default function Home(){
   // property reads on frames where nothing moved, not a re-render.
   React.useLayoutEffect(()=>{
     if(currentView!=="daily")return;
-    // Put today in view BEFORE the first measure below, or that measure reads
-    // scrollLeft 0 and latches the wrong day. weekDates starts 183 days back,
-    // so index 0 is roughly six months ago and the centre-of-viewport formula
-    // at scrollLeft 0 lands on index 8 — a date in March, which is exactly
-    // what the label was showing. The post-paint effect above already scrolled
-    // today into view, but it runs after this one, so the bad value was
-    // already latched by then and only a later animation frame could correct
-    // it — which never happens anywhere rAF is throttled. Doing it here makes
-    // the first reading the correct one instead of relying on a fix-up frame.
-    document.getElementById("day-picker-today")?.scrollIntoView({inline:"start",block:"nearest"});
     let raf=0;
     let lastLeft=-1,lastMax=-1,lastClient=-1,lastIdx=-1;
     const measure=()=>{
@@ -5459,7 +5475,7 @@ export default function Home(){
                   display:"flex",alignItems:"center",justifyContent:"center"}}>
                 <i className="ti ti-chevron-left" style={{fontSize:15}} aria-hidden="true"/>
               </button>
-              <div id="day-picker-scroll" ref={dayScrollElRef}
+              <div id="day-picker-scroll" ref={attachDayScrollEl}
                 style={{display:"flex",gap:6,overflowX:"auto",flex:1,
                   scrollbarWidth:"none",msOverflowStyle:"none",
                   padding:"3px 2px 3px",paddingBottom:4}}>
