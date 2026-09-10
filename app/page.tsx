@@ -5002,9 +5002,14 @@ export default function Home(){
   // weekDates now starts 2 weeks before today (see above), so without this
   // the day-picker strip would default to showing that earlier range on
   // load/view-switch instead of today — re-centers on today's chip
-  // whenever the Daily view becomes active. Runs after paint (useEffect,
-  // not useLayoutEffect), so the chip already exists in the DOM from this
-  // same render by the time it fires.
+  // whenever the Daily view becomes active.
+  //
+  // No longer the thing that first positions the strip: the scroll-measuring
+  // layout effect below now does that itself, before its first reading, so
+  // that reading isn't taken at scrollLeft 0. This is kept as a post-paint
+  // backstop for the case where layout isn't settled enough during the layout
+  // effect for scrollIntoView to land — it targets the same position, so when
+  // the earlier scroll worked this is a no-op.
   useEffect(()=>{
     if(currentView==="daily"){
       document.getElementById("day-picker-today")?.scrollIntoView({inline:"start",block:"nearest"});
@@ -5015,7 +5020,10 @@ export default function Home(){
   const dayTrackRef=React.useRef<HTMLDivElement|null>(null);
   const dayDragRef=React.useRef<{startX:number;startLeft:number;max:number;range:number}|null>(null);
   const[dayScrollMetrics,setDayScrollMetrics]=useState({left:0,max:1,client:1});
-  const[viewedDate,setViewedDate]=useState<string|null>(null);
+  // Seeded with today rather than null so the label under the strip can never
+  // render a wrong date, not even for the frame before the effect below takes
+  // its first scroll reading.
+  const[viewedDate,setViewedDate]=useState<string|null>(todayISO());
 
   // Drives both the slider thumb and the "where am I" date label from the
   // day-picker's actual scroll position. Deliberately NOT a native "scroll"
@@ -5032,6 +5040,16 @@ export default function Home(){
   // property reads on frames where nothing moved, not a re-render.
   React.useLayoutEffect(()=>{
     if(currentView!=="daily")return;
+    // Put today in view BEFORE the first measure below, or that measure reads
+    // scrollLeft 0 and latches the wrong day. weekDates starts 183 days back,
+    // so index 0 is roughly six months ago and the centre-of-viewport formula
+    // at scrollLeft 0 lands on index 8 — a date in March, which is exactly
+    // what the label was showing. The post-paint effect above already scrolled
+    // today into view, but it runs after this one, so the bad value was
+    // already latched by then and only a later animation frame could correct
+    // it — which never happens anywhere rAF is throttled. Doing it here makes
+    // the first reading the correct one instead of relying on a fix-up frame.
+    document.getElementById("day-picker-today")?.scrollIntoView({inline:"start",block:"nearest"});
     let raf=0;
     let lastLeft=-1,lastMax=-1,lastClient=-1,lastIdx=-1;
     const measure=()=>{
@@ -5045,8 +5063,14 @@ export default function Home(){
         setDayScrollMetrics({left,max,client});
       }
       const step=Math.max(1,el.scrollWidth/Math.max(1,weekDates.length));
+      // Measured at the strip's LEFT edge, not its centre. The scroll above
+      // uses inline:"start", which parks today at the left edge, so a
+      // centre-of-viewport reading named a day about eight chips further
+      // along — the label said "18 Sept" while today, and the leftmost chip,
+      // were the 10th. Reading the same edge the scroll aligns to makes the
+      // label name the day the strip is actually parked on.
       const idx=Math.min(weekDates.length-1,Math.max(0,
-        Math.round((left+client/2)/step-0.5)));
+        Math.round(left/step)));
       if(idx!==lastIdx){
         lastIdx=idx;
         setViewedDate(weekDates[idx]?.date??null);
