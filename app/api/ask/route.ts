@@ -1,5 +1,26 @@
 import { NextResponse } from "next/server";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { buildSystemPrompt, type ChatContext } from "./_prompt";
+
+// The request body's `context` arrives untrusted, so it's checked before the
+// prompt interpolates it. Deliberately shallow: this data is the user's own,
+// so bad values only degrade their own assistant's answer — the check exists
+// to stop a malformed body throwing inside the template, not to police
+// content. What is NOT accepted at any strength is a client-supplied prompt;
+// `system` is ignored outright (see the POST handler).
+function isChatContext(v: unknown): v is ChatContext {
+  if (!v || typeof v !== "object") return false;
+  const c = v as Record<string, unknown>;
+  return (
+    typeof c.today === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(c.today) &&
+    typeof c.weekday === "string" &&
+    !!c.schedule &&
+    typeof c.schedule === "object" &&
+    Array.isArray(c.tasks) &&
+    Array.isArray(c.routines)
+  );
+}
 
 // Same pattern as app/api/conversations/_lib.ts and app/api/memories/_lib.ts
 // — duplicated rather than shared, matching this codebase's convention of
@@ -346,8 +367,8 @@ async function isAutoMemoryEnabled(userId: string): Promise<boolean> {
   }
 }
 
-// Appended to the client-sent system prompt — memories live in a table the
-// server can read directly, unlike the schedule/tasks/routines context
+// Appended to the system prompt built in ./_prompt — memories live in a table
+// the server can read directly, unlike the schedule/tasks/routines context
 // (client-only in-memory state), so there's no reason to round-trip this
 // through the client the way that context has to be. Omitted entirely when
 // there's nothing to show, rather than telling the model "you know nothing
@@ -636,7 +657,17 @@ export async function POST(req: Request) {
     // below (persistIfPossible etc.), which close over this binding.
     const userId: string = authedUserId;
 
-    const { system, messages, useOpus, conversationId } = await req.json();
+    // `system` is deliberately NOT destructured. The prompt is server-owned
+    // now (see ./_prompt); anything the client sends under that name is
+    // ignored rather than merged or used as a fallback.
+    const { context, messages, useOpus, conversationId } = await req.json();
+
+    if (!isChatContext(context)) {
+      return NextResponse.json(
+        { error: "Missing or malformed `context`" },
+        { status: 400 }
+      );
+    }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     const groqKey = process.env.GROQ_API_KEY;
@@ -658,7 +689,7 @@ export async function POST(req: Request) {
     // paths need the enriched system prompt, and persistMemories below
     // reuses this exact list rather than re-querying.
     const existingMemories = await fetchUserMemories(userId);
-    const enrichedSystem = `${system ?? ""}${buildMemorySystemAddition(existingMemories)}`;
+    const enrichedSystem = `${buildSystemPrompt(context)}${buildMemorySystemAddition(existingMemories)}`;
 
     async function persistMemoriesIfPossible(actions: any[]): Promise<void> {
       if (!Array.isArray(actions) || !actions.some((a) => a?.type === "remember")) return;
