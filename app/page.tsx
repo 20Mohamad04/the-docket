@@ -12,7 +12,7 @@ type Priority = "urgent"|"high"|"medium";
 type TaskType = "milestone"|"ongoing";
 type View = "daily"|"all"|"calendar"|"archive";
 type Filter = "all"|"ongoing"|"milestone"|"done"|Category;
-type Lang = "en"|"ar"|"fr"|"tr"|"ur";
+type Lang = "en"|"ar"|"fr"|"tr"|"ur"|"bn"|"es"|"hi"|"pt"|"ru"|"zh";
 
 // Bottom nav bar's fixed footprint. The chat panel's own bottom offset and
 // available height are derived from these plus the bar's measured height, so
@@ -254,12 +254,253 @@ const T:Record<Lang,Record<string,string>> = {
     prayerPlaceholder:"⚠ اوقات نماز تخمینی ہیں — ترتیبات میں درست اوقات فعال کریں ⚙️",
     weekView:"ہفتہ وار نظارہ",
   },
+  bn:{
+    appName:"The Docket", daily:"দৈনিক রুটিন", allTasks:"সব কাজ",
+    week:"সপ্তাহ", archive:"সম্পন্ন ও মুছে ফেলা", settings:"সেটিংস",
+    newTask:"নতুন কাজ", save:"সংরক্ষণ", cancel:"বাতিল", addStep:"যোগ করুন",
+    prayerSetting:"সঠিক নামাজের সময়",
+    prayerDesc:"আপনার অবস্থান থেকে প্রকৃত নামাজের সময় আনে",
+    prayerLoading:"📍 আপনার অবস্থান নেওয়া হচ্ছে…",
+    prayerDone:"✓ আজকের নামাজের সময় হালনাগাদ হয়েছে",
+    prayerDenied:"⚠ অবস্থানের অনুমতি বন্ধ আছে। ব্রাউজারের সাইট সেটিংসে এটি চালু করুন।",
+    prayerTimeout:"⚠ সময়মতো আপনার অবস্থান পাওয়া যায়নি। আবার চেষ্টা করুন বা সংযোগ দেখুন।",
+    prayerUnavailable:"⚠ আপনার ডিভাইস এই মুহূর্তে অবস্থান নির্ণয় করতে পারেনি।",
+    prayerService:"⚠ নামাজের সময় সেবায় পৌঁছানো যায়নি। কিছুক্ষণ পর চেষ্টা করুন।",
+    notifSetting:"বিজ্ঞপ্তি",
+    notifDesc:"নির্ধারিত সময় হলে ব্রাউজার সতর্কতা",
+    darkMode:"ডার্ক মোড",
+    darkDesc:"গাঢ় রঙের থিমে যান",
+    language:"ভাষা",
+    languageDesc:"অ্যাপের ভাষা পরিবর্তন করুন",
+    nothingToday:"আজ কিছু নির্ধারিত নেই।",
+    nothingHere:"এখানে কিছু নেই।",
+    allOpen:"সব খোলা", ongoing:"চলমান", completable:"সম্পন্নযোগ্য",
+    category:"বিভাগ", show:"দেখান", overdue:"বিলম্বিত",
+    urgent:"জরুরি", high:"উচ্চ", medium:"মাঝারি",
+    chatPlaceholder:"যেমন: রিভিশনের জন্য কাজ যোগ করুন",
+    chatWelcome:"বলুন কী যোগ বা পরিবর্তন করতে হবে — সঠিক করতে প্রশ্ন করব।",
+    send:"পাঠান", working:"কাজ চলছে…",
+    steps:"ধাপ", taskTitle:"কাজ", notes:"নোট",
+    dueDate:"নির্ধারিত তারিখ", nature:"ধরন", recurring:"পুনরাবৃত্ত",
+    oneOff:"একবার", daily2:"দৈনিক", weekly:"সাপ্তাহিক",
+    milestone:"সম্পন্নযোগ্য", ongoing2:"চলমান",
+    finishedDeleted:"সম্পন্ন ও মুছে ফেলা", restore:"↺",
+    landLawExam:"ভূমি আইন পরীক্ষা", cheshireOak:"Cheshire Oak সাক্ষাৎকার",
+    ongoingProjects:"চলমান প্রকল্প", completableOpen:"সম্পন্নযোগ্য, এখনও খোলা",
+    prayerPlaceholder:"⚠ নামাজের সময় আনুমানিক — সেটিংসে সঠিক সময় চালু করুন ⚙️",
+    weekView:"সাপ্তাহিক দৃশ্য",
+  },
+  es:{
+    appName:"The Docket", daily:"Rutina Diaria", allTasks:"Todas las Tareas",
+    week:"Semana", archive:"Terminadas y Eliminadas", settings:"Ajustes",
+    newTask:"Nueva Tarea", save:"Guardar", cancel:"Cancelar", addStep:"Añadir",
+    prayerSetting:"Horarios de oración precisos",
+    prayerDesc:"Usa tu ubicación para obtener los horarios reales",
+    prayerLoading:"📍 Obteniendo tu ubicación…",
+    prayerDone:"✓ Horarios de oración actualizados",
+    prayerDenied:"⚠ El acceso a la ubicación está bloqueado. Actívalo en los ajustes del sitio en tu navegador.",
+    prayerTimeout:"⚠ No se pudo obtener tu ubicación a tiempo. Inténtalo de nuevo o revisa tu conexión.",
+    prayerUnavailable:"⚠ Tu dispositivo no pudo determinar tu ubicación en este momento.",
+    prayerService:"⚠ No se pudo conectar con el servicio de horarios de oración. Inténtalo en unos minutos.",
+    notifSetting:"Notificaciones",
+    notifDesc:"Avisos del navegador cuando vence un elemento programado",
+    darkMode:"Modo oscuro",
+    darkDesc:"Cambiar a un tema oscuro",
+    language:"Idioma",
+    languageDesc:"Cambiar el idioma de la aplicación",
+    nothingToday:"Nada programado para hoy.",
+    nothingHere:"Nada por aquí.",
+    allOpen:"Todo Abierto", ongoing:"En curso", completable:"Completable",
+    category:"Categoría", show:"Mostrar", overdue:"ATRASADO",
+    urgent:"urgente", high:"alta", medium:"media",
+    chatPlaceholder:"p. ej. añade una tarea para repasar",
+    chatWelcome:"Dime qué añadir o cambiar — te haré preguntas para acertar.",
+    send:"Enviar", working:"Trabajando en ello…",
+    steps:"Pasos", taskTitle:"Tarea", notes:"Notas",
+    dueDate:"Fecha límite", nature:"Tipo", recurring:"Recurrente",
+    oneOff:"Puntual", daily2:"Diaria", weekly:"Semanal",
+    milestone:"Completable", ongoing2:"Continua",
+    finishedDeleted:"Terminadas y Eliminadas", restore:"↺",
+    landLawExam:"Examen de Derecho Inmobiliario", cheshireOak:"Entrevista en Cheshire Oak",
+    ongoingProjects:"Proyectos en curso", completableOpen:"Completables, aún abiertas",
+    prayerPlaceholder:"⚠ Los horarios de oración son aproximados — actívalos en Ajustes ⚙️",
+    weekView:"Vista Semanal",
+  },
+  hi:{
+    appName:"The Docket", daily:"दैनिक दिनचर्या", allTasks:"सभी कार्य",
+    week:"सप्ताह", archive:"पूर्ण और हटाए गए", settings:"सेटिंग्स",
+    newTask:"नया कार्य", save:"सहेजें", cancel:"रद्द करें", addStep:"जोड़ें",
+    prayerSetting:"सटीक नमाज़ के समय",
+    prayerDesc:"आपके स्थान से वास्तविक नमाज़ के समय लाता है",
+    prayerLoading:"📍 आपका स्थान पता किया जा रहा है…",
+    prayerDone:"✓ आज के नमाज़ के समय अपडेट हो गए",
+    prayerDenied:"⚠ स्थान की अनुमति अवरुद्ध है। इसे अपने ब्राउज़र की साइट सेटिंग्स में चालू करें।",
+    prayerTimeout:"⚠ समय पर आपका स्थान नहीं मिल सका। फिर से कोशिश करें या कनेक्शन जाँचें।",
+    prayerUnavailable:"⚠ आपका डिवाइस इस समय स्थान तय नहीं कर सका।",
+    prayerService:"⚠ नमाज़ समय सेवा से संपर्क नहीं हो सका। थोड़ी देर बाद कोशिश करें।",
+    notifSetting:"सूचनाएँ",
+    notifDesc:"निर्धारित समय आने पर ब्राउज़र अलर्ट",
+    darkMode:"डार्क मोड",
+    darkDesc:"गहरे रंग की थीम पर जाएँ",
+    language:"भाषा",
+    languageDesc:"ऐप की भाषा बदलें",
+    nothingToday:"आज कुछ निर्धारित नहीं है।",
+    nothingHere:"यहाँ कुछ नहीं है।",
+    allOpen:"सभी खुले", ongoing:"जारी", completable:"पूर्ण होने योग्य",
+    category:"श्रेणी", show:"दिखाएँ", overdue:"विलंबित",
+    urgent:"अत्यावश्यक", high:"उच्च", medium:"मध्यम",
+    chatPlaceholder:"उदा. दोहराने के लिए कार्य जोड़ें",
+    chatWelcome:"बताइए क्या जोड़ना या बदलना है — मैं सही करने के लिए सवाल पूछूँगा।",
+    send:"भेजें", working:"काम जारी है…",
+    steps:"चरण", taskTitle:"कार्य", notes:"नोट्स",
+    dueDate:"नियत तारीख", nature:"प्रकार", recurring:"आवर्ती",
+    oneOff:"एक बार", daily2:"दैनिक", weekly:"साप्ताहिक",
+    milestone:"पूर्ण होने योग्य", ongoing2:"निरंतर",
+    finishedDeleted:"पूर्ण और हटाए गए", restore:"↺",
+    landLawExam:"भूमि कानून परीक्षा", cheshireOak:"Cheshire Oak साक्षात्कार",
+    ongoingProjects:"जारी परियोजनाएँ", completableOpen:"पूर्ण होने योग्य, अब भी खुले",
+    prayerPlaceholder:"⚠ नमाज़ के समय अनुमानित हैं — सेटिंग्स में सटीक समय चालू करें ⚙️",
+    weekView:"साप्ताहिक दृश्य",
+  },
+  pt:{
+    appName:"The Docket", daily:"Rotina Diária", allTasks:"Todas as Tarefas",
+    week:"Semana", archive:"Concluídas e Excluídas", settings:"Configurações",
+    newTask:"Nova Tarefa", save:"Salvar", cancel:"Cancelar", addStep:"Adicionar",
+    prayerSetting:"Horários de oração precisos",
+    prayerDesc:"Usa sua localização para obter os horários reais",
+    prayerLoading:"📍 Obtendo sua localização…",
+    prayerDone:"✓ Horários de oração atualizados",
+    prayerDenied:"⚠ O acesso à localização está bloqueado. Ative-o nas configurações do site no seu navegador.",
+    prayerTimeout:"⚠ Não foi possível obter sua localização a tempo. Tente de novo ou verifique sua conexão.",
+    prayerUnavailable:"⚠ Seu dispositivo não conseguiu determinar sua localização agora.",
+    prayerService:"⚠ Não foi possível acessar o serviço de horários de oração. Tente em instantes.",
+    notifSetting:"Notificações",
+    notifDesc:"Alertas do navegador quando um item agendado vence",
+    darkMode:"Modo escuro",
+    darkDesc:"Mudar para um tema escuro",
+    language:"Idioma",
+    languageDesc:"Alterar o idioma do aplicativo",
+    nothingToday:"Nada agendado para hoje.",
+    nothingHere:"Nada aqui.",
+    allOpen:"Tudo Aberto", ongoing:"Em andamento", completable:"Concluível",
+    category:"Categoria", show:"Mostrar", overdue:"ATRASADO",
+    urgent:"urgente", high:"alta", medium:"média",
+    chatPlaceholder:"ex. adicione uma tarefa para revisar",
+    chatWelcome:"Diga o que adicionar ou mudar — farei perguntas para acertar.",
+    send:"Enviar", working:"Trabalhando nisso…",
+    steps:"Etapas", taskTitle:"Tarefa", notes:"Notas",
+    dueDate:"Data limite", nature:"Tipo", recurring:"Recorrente",
+    oneOff:"Única", daily2:"Diária", weekly:"Semanal",
+    milestone:"Concluível", ongoing2:"Contínua",
+    finishedDeleted:"Concluídas e Excluídas", restore:"↺",
+    landLawExam:"Prova de Direito Imobiliário", cheshireOak:"Entrevista em Cheshire Oak",
+    ongoingProjects:"Projetos em andamento", completableOpen:"Concluíveis, ainda abertas",
+    prayerPlaceholder:"⚠ Os horários de oração são aproximados — ative-os nas Configurações ⚙️",
+    weekView:"Visão Semanal",
+  },
+  ru:{
+    appName:"The Docket", daily:"Ежедневный распорядок", allTasks:"Все задачи",
+    week:"Неделя", archive:"Завершённые и удалённые", settings:"Настройки",
+    newTask:"Новая задача", save:"Сохранить", cancel:"Отмена", addStep:"Добавить",
+    prayerSetting:"Точное время молитв",
+    prayerDesc:"Определяет время молитв по вашему местоположению",
+    prayerLoading:"📍 Определяем ваше местоположение…",
+    prayerDone:"✓ Время молитв обновлено на сегодня",
+    prayerDenied:"⚠ Доступ к геолокации заблокирован. Включите его в настройках сайта в браузере.",
+    prayerTimeout:"⚠ Не удалось определить местоположение вовремя. Повторите попытку или проверьте соединение.",
+    prayerUnavailable:"⚠ Устройство не смогло определить ваше местоположение.",
+    prayerService:"⚠ Не удалось связаться со службой времени молитв. Попробуйте позже.",
+    notifSetting:"Уведомления",
+    notifDesc:"Оповещения браузера, когда наступает срок запланированного пункта",
+    darkMode:"Тёмная тема",
+    darkDesc:"Переключиться на тёмное оформление",
+    language:"Язык",
+    languageDesc:"Изменить язык приложения",
+    nothingToday:"На сегодня ничего не запланировано.",
+    nothingHere:"Здесь пусто.",
+    allOpen:"Все открытые", ongoing:"В процессе", completable:"Завершаемые",
+    category:"Категория", show:"Показать", overdue:"ПРОСРОЧЕНО",
+    urgent:"срочно", high:"высокий", medium:"средний",
+    chatPlaceholder:"напр. добавить задачу для повторения",
+    chatWelcome:"Скажите, что добавить или изменить — я уточню детали.",
+    send:"Отправить", working:"Работаю…",
+    steps:"Шаги", taskTitle:"Задача", notes:"Заметки",
+    dueDate:"Срок", nature:"Тип", recurring:"Повторяющаяся",
+    oneOff:"Разовая", daily2:"Ежедневно", weekly:"Еженедельно",
+    milestone:"Завершаемая", ongoing2:"Постоянная",
+    finishedDeleted:"Завершённые и удалённые", restore:"↺",
+    landLawExam:"Экзамен по земельному праву", cheshireOak:"Собеседование в Cheshire Oak",
+    ongoingProjects:"Текущие проекты", completableOpen:"Завершаемые, ещё открытые",
+    prayerPlaceholder:"⚠ Время молитв приблизительное — включите точное в Настройках ⚙️",
+    weekView:"Обзор недели",
+  },
+  zh:{
+    appName:"The Docket", daily:"每日例程", allTasks:"全部任务",
+    week:"本周", archive:"已完成与已删除", settings:"设置",
+    newTask:"新建任务", save:"保存", cancel:"取消", addStep:"添加",
+    prayerSetting:"精确礼拜时间",
+    prayerDesc:"根据你的位置获取真实礼拜时间",
+    prayerLoading:"📍 正在获取你的位置…",
+    prayerDone:"✓ 今日礼拜时间已更新",
+    prayerDenied:"⚠ 位置访问已被阻止。请在浏览器的网站设置中开启。",
+    prayerTimeout:"⚠ 未能及时获取你的位置。请重试或检查网络连接。",
+    prayerUnavailable:"⚠ 你的设备目前无法确定位置。",
+    prayerService:"⚠ 无法连接礼拜时间服务。请稍后再试。",
+    notifSetting:"通知",
+    notifDesc:"计划事项到时间时的浏览器提醒",
+    darkMode:"深色模式",
+    darkDesc:"切换到深色配色",
+    language:"语言",
+    languageDesc:"更改应用显示语言",
+    nothingToday:"今天没有安排。",
+    nothingHere:"这里空空如也。",
+    allOpen:"全部进行中", ongoing:"持续", completable:"可完成",
+    category:"分类", show:"显示", overdue:"已逾期",
+    urgent:"紧急", high:"高", medium:"中",
+    chatPlaceholder:"例如：添加一个复习任务",
+    chatWelcome:"告诉我要添加或修改什么 — 我会提问以确保准确。",
+    send:"发送", working:"处理中…",
+    steps:"步骤", taskTitle:"任务", notes:"备注",
+    dueDate:"截止日期", nature:"类型", recurring:"重复",
+    oneOff:"一次性", daily2:"每日", weekly:"每周",
+    milestone:"可完成", ongoing2:"持续进行",
+    finishedDeleted:"已完成与已删除", restore:"↺",
+    landLawExam:"土地法考试", cheshireOak:"Cheshire Oak 面试",
+    ongoingProjects:"进行中的项目", completableOpen:"可完成且未结束",
+    prayerPlaceholder:"⚠ 礼拜时间为估算值 — 请在设置中启用精确时间 ⚙️",
+    weekView:"周视图",
+  },
 };
 
+// Endonyms — what speakers call their own language. This is what the selector
+// shows, so someone who has landed in a language they can't read still
+// recognises their own.
 const LANG_LABELS:Record<Lang,string> = {
-  en:"English", ar:"العربية", fr:"Français", tr:"Türkçe", ur:"اردو"
+  en:"English", ar:"العربية", fr:"Français", tr:"Türkçe", ur:"اردو",
+  bn:"বাংলা", es:"Español", hi:"हिन्दी", pt:"Português", ru:"Русский", zh:"中文"
 };
+// English names, shown next to the endonym wherever the two differ. Without
+// them the alphabetical ordering below looks arbitrary — there is no way to
+// see that বাংলা sits between العربية and English on purpose.
+const LANG_NAMES_EN:Record<Lang,string> = {
+  en:"English", ar:"Arabic", fr:"French", tr:"Turkish", ur:"Urdu",
+  bn:"Bengali", es:"Spanish", hi:"Hindi", pt:"Portuguese", ru:"Russian", zh:"Mandarin Chinese"
+};
+// Alphabetical by English name. Object key order would otherwise decide the
+// menu, which puts the order at the mercy of where the next language happens
+// to get pasted into T.
+const LANG_ORDER:Lang[] = ["ar","bn","en","fr","hi","zh","pt","ru","es","tr","ur"];
+// Of the eleven, only these two are right-to-left.
 const RTL_LANGS:Lang[] = ["ar","ur"];
+// Inter covers Latin and Cyrillic but has no Arabic, Devanagari, Bengali or
+// CJK glyphs. Per-glyph fallback would handle it, but naming a stack keeps the
+// selector's metrics stable instead of varying with whatever the browser picks.
+function langFont(code:Lang):string{
+  if(code==="ar"||code==="ur") return "'Segoe UI','Noto Naskh Arabic',sans-serif";
+  if(code==="hi"||code==="bn") return "'Nirmala UI','Noto Sans',sans-serif";
+  if(code==="zh") return "'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif";
+  return "inherit";
+}
 
 // ── Theme colours (light + dark) ──────────────────────────────────────────────
 // Body scroll lock, shared by the chat panel's own effect and the app-level
@@ -5250,6 +5491,7 @@ export default function Home(){
   const[avatarOpen,setAvatarOpen]=useState(false);
   const[avatarShown,setAvatarShown]=useState(false);
   const avatarExitTimer=React.useRef<number|null>(null);
+  const[langMenuOpen,setLangMenuOpen]=useState(false);
   const[currentView,setCurrentView]=useState<View>("daily");
   const[isLoaded,setIsLoaded]=useState(false);
   // True once the initial Supabase session check has resolved (found a
@@ -5307,6 +5549,9 @@ export default function Home(){
   }
   function closeAvatarCard(){
     if(!avatarOpen||avatarExitTimer.current!=null)return;
+    // Collapse the language list on the way out, or the card reopens with it
+    // still expanded over the rows below.
+    setLangMenuOpen(false);
     setAvatarShown(false);
     avatarExitTimer.current=window.setTimeout(()=>{
       avatarExitTimer.current=null;
@@ -5325,10 +5570,19 @@ export default function Home(){
   useEffect(()=>()=>{ if(avatarExitTimer.current!=null)window.clearTimeout(avatarExitTimer.current); },[]);
   useEffect(()=>{
     if(!avatarOpen)return;
-    function onKey(e:KeyboardEvent){ if(e.key==="Escape") closeAvatarCard(); }
+    // Escape unwinds one layer at a time: the language list first, the card
+    // only once nothing is open on top of it.
+    function onKey(e:KeyboardEvent){
+      if(e.key!=="Escape")return;
+      if(langMenuOpen){ setLangMenuOpen(false); return; }
+      closeAvatarCard();
+    }
     document.addEventListener("keydown",onKey);
     return()=>document.removeEventListener("keydown",onKey);
-  },[avatarOpen]);// eslint-disable-line react-hooks/exhaustive-deps
+    // langMenuOpen is read inside the handler, so the listener has to be
+    // rebound when it changes or Escape closes the whole card from a stale
+    // false.
+  },[avatarOpen,langMenuOpen]);// eslint-disable-line react-hooks/exhaustive-deps
 
   // Lock body scroll while the avatar card or a modal is open — see
   // lockBodyScroll for why pinning is necessary and why it reserves the
@@ -6217,25 +6471,56 @@ export default function Home(){
                 <span style={cardKnobStyle(dark)}/>
               </button>
             </div>
-            <div style={{...cardRowStyle,cursor:"default",alignItems:"flex-start"}}>
-              <i className="ti ti-world" style={{...cardIconStyle,marginTop:2}} aria-hidden="true"/>
-              <div style={{flex:1,minWidth:0}}>
-                <p style={{marginBottom:7}}>{t("language")}</p>
-                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                  {(Object.entries(LANG_LABELS) as [Lang,string][]).map(([code,label])=>(
-                    <button key={code} onClick={()=>setLang(code)}
-                      style={{padding:"5px 10px",borderRadius:7,
-                        border:`1.5px solid ${lang===code?C.primary:C.border}`,
-                        background:lang===code?C.primary:"transparent",
-                        color:lang===code?"white":C.muted,
-                        fontSize:11.5,fontWeight:600,cursor:"pointer",
-                        fontFamily:code==="ar"||code==="ur"?"'Segoe UI',sans-serif":"inherit"}}>
-                      {label}
+            {/* Eleven languages don't fit as pills — the row wrapped to four
+                lines and pushed everything below it off a phone screen. The
+                list expands in flow rather than floating: the card clips its
+                own corners and scrolls internally, so an absolutely positioned
+                popover would be cut off at the card's edge. */}
+            <button onClick={()=>setLangMenuOpen(o=>!o)}
+              style={cardRowStyle} aria-expanded={langMenuOpen}>
+              <i className="ti ti-world" style={cardIconStyle} aria-hidden="true"/>
+              <span style={{flex:1}}>{t("language")}</span>
+              <span style={{fontSize:12.5,color:C.muted,fontFamily:langFont(lang),
+                overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:110}}>
+                {LANG_LABELS[lang]}
+              </span>
+              <i className="ti ti-chevron-down" aria-hidden="true"
+                style={{fontSize:14,flexShrink:0,color:C.muted2,
+                  transform:langMenuOpen?"rotate(180deg)":"rotate(0deg)",
+                  transition:"transform 0.2s ease"}}/>
+            </button>
+            {langMenuOpen&&(
+              // Capped and scrollable so the list can't push the card's own
+              // rows out of reach on a short screen.
+              <div role="listbox" aria-label={t("language")}
+                style={{maxHeight:244,overflowY:"auto",
+                  background:dark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.025)",
+                  borderTop:`1px solid ${C.border}`,borderBottom:`1px solid ${C.border}`}}>
+                {LANG_ORDER.map(code=>{
+                  const active=lang===code;
+                  return(
+                    <button key={code} role="option" aria-selected={active}
+                      onClick={()=>{ setLang(code); setLangMenuOpen(false); }}
+                      // Indented to sit under the row's label, not its icon.
+                      // Logical padding so the indent flips with an RTL locale.
+                      style={{...cardRowStyle,padding:"9px 14px",paddingInlineStart:41,
+                        background:active?(dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.05)"):"transparent",
+                        color:active?C.primary:C.navy,fontWeight:active?700:500}}>
+                      <span style={{flex:1,minWidth:0,fontFamily:langFont(code)}}>
+                        {LANG_LABELS[code]}
+                        {LANG_NAMES_EN[code]!==LANG_LABELS[code]&&(
+                          <span style={{fontSize:11,color:C.muted2,fontFamily:"inherit",marginInlineStart:7}}>
+                            {LANG_NAMES_EN[code]}
+                          </span>
+                        )}
+                      </span>
+                      {active&&<i className="ti ti-check" aria-hidden="true"
+                        style={{fontSize:14,flexShrink:0,color:C.primary}}/>}
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-            </div>
+            )}
             <div style={{...cardRowStyle,cursor:"default",alignItems:"flex-start"}}>
               <i className="ti ti-building-mosque" style={{...cardIconStyle,marginTop:2}} aria-hidden="true"/>
               <div style={{flex:1,minWidth:0}}>
