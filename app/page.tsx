@@ -82,7 +82,10 @@ const T:Record<Lang,Record<string,string>> = {
     prayerDesc:"Uses your location to fetch real prayer times",
     prayerLoading:"📍 Fetching your location…",
     prayerDone:"✓ Prayer times updated for today",
-    prayerError:"⚠ Could not get location — check browser permissions",
+    prayerDenied:"⚠ Location access is blocked. Enable it in your browser's site settings to use accurate prayer times.",
+    prayerTimeout:"⚠ Couldn't get your location in time. Try again, or check your connection.",
+    prayerUnavailable:"⚠ Your device couldn't determine your location right now.",
+    prayerService:"⚠ Couldn't reach the prayer times service. Try again shortly.",
     notifSetting:"Notifications",
     notifDesc:"Browser alerts when a scheduled item is due",
     darkMode:"Dark mode",
@@ -115,7 +118,10 @@ const T:Record<Lang,Record<string,string>> = {
     prayerDesc:"يستخدم موقعك لجلب أوقات الصلاة الحقيقية",
     prayerLoading:"📍 جاري تحديد موقعك…",
     prayerDone:"✓ تم تحديث أوقات الصلاة لهذا اليوم",
-    prayerError:"⚠ تعذّر الحصول على الموقع — تحقق من إذن الموقع",
+    prayerDenied:"⚠ الوصول إلى الموقع محظور. فعّله من إعدادات الموقع في متصفحك.",
+    prayerTimeout:"⚠ لم نتمكّن من تحديد موقعك في الوقت المحدد. حاول مجددًا أو تحقق من اتصالك.",
+    prayerUnavailable:"⚠ تعذّر على جهازك تحديد الموقع حاليًا.",
+    prayerService:"⚠ تعذّر الاتصال بخدمة أوقات الصلاة. حاول بعد قليل.",
     notifSetting:"الإشعارات",
     notifDesc:"تنبيهات المتصفح عند موعد عنصر مجدول",
     darkMode:"الوضع الداكن",
@@ -148,7 +154,10 @@ const T:Record<Lang,Record<string,string>> = {
     prayerDesc:"Utilise votre position pour les heures de prière",
     prayerLoading:"📍 Localisation en cours…",
     prayerDone:"✓ Heures de prière mises à jour",
-    prayerError:"⚠ Impossible d'obtenir la localisation",
+    prayerDenied:"⚠ L'accès à la localisation est bloqué. Activez-le dans les paramètres du site de votre navigateur.",
+    prayerTimeout:"⚠ Localisation trop longue. Réessayez ou vérifiez votre connexion.",
+    prayerUnavailable:"⚠ Votre appareil n'a pas pu déterminer votre position pour le moment.",
+    prayerService:"⚠ Impossible de joindre le service des heures de prière. Réessayez bientôt.",
     notifSetting:"Notifications",
     notifDesc:"Alertes navigateur pour les éléments planifiés",
     darkMode:"Mode sombre",
@@ -181,7 +190,10 @@ const T:Record<Lang,Record<string,string>> = {
     prayerDesc:"Gerçek namaz vakitleri için konumunuzu kullanır",
     prayerLoading:"📍 Konumunuz alınıyor…",
     prayerDone:"✓ Namaz vakitleri güncellendi",
-    prayerError:"⚠ Konum alınamadı — izinleri kontrol edin",
+    prayerDenied:"⚠ Konum erişimi engellendi. Tarayıcınızın site ayarlarından etkinleştirin.",
+    prayerTimeout:"⚠ Konumunuz zamanında alınamadı. Tekrar deneyin veya bağlantınızı kontrol edin.",
+    prayerUnavailable:"⚠ Cihazınız şu anda konumunuzu belirleyemedi.",
+    prayerService:"⚠ Namaz vakitleri servisine ulaşılamadı. Birazdan tekrar deneyin.",
     notifSetting:"Bildirimler",
     notifDesc:"Zamanlanmış öğeler için tarayıcı uyarıları",
     darkMode:"Karanlık mod",
@@ -214,7 +226,10 @@ const T:Record<Lang,Record<string,string>> = {
     prayerDesc:"آپ کے مقام سے نماز کے اوقات لیتا ہے",
     prayerLoading:"📍 مقام حاصل ہو رہا ہے…",
     prayerDone:"✓ نماز کے اوقات آج کے لیے اپ ڈیٹ ہو گئے",
-    prayerError:"⚠ مقام نہیں مل سکا — اجازت چیک کریں",
+    prayerDenied:"⚠ مقام تک رسائی بلاک ہے۔ اسے اپنے براؤزر کی سائٹ سیٹنگز میں آن کریں۔",
+    prayerTimeout:"⚠ وقت پر مقام حاصل نہیں ہو سکا۔ دوبارہ کوشش کریں یا کنیکشن چیک کریں۔",
+    prayerUnavailable:"⚠ آپ کا آلہ اس وقت مقام معلوم نہیں کر سکا۔",
+    prayerService:"⚠ نماز اوقات کی سروس تک رسائی نہیں ہو سکی۔ تھوڑی دیر میں دوبارہ کوشش کریں۔",
     notifSetting:"اطلاعات",
     notifDesc:"مقررہ وقت پر براؤزر الرٹ",
     darkMode:"تاریک موڈ",
@@ -5256,7 +5271,12 @@ export default function Home(){
   // Read only through setUndoStack's functional updater (see undoLast), so
   // the value binding itself is deliberately not taken.
   const[,setUndoStack]=useState<{tasks:Task[];routines:Routine[]}[]>([]);
-  const[prayerStatus,setPrayerStatus]=useState<"idle"|"loading"|"done"|"error">("idle");
+  // One status per outcome rather than a single "error". The old shape forced
+  // every failure — denial, timeout, no fix available, a dead network, an
+  // Aladhan outage — through one string that told the user to check browser
+  // permissions, which was wrong for all but the first.
+  const[prayerStatus,setPrayerStatus]=useState<
+    "idle"|"loading"|"done"|"denied"|"timeout"|"unavailable"|"service">("idle");
   const[dark,setDark]=useState(false);
   const[lang,setLang]=useState<Lang>("en");
   const[onboarding,setOnboarding]=useState(false);
@@ -5471,9 +5491,16 @@ export default function Home(){
     setTimeout(()=>{cloudSyncingRef.current=false;},300);
   }
 
+  // Whether anything that could still overwrite `routines` from elsewhere has
+  // finished. The prayer refresh below writes into routines, and a cloud pull
+  // landing after it would silently throw the fetched times away.
+  const[cloudPullDone,setCloudPullDone]=useState(false);
   useEffect(()=>{
-    if(user?.id&&isLoaded) loadCloudData(user.id);
-  },[user?.id,isLoaded]);
+    if(!isLoaded) return;
+    if(user?.id){ loadCloudData(user.id).finally(()=>setCloudPullDone(true)); return; }
+    // Auth resolved with no session: nothing is coming, so it is safe already.
+    if(authChecked) setCloudPullDone(true);
+  },[user?.id,isLoaded,authChecked]);
 
   // ── Pro status — reads the subscriptions row the Stripe webhook writes.
   // RLS restricts this to the signed-in user's own row. current_period_end
@@ -5527,10 +5554,15 @@ export default function Home(){
     })();
   },[routines,isLoaded,user?.id]);
 
+  // Set only when the *stored* setting was already on, so the mount refresh
+  // below never double-fires alongside a manual toggle (which does its own
+  // fetch). Consumed once and cleared.
+  const pendingPrayerRefreshRef=React.useRef(false);
+
   // Load prayer setting from storage
   useEffect(()=>{
     const saved=localStorage.getItem("docket-prayer-enabled");
-    if(saved==="true") setPrayerEnabled(true);
+    if(saved==="true"){ setPrayerEnabled(true); pendingPrayerRefreshRef.current=true; }
     const savedDark=localStorage.getItem("docket-dark");
     if(savedDark==="true") setDark(true);
     const savedLang=localStorage.getItem("docket-lang") as Lang;
@@ -5551,11 +5583,28 @@ export default function Home(){
   // Prayer names to update
   const PRAYER_NAMES=["Fajr","Dhuhr","Asr","Maghrib","Isha"];
 
-  async function fetchAndApplyPrayerTimes(){
+  // Returns whether prayer times were actually applied, so the toggle can roll
+  // itself back rather than sitting ON above an error.
+  async function fetchAndApplyPrayerTimes():Promise<boolean>{
     setPrayerStatus("loading");
+    // A previously-denied site fails instantly with code 1 and shows no
+    // prompt, so asking again only burns the timeout before saying the same
+    // thing. Checking first turns that into an immediate, accurate message.
+    // Wrapped because the Permissions API doesn't accept "geolocation"
+    // everywhere (older Safari throws) — an unsupported query must fall
+    // through to the normal request, not fail the whole operation.
+    try{
+      const perm=await navigator.permissions?.query({name:"geolocation" as PermissionName});
+      if(perm?.state==="denied"){ setPrayerStatus("denied"); return false; }
+    }catch{ /* Permissions API unavailable here — carry on and just ask. */ }
     try{
       const pos = await new Promise<GeolocationPosition>((resolve,reject)=>
-        navigator.geolocation.getCurrentPosition(resolve,reject,{timeout:8000})
+        // 20s, not 8: the old limit had to cover the user reading the
+        // permission prompt and deciding, so a slow-but-willing user timed out
+        // and was then told to check permissions they had just granted.
+        // maximumAge lets a fix from the last 10 minutes return immediately —
+        // the default of 0 forced a fresh lookup on every single toggle.
+        navigator.geolocation.getCurrentPosition(resolve,reject,{timeout:20000,maximumAge:600000})
       );
       const{latitude,longitude}=pos.coords;
       const res=await fetch(
@@ -5574,31 +5623,61 @@ export default function Home(){
         return{...r, time:rawTime.slice(0,5)};
       }));
       setPrayerStatus("done");
+      return true;
     }catch(e:any){
-      // Diagnostic only — behavior/UI message unchanged for now. Differentiate
-      // the two failure points in the try block above: geolocation vs the
-      // Aladhan fetch/response, so the console shows what actually broke
-      // instead of a single generic "could not get location" guess.
+      // This classification already existed but only reached the console — the
+      // UI showed one message for all of it. Now it drives what the user sees,
+      // so "check your browser permissions" appears only when permission is
+      // genuinely the problem.
       const isGeoError=e&&typeof e.code==="number"&&typeof e.message==="string"&&!(e instanceof Error);
       if(isGeoError){
         const codeNames:Record<number,string>={1:"PERMISSION_DENIED",2:"POSITION_UNAVAILABLE",3:"TIMEOUT"};
         console.error(`Prayer times: geolocation failed — code ${e.code} (${codeNames[e.code]??"unknown"}): ${e.message}`);
+        setPrayerStatus(e.code===1?"denied":e.code===3?"timeout":"unavailable");
       } else if(e instanceof TypeError){
         console.error("Prayer times: network/fetch failure —",e.message,e);
+        setPrayerStatus("service");
       } else if(e instanceof Error){
         console.error("Prayer times: API/processing failure —",e.message,e);
+        setPrayerStatus("service");
       } else {
         console.error("Prayer times: unexpected failure —",e);
+        setPrayerStatus("service");
       }
-      setPrayerStatus("error");
+      return false;
     }
   }
 
   async function togglePrayer(){
     const next=!prayerEnabled;
     setPrayerEnabled(next);
-    if(next) await fetchAndApplyPrayerTimes();
+    // Switching off clears any stale error along with it.
+    if(!next){ setPrayerStatus("idle"); return; }
+    // Roll the switch back if it didn't actually work. Leaving it ON above an
+    // error claims a feature is running when it isn't, and the next render
+    // would show accurate prayer times as enabled while the times themselves
+    // were never updated.
+    const applied=await fetchAndApplyPrayerTimes();
+    if(!applied) setPrayerEnabled(false);
   }
+
+  // The setting persisted as ON, but the times themselves did not — they were
+  // written into `routines` by whichever day the user last toggled it. Without
+  // this the toggle reads "on" while the rows show yesterday's Fajr. Runs once
+  // per load, and only once the routines it writes into have settled.
+  useEffect(()=>{
+    if(!pendingPrayerRefreshRef.current||!isLoaded||!cloudPullDone) return;
+    pendingPrayerRefreshRef.current=false;
+    (async()=>{
+      // Same contract as the manual toggle: a failure must not leave the
+      // switch claiming the feature is running.
+      const applied=await fetchAndApplyPrayerTimes();
+      if(!applied) setPrayerEnabled(false);
+    })();
+    // fetchAndApplyPrayerTimes is a stable declaration in this component and
+    // the ref guard makes this a once-per-load effect regardless.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[isLoaded,cloudPullDone]);
 
   const addTask=useCallback((data:Omit<Task,"id"|"done"|"deleted"|"checklist">)=>{
     setTasks(p=>[...p,{id:Date.now(),...data,done:false,deleted:false,checklist:[]}]);
@@ -6164,10 +6243,15 @@ export default function Home(){
                 {/* One compact status line — this is the only place a denied
                     location permission ever surfaces. */}
                 {prayerStatus!=="idle"&&(
-                  <p style={{fontSize:10.5,marginTop:3,
-                    color:prayerStatus==="error"?C.urgent:prayerStatus==="done"?C.sage:C.accent}}>
+                  <p style={{fontSize:10.5,marginTop:3,lineHeight:1.45,
+                    color:prayerStatus==="done"?C.sage
+                      :prayerStatus==="loading"?C.accent:C.urgent}}>
                     {prayerStatus==="loading"?t("prayerLoading")
-                      :prayerStatus==="done"?t("prayerDone"):t("prayerError")}
+                      :prayerStatus==="done"?t("prayerDone")
+                      :prayerStatus==="denied"?t("prayerDenied")
+                      :prayerStatus==="timeout"?t("prayerTimeout")
+                      :prayerStatus==="unavailable"?t("prayerUnavailable")
+                      :t("prayerService")}
                   </p>
                 )}
               </div>
