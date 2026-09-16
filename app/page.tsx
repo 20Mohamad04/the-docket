@@ -76,10 +76,9 @@ interface Routine {
 const T:Record<Lang,Record<string,string>> = {
   en:{
     appName:"The Docket", daily:"Daily Routine", allTasks:"All Tasks",
-    week:"Week", archive:"Finished & Deleted", settings:"Settings",
+    week:"Week", archive:"Finished & Deleted",
     newTask:"New Task", save:"Save Task", cancel:"Cancel", addStep:"Add",
     prayerSetting:"Accurate prayer times",
-    prayerDesc:"Uses your location to fetch real prayer times",
     prayerLoading:"📍 Fetching your location…",
     prayerDone:"✓ Prayer times updated for today",
     prayerDenied:"⚠ Location access is blocked. Enable it in your browser's site settings to use accurate prayer times.",
@@ -87,35 +86,26 @@ const T:Record<Lang,Record<string,string>> = {
     prayerUnavailable:"⚠ Your device couldn't determine your location right now.",
     prayerService:"⚠ Couldn't reach the prayer times service. Try again shortly.",
     notifSetting:"Notifications",
-    notifDesc:"Browser alerts when a scheduled item is due",
     darkMode:"Dark mode",
-    darkDesc:"Switch to a dark colour scheme",
     language:"Language",
-    languageDesc:"Change the app display language",
     nothingToday:"Nothing scheduled today.",
     nothingHere:"Nothing here.",
     allOpen:"All Open", ongoing:"Ongoing", completable:"Completable",
     category:"Category", show:"Show", overdue:"OVERDUE",
     urgent:"urgent", high:"high", medium:"medium",
     chatPlaceholder:"e.g. add a task to revise Land Law",
-    chatWelcome:"Tell me what to add, remove, or change — I'll ask questions to get it right.",
-    send:"Send", working:"Working on it…",
+    working:"Working on it…",
     steps:"Steps", taskTitle:"Task", notes:"Notes",
     dueDate:"Due / target date", nature:"Nature", recurring:"Recurring",
     oneOff:"One-off", daily2:"Daily", weekly:"Weekly",
     milestone:"Completable", ongoing2:"Ongoing",
-    finishedDeleted:"Finished & Deleted", restore:"↺",
-    landLawExam:"Land Law exam", cheshireOak:"Cheshire Oak",
-    ongoingProjects:"Ongoing projects", completableOpen:"Completable, still open",
-    prayerPlaceholder:"⚠ Prayer times are placeholders — enable accurate times in Settings ⚙️",
-    weekView:"Week View",
+    finishedDeleted:"Finished & Deleted",
   },
   ar:{
     appName:"الدفتر", daily:"الروتين اليومي", allTasks:"جميع المهام",
-    week:"الأسبوع", archive:"المنجزة والمحذوفة", settings:"الإعدادات",
+    week:"الأسبوع", archive:"المنجزة والمحذوفة",
     newTask:"مهمة جديدة", save:"حفظ", cancel:"إلغاء", addStep:"إضافة",
     prayerSetting:"أوقات الصلاة الدقيقة",
-    prayerDesc:"يستخدم موقعك لجلب أوقات الصلاة الحقيقية",
     prayerLoading:"📍 جاري تحديد موقعك…",
     prayerDone:"✓ تم تحديث أوقات الصلاة لهذا اليوم",
     prayerDenied:"⚠ الوصول إلى الموقع محظور. فعّله من إعدادات الموقع في متصفحك.",
@@ -123,35 +113,26 @@ const T:Record<Lang,Record<string,string>> = {
     prayerUnavailable:"⚠ تعذّر على جهازك تحديد الموقع حاليًا.",
     prayerService:"⚠ تعذّر الاتصال بخدمة أوقات الصلاة. حاول بعد قليل.",
     notifSetting:"الإشعارات",
-    notifDesc:"تنبيهات المتصفح عند موعد عنصر مجدول",
     darkMode:"الوضع الداكن",
-    darkDesc:"التبديل إلى نظام ألوان داكن",
     language:"اللغة",
-    languageDesc:"تغيير لغة العرض",
     nothingToday:"لا شيء مجدول اليوم.",
     nothingHere:"لا يوجد شيء هنا.",
     allOpen:"الكل المفتوح", ongoing:"جارٍ", completable:"قابل للإنجاز",
     category:"الفئة", show:"عرض", overdue:"متأخر",
     urgent:"عاجل", high:"مرتفع", medium:"متوسط",
     chatPlaceholder:"مثال: أضف مهمة لمراجعة القانون",
-    chatWelcome:"أخبرني بما تريد إضافته أو تغييره — سأسألك لأفهم أكثر.",
-    send:"إرسال", working:"جاري المعالجة…",
+    working:"جاري المعالجة…",
     steps:"الخطوات", taskTitle:"المهمة", notes:"ملاحظات",
     dueDate:"تاريخ الاستحقاق", nature:"الطبيعة", recurring:"متكرر",
     oneOff:"مرة واحدة", daily2:"يومياً", weekly:"أسبوعياً",
     milestone:"قابل للإنجاز", ongoing2:"مستمر",
-    finishedDeleted:"المنجزة والمحذوفة", restore:"↺",
-    landLawExam:"امتحان قانون الأراضي", cheshireOak:"مقابلة تشيشاير أوك",
-    ongoingProjects:"مشاريع جارية", completableOpen:"مهام قابلة للإنجاز",
-    prayerPlaceholder:"⚠ أوقات الصلاة تقريبية — فعّل الأوقات الدقيقة من الإعدادات ⚙️",
-    weekView:"عرض الأسبوع",
+    finishedDeleted:"المنجزة والمحذوفة",
   },
   fr:{
     appName:"The Docket", daily:"Routine Quotidienne", allTasks:"Toutes les Tâches",
-    week:"Semaine", archive:"Terminées & Supprimées", settings:"Paramètres",
+    week:"Semaine", archive:"Terminées & Supprimées",
     newTask:"Nouvelle Tâche", save:"Enregistrer", cancel:"Annuler", addStep:"Ajouter",
     prayerSetting:"Heures de prière précises",
-    prayerDesc:"Utilise votre position pour les heures de prière",
     prayerLoading:"📍 Localisation en cours…",
     prayerDone:"✓ Heures de prière mises à jour",
     prayerDenied:"⚠ L'accès à la localisation est bloqué. Activez-le dans les paramètres du site de votre navigateur.",
@@ -159,35 +140,26 @@ const T:Record<Lang,Record<string,string>> = {
     prayerUnavailable:"⚠ Votre appareil n'a pas pu déterminer votre position pour le moment.",
     prayerService:"⚠ Impossible de joindre le service des heures de prière. Réessayez bientôt.",
     notifSetting:"Notifications",
-    notifDesc:"Alertes navigateur pour les éléments planifiés",
     darkMode:"Mode sombre",
-    darkDesc:"Passer à un thème sombre",
     language:"Langue",
-    languageDesc:"Changer la langue d'affichage",
     nothingToday:"Rien de planifié aujourd'hui.",
     nothingHere:"Rien ici.",
     allOpen:"Tout ouvert", ongoing:"En cours", completable:"Réalisable",
     category:"Catégorie", show:"Afficher", overdue:"EN RETARD",
     urgent:"urgent", high:"élevé", medium:"moyen",
     chatPlaceholder:"ex. ajouter une tâche pour réviser",
-    chatWelcome:"Dites-moi ce que vous voulez ajouter ou modifier.",
-    send:"Envoyer", working:"En cours…",
+    working:"En cours…",
     steps:"Étapes", taskTitle:"Tâche", notes:"Notes",
     dueDate:"Date limite", nature:"Nature", recurring:"Récurrent",
     oneOff:"Ponctuel", daily2:"Quotidien", weekly:"Hebdomadaire",
     milestone:"Réalisable", ongoing2:"Continu",
-    finishedDeleted:"Terminées & Supprimées", restore:"↺",
-    landLawExam:"Examen droit foncier", cheshireOak:"Entretien Cheshire Oak",
-    ongoingProjects:"Projets en cours", completableOpen:"Tâches réalisables",
-    prayerPlaceholder:"⚠ Heures de prière approximatives — activez-les dans Paramètres ⚙️",
-    weekView:"Vue Semaine",
+    finishedDeleted:"Terminées & Supprimées",
   },
   tr:{
     appName:"The Docket", daily:"Günlük Rutin", allTasks:"Tüm Görevler",
-    week:"Hafta", archive:"Tamamlanan & Silinenler", settings:"Ayarlar",
+    week:"Hafta", archive:"Tamamlanan & Silinenler",
     newTask:"Yeni Görev", save:"Kaydet", cancel:"İptal", addStep:"Ekle",
     prayerSetting:"Doğru namaz vakitleri",
-    prayerDesc:"Gerçek namaz vakitleri için konumunuzu kullanır",
     prayerLoading:"📍 Konumunuz alınıyor…",
     prayerDone:"✓ Namaz vakitleri güncellendi",
     prayerDenied:"⚠ Konum erişimi engellendi. Tarayıcınızın site ayarlarından etkinleştirin.",
@@ -195,35 +167,26 @@ const T:Record<Lang,Record<string,string>> = {
     prayerUnavailable:"⚠ Cihazınız şu anda konumunuzu belirleyemedi.",
     prayerService:"⚠ Namaz vakitleri servisine ulaşılamadı. Birazdan tekrar deneyin.",
     notifSetting:"Bildirimler",
-    notifDesc:"Zamanlanmış öğeler için tarayıcı uyarıları",
     darkMode:"Karanlık mod",
-    darkDesc:"Koyu renk şemasına geç",
     language:"Dil",
-    languageDesc:"Uygulama dilini değiştir",
     nothingToday:"Bugün planlanmış bir şey yok.",
     nothingHere:"Burada bir şey yok.",
     allOpen:"Tümü Açık", ongoing:"Devam Eden", completable:"Tamamlanabilir",
     category:"Kategori", show:"Göster", overdue:"GECİKMİŞ",
     urgent:"acil", high:"yüksek", medium:"orta",
     chatPlaceholder:"örn. revizyon için görev ekle",
-    chatWelcome:"Ne eklemek veya değiştirmek istediğinizi söyleyin.",
-    send:"Gönder", working:"İşleniyor…",
+    working:"İşleniyor…",
     steps:"Adımlar", taskTitle:"Görev", notes:"Notlar",
     dueDate:"Son tarih", nature:"Tür", recurring:"Tekrar",
     oneOff:"Tek seferlik", daily2:"Günlük", weekly:"Haftalık",
     milestone:"Tamamlanabilir", ongoing2:"Süregelen",
-    finishedDeleted:"Tamamlanan & Silinenler", restore:"↺",
-    landLawExam:"Arazi Hukuku sınavı", cheshireOak:"Cheshire Oak görüşmesi",
-    ongoingProjects:"Devam eden projeler", completableOpen:"Tamamlanabilir görevler",
-    prayerPlaceholder:"⚠ Namaz vakitleri tahmini — Ayarlar'dan doğru vakitleri etkinleştirin ⚙️",
-    weekView:"Haftalık Görünüm",
+    finishedDeleted:"Tamamlanan & Silinenler",
   },
   ur:{
     appName:"The Docket", daily:"روزانہ معمول", allTasks:"تمام کام",
-    week:"ہفتہ", archive:"مکمل اور حذف", settings:"ترتیبات",
+    week:"ہفتہ", archive:"مکمل اور حذف",
     newTask:"نیا کام", save:"محفوظ", cancel:"منسوخ", addStep:"شامل",
     prayerSetting:"درست اوقات نماز",
-    prayerDesc:"آپ کے مقام سے نماز کے اوقات لیتا ہے",
     prayerLoading:"📍 مقام حاصل ہو رہا ہے…",
     prayerDone:"✓ نماز کے اوقات آج کے لیے اپ ڈیٹ ہو گئے",
     prayerDenied:"⚠ مقام تک رسائی بلاک ہے۔ اسے اپنے براؤزر کی سائٹ سیٹنگز میں آن کریں۔",
@@ -231,35 +194,26 @@ const T:Record<Lang,Record<string,string>> = {
     prayerUnavailable:"⚠ آپ کا آلہ اس وقت مقام معلوم نہیں کر سکا۔",
     prayerService:"⚠ نماز اوقات کی سروس تک رسائی نہیں ہو سکی۔ تھوڑی دیر میں دوبارہ کوشش کریں۔",
     notifSetting:"اطلاعات",
-    notifDesc:"مقررہ وقت پر براؤزر الرٹ",
     darkMode:"تاریک موڈ",
-    darkDesc:"تاریک رنگ سکیم پر جائیں",
     language:"زبان",
-    languageDesc:"ایپ کی زبان تبدیل کریں",
     nothingToday:"آج کچھ شیڈول نہیں۔",
     nothingHere:"یہاں کچھ نہیں۔",
     allOpen:"سب کھلے", ongoing:"جاری", completable:"مکمل ہونے والا",
     category:"زمرہ", show:"دکھائیں", overdue:"تاخیر",
     urgent:"فوری", high:"اہم", medium:"معمولی",
     chatPlaceholder:"مثال: نظر ثانی کے لیے کام شامل کریں",
-    chatWelcome:"بتائیں کیا شامل یا تبدیل کرنا ہے۔",
-    send:"بھیجیں", working:"کام جاری…",
+    working:"کام جاری…",
     steps:"مراحل", taskTitle:"کام", notes:"نوٹس",
     dueDate:"آخری تاریخ", nature:"نوعیت", recurring:"دہرائیں",
     oneOff:"ایک بار", daily2:"روزانہ", weekly:"ہفتہ وار",
     milestone:"مکمل ہونے والا", ongoing2:"جاری",
-    finishedDeleted:"مکمل اور حذف", restore:"↺",
-    landLawExam:"لینڈ لاء امتحان", cheshireOak:"چیشائر اوک انٹرویو",
-    ongoingProjects:"جاری منصوبے", completableOpen:"مکمل ہونے والے کام",
-    prayerPlaceholder:"⚠ اوقات نماز تخمینی ہیں — ترتیبات میں درست اوقات فعال کریں ⚙️",
-    weekView:"ہفتہ وار نظارہ",
+    finishedDeleted:"مکمل اور حذف",
   },
   bn:{
     appName:"The Docket", daily:"দৈনিক রুটিন", allTasks:"সব কাজ",
-    week:"সপ্তাহ", archive:"সম্পন্ন ও মুছে ফেলা", settings:"সেটিংস",
+    week:"সপ্তাহ", archive:"সম্পন্ন ও মুছে ফেলা",
     newTask:"নতুন কাজ", save:"সংরক্ষণ", cancel:"বাতিল", addStep:"যোগ করুন",
     prayerSetting:"সঠিক নামাজের সময়",
-    prayerDesc:"আপনার অবস্থান থেকে প্রকৃত নামাজের সময় আনে",
     prayerLoading:"📍 আপনার অবস্থান নেওয়া হচ্ছে…",
     prayerDone:"✓ আজকের নামাজের সময় হালনাগাদ হয়েছে",
     prayerDenied:"⚠ অবস্থানের অনুমতি বন্ধ আছে। ব্রাউজারের সাইট সেটিংসে এটি চালু করুন।",
@@ -267,35 +221,26 @@ const T:Record<Lang,Record<string,string>> = {
     prayerUnavailable:"⚠ আপনার ডিভাইস এই মুহূর্তে অবস্থান নির্ণয় করতে পারেনি।",
     prayerService:"⚠ নামাজের সময় সেবায় পৌঁছানো যায়নি। কিছুক্ষণ পর চেষ্টা করুন।",
     notifSetting:"বিজ্ঞপ্তি",
-    notifDesc:"নির্ধারিত সময় হলে ব্রাউজার সতর্কতা",
     darkMode:"ডার্ক মোড",
-    darkDesc:"গাঢ় রঙের থিমে যান",
     language:"ভাষা",
-    languageDesc:"অ্যাপের ভাষা পরিবর্তন করুন",
     nothingToday:"আজ কিছু নির্ধারিত নেই।",
     nothingHere:"এখানে কিছু নেই।",
     allOpen:"সব খোলা", ongoing:"চলমান", completable:"সম্পন্নযোগ্য",
     category:"বিভাগ", show:"দেখান", overdue:"বিলম্বিত",
     urgent:"জরুরি", high:"উচ্চ", medium:"মাঝারি",
     chatPlaceholder:"যেমন: রিভিশনের জন্য কাজ যোগ করুন",
-    chatWelcome:"বলুন কী যোগ বা পরিবর্তন করতে হবে — সঠিক করতে প্রশ্ন করব।",
-    send:"পাঠান", working:"কাজ চলছে…",
+    working:"কাজ চলছে…",
     steps:"ধাপ", taskTitle:"কাজ", notes:"নোট",
     dueDate:"নির্ধারিত তারিখ", nature:"ধরন", recurring:"পুনরাবৃত্ত",
     oneOff:"একবার", daily2:"দৈনিক", weekly:"সাপ্তাহিক",
     milestone:"সম্পন্নযোগ্য", ongoing2:"চলমান",
-    finishedDeleted:"সম্পন্ন ও মুছে ফেলা", restore:"↺",
-    landLawExam:"ভূমি আইন পরীক্ষা", cheshireOak:"Cheshire Oak সাক্ষাৎকার",
-    ongoingProjects:"চলমান প্রকল্প", completableOpen:"সম্পন্নযোগ্য, এখনও খোলা",
-    prayerPlaceholder:"⚠ নামাজের সময় আনুমানিক — সেটিংসে সঠিক সময় চালু করুন ⚙️",
-    weekView:"সাপ্তাহিক দৃশ্য",
+    finishedDeleted:"সম্পন্ন ও মুছে ফেলা",
   },
   es:{
     appName:"The Docket", daily:"Rutina Diaria", allTasks:"Todas las Tareas",
-    week:"Semana", archive:"Terminadas y Eliminadas", settings:"Ajustes",
+    week:"Semana", archive:"Terminadas y Eliminadas",
     newTask:"Nueva Tarea", save:"Guardar", cancel:"Cancelar", addStep:"Añadir",
     prayerSetting:"Horarios de oración precisos",
-    prayerDesc:"Usa tu ubicación para obtener los horarios reales",
     prayerLoading:"📍 Obteniendo tu ubicación…",
     prayerDone:"✓ Horarios de oración actualizados",
     prayerDenied:"⚠ El acceso a la ubicación está bloqueado. Actívalo en los ajustes del sitio en tu navegador.",
@@ -303,35 +248,26 @@ const T:Record<Lang,Record<string,string>> = {
     prayerUnavailable:"⚠ Tu dispositivo no pudo determinar tu ubicación en este momento.",
     prayerService:"⚠ No se pudo conectar con el servicio de horarios de oración. Inténtalo en unos minutos.",
     notifSetting:"Notificaciones",
-    notifDesc:"Avisos del navegador cuando vence un elemento programado",
     darkMode:"Modo oscuro",
-    darkDesc:"Cambiar a un tema oscuro",
     language:"Idioma",
-    languageDesc:"Cambiar el idioma de la aplicación",
     nothingToday:"Nada programado para hoy.",
     nothingHere:"Nada por aquí.",
     allOpen:"Todo Abierto", ongoing:"En curso", completable:"Completable",
     category:"Categoría", show:"Mostrar", overdue:"ATRASADO",
     urgent:"urgente", high:"alta", medium:"media",
     chatPlaceholder:"p. ej. añade una tarea para repasar",
-    chatWelcome:"Dime qué añadir o cambiar — te haré preguntas para acertar.",
-    send:"Enviar", working:"Trabajando en ello…",
+    working:"Trabajando en ello…",
     steps:"Pasos", taskTitle:"Tarea", notes:"Notas",
     dueDate:"Fecha límite", nature:"Tipo", recurring:"Recurrente",
     oneOff:"Puntual", daily2:"Diaria", weekly:"Semanal",
     milestone:"Completable", ongoing2:"Continua",
-    finishedDeleted:"Terminadas y Eliminadas", restore:"↺",
-    landLawExam:"Examen de Derecho Inmobiliario", cheshireOak:"Entrevista en Cheshire Oak",
-    ongoingProjects:"Proyectos en curso", completableOpen:"Completables, aún abiertas",
-    prayerPlaceholder:"⚠ Los horarios de oración son aproximados — actívalos en Ajustes ⚙️",
-    weekView:"Vista Semanal",
+    finishedDeleted:"Terminadas y Eliminadas",
   },
   hi:{
     appName:"The Docket", daily:"दैनिक दिनचर्या", allTasks:"सभी कार्य",
-    week:"सप्ताह", archive:"पूर्ण और हटाए गए", settings:"सेटिंग्स",
+    week:"सप्ताह", archive:"पूर्ण और हटाए गए",
     newTask:"नया कार्य", save:"सहेजें", cancel:"रद्द करें", addStep:"जोड़ें",
     prayerSetting:"सटीक नमाज़ के समय",
-    prayerDesc:"आपके स्थान से वास्तविक नमाज़ के समय लाता है",
     prayerLoading:"📍 आपका स्थान पता किया जा रहा है…",
     prayerDone:"✓ आज के नमाज़ के समय अपडेट हो गए",
     prayerDenied:"⚠ स्थान की अनुमति अवरुद्ध है। इसे अपने ब्राउज़र की साइट सेटिंग्स में चालू करें।",
@@ -339,35 +275,26 @@ const T:Record<Lang,Record<string,string>> = {
     prayerUnavailable:"⚠ आपका डिवाइस इस समय स्थान तय नहीं कर सका।",
     prayerService:"⚠ नमाज़ समय सेवा से संपर्क नहीं हो सका। थोड़ी देर बाद कोशिश करें।",
     notifSetting:"सूचनाएँ",
-    notifDesc:"निर्धारित समय आने पर ब्राउज़र अलर्ट",
     darkMode:"डार्क मोड",
-    darkDesc:"गहरे रंग की थीम पर जाएँ",
     language:"भाषा",
-    languageDesc:"ऐप की भाषा बदलें",
     nothingToday:"आज कुछ निर्धारित नहीं है।",
     nothingHere:"यहाँ कुछ नहीं है।",
     allOpen:"सभी खुले", ongoing:"जारी", completable:"पूर्ण होने योग्य",
     category:"श्रेणी", show:"दिखाएँ", overdue:"विलंबित",
     urgent:"अत्यावश्यक", high:"उच्च", medium:"मध्यम",
     chatPlaceholder:"उदा. दोहराने के लिए कार्य जोड़ें",
-    chatWelcome:"बताइए क्या जोड़ना या बदलना है — मैं सही करने के लिए सवाल पूछूँगा।",
-    send:"भेजें", working:"काम जारी है…",
+    working:"काम जारी है…",
     steps:"चरण", taskTitle:"कार्य", notes:"नोट्स",
     dueDate:"नियत तारीख", nature:"प्रकार", recurring:"आवर्ती",
     oneOff:"एक बार", daily2:"दैनिक", weekly:"साप्ताहिक",
     milestone:"पूर्ण होने योग्य", ongoing2:"निरंतर",
-    finishedDeleted:"पूर्ण और हटाए गए", restore:"↺",
-    landLawExam:"भूमि कानून परीक्षा", cheshireOak:"Cheshire Oak साक्षात्कार",
-    ongoingProjects:"जारी परियोजनाएँ", completableOpen:"पूर्ण होने योग्य, अब भी खुले",
-    prayerPlaceholder:"⚠ नमाज़ के समय अनुमानित हैं — सेटिंग्स में सटीक समय चालू करें ⚙️",
-    weekView:"साप्ताहिक दृश्य",
+    finishedDeleted:"पूर्ण और हटाए गए",
   },
   pt:{
     appName:"The Docket", daily:"Rotina Diária", allTasks:"Todas as Tarefas",
-    week:"Semana", archive:"Concluídas e Excluídas", settings:"Configurações",
+    week:"Semana", archive:"Concluídas e Excluídas",
     newTask:"Nova Tarefa", save:"Salvar", cancel:"Cancelar", addStep:"Adicionar",
     prayerSetting:"Horários de oração precisos",
-    prayerDesc:"Usa sua localização para obter os horários reais",
     prayerLoading:"📍 Obtendo sua localização…",
     prayerDone:"✓ Horários de oração atualizados",
     prayerDenied:"⚠ O acesso à localização está bloqueado. Ative-o nas configurações do site no seu navegador.",
@@ -375,35 +302,26 @@ const T:Record<Lang,Record<string,string>> = {
     prayerUnavailable:"⚠ Seu dispositivo não conseguiu determinar sua localização agora.",
     prayerService:"⚠ Não foi possível acessar o serviço de horários de oração. Tente em instantes.",
     notifSetting:"Notificações",
-    notifDesc:"Alertas do navegador quando um item agendado vence",
     darkMode:"Modo escuro",
-    darkDesc:"Mudar para um tema escuro",
     language:"Idioma",
-    languageDesc:"Alterar o idioma do aplicativo",
     nothingToday:"Nada agendado para hoje.",
     nothingHere:"Nada aqui.",
     allOpen:"Tudo Aberto", ongoing:"Em andamento", completable:"Concluível",
     category:"Categoria", show:"Mostrar", overdue:"ATRASADO",
     urgent:"urgente", high:"alta", medium:"média",
     chatPlaceholder:"ex. adicione uma tarefa para revisar",
-    chatWelcome:"Diga o que adicionar ou mudar — farei perguntas para acertar.",
-    send:"Enviar", working:"Trabalhando nisso…",
+    working:"Trabalhando nisso…",
     steps:"Etapas", taskTitle:"Tarefa", notes:"Notas",
     dueDate:"Data limite", nature:"Tipo", recurring:"Recorrente",
     oneOff:"Única", daily2:"Diária", weekly:"Semanal",
     milestone:"Concluível", ongoing2:"Contínua",
-    finishedDeleted:"Concluídas e Excluídas", restore:"↺",
-    landLawExam:"Prova de Direito Imobiliário", cheshireOak:"Entrevista em Cheshire Oak",
-    ongoingProjects:"Projetos em andamento", completableOpen:"Concluíveis, ainda abertas",
-    prayerPlaceholder:"⚠ Os horários de oração são aproximados — ative-os nas Configurações ⚙️",
-    weekView:"Visão Semanal",
+    finishedDeleted:"Concluídas e Excluídas",
   },
   ru:{
     appName:"The Docket", daily:"Ежедневный распорядок", allTasks:"Все задачи",
-    week:"Неделя", archive:"Завершённые и удалённые", settings:"Настройки",
+    week:"Неделя", archive:"Завершённые и удалённые",
     newTask:"Новая задача", save:"Сохранить", cancel:"Отмена", addStep:"Добавить",
     prayerSetting:"Точное время молитв",
-    prayerDesc:"Определяет время молитв по вашему местоположению",
     prayerLoading:"📍 Определяем ваше местоположение…",
     prayerDone:"✓ Время молитв обновлено на сегодня",
     prayerDenied:"⚠ Доступ к геолокации заблокирован. Включите его в настройках сайта в браузере.",
@@ -411,35 +329,26 @@ const T:Record<Lang,Record<string,string>> = {
     prayerUnavailable:"⚠ Устройство не смогло определить ваше местоположение.",
     prayerService:"⚠ Не удалось связаться со службой времени молитв. Попробуйте позже.",
     notifSetting:"Уведомления",
-    notifDesc:"Оповещения браузера, когда наступает срок запланированного пункта",
     darkMode:"Тёмная тема",
-    darkDesc:"Переключиться на тёмное оформление",
     language:"Язык",
-    languageDesc:"Изменить язык приложения",
     nothingToday:"На сегодня ничего не запланировано.",
     nothingHere:"Здесь пусто.",
     allOpen:"Все открытые", ongoing:"В процессе", completable:"Завершаемые",
     category:"Категория", show:"Показать", overdue:"ПРОСРОЧЕНО",
     urgent:"срочно", high:"высокий", medium:"средний",
     chatPlaceholder:"напр. добавить задачу для повторения",
-    chatWelcome:"Скажите, что добавить или изменить — я уточню детали.",
-    send:"Отправить", working:"Работаю…",
+    working:"Работаю…",
     steps:"Шаги", taskTitle:"Задача", notes:"Заметки",
     dueDate:"Срок", nature:"Тип", recurring:"Повторяющаяся",
     oneOff:"Разовая", daily2:"Ежедневно", weekly:"Еженедельно",
     milestone:"Завершаемая", ongoing2:"Постоянная",
-    finishedDeleted:"Завершённые и удалённые", restore:"↺",
-    landLawExam:"Экзамен по земельному праву", cheshireOak:"Собеседование в Cheshire Oak",
-    ongoingProjects:"Текущие проекты", completableOpen:"Завершаемые, ещё открытые",
-    prayerPlaceholder:"⚠ Время молитв приблизительное — включите точное в Настройках ⚙️",
-    weekView:"Обзор недели",
+    finishedDeleted:"Завершённые и удалённые",
   },
   zh:{
     appName:"The Docket", daily:"每日例程", allTasks:"全部任务",
-    week:"本周", archive:"已完成与已删除", settings:"设置",
+    week:"本周", archive:"已完成与已删除",
     newTask:"新建任务", save:"保存", cancel:"取消", addStep:"添加",
     prayerSetting:"精确礼拜时间",
-    prayerDesc:"根据你的位置获取真实礼拜时间",
     prayerLoading:"📍 正在获取你的位置…",
     prayerDone:"✓ 今日礼拜时间已更新",
     prayerDenied:"⚠ 位置访问已被阻止。请在浏览器的网站设置中开启。",
@@ -447,28 +356,20 @@ const T:Record<Lang,Record<string,string>> = {
     prayerUnavailable:"⚠ 你的设备目前无法确定位置。",
     prayerService:"⚠ 无法连接礼拜时间服务。请稍后再试。",
     notifSetting:"通知",
-    notifDesc:"计划事项到时间时的浏览器提醒",
     darkMode:"深色模式",
-    darkDesc:"切换到深色配色",
     language:"语言",
-    languageDesc:"更改应用显示语言",
     nothingToday:"今天没有安排。",
     nothingHere:"这里空空如也。",
     allOpen:"全部进行中", ongoing:"持续", completable:"可完成",
     category:"分类", show:"显示", overdue:"已逾期",
     urgent:"紧急", high:"高", medium:"中",
     chatPlaceholder:"例如：添加一个复习任务",
-    chatWelcome:"告诉我要添加或修改什么 — 我会提问以确保准确。",
-    send:"发送", working:"处理中…",
+    working:"处理中…",
     steps:"步骤", taskTitle:"任务", notes:"备注",
     dueDate:"截止日期", nature:"类型", recurring:"重复",
     oneOff:"一次性", daily2:"每日", weekly:"每周",
     milestone:"可完成", ongoing2:"持续进行",
-    finishedDeleted:"已完成与已删除", restore:"↺",
-    landLawExam:"土地法考试", cheshireOak:"Cheshire Oak 面试",
-    ongoingProjects:"进行中的项目", completableOpen:"可完成且未结束",
-    prayerPlaceholder:"⚠ 礼拜时间为估算值 — 请在设置中启用精确时间 ⚙️",
-    weekView:"周视图",
+    finishedDeleted:"已完成与已删除",
   },
 };
 
@@ -500,6 +401,49 @@ function langFont(code:Lang):string{
   if(code==="hi"||code==="bn") return "'Nirmala UI','Noto Sans',sans-serif";
   if(code==="zh") return "'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif";
   return "inherit";
+}
+
+// BCP-47 tag per UI language, so every date the app prints gets its month and
+// weekday names from the platform instead of a hardcoded English list. Region
+// subtags pick the largest speaker population where the language spans several
+// (bn-BD over bn-IN, pt-BR over pt-PT, zh-CN to match the Simplified strings).
+//
+// Arabic is deliberately plain "ar" and not "ar-SA": CLDR gives ar-SA the
+// islamic-umalqura calendar, so Intl would render Gregorian dates as Hijri
+// ones. Plain "ar" stays Gregorian with Arabic month names, which is what the
+// rest of the app's date logic assumes.
+const LANG_LOCALES:Record<Lang,string> = {
+  en:"en-GB", ar:"ar", fr:"fr-FR", tr:"tr-TR", ur:"ur-PK",
+  bn:"bn-BD", es:"es-ES", hi:"hi-IN", pt:"pt-BR", ru:"ru-RU", zh:"zh-CN"
+};
+function localeFor(code:Lang):string{ return LANG_LOCALES[code]??"en-GB"; }
+
+// Month names and Monday-first weekday abbreviations, built from Intl rather
+// than a hardcoded English list. Memoised per locale: constructing a
+// DateTimeFormat is the expensive part and both calendar grids rebuild these
+// on every render.
+const monthNameCache=new Map<string,string[]>();
+function monthNames(locale:string):string[]{
+  const hit=monthNameCache.get(locale);
+  if(hit) return hit;
+  const f=new Intl.DateTimeFormat(locale,{month:"long"});
+  // Noon UTC on the 15th — far enough from either boundary that no timezone
+  // offset can roll the date into a neighbouring month.
+  const v=Array.from({length:12},(_,m)=>f.format(new Date(Date.UTC(2021,m,15,12))));
+  monthNameCache.set(locale,v);
+  return v;
+}
+const dowNameCache=new Map<string,string[]>();
+function dowNamesMonFirst(locale:string):string[]{
+  const hit=dowNameCache.get(locale);
+  if(hit) return hit;
+  const f=new Intl.DateTimeFormat(locale,{weekday:"short"});
+  // 1 March 2021 was a Monday, so seven consecutive days from it give Mon..Sun
+  // — the order both calendar grids lay their columns out in. Noon UTC again,
+  // or a negative offset would shift the whole week back by a day.
+  const v=Array.from({length:7},(_,i)=>f.format(new Date(Date.UTC(2021,2,1+i,12))));
+  dowNameCache.set(locale,v);
+  return v;
 }
 
 // ── Theme colours (light + dark) ──────────────────────────────────────────────
@@ -693,9 +637,9 @@ function daysUntil(d:string){
   if(!d)return null;
   return Math.round((new Date(d).getTime()-new Date(todayISO()).getTime())/86400000);
 }
-function fmtDate(d:string){
+function fmtDate(d:string,locale:string="en-GB"){
   if(!d)return "";
-  return new Date(d+"T00:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+  return new Date(d+"T00:00:00").toLocaleDateString(locale,{weekday:"short",day:"numeric",month:"short"});
 }
 function computeStreak(r:Routine){
   let streak=0;
@@ -793,7 +737,7 @@ function Checkbox({checked,onClick,small}:{checked:boolean;onClick:()=>void;smal
 
 // ── Searchable Category Picker ────────────────────────────────────────────────
 function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
-  const{dark}=useApp();
+  const{dark,t}=useApp();
   const C=getC(dark);
   const[search,setSearch]=useState("");
   const[open,setOpen]=useState(false);
@@ -846,7 +790,7 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
                   outline:"none",fontSize:13,background:C.surface,color:C.navy,fontFamily:"inherit"}}/>
               <button onClick={()=>{if(customVal.trim()){onChange(customVal.trim());setOpen(false);setCustomVal("");setCustomMode(false);}}}
                 style={{background:C.primary,color:"white",border:"none",borderRadius:7,
-                  padding:"0 12px",fontSize:12,fontWeight:700,cursor:"pointer"}}>Add</button>
+                  padding:"0 12px",fontSize:12,fontWeight:700,cursor:"pointer"}}>{t("addStep")}</button>
             </div>
           )}
           <div style={{maxHeight:240,overflowY:"auto"}}>
@@ -882,10 +826,9 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
 // <input type="date"> widget. Adapts the same month-grid math CalendarView
 // uses (firstDay/daysInMonth/startDow, 7-col grid with empty offset cells)
 // but without CalendarView's task/event overlay — this only needs day cells.
-const DP_MONTH_NAMES=["January","February","March","April","May","June","July","August","September","October","November","December"];
-const DP_DOW=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-
 function DatePicker({value,onChange,dark}:{value:string;onChange:(v:string)=>void;dark:boolean}){
+  const{lang}=useApp();
+  const locale=localeFor(lang);
   const C=getC(dark);
   const[open,setOpen]=useState(false);
   const parsed=value?new Date(value+"T12:00:00"):null;
@@ -904,7 +847,7 @@ function DatePicker({value,onChange,dark}:{value:string;onChange:(v:string)=>voi
   }
 
   const displayLabel=parsed
-    ?parsed.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",year:"numeric"})
+    ?parsed.toLocaleDateString(locale,{weekday:"short",day:"numeric",month:"short",year:"numeric"})
     :"Select a date";
 
   return(
@@ -935,7 +878,7 @@ function DatePicker({value,onChange,dark}:{value:string;onChange:(v:string)=>voi
               style={{width:28,height:28,borderRadius:8,border:`1px solid ${C.border}`,
                 background:C.surface2,cursor:"pointer",fontSize:14,color:C.navy}}>‹</button>
             <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:13,color:C.navy}}>
-              {DP_MONTH_NAMES[viewMonth]} {viewYear}
+              {monthNames(locale)[viewMonth]} {viewYear}
             </span>
             <button onClick={()=>{if(viewMonth===11){setViewMonth(0);setViewYear(y=>y+1);}else setViewMonth(m=>m+1);}}
               style={{width:28,height:28,borderRadius:8,border:`1px solid ${C.border}`,
@@ -943,8 +886,10 @@ function DatePicker({value,onChange,dark}:{value:string;onChange:(v:string)=>voi
           </div>
           {/* Day-of-week headers */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",marginBottom:4}}>
-            {DP_DOW.map(d=>(
-              <div key={d} style={{textAlign:"center",fontSize:10,fontWeight:700,
+            {/* Keyed by index, not by name — some locales abbreviate two
+                weekdays identically, which would collide as React keys. */}
+            {dowNamesMonFirst(locale).map((d,i)=>(
+              <div key={i} style={{textAlign:"center",fontSize:10,fontWeight:700,
                 color:C.muted,padding:"4px 0"}}>{d}</div>
             ))}
           </div>
@@ -987,7 +932,7 @@ function TaskModal({initial,onClose,onSave}:{
   initial?:Partial<Task>;onClose:()=>void;
   onSave:(t:Omit<Task,"id"|"done"|"deleted"|"checklist">)=>void;
 }){
-  const{dark}=useApp();
+  const{dark,t}=useApp();
   const C=getC(dark);
   const[title,setTitle]=useState(initial?.title??"");
   const[category,setCategory]=useState<Category>(initial?.category??"study");
@@ -998,22 +943,22 @@ function TaskModal({initial,onClose,onSave}:{
   const[notes,setNotes]=useState(initial?.notes??"");
 
   const priorityOpts=[
-    {v:"urgent",label:"Urgent",icon:"ti-flame",color:"#D94F3D",bg:"rgba(217,79,61,0.1)"},
-    {v:"high",label:"High",icon:"ti-arrow-up",color:"#C9A84C",bg:"rgba(201,168,76,0.1)"},
-    {v:"medium",label:"Medium",icon:"ti-minus",color:"#4C5FD5",bg:"rgba(76,95,213,0.1)"},
+    {v:"urgent",label:t("urgent"),icon:"ti-flame",color:"#D94F3D",bg:"rgba(217,79,61,0.1)"},
+    {v:"high",label:t("high"),icon:"ti-arrow-up",color:"#C9A84C",bg:"rgba(201,168,76,0.1)"},
+    {v:"medium",label:t("medium"),icon:"ti-minus",color:"#4C5FD5",bg:"rgba(76,95,213,0.1)"},
   ];
   const typeOpts=[
-    {v:"milestone",label:"Completable",icon:"ti-circle-check",desc:"Has a clear end"},
-    {v:"ongoing",label:"Ongoing",icon:"ti-repeat",desc:"No fixed finish"},
+    {v:"milestone",label:t("milestone"),icon:"ti-circle-check",desc:"Has a clear end"},
+    {v:"ongoing",label:t("ongoing2"),icon:"ti-repeat",desc:"No fixed finish"},
   ];
   const recurringOpts=[
-    {v:"",label:"One-off"},
-    {v:"daily",label:"Daily"},
+    {v:"",label:t("oneOff")},
+    {v:"daily",label:t("daily2")},
     {v:"every_2_days",label:"Every 2 days"},
     {v:"every_3_days",label:"Every 3 days"},
     {v:"weekdays",label:"Weekdays"},
     {v:"weekends",label:"Weekends"},
-    {v:"weekly",label:"Weekly"},
+    {v:"weekly",label:t("weekly")},
     {v:"biweekly",label:"Bi-weekly"},
     {v:"monthly",label:"Monthly"},
   ];
@@ -1047,7 +992,7 @@ function TaskModal({initial,onClose,onSave}:{
             </div>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
               fontSize:17,color:C.navy}}>
-              {initial?.id?"Edit Task":"New Task"}
+              {initial?.id?"Edit Task":t("newTask")}
             </p>
           </div>
           <button onClick={onClose} style={{background:"none",border:"none",
@@ -1061,7 +1006,7 @@ function TaskModal({initial,onClose,onSave}:{
           {/* Task title */}
           <div style={{marginBottom:16}}>
             <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
-              textTransform:"uppercase",marginBottom:8}}>Task name</p>
+              textTransform:"uppercase",marginBottom:8}}>{t("taskTitle")}</p>
             <input value={title} onChange={e=>setTitle(e.target.value)}
               placeholder="What needs to be done?"
               autoFocus
@@ -1074,7 +1019,7 @@ function TaskModal({initial,onClose,onSave}:{
           {/* Category */}
           <div style={{marginBottom:16}}>
             <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
-              textTransform:"uppercase",marginBottom:8}}>Category</p>
+              textTransform:"uppercase",marginBottom:8}}>{t("category")}</p>
             <CategoryPicker value={category} onChange={setCategory}/>
           </div>
 
@@ -1091,7 +1036,11 @@ function TaskModal({initial,onClose,onSave}:{
                     display:"flex",flexDirection:"column",alignItems:"center",gap:4,
                     transition:"all 0.15s"}}>
                   <i className={`ti ${p.icon}`} style={{fontSize:18,color:priority===p.v?p.color:C.muted}} aria-hidden="true"/>
-                  <span style={{fontSize:11,fontWeight:700,color:priority===p.v?p.color:C.muted}}>{p.label}</span>
+                  {/* The priority keys are stored lowercase (they double as
+                      inline words elsewhere); capitalize is a no-op in scripts
+                      without letter case, so it is safe across all eleven. */}
+                  <span style={{fontSize:11,fontWeight:700,textTransform:"capitalize",
+                    color:priority===p.v?p.color:C.muted}}>{p.label}</span>
                 </button>
               ))}
             </div>
@@ -1100,7 +1049,7 @@ function TaskModal({initial,onClose,onSave}:{
           {/* Nature/Type */}
           <div style={{marginBottom:16}}>
             <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
-              textTransform:"uppercase",marginBottom:8}}>Nature</p>
+              textTransform:"uppercase",marginBottom:8}}>{t("nature")}</p>
             <div style={{display:"flex",gap:8}}>
               {typeOpts.map(tp=>(
                 <button key={tp.v} onClick={()=>setType(tp.v as TaskType)}
@@ -1122,7 +1071,7 @@ function TaskModal({initial,onClose,onSave}:{
           {/* Recurring */}
           <div style={{marginBottom:16}}>
             <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
-              textTransform:"uppercase",marginBottom:8}}>Repeats</p>
+              textTransform:"uppercase",marginBottom:8}}>{t("recurring")}</p>
             <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
               {recurringOpts.map(r=>(
                 <button key={r.v} onClick={()=>setRecurring(r.v)}
@@ -1141,14 +1090,14 @@ function TaskModal({initial,onClose,onSave}:{
           {/* Due date */}
           <div style={{marginBottom:16}}>
             <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
-              textTransform:"uppercase",marginBottom:8}}>Due date</p>
+              textTransform:"uppercase",marginBottom:8}}>{t("dueDate")}</p>
             <DatePicker value={date} onChange={setDate} dark={dark}/>
           </div>
 
           {/* Notes */}
           <div style={{marginBottom:4}}>
             <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
-              textTransform:"uppercase",marginBottom:8}}>Notes <span style={{fontWeight:400,textTransform:"none",letterSpacing:0}}>(optional)</span></p>
+              textTransform:"uppercase",marginBottom:8}}>{t("notes")} <span style={{fontWeight:400,textTransform:"none",letterSpacing:0}}>(optional)</span></p>
             <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={2}
               placeholder="Any details worth remembering…"
               style={{...inp,resize:"vertical"}}
@@ -1167,7 +1116,7 @@ function TaskModal({initial,onClose,onSave}:{
               transition:"all 0.15s"}}
             onMouseEnter={e=>{e.currentTarget.style.borderColor=C.primary;e.currentTarget.style.color=C.primary;}}
             onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.muted;}}>
-            Cancel
+            {t("cancel")}
           </button>
           <button onClick={()=>{if(!title.trim())return;
             onSave({title,category,priority,type,date,time:"",recurring,notes});onClose();}}
@@ -1194,7 +1143,8 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
   onAddStep:(t:string)=>void;onToggleStep:(id:number)=>void;
   onRemoveStep:(id:number)=>void;isArchive?:boolean;onRestore?:()=>void;
 }){
-  const{dark}=useApp();
+  const{dark,lang,t}=useApp();
+  const locale=localeFor(lang);
   const C=getC(dark);
   const[expanded,setExpanded]=useState(false);
   const[stepInput,setStepInput]=useState("");
@@ -1239,11 +1189,11 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
           {task.done&&!task.deleted&&<span style={{fontSize:10,fontWeight:600,padding:"3px 8px",
             borderRadius:7,background:C.sageSoft,color:C.sage}}>✓ Completed</span>}
           {task.type==="ongoing"&&<span style={{fontSize:10,fontWeight:600,padding:"3px 8px",
-            borderRadius:7,background:"#E4E9F9",color:C.primary}}>◆ ONGOING</span>}
+            borderRadius:7,background:"#E4E9F9",color:C.primary}}>◆ {t("ongoing")}</span>}
           {task.date&&<span style={{fontSize:10,fontWeight:600,padding:"3px 8px",borderRadius:7,
             background:overdue?C.urgentSoft:C.surface2,
             color:overdue?C.urgent:C.muted}}>
-            {overdue?"OVERDUE · ":""}{fmtDate(task.date)}{task.time?` · ${task.time}`:""}
+            {overdue?`${t("overdue")} · `:""}{fmtDate(task.date,locale)}{task.time?` · ${task.time}`:""}
           </span>}
           {task.recurring&&<span style={{fontSize:10,fontWeight:600,padding:"3px 8px",
             borderRadius:7,background:C.sageSoft,color:C.sage}}>{task.recurring}</span>}
@@ -1256,7 +1206,7 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
             {cl.length>0&&<span style={{background:"#E4E9F9",color:C.primary,
               padding:"2px 7px",borderRadius:6,fontFamily:"monospace",fontSize:9.5}}>
               {clDone}/{cl.length}</span>}
-            {expanded?"▲":"▼"} Steps
+            {expanded?"▲":"▼"} {t("steps")}
           </button>
           {expanded&&<div style={{marginTop:7,background:C.surface2,borderRadius:10,padding:"9px 11px"}}>
             {cl.map(s=>(
@@ -1278,7 +1228,7 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
               <button onClick={()=>{if(stepInput.trim()){onAddStep(stepInput.trim());setStepInput("");}}}
                 style={{background:C.navy,color:"white",border:"none",
                   padding:"0 11px",borderRadius:7,fontSize:11.5,fontWeight:600,cursor:"pointer"}}>
-                Add
+                {t("addStep")}
               </button>
             </div>
           </div>}
@@ -2414,6 +2364,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
   subPeriodEnd?:string|null;
   subTier?:string|null;
 }){
+  const locale=localeFor(useApp().lang);
   const C=getC(dark);
   const[authStatus,setAuthStatus]=useState<"idle"|"loading"|"success"|"error"|"confirm">("idle");
   const[authMsg,setAuthMsg]=useState("");
@@ -2697,7 +2648,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                 <p style={{fontSize:11.5,color:C.muted}}>
                   {isPro
                     ?(subPeriodEnd
-                        ?`Renews ${new Date(subPeriodEnd).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})}`
+                        ?`Renews ${new Date(subPeriodEnd).toLocaleDateString(locale,{day:"numeric",month:"long",year:"numeric"})}`
                         :"Active subscription")
                     :"Upgrade for unlimited Opus access and more"}
                 </p>
@@ -2852,7 +2803,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                     border:`1px solid ${C.border}`}}>
                     <div style={{flex:1,minWidth:0}}>
                       <p style={{fontSize:12,color:C.navy,lineHeight:1.4}}>{m.content}</p>
-                      <p style={{fontSize:10,color:C.muted2,marginTop:3}}>{formatConversationTime(m.created_at)}</p>
+                      <p style={{fontSize:10,color:C.muted2,marginTop:3}}>{formatConversationTime(m.created_at,locale)}</p>
                     </div>
                     <button onClick={()=>handleDeleteMemory(m.id)} disabled={deletingMemoryId===m.id}
                       title="Delete memory"
@@ -3247,7 +3198,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
 
 // ── All Tasks Sidebar ────────────────────────────────────────────────────────
 function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFilter:(f:Filter)=>void;}){
-  const{dark}=useApp();
+  const{dark,t}=useApp();
   const C=getC(dark);
   const open=tasks.filter(t=>!t.done&&!t.deleted);
   const archived=tasks.filter(t=>t.done||t.deleted);
@@ -3271,14 +3222,14 @@ function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFil
   return(
     <div className="glass" style={{borderRadius:18,padding:12,height:"fit-content"}}>
       <p style={{fontSize:10,fontWeight:700,letterSpacing:1.5,color:C.muted2,
-        textTransform:"uppercase",padding:"6px 10px 6px"}}>Show</p>
-      <Btn f="all" label="All Open" count={open.length}/>
-      <Btn f="ongoing" label="Ongoing" count={open.filter(t=>t.type==="ongoing").length}/>
-      <Btn f="milestone" label="Completable" count={open.filter(t=>t.type==="milestone").length}/>
-      <Btn f="done" label="Finished & Deleted" count={archived.length}/>
+        textTransform:"uppercase",padding:"6px 10px 6px"}}>{t("show")}</p>
+      <Btn f="all" label={t("allOpen")} count={open.length}/>
+      <Btn f="ongoing" label={t("ongoing")} count={open.filter(x=>x.type==="ongoing").length}/>
+      <Btn f="milestone" label={t("completable")} count={open.filter(x=>x.type==="milestone").length}/>
+      <Btn f="done" label={t("finishedDeleted")} count={archived.length}/>
       <div style={{height:1,background:C.border,margin:"6px 4px"}}/>
       <p style={{fontSize:10,fontWeight:700,letterSpacing:1.5,color:C.muted2,
-        textTransform:"uppercase",padding:"6px 10px 6px"}}>Category</p>
+        textTransform:"uppercase",padding:"6px 10px 6px"}}>{t("category")}</p>
       <div style={{maxHeight:260,overflowY:"auto",paddingRight:2}}>
         {catEntries.map(([k,v])=>(
           <Btn key={k} f={k as Filter} label={v.label} count={open.filter(t=>t.category===k).length}/>
@@ -3590,11 +3541,12 @@ async function getAuthHeader():Promise<Record<string,string>>{
   return session?.access_token?{Authorization:`Bearer ${session.access_token}`}:{};
 }
 
-// "2 hours ago" for anything within the last day, otherwise a short date —
-// matches the en-GB day-then-month convention used everywhere else in this
-// app (fmtDate, the calendar views, etc.), with the year added only when
-// it isn't the current one.
-function formatConversationTime(iso:string):string{
+// "2 hours ago" for anything within the last day, otherwise a short date in
+// the caller's locale — the same source every other date in the app now uses
+// (fmtDate, the calendar views), with the year added only when it isn't the
+// current one. The relative half is still English; it belongs with the rest
+// of the untranslated chat strings, not here.
+function formatConversationTime(iso:string,locale:string="en-GB"):string{
   const date=new Date(iso);
   const diffMin=Math.round((Date.now()-date.getTime())/60000);
   if(diffMin<1) return "Just now";
@@ -3602,13 +3554,14 @@ function formatConversationTime(iso:string):string{
   const diffHr=Math.round(diffMin/60);
   if(diffHr<24) return `${diffHr} hour${diffHr===1?"":"s"} ago`;
   const sameYear=date.getFullYear()===new Date().getFullYear();
-  return date.toLocaleDateString("en-GB",{day:"numeric",month:"short",...(sameYear?{}:{year:"numeric"})});
+  return date.toLocaleDateString(locale,{day:"numeric",month:"short",...(sameYear?{}:{year:"numeric"})});
 }
 
 function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrentView,onAddTask}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
   user?:{id?:string}|null;isPro?:boolean;tier?:string|null;
   currentView:View;setCurrentView:(v:View)=>void;onAddTask:()=>void;}){
-  const{dark}=useApp();
+  const{dark,t,lang}=useApp();
+  const locale=localeFor(lang);
   const C=getC(dark);
   // C.border is a near-transparent tint meant for subtle layering over
   // textured surfaces — against the input row's solid white/navy bar it reads
@@ -4065,6 +4018,9 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
     return{
       today:todayISO(),
       // Local weekday, not UTC — the server cannot infer the user timezone.
+      // Deliberately en-GB and not the UI locale: this is model input, not a
+      // label. The server prompt reasons over English weekday names, so
+      // localising it here would hand the assistant "الثلاثاء" to match on.
       weekday:new Date().toLocaleDateString("en-GB",{weekday:"long"}),
       schedule,
       tasks:tasks.filter(t=>!t.deleted&&!t.done).map(t=>({id:t.id,title:t.title,
@@ -4100,7 +4056,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
     // NOT reset here, and applies to every message until the user changes it.
     const newMsgs=[...messages,{role:"user" as const,content:userMsg,
       ...(attachedImage?{imageDataUrl:attachedImage}:{})}];
-    setMessages([...newMsgs,{role:"assistant" as const,content:"Working on it…"}]);
+    setMessages([...newMsgs,{role:"assistant" as const,content:t("working")}]);
     setLoading(true);
     try{
       const authHeaders=await getAuthHeader();
@@ -4510,7 +4466,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                       <div style={{flex:1,minWidth:0}}>
                         <p style={{fontSize:12,fontWeight:600,color:C.navy,whiteSpace:"nowrap",
                           overflow:"hidden",textOverflow:"ellipsis"}}>{c.title}</p>
-                        <p style={{fontSize:10,color:C.muted}}>{formatConversationTime(c.updated_at)}</p>
+                        <p style={{fontSize:10,color:C.muted}}>{formatConversationTime(c.updated_at,locale)}</p>
                       </div>
                       <button onClick={e=>deleteConversation(c.id,e)}
                         disabled={deletingId===c.id}
@@ -4917,6 +4873,8 @@ const TYPE_STYLE:Record<string,{bg:string;color:string;icon:string}>={
 };
 
 function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:ReturnType<typeof getC>}){
+  const{lang}=useApp();
+  const locale=localeFor(lang);
   const now=new Date();
   const[viewMonth,setViewMonth]=useState(now.getMonth());
   const[viewYear,setViewYear]=useState(now.getFullYear());
@@ -4941,9 +4899,6 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
     return{iso,events,tasks:dayTasks,routineCount:dayRoutines.length};
   }
 
-  const MONTH_NAMES=["January","February","March","April","May","June","July","August","September","October","November","December"];
-  const DOW=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-
   const selData=selectedDay?getDayData(parseInt(selectedDay)):null;
 
   return(
@@ -4959,7 +4914,7 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
               backgroundImage:`linear-gradient(135deg,${C.surface},${C.surface2})`,
               boxShadow:"0 2px 6px rgba(35,42,77,0.08)"}}>‹</button>
           <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:15,color:C.navy,minWidth:130,textAlign:"center"}}>
-            {MONTH_NAMES[viewMonth]} {viewYear}
+            {monthNames(locale)[viewMonth]} {viewYear}
           </span>
           <button onClick={()=>{if(viewMonth===11){setViewMonth(0);setViewYear(y=>y+1);}else setViewMonth(m=>m+1);}}
             style={{width:32,height:32,borderRadius:8,border:`1px solid ${C.border}`,
@@ -4984,8 +4939,8 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,overflow:"hidden"}}>
         {/* Day headers */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",borderBottom:`1px solid ${C.border}`}}>
-          {DOW.map(d=>(
-            <div key={d} style={{padding:"8px 4px",textAlign:"center",fontSize:10.5,
+          {dowNamesMonFirst(locale).map((d,i)=>(
+            <div key={i} style={{padding:"8px 4px",textAlign:"center",fontSize:10.5,
               fontWeight:700,color:C.muted,background:C.surface2}}>{d}</div>
           ))}
         </div>
@@ -5045,7 +5000,7 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
           borderRadius:14,padding:"16px 18px"}}>
           <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:15,
             color:C.navy,marginBottom:10}}>
-            {new Date(selData.iso+"T12:00:00").toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}
+            {new Date(selData.iso+"T12:00:00").toLocaleDateString(locale,{weekday:"long",day:"numeric",month:"long"})}
           </p>
           {selData.events.length>0&&(
             <div style={{marginBottom:10}}>
@@ -5092,6 +5047,8 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
 
 // ── Live Clock — signature element ───────────────────────────────────────────
 function LiveClock({dark,C}:{dark:boolean;C:ReturnType<typeof getC>}){
+  const{lang,t}=useApp();
+  const locale=localeFor(lang);
   // time starts null so server-render and the client's pre-hydration render
   // are identical (both show the placeholder) — Date() is only ever evaluated
   // inside useEffect, which runs client-side only, after hydration completes.
@@ -5104,9 +5061,9 @@ function LiveClock({dark,C}:{dark:boolean;C:ReturnType<typeof getC>}){
   const hh=time?String(time.getHours()).padStart(2,"0"):"--";
   const mm=time?String(time.getMinutes()).padStart(2,"0"):"--";
   const ss=time?String(time.getSeconds()).padStart(2,"0"):"--";
-  const dateLabel=time?time.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"";
+  const dateLabel=time?time.toLocaleDateString(locale,{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"";
   const weekNum=time?String(Math.ceil((time.getDate()+new Date(time.getFullYear(),time.getMonth(),1).getDay())/7)):"–";
-  const monthShort=time?time.toLocaleDateString("en-GB",{month:"short"}):"";
+  const monthShort=time?time.toLocaleDateString(locale,{month:"short"}):"";
   return(
     <div className="glass" style={{borderRadius:20,padding:"20px 24px",marginBottom:18,
       background:dark?"rgba(0,0,0,0.1)":"rgba(255,255,255,0.05)",
@@ -5124,7 +5081,7 @@ function LiveClock({dark,C}:{dark:boolean;C:ReturnType<typeof getC>}){
       </div>
       <div style={{textAlign:"right"}}>
         <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,
-          color:C.muted2,letterSpacing:"2px",textTransform:"uppercase"}}>Week</p>
+          color:C.muted2,letterSpacing:"2px",textTransform:"uppercase"}}>{t("week")}</p>
         <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:28,
           color:C.navy,lineHeight:1,marginTop:2}}>
           {weekNum}
@@ -5605,6 +5562,7 @@ export default function Home(){
 
   const C=getC(dark);
   const dir:("ltr"|"rtl")=RTL_LANGS.includes(lang)?"rtl":"ltr";
+  const locale=localeFor(lang);
   const t=(k:string)=>T[lang]?.[k]??T.en[k]??k;
 
   useEffect(()=>{
@@ -6092,8 +6050,8 @@ export default function Home(){
       const d=new Date(start);d.setDate(start.getDate()+i);
       const key=["sun","mon","tue","wed","thu","fri","sat"][d.getDay()];
       return{key,date:d.toISOString().slice(0,10),dayNum:d.getDate(),
-        label:d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}),
-        month:d.toLocaleDateString("en-GB",{month:"short"})};
+        label:d.toLocaleDateString(locale,{day:"numeric",month:"short"}),
+        month:d.toLocaleDateString(locale,{month:"short"})};
     });
   })();
 
@@ -6387,7 +6345,7 @@ export default function Home(){
             fontSize:18,color:C.navy,letterSpacing:"-0.5px"}}>{t("appName")}</p>
           <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,
             color:C.muted,letterSpacing:"2px",textTransform:"uppercase",marginTop:2}}>
-            {clientToday?clientToday.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}):""}
+            {clientToday?clientToday.toLocaleDateString(locale,{weekday:"short",day:"numeric",month:"short"}):""}
           </p>
         </div>
         {/* Spacer matching the avatar's footprint — the settings button that
@@ -6408,12 +6366,22 @@ export default function Home(){
         <div onClick={closeAvatarCard}
           style={{position:"fixed",inset:0,zIndex:70,background:"rgba(0,0,0,0.35)",
             opacity:avatarShown?1:0,transition:`opacity ${CARD_ANIM_MS}ms ease`}}/>
-        <div style={{position:"fixed",top:AVATAR_CARD_TOP,left:20,zIndex:71,
-          width:`min(${AVATAR_CARD_WIDTH}px, calc(100vw - 40px))`,
+        {/* position:fixed opts out of the wrapper's `direction`, so the card
+            has to be told which edge to hang from. The nav's avatar flips on
+            its own — it's a flex item under direction:rtl — and without this
+            the card stayed on the left, disconnected from the button that
+            opened it. NAV_PAD, not a literal 20, so it lines up with that
+            button on both sides. */}
+        <div style={{position:"fixed",top:AVATAR_CARD_TOP,zIndex:71,
+          ...(dir==="rtl"?{right:NAV_PAD}:{left:NAV_PAD}),
+          width:`min(${AVATAR_CARD_WIDTH}px, calc(100vw - ${NAV_PAD*2}px))`,
           background:dark?"#1E2043":"#FFFFFF",
           borderRadius:16,border:`0.5px solid ${C.border}`,
           boxShadow:dark?"0 8px 32px rgba(0,0,0,0.5)":"0 8px 32px rgba(0,0,0,0.12)",
-          overflow:"hidden",transformOrigin:"top left",
+          // transform-origin has no logical keyword, so it needs the same
+          // branch: the open animation must grow out of the corner nearest
+          // the avatar, not away from it.
+          overflow:"hidden",transformOrigin:dir==="rtl"?"top right":"top left",
           opacity:avatarShown?1:0,
           transform:avatarShown?"scale(1)":"scale(0.96)",
           pointerEvents:avatarShown?"auto":"none",
@@ -6596,7 +6564,7 @@ export default function Home(){
         {currentView==="daily"&&(
           <div>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,
-              fontSize:24,color:C.navy,marginBottom:10,letterSpacing:"-0.5px"}}>Daily Routine</p>
+              fontSize:24,color:C.navy,marginBottom:10,letterSpacing:"-0.5px"}}>{t("daily")}</p>
             <LiveClock dark={dark} C={C}/>
             {/* Week day picker with arrows */}
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
@@ -6681,7 +6649,7 @@ export default function Home(){
             </div>
             <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,
               color:C.muted,marginBottom:10}}>
-              {viewedDay?.label||(clientToday?clientToday.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"}):"")}
+              {viewedDay?.label||(clientToday?clientToday.toLocaleDateString(locale,{weekday:"long",day:"numeric",month:"long"}):"")}
             </p>
 
             {(()=>{
@@ -6704,7 +6672,7 @@ export default function Home(){
                   else if(it.taskId)toggleTask(it.taskId);
                 }}/>
               )):<p style={{textAlign:"center",color:C.muted2,padding:"40px 0",
-                fontFamily:"'Space Grotesk',sans-serif",fontWeight:600}}>Nothing scheduled.</p>}
+                fontFamily:"'Space Grotesk',sans-serif",fontWeight:600}}>{t("nothingToday")}</p>}
             </div>
           </div>
         )}
@@ -6739,7 +6707,7 @@ export default function Home(){
                     isArchive={taskFilter==="done"}
                     onRestore={()=>restoreTask(t.id)}/>
                 )):<p style={{textAlign:"center",color:C.muted2,padding:"48px 0",
-                  fontFamily:"'Space Grotesk',sans-serif",fontWeight:600}}>Nothing here.</p>}
+                  fontFamily:"'Space Grotesk',sans-serif",fontWeight:600}}>{t("nothingHere")}</p>}
               </div>
             </div>
           </div>
