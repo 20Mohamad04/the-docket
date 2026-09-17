@@ -433,17 +433,36 @@ function monthNames(locale:string):string[]{
   monthNameCache.set(locale,v);
   return v;
 }
+// Which day a calendar grid's first column holds, as a JS getDay() index
+// (0=Sun). A CSS grid under direction:rtl fills its columns right-to-left, so
+// the first column is the rightmost one — and a Monday-first week therefore
+// put Monday on the right and Sunday stranded on the far left, which is not
+// how an Arabic or Urdu reader scans a week. RTL starts on Sunday so the week
+// reads Sunday→Saturday leading from the right edge.
+function weekStartDay(dir:"ltr"|"rtl"):number{ return dir==="rtl"?0:1; }
+
+// Weekday abbreviations in column order for a given start day. Paired with
+// leadingBlanks below: both take the same start day, because a header row and
+// a date grid that disagree about where the week begins is exactly the bug
+// this replaced — the labels sat one column off from the dates under them.
 const dowNameCache=new Map<string,string[]>();
-function dowNamesMonFirst(locale:string):string[]{
-  const hit=dowNameCache.get(locale);
+function dowNames(locale:string,startDay:number):string[]{
+  const key=`${locale}|${startDay}`;
+  const hit=dowNameCache.get(key);
   if(hit) return hit;
   const f=new Intl.DateTimeFormat(locale,{weekday:"short"});
-  // 1 March 2021 was a Monday, so seven consecutive days from it give Mon..Sun
-  // — the order both calendar grids lay their columns out in. Noon UTC again,
-  // or a negative offset would shift the whole week back by a day.
-  const v=Array.from({length:7},(_,i)=>f.format(new Date(Date.UTC(2021,2,1+i,12))));
-  dowNameCache.set(locale,v);
+  // 3 January 2021 was a Sunday, so offsetting from it by startDay lands on
+  // the requested first day and the seven following days run in order. Noon
+  // UTC, or a negative timezone offset shifts the whole week back by a day.
+  const v=Array.from({length:7},(_,i)=>f.format(new Date(Date.UTC(2021,0,3+startDay+i,12))));
+  dowNameCache.set(key,v);
   return v;
+}
+
+// How many empty cells precede the 1st of the month, for a week beginning on
+// startDay. The old form hardcoded the Monday case as (getDay()+6)%7.
+function leadingBlanks(firstOfMonth:Date,startDay:number):number{
+  return (firstOfMonth.getDay()-startDay+7)%7;
 }
 
 // ── Theme colours (light + dark) ──────────────────────────────────────────────
@@ -827,7 +846,7 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
 // uses (firstDay/daysInMonth/startDow, 7-col grid with empty offset cells)
 // but without CalendarView's task/event overlay — this only needs day cells.
 function DatePicker({value,onChange,dark}:{value:string;onChange:(v:string)=>void;dark:boolean}){
-  const{lang}=useApp();
+  const{lang,dir}=useApp();
   const locale=localeFor(lang);
   const C=getC(dark);
   const[open,setOpen]=useState(false);
@@ -838,7 +857,8 @@ function DatePicker({value,onChange,dark}:{value:string;onChange:(v:string)=>voi
 
   const firstDay=new Date(viewYear,viewMonth,1);
   const daysInMonth=new Date(viewYear,viewMonth+1,0).getDate();
-  const startDow=(firstDay.getDay()+6)%7; // 0=Mon
+  const weekStart=weekStartDay(dir);
+  const startDow=leadingBlanks(firstDay,weekStart);
   const monthISO=`${viewYear}-${String(viewMonth+1).padStart(2,"0")}`;
 
   function selectDay(day:number){
@@ -888,7 +908,7 @@ function DatePicker({value,onChange,dark}:{value:string;onChange:(v:string)=>voi
           <div style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",marginBottom:4}}>
             {/* Keyed by index, not by name — some locales abbreviate two
                 weekdays identically, which would collide as React keys. */}
-            {dowNamesMonFirst(locale).map((d,i)=>(
+            {dowNames(locale,weekStart).map((d,i)=>(
               <div key={i} style={{textAlign:"center",fontSize:10,fontWeight:700,
                 color:C.muted,padding:"4px 0"}}>{d}</div>
             ))}
@@ -4873,7 +4893,7 @@ const TYPE_STYLE:Record<string,{bg:string;color:string;icon:string}>={
 };
 
 function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:ReturnType<typeof getC>}){
-  const{lang}=useApp();
+  const{lang,dir}=useApp();
   const locale=localeFor(lang);
   const now=new Date();
   const[viewMonth,setViewMonth]=useState(now.getMonth());
@@ -4882,7 +4902,8 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
 
   const firstDay=new Date(viewYear,viewMonth,1);
   const daysInMonth=new Date(viewYear,viewMonth+1,0).getDate();
-  const startDow=(firstDay.getDay()+6)%7; // 0=Mon
+  const weekStart=weekStartDay(dir);
+  const startDow=leadingBlanks(firstDay,weekStart);
 
   const monthISO=`${viewYear}-${String(viewMonth+1).padStart(2,"0")}`;
 
@@ -4939,7 +4960,7 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,overflow:"hidden"}}>
         {/* Day headers */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",borderBottom:`1px solid ${C.border}`}}>
-          {dowNamesMonFirst(locale).map((d,i)=>(
+          {dowNames(locale,weekStart).map((d,i)=>(
             <div key={i} style={{padding:"8px 4px",textAlign:"center",fontSize:10.5,
               fontWeight:700,color:C.muted,background:C.surface2}}>{d}</div>
           ))}
