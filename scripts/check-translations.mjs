@@ -22,18 +22,7 @@ const src = readFileSync(SRC, "utf8");
 // Keys that are allowed to exist without a t() call. Each needs a reason —
 // an empty allowlist is the goal, so anything parked here should be a real
 // decision rather than a to-do that went quiet.
-const ALLOWED_UNUSED = {
-  // Both are content decisions, not missing wiring. The keys are translated
-  // and ready; what is unresolved is which English text they should replace.
-  save:
-    "The task modal's button reads 'Save Changes' or 'Add Task' depending on " +
-    "whether the task exists. One key cannot carry both, and 'Save Task' is " +
-    "neither. Needs a decision on the button's wording, then likely two keys.",
-  chatPlaceholder:
-    "The composer placeholder currently reads 'Ask Docket…'. This key says " +
-    "'e.g. add a task to revise Land Law' — different text with a different " +
-    "intent, so swapping one for the other is a copy change, not a fix.",
-};
+const ALLOWED_UNUSED = {};
 
 function fail(msg) {
   console.error(msg);
@@ -89,7 +78,17 @@ for (const code of langs) {
 // never counts as a use.
 const body = src.slice(0, tStart) + src.slice(tEnd);
 const used = new Set([...body.matchAll(/\bt\("(\w+)"\)/g)].map((x) => x[1]));
-const unused = enKeys.filter((k) => !used.has(k) && !(k in ALLOWED_UNUSED));
+
+// Some families are looked up dynamically — catLabel does t("cat_" + key), so
+// no literal t("cat_health") exists anywhere. Without this, 59 live keys read
+// as dead and the check cries wolf until someone stops believing it. A prefix
+// counts as used only when the source actually builds a key from it.
+const dynamicPrefixes = [...body.matchAll(/\bt\("(\w+?_)"\s*\+/g)].map((x) => x[1]);
+const isDynamic = (k) => dynamicPrefixes.some((p) => k.startsWith(p));
+
+const unused = enKeys.filter(
+  (k) => !used.has(k) && !isDynamic(k) && !(k in ALLOWED_UNUSED),
+);
 
 // An allowlist entry for a key that no longer exists is stale — it would go on
 // silently excusing nothing. Surface it rather than let it rot.

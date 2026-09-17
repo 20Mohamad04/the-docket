@@ -77,7 +77,7 @@ const T:Record<Lang,Record<string,string>> = {
   en:{
     appName:"The Docket", daily:"Daily Routine", allTasks:"All Tasks",
     week:"Week", archive:"Finished & Deleted",
-    newTask:"New Task", save:"Save Task", cancel:"Cancel", addStep:"Add",
+    newTask:"New Task", cancel:"Cancel", addStep:"Add",
     prayerSetting:"Accurate prayer times",
     prayerLoading:"📍 Fetching your location…",
     prayerDone:"✓ Prayer times updated for today",
@@ -93,18 +93,75 @@ const T:Record<Lang,Record<string,string>> = {
     allOpen:"All Open", ongoing:"Ongoing", completable:"Completable",
     category:"Category", show:"Show", overdue:"OVERDUE",
     urgent:"urgent", high:"high", medium:"medium",
-    chatPlaceholder:"e.g. add a task to revise Land Law",
     working:"Working on it…",
     steps:"Steps", taskTitle:"Task", notes:"Notes",
     dueDate:"Due / target date", nature:"Nature", recurring:"Recurring",
     oneOff:"One-off", daily2:"Daily", weekly:"Weekly",
     milestone:"Completable", ongoing2:"Ongoing",
     finishedDeleted:"Finished & Deleted",
+    calendar:"Calendar", addTask:"Add Task",
+    chatAsk:"Ask Docket…", chatHistory:"Chat history", newChat:"New chat",
+    historySignIn:"Sign in to save and view your chat history.",
+    loading:"Loading…", noConversations:"No past conversations yet.",
+    deleteConversation:"Delete conversation", close:"Close",
+    attached:"Attached", attachedPreview:"Attached preview",
+    imageAttached:"Image attached", removeImage:"Remove image",
+    attachImage:"Attach an image",
+    chooseModel:"Choose which model sends your next messages",
+    opusExhausted:"Opus credits used up this month — sent with the standard model instead.",
+    editTask:"Edit Task", saveChanges:"Save Changes", priority:"Priority",
+    taskTitlePlaceholder:"What needs to be done?", optional:"(optional)",
+    notesPlaceholder:"Any details worth remembering…",
+    typeMilestoneDesc:"Has a clear end", typeOngoingDesc:"No fixed finish",
+    every2Days:"Every 2 days", every3Days:"Every 3 days",
+    weekdays:"Weekdays", weekends:"Weekends", biweekly:"Bi-weekly", monthly:"Monthly",
+    searchOrCustom:"Search or type custom…", clickToChange:"Click to change",
+    searchCategories:"Search categories…", typeOwnCategory:"Type your own category…",
+    selectDate:"Select a date",
+    // Category labels. Prefixed so they stay visibly grouped and
+    // cannot collide with a UI key of the same name.
+    cat_health:"Health & Fitness", cat_fitness:"Fitness & Exercise", cat_nutrition:"Nutrition & Diet", cat_mental:"Mental Health",
+    cat_medical:"Medical", cat_faith:"Faith & Spirituality", cat_personal:"Personal Dev", cat_reading:"Reading & Books",
+    cat_music:"Music", cat_creative:"Creative & Arts", cat_language:"Language Learning", cat_study:"Study",
+    cat_research:"Research", cat_writing:"Writing", cat_education:"Education", cat_career:"Career",
+    cat_interview:"Interviews", cat_networking:"Networking", cat_project:"Projects", cat_hr:"HR & People",
+    cat_business:"Business", cat_side_hustle:"Side Hustle", cat_marketing:"Marketing", cat_sales:"Sales",
+    cat_design:"Design", cat_content:"Content Creation", cat_customer:"Customer Service", cat_finance:"Finance",
+    cat_trading:"Trading & Investing", cat_savings:"Savings & Goals", cat_investment:"Investments", cat_debt:"Debt & Loans",
+    cat_tax:"Tax & Accounting", cat_insurance:"Insurance", cat_subscriptions:"Subscriptions", cat_legal:"Legal",
+    cat_legal_work:"Legal Work", cat_compliance:"Compliance", cat_admin:"Admin & Housing", cat_home:"Home & DIY",
+    cat_property:"Property", cat_utilities:"Utilities & Bills", cat_vehicle:"Vehicle", cat_driving:"Driving",
+    cat_shopping:"Shopping & Errands", cat_family:"Family", cat_childcare:"Childcare", cat_pets:"Pets",
+    cat_social:"Social Life", cat_events:"Events", cat_technology:"Technology", cat_travel:"Travel & Holidays",
+    cat_volunteering:"Volunteering", cat_charity:"Charity & Giving", cat_community:"Community", cat_environment:"Environment",
+    cat_sports:"Sports", cat_cooking:"Cooking & Recipes", cat_other:"Other",
+    tasksThisDay:"Tasks this day", noEventsThisDay:"No events or tasks on this day.",
+    hasTask:"Has task", hasRoutine:"Has routine",
+    holType_public:"Public", holType_religious:"Religious",
+    holType_awareness:"Awareness", holType_cultural:"Cultural",
+    holType_islamic:"Islamic", holType_bank:"Bank",
+    // Holiday names. Only the internationally observed dates are
+    // translated; nation-specific ones keep their English names.
+    hol_newYear:"New Year's Day", hol_holocaustMemorial:"Holocaust Memorial Day",
+    hol_valentines:"Valentine's Day", hol_womensDay:"International Women's Day",
+    hol_downSyndrome:"World Down Syndrome Day", hol_nowruz:"Nowruz (Persian New Year)",
+    hol_waterDay:"World Water Day", hol_healthDay:"World Health Day",
+    hol_earthDay:"Earth Day", hol_labourDay:"International Labour Day",
+    hol_familiesDay:"International Day of Families", hol_childrensDay:"World Children's Day",
+    hol_environmentDay:"World Environment Day", hol_musicDay:"World Music Day",
+    hol_youthDay:"International Youth Day", hol_peaceDay:"International Day of Peace",
+    hol_olderPersons:"International Day of Older Persons", hol_teachersDay:"World Teachers' Day",
+    hol_mentalHealthDay:"World Mental Health Day", hol_foodDay:"World Food Day",
+    hol_aidsDay:"World AIDS Day", hol_humanRights:"Human Rights Day",
+    hol_christmas:"Christmas Day", hol_newYearsEve:"New Year's Eve",
+    hol_ramadan:"Ramadan begins (approx)", hol_eidFitr:"Eid al-Fitr (approx)",
+    hol_eidAdha:"Eid al-Adha (approx)", hol_islamicNewYear:"Islamic New Year (approx)",
+    hol_arafah:"Day of Arafah (approx)",
   },
   ar:{
     appName:"الدفتر", daily:"الروتين اليومي", allTasks:"جميع المهام",
     week:"الأسبوع", archive:"المنجزة والمحذوفة",
-    newTask:"مهمة جديدة", save:"حفظ", cancel:"إلغاء", addStep:"إضافة",
+    newTask:"مهمة جديدة", cancel:"إلغاء", addStep:"إضافة",
     prayerSetting:"أوقات الصلاة الدقيقة",
     prayerLoading:"📍 جاري تحديد موقعك…",
     prayerDone:"✓ تم تحديث أوقات الصلاة لهذا اليوم",
@@ -120,18 +177,75 @@ const T:Record<Lang,Record<string,string>> = {
     allOpen:"الكل المفتوح", ongoing:"جارٍ", completable:"قابل للإنجاز",
     category:"الفئة", show:"عرض", overdue:"متأخر",
     urgent:"عاجل", high:"مرتفع", medium:"متوسط",
-    chatPlaceholder:"مثال: أضف مهمة لمراجعة القانون",
     working:"جاري المعالجة…",
     steps:"الخطوات", taskTitle:"المهمة", notes:"ملاحظات",
     dueDate:"تاريخ الاستحقاق", nature:"الطبيعة", recurring:"متكرر",
     oneOff:"مرة واحدة", daily2:"يومياً", weekly:"أسبوعياً",
     milestone:"قابل للإنجاز", ongoing2:"مستمر",
     finishedDeleted:"المنجزة والمحذوفة",
+    calendar:"التقويم", addTask:"إضافة مهمة",
+    chatAsk:"اسأل الدفتر…", chatHistory:"سجل المحادثات", newChat:"محادثة جديدة",
+    historySignIn:"سجّل الدخول لحفظ محادثاتك وعرضها.",
+    loading:"جاري التحميل…", noConversations:"لا توجد محادثات سابقة.",
+    deleteConversation:"حذف المحادثة", close:"إغلاق",
+    attached:"مرفق", attachedPreview:"معاينة المرفق",
+    imageAttached:"تم إرفاق صورة", removeImage:"إزالة الصورة",
+    attachImage:"إرفاق صورة",
+    chooseModel:"اختر النموذج الذي سيرسل رسائلك التالية",
+    opusExhausted:"انتهى رصيد Opus هذا الشهر — تم الإرسال بالنموذج القياسي.",
+    editTask:"تعديل المهمة", saveChanges:"حفظ التغييرات", priority:"الأولوية",
+    taskTitlePlaceholder:"ما الذي يجب إنجازه؟", optional:"(اختياري)",
+    notesPlaceholder:"أي تفاصيل تستحق التذكّر…",
+    typeMilestoneDesc:"لها نهاية واضحة", typeOngoingDesc:"بلا نهاية محدّدة",
+    every2Days:"كل يومين", every3Days:"كل 3 أيام",
+    weekdays:"أيام العمل", weekends:"عطلة نهاية الأسبوع", biweekly:"كل أسبوعين", monthly:"شهريًا",
+    searchOrCustom:"ابحث أو اكتب فئة مخصّصة…", clickToChange:"اضغط للتغيير",
+    searchCategories:"ابحث في الفئات…", typeOwnCategory:"اكتب فئتك الخاصة…",
+    selectDate:"اختر تاريخًا",
+    // Category labels. Prefixed so they stay visibly grouped and
+    // cannot collide with a UI key of the same name.
+    cat_health:"الصحة واللياقة", cat_fitness:"اللياقة والتمارين", cat_nutrition:"التغذية والحمية", cat_mental:"الصحة النفسية",
+    cat_medical:"طبي", cat_faith:"الإيمان والروحانية", cat_personal:"التطوير الشخصي", cat_reading:"القراءة والكتب",
+    cat_music:"الموسيقى", cat_creative:"الإبداع والفنون", cat_language:"تعلّم اللغات", cat_study:"الدراسة",
+    cat_research:"البحث", cat_writing:"الكتابة", cat_education:"التعليم", cat_career:"المسار المهني",
+    cat_interview:"المقابلات", cat_networking:"بناء العلاقات", cat_project:"المشاريع", cat_hr:"الموارد البشرية",
+    cat_business:"الأعمال", cat_side_hustle:"عمل جانبي", cat_marketing:"التسويق", cat_sales:"المبيعات",
+    cat_design:"التصميم", cat_content:"صناعة المحتوى", cat_customer:"خدمة العملاء", cat_finance:"المالية",
+    cat_trading:"التداول والاستثمار", cat_savings:"الادخار والأهداف", cat_investment:"الاستثمارات", cat_debt:"الديون والقروض",
+    cat_tax:"الضرائب والمحاسبة", cat_insurance:"التأمين", cat_subscriptions:"الاشتراكات", cat_legal:"قانوني",
+    cat_legal_work:"عمل قانوني", cat_compliance:"الامتثال", cat_admin:"الإدارة والسكن", cat_home:"المنزل والصيانة",
+    cat_property:"العقارات", cat_utilities:"المرافق والفواتير", cat_vehicle:"المركبة", cat_driving:"القيادة",
+    cat_shopping:"التسوق والمشاوير", cat_family:"العائلة", cat_childcare:"رعاية الأطفال", cat_pets:"الحيوانات الأليفة",
+    cat_social:"الحياة الاجتماعية", cat_events:"المناسبات", cat_technology:"التقنية", cat_travel:"السفر والعطلات",
+    cat_volunteering:"العمل التطوعي", cat_charity:"الخير والتبرع", cat_community:"المجتمع", cat_environment:"البيئة",
+    cat_sports:"الرياضة", cat_cooking:"الطبخ والوصفات", cat_other:"أخرى",
+    tasksThisDay:"مهام هذا اليوم", noEventsThisDay:"لا توجد مناسبات أو مهام في هذا اليوم.",
+    hasTask:"يوجد مهمة", hasRoutine:"يوجد روتين",
+    holType_public:"رسمي", holType_religious:"ديني",
+    holType_awareness:"توعية", holType_cultural:"ثقافي",
+    holType_islamic:"إسلامي", holType_bank:"عطلة مصرفية",
+    // Holiday names. Only the internationally observed dates are
+    // translated; nation-specific ones keep their English names.
+    hol_newYear:"رأس السنة الميلادية", hol_holocaustMemorial:"اليوم العالمي لإحياء ذكرى الهولوكوست",
+    hol_valentines:"عيد الحب", hol_womensDay:"اليوم العالمي للمرأة",
+    hol_downSyndrome:"اليوم العالمي لمتلازمة داون", hol_nowruz:"النيروز (رأس السنة الفارسية)",
+    hol_waterDay:"اليوم العالمي للمياه", hol_healthDay:"يوم الصحة العالمي",
+    hol_earthDay:"يوم الأرض", hol_labourDay:"عيد العمال العالمي",
+    hol_familiesDay:"اليوم الدولي للأسر", hol_childrensDay:"اليوم العالمي للطفل",
+    hol_environmentDay:"اليوم العالمي للبيئة", hol_musicDay:"اليوم العالمي للموسيقى",
+    hol_youthDay:"اليوم الدولي للشباب", hol_peaceDay:"اليوم الدولي للسلام",
+    hol_olderPersons:"اليوم الدولي لكبار السن", hol_teachersDay:"اليوم العالمي للمعلم",
+    hol_mentalHealthDay:"اليوم العالمي للصحة النفسية", hol_foodDay:"يوم الأغذية العالمي",
+    hol_aidsDay:"اليوم العالمي للإيدز", hol_humanRights:"يوم حقوق الإنسان",
+    hol_christmas:"عيد الميلاد", hol_newYearsEve:"ليلة رأس السنة",
+    hol_ramadan:"بداية رمضان (تقريبي)", hol_eidFitr:"عيد الفطر (تقريبي)",
+    hol_eidAdha:"عيد الأضحى (تقريبي)", hol_islamicNewYear:"رأس السنة الهجرية (تقريبي)",
+    hol_arafah:"يوم عرفة (تقريبي)",
   },
   fr:{
     appName:"The Docket", daily:"Routine Quotidienne", allTasks:"Toutes les Tâches",
     week:"Semaine", archive:"Terminées & Supprimées",
-    newTask:"Nouvelle Tâche", save:"Enregistrer", cancel:"Annuler", addStep:"Ajouter",
+    newTask:"Nouvelle Tâche", cancel:"Annuler", addStep:"Ajouter",
     prayerSetting:"Heures de prière précises",
     prayerLoading:"📍 Localisation en cours…",
     prayerDone:"✓ Heures de prière mises à jour",
@@ -147,18 +261,75 @@ const T:Record<Lang,Record<string,string>> = {
     allOpen:"Tout ouvert", ongoing:"En cours", completable:"Réalisable",
     category:"Catégorie", show:"Afficher", overdue:"EN RETARD",
     urgent:"urgent", high:"élevé", medium:"moyen",
-    chatPlaceholder:"ex. ajouter une tâche pour réviser",
     working:"En cours…",
     steps:"Étapes", taskTitle:"Tâche", notes:"Notes",
     dueDate:"Date limite", nature:"Nature", recurring:"Récurrent",
     oneOff:"Ponctuel", daily2:"Quotidien", weekly:"Hebdomadaire",
     milestone:"Réalisable", ongoing2:"Continu",
     finishedDeleted:"Terminées & Supprimées",
+    calendar:"Calendrier", addTask:"Ajouter une tâche",
+    chatAsk:"Demandez à Docket…", chatHistory:"Historique des discussions", newChat:"Nouvelle discussion",
+    historySignIn:"Connectez-vous pour enregistrer et consulter votre historique.",
+    loading:"Chargement…", noConversations:"Aucune conversation pour le moment.",
+    deleteConversation:"Supprimer la conversation", close:"Fermer",
+    attached:"Pièce jointe", attachedPreview:"Aperçu de la pièce jointe",
+    imageAttached:"Image jointe", removeImage:"Retirer l'image",
+    attachImage:"Joindre une image",
+    chooseModel:"Choisissez le modèle qui enverra vos prochains messages",
+    opusExhausted:"Crédits Opus épuisés ce mois-ci — envoyé avec le modèle standard.",
+    editTask:"Modifier la tâche", saveChanges:"Enregistrer les modifications", priority:"Priorité",
+    taskTitlePlaceholder:"Qu'y a-t-il à faire ?", optional:"(facultatif)",
+    notesPlaceholder:"Des détails à retenir…",
+    typeMilestoneDesc:"A une fin claire", typeOngoingDesc:"Sans fin définie",
+    every2Days:"Tous les 2 jours", every3Days:"Tous les 3 jours",
+    weekdays:"En semaine", weekends:"Le week-end", biweekly:"Toutes les 2 semaines", monthly:"Mensuel",
+    searchOrCustom:"Rechercher ou saisir…", clickToChange:"Cliquez pour changer",
+    searchCategories:"Rechercher des catégories…", typeOwnCategory:"Saisissez votre catégorie…",
+    selectDate:"Choisir une date",
+    // Category labels. Prefixed so they stay visibly grouped and
+    // cannot collide with a UI key of the same name.
+    cat_health:"Santé & Forme", cat_fitness:"Forme & Exercice", cat_nutrition:"Nutrition & Régime", cat_mental:"Santé mentale",
+    cat_medical:"Médical", cat_faith:"Foi & Spiritualité", cat_personal:"Développement personnel", cat_reading:"Lecture & Livres",
+    cat_music:"Musique", cat_creative:"Création & Arts", cat_language:"Apprentissage des langues", cat_study:"Études",
+    cat_research:"Recherche", cat_writing:"Écriture", cat_education:"Éducation", cat_career:"Carrière",
+    cat_interview:"Entretiens", cat_networking:"Réseautage", cat_project:"Projets", cat_hr:"RH & Personnel",
+    cat_business:"Affaires", cat_side_hustle:"Activité secondaire", cat_marketing:"Marketing", cat_sales:"Ventes",
+    cat_design:"Design", cat_content:"Création de contenu", cat_customer:"Service client", cat_finance:"Finances",
+    cat_trading:"Trading & Investissement", cat_savings:"Épargne & Objectifs", cat_investment:"Investissements", cat_debt:"Dettes & Prêts",
+    cat_tax:"Impôts & Comptabilité", cat_insurance:"Assurance", cat_subscriptions:"Abonnements", cat_legal:"Juridique",
+    cat_legal_work:"Travail juridique", cat_compliance:"Conformité", cat_admin:"Admin & Logement", cat_home:"Maison & Bricolage",
+    cat_property:"Immobilier", cat_utilities:"Charges & Factures", cat_vehicle:"Véhicule", cat_driving:"Conduite",
+    cat_shopping:"Courses & Achats", cat_family:"Famille", cat_childcare:"Garde d'enfants", cat_pets:"Animaux",
+    cat_social:"Vie sociale", cat_events:"Événements", cat_technology:"Technologie", cat_travel:"Voyages & Vacances",
+    cat_volunteering:"Bénévolat", cat_charity:"Dons & Charité", cat_community:"Communauté", cat_environment:"Environnement",
+    cat_sports:"Sport", cat_cooking:"Cuisine & Recettes", cat_other:"Autre",
+    tasksThisDay:"Tâches du jour", noEventsThisDay:"Aucun événement ni tâche ce jour-là.",
+    hasTask:"Contient une tâche", hasRoutine:"Contient une routine",
+    holType_public:"Férié", holType_religious:"Religieux",
+    holType_awareness:"Sensibilisation", holType_cultural:"Culturel",
+    holType_islamic:"Islamique", holType_bank:"Férié bancaire",
+    // Holiday names. Only the internationally observed dates are
+    // translated; nation-specific ones keep their English names.
+    hol_newYear:"Jour de l'An", hol_holocaustMemorial:"Journée de la mémoire de l'Holocauste",
+    hol_valentines:"Saint-Valentin", hol_womensDay:"Journée internationale des femmes",
+    hol_downSyndrome:"Journée mondiale de la trisomie 21", hol_nowruz:"Norouz (Nouvel An persan)",
+    hol_waterDay:"Journée mondiale de l'eau", hol_healthDay:"Journée mondiale de la santé",
+    hol_earthDay:"Jour de la Terre", hol_labourDay:"Journée internationale des travailleurs",
+    hol_familiesDay:"Journée internationale des familles", hol_childrensDay:"Journée mondiale de l'enfance",
+    hol_environmentDay:"Journée mondiale de l'environnement", hol_musicDay:"Fête de la musique",
+    hol_youthDay:"Journée internationale de la jeunesse", hol_peaceDay:"Journée internationale de la paix",
+    hol_olderPersons:"Journée internationale des personnes âgées", hol_teachersDay:"Journée mondiale des enseignants",
+    hol_mentalHealthDay:"Journée mondiale de la santé mentale", hol_foodDay:"Journée mondiale de l'alimentation",
+    hol_aidsDay:"Journée mondiale du sida", hol_humanRights:"Journée des droits de l'homme",
+    hol_christmas:"Noël", hol_newYearsEve:"Réveillon du Nouvel An",
+    hol_ramadan:"Début du Ramadan (approx.)", hol_eidFitr:"Aïd el-Fitr (approx.)",
+    hol_eidAdha:"Aïd el-Adha (approx.)", hol_islamicNewYear:"Nouvel An musulman (approx.)",
+    hol_arafah:"Jour d'Arafat (approx.)",
   },
   tr:{
     appName:"The Docket", daily:"Günlük Rutin", allTasks:"Tüm Görevler",
     week:"Hafta", archive:"Tamamlanan & Silinenler",
-    newTask:"Yeni Görev", save:"Kaydet", cancel:"İptal", addStep:"Ekle",
+    newTask:"Yeni Görev", cancel:"İptal", addStep:"Ekle",
     prayerSetting:"Doğru namaz vakitleri",
     prayerLoading:"📍 Konumunuz alınıyor…",
     prayerDone:"✓ Namaz vakitleri güncellendi",
@@ -174,18 +345,75 @@ const T:Record<Lang,Record<string,string>> = {
     allOpen:"Tümü Açık", ongoing:"Devam Eden", completable:"Tamamlanabilir",
     category:"Kategori", show:"Göster", overdue:"GECİKMİŞ",
     urgent:"acil", high:"yüksek", medium:"orta",
-    chatPlaceholder:"örn. revizyon için görev ekle",
     working:"İşleniyor…",
     steps:"Adımlar", taskTitle:"Görev", notes:"Notlar",
     dueDate:"Son tarih", nature:"Tür", recurring:"Tekrar",
     oneOff:"Tek seferlik", daily2:"Günlük", weekly:"Haftalık",
     milestone:"Tamamlanabilir", ongoing2:"Süregelen",
     finishedDeleted:"Tamamlanan & Silinenler",
+    calendar:"Takvim", addTask:"Görev Ekle",
+    chatAsk:"Docket'e sorun…", chatHistory:"Sohbet geçmişi", newChat:"Yeni sohbet",
+    historySignIn:"Sohbet geçmişinizi kaydetmek ve görmek için giriş yapın.",
+    loading:"Yükleniyor…", noConversations:"Henüz geçmiş sohbet yok.",
+    deleteConversation:"Sohbeti sil", close:"Kapat",
+    attached:"Ek", attachedPreview:"Ek önizlemesi",
+    imageAttached:"Görsel eklendi", removeImage:"Görseli kaldır",
+    attachImage:"Görsel ekle",
+    chooseModel:"Sonraki mesajlarınızı hangi modelin göndereceğini seçin",
+    opusExhausted:"Bu ay Opus krediniz bitti — standart modelle gönderildi.",
+    editTask:"Görevi Düzenle", saveChanges:"Değişiklikleri Kaydet", priority:"Öncelik",
+    taskTitlePlaceholder:"Ne yapılması gerekiyor?", optional:"(isteğe bağlı)",
+    notesPlaceholder:"Hatırlanmaya değer ayrıntılar…",
+    typeMilestoneDesc:"Belirli bir sonu var", typeOngoingDesc:"Sabit bir bitişi yok",
+    every2Days:"2 günde bir", every3Days:"3 günde bir",
+    weekdays:"Hafta içi", weekends:"Hafta sonu", biweekly:"İki haftada bir", monthly:"Aylık",
+    searchOrCustom:"Arayın veya kendiniz yazın…", clickToChange:"Değiştirmek için tıklayın",
+    searchCategories:"Kategorilerde ara…", typeOwnCategory:"Kendi kategorinizi yazın…",
+    selectDate:"Bir tarih seçin",
+    // Category labels. Prefixed so they stay visibly grouped and
+    // cannot collide with a UI key of the same name.
+    cat_health:"Sağlık & Form", cat_fitness:"Form & Egzersiz", cat_nutrition:"Beslenme & Diyet", cat_mental:"Ruh Sağlığı",
+    cat_medical:"Tıbbi", cat_faith:"İnanç & Maneviyat", cat_personal:"Kişisel Gelişim", cat_reading:"Okuma & Kitaplar",
+    cat_music:"Müzik", cat_creative:"Yaratıcılık & Sanat", cat_language:"Dil Öğrenimi", cat_study:"Ders Çalışma",
+    cat_research:"Araştırma", cat_writing:"Yazma", cat_education:"Eğitim", cat_career:"Kariyer",
+    cat_interview:"Mülakatlar", cat_networking:"Network", cat_project:"Projeler", cat_hr:"İK & İnsan",
+    cat_business:"İş", cat_side_hustle:"Ek Gelir", cat_marketing:"Pazarlama", cat_sales:"Satış",
+    cat_design:"Tasarım", cat_content:"İçerik Üretimi", cat_customer:"Müşteri Hizmetleri", cat_finance:"Finans",
+    cat_trading:"Alım Satım & Yatırım", cat_savings:"Birikim & Hedefler", cat_investment:"Yatırımlar", cat_debt:"Borç & Krediler",
+    cat_tax:"Vergi & Muhasebe", cat_insurance:"Sigorta", cat_subscriptions:"Abonelikler", cat_legal:"Hukuk",
+    cat_legal_work:"Hukuki İşler", cat_compliance:"Uyum", cat_admin:"İdari & Konut", cat_home:"Ev & Tadilat",
+    cat_property:"Emlak", cat_utilities:"Faturalar & Aidat", cat_vehicle:"Araç", cat_driving:"Sürüş",
+    cat_shopping:"Alışveriş & İşler", cat_family:"Aile", cat_childcare:"Çocuk Bakımı", cat_pets:"Evcil Hayvanlar",
+    cat_social:"Sosyal Hayat", cat_events:"Etkinlikler", cat_technology:"Teknoloji", cat_travel:"Seyahat & Tatil",
+    cat_volunteering:"Gönüllülük", cat_charity:"Bağış & Yardım", cat_community:"Topluluk", cat_environment:"Çevre",
+    cat_sports:"Spor", cat_cooking:"Yemek & Tarifler", cat_other:"Diğer",
+    tasksThisDay:"Bu günün görevleri", noEventsThisDay:"Bu gün için etkinlik veya görev yok.",
+    hasTask:"Görev var", hasRoutine:"Rutin var",
+    holType_public:"Resmî", holType_religious:"Dinî",
+    holType_awareness:"Farkındalık", holType_cultural:"Kültürel",
+    holType_islamic:"İslami", holType_bank:"Banka tatili",
+    // Holiday names. Only the internationally observed dates are
+    // translated; nation-specific ones keep their English names.
+    hol_newYear:"Yılbaşı", hol_holocaustMemorial:"Holokost'u Anma Günü",
+    hol_valentines:"Sevgililer Günü", hol_womensDay:"Dünya Kadınlar Günü",
+    hol_downSyndrome:"Dünya Down Sendromu Günü", hol_nowruz:"Nevruz (Pers Yeni Yılı)",
+    hol_waterDay:"Dünya Su Günü", hol_healthDay:"Dünya Sağlık Günü",
+    hol_earthDay:"Dünya Günü", hol_labourDay:"Dünya İşçi Bayramı",
+    hol_familiesDay:"Dünya Aile Günü", hol_childrensDay:"Dünya Çocuk Günü",
+    hol_environmentDay:"Dünya Çevre Günü", hol_musicDay:"Dünya Müzik Günü",
+    hol_youthDay:"Dünya Gençlik Günü", hol_peaceDay:"Dünya Barış Günü",
+    hol_olderPersons:"Dünya Yaşlılar Günü", hol_teachersDay:"Dünya Öğretmenler Günü",
+    hol_mentalHealthDay:"Dünya Ruh Sağlığı Günü", hol_foodDay:"Dünya Gıda Günü",
+    hol_aidsDay:"Dünya AIDS Günü", hol_humanRights:"İnsan Hakları Günü",
+    hol_christmas:"Noel", hol_newYearsEve:"Yılbaşı Gecesi",
+    hol_ramadan:"Ramazan başlangıcı (yaklaşık)", hol_eidFitr:"Ramazan Bayramı (yaklaşık)",
+    hol_eidAdha:"Kurban Bayramı (yaklaşık)", hol_islamicNewYear:"Hicri Yılbaşı (yaklaşık)",
+    hol_arafah:"Arefe Günü (yaklaşık)",
   },
   ur:{
     appName:"The Docket", daily:"روزانہ معمول", allTasks:"تمام کام",
     week:"ہفتہ", archive:"مکمل اور حذف",
-    newTask:"نیا کام", save:"محفوظ", cancel:"منسوخ", addStep:"شامل",
+    newTask:"نیا کام", cancel:"منسوخ", addStep:"شامل",
     prayerSetting:"درست اوقات نماز",
     prayerLoading:"📍 مقام حاصل ہو رہا ہے…",
     prayerDone:"✓ نماز کے اوقات آج کے لیے اپ ڈیٹ ہو گئے",
@@ -201,18 +429,75 @@ const T:Record<Lang,Record<string,string>> = {
     allOpen:"سب کھلے", ongoing:"جاری", completable:"مکمل ہونے والا",
     category:"زمرہ", show:"دکھائیں", overdue:"تاخیر",
     urgent:"فوری", high:"اہم", medium:"معمولی",
-    chatPlaceholder:"مثال: نظر ثانی کے لیے کام شامل کریں",
     working:"کام جاری…",
     steps:"مراحل", taskTitle:"کام", notes:"نوٹس",
     dueDate:"آخری تاریخ", nature:"نوعیت", recurring:"دہرائیں",
     oneOff:"ایک بار", daily2:"روزانہ", weekly:"ہفتہ وار",
     milestone:"مکمل ہونے والا", ongoing2:"جاری",
     finishedDeleted:"مکمل اور حذف",
+    calendar:"کیلنڈر", addTask:"کام شامل کریں",
+    chatAsk:"ڈاکٹ سے پوچھیں…", chatHistory:"گفتگو کی تاریخ", newChat:"نئی گفتگو",
+    historySignIn:"اپنی گفتگو محفوظ کرنے اور دیکھنے کے لیے سائن ان کریں۔",
+    loading:"لوڈ ہو رہا ہے…", noConversations:"ابھی کوئی پرانی گفتگو نہیں۔",
+    deleteConversation:"گفتگو حذف کریں", close:"بند کریں",
+    attached:"منسلک", attachedPreview:"منسلکہ کا پیش منظر",
+    imageAttached:"تصویر منسلک ہے", removeImage:"تصویر ہٹائیں",
+    attachImage:"تصویر منسلک کریں",
+    chooseModel:"منتخب کریں کہ آپ کے اگلے پیغامات کون سا ماڈل بھیجے",
+    opusExhausted:"اس ماہ Opus کریڈٹ ختم — معیاری ماڈل سے بھیجا گیا۔",
+    editTask:"کام میں ترمیم", saveChanges:"تبدیلیاں محفوظ کریں", priority:"ترجیح",
+    taskTitlePlaceholder:"کیا کرنا ہے؟", optional:"(اختیاری)",
+    notesPlaceholder:"یاد رکھنے کے قابل کوئی تفصیل…",
+    typeMilestoneDesc:"واضح اختتام رکھتا ہے", typeOngoingDesc:"کوئی مقررہ اختتام نہیں",
+    every2Days:"ہر 2 دن بعد", every3Days:"ہر 3 دن بعد",
+    weekdays:"ہفتے کے دن", weekends:"ہفتہ وار تعطیل", biweekly:"ہر 2 ہفتے بعد", monthly:"ماہانہ",
+    searchOrCustom:"تلاش کریں یا خود لکھیں…", clickToChange:"تبدیل کرنے کے لیے دبائیں",
+    searchCategories:"زمرے تلاش کریں…", typeOwnCategory:"اپنا زمرہ لکھیں…",
+    selectDate:"تاریخ منتخب کریں",
+    // Category labels. Prefixed so they stay visibly grouped and
+    // cannot collide with a UI key of the same name.
+    cat_health:"صحت اور فٹنس", cat_fitness:"فٹنس اور ورزش", cat_nutrition:"غذائیت اور خوراک", cat_mental:"ذہنی صحت",
+    cat_medical:"طبی", cat_faith:"ایمان اور روحانیت", cat_personal:"ذاتی ترقی", cat_reading:"مطالعہ اور کتابیں",
+    cat_music:"موسیقی", cat_creative:"تخلیق اور فنون", cat_language:"زبان سیکھنا", cat_study:"تعلیم و مطالعہ",
+    cat_research:"تحقیق", cat_writing:"تحریر", cat_education:"تعلیم", cat_career:"کیریئر",
+    cat_interview:"انٹرویوز", cat_networking:"روابط", cat_project:"منصوبے", cat_hr:"ایچ آر اور عملہ",
+    cat_business:"کاروبار", cat_side_hustle:"اضافی کام", cat_marketing:"مارکیٹنگ", cat_sales:"فروخت",
+    cat_design:"ڈیزائن", cat_content:"مواد کی تخلیق", cat_customer:"کسٹمر سروس", cat_finance:"مالیات",
+    cat_trading:"ٹریڈنگ اور سرمایہ کاری", cat_savings:"بچت اور اہداف", cat_investment:"سرمایہ کاری", cat_debt:"قرض اور ادھار",
+    cat_tax:"ٹیکس اور اکاؤنٹنگ", cat_insurance:"انشورنس", cat_subscriptions:"سبسکرپشنز", cat_legal:"قانونی",
+    cat_legal_work:"قانونی کام", cat_compliance:"تعمیل", cat_admin:"انتظامی اور رہائش", cat_home:"گھر اور مرمت",
+    cat_property:"جائیداد", cat_utilities:"یوٹیلیٹی اور بل", cat_vehicle:"گاڑی", cat_driving:"ڈرائیونگ",
+    cat_shopping:"خریداری اور کام", cat_family:"خاندان", cat_childcare:"بچوں کی دیکھ بھال", cat_pets:"پالتو جانور",
+    cat_social:"سماجی زندگی", cat_events:"تقریبات", cat_technology:"ٹیکنالوجی", cat_travel:"سفر اور چھٹیاں",
+    cat_volunteering:"رضاکارانہ کام", cat_charity:"خیرات اور عطیہ", cat_community:"کمیونٹی", cat_environment:"ماحول",
+    cat_sports:"کھیل", cat_cooking:"کھانا پکانا اور ترکیبیں", cat_other:"دیگر",
+    tasksThisDay:"اس دن کے کام", noEventsThisDay:"اس دن کوئی تقریب یا کام نہیں۔",
+    hasTask:"کام موجود", hasRoutine:"معمول موجود",
+    holType_public:"سرکاری", holType_religious:"مذہبی",
+    holType_awareness:"آگاہی", holType_cultural:"ثقافتی",
+    holType_islamic:"اسلامی", holType_bank:"بینک تعطیل",
+    // Holiday names. Only the internationally observed dates are
+    // translated; nation-specific ones keep their English names.
+    hol_newYear:"نئے سال کا دن", hol_holocaustMemorial:"ہولوکاسٹ یادگاری دن",
+    hol_valentines:"یومِ محبت", hol_womensDay:"خواتین کا عالمی دن",
+    hol_downSyndrome:"ڈاؤن سنڈروم کا عالمی دن", hol_nowruz:"نوروز (فارسی نیا سال)",
+    hol_waterDay:"پانی کا عالمی دن", hol_healthDay:"صحت کا عالمی دن",
+    hol_earthDay:"یومِ ارض", hol_labourDay:"مزدوروں کا عالمی دن",
+    hol_familiesDay:"خاندانوں کا عالمی دن", hol_childrensDay:"بچوں کا عالمی دن",
+    hol_environmentDay:"ماحولیات کا عالمی دن", hol_musicDay:"موسیقی کا عالمی دن",
+    hol_youthDay:"نوجوانوں کا عالمی دن", hol_peaceDay:"امن کا عالمی دن",
+    hol_olderPersons:"بزرگوں کا عالمی دن", hol_teachersDay:"اساتذہ کا عالمی دن",
+    hol_mentalHealthDay:"ذہنی صحت کا عالمی دن", hol_foodDay:"خوراک کا عالمی دن",
+    hol_aidsDay:"ایڈز کا عالمی دن", hol_humanRights:"انسانی حقوق کا دن",
+    hol_christmas:"کرسمس", hol_newYearsEve:"نئے سال کی شب",
+    hol_ramadan:"رمضان کا آغاز (تخمینی)", hol_eidFitr:"عید الفطر (تخمینی)",
+    hol_eidAdha:"عید الاضحیٰ (تخمینی)", hol_islamicNewYear:"اسلامی نیا سال (تخمینی)",
+    hol_arafah:"یومِ عرفہ (تخمینی)",
   },
   bn:{
     appName:"The Docket", daily:"দৈনিক রুটিন", allTasks:"সব কাজ",
     week:"সপ্তাহ", archive:"সম্পন্ন ও মুছে ফেলা",
-    newTask:"নতুন কাজ", save:"সংরক্ষণ", cancel:"বাতিল", addStep:"যোগ করুন",
+    newTask:"নতুন কাজ", cancel:"বাতিল", addStep:"যোগ করুন",
     prayerSetting:"সঠিক নামাজের সময়",
     prayerLoading:"📍 আপনার অবস্থান নেওয়া হচ্ছে…",
     prayerDone:"✓ আজকের নামাজের সময় হালনাগাদ হয়েছে",
@@ -228,18 +513,75 @@ const T:Record<Lang,Record<string,string>> = {
     allOpen:"সব খোলা", ongoing:"চলমান", completable:"সম্পন্নযোগ্য",
     category:"বিভাগ", show:"দেখান", overdue:"বিলম্বিত",
     urgent:"জরুরি", high:"উচ্চ", medium:"মাঝারি",
-    chatPlaceholder:"যেমন: রিভিশনের জন্য কাজ যোগ করুন",
     working:"কাজ চলছে…",
     steps:"ধাপ", taskTitle:"কাজ", notes:"নোট",
     dueDate:"নির্ধারিত তারিখ", nature:"ধরন", recurring:"পুনরাবৃত্ত",
     oneOff:"একবার", daily2:"দৈনিক", weekly:"সাপ্তাহিক",
     milestone:"সম্পন্নযোগ্য", ongoing2:"চলমান",
     finishedDeleted:"সম্পন্ন ও মুছে ফেলা",
+    calendar:"ক্যালেন্ডার", addTask:"কাজ যোগ করুন",
+    chatAsk:"ডকেটকে জিজ্ঞাসা করুন…", chatHistory:"চ্যাটের ইতিহাস", newChat:"নতুন চ্যাট",
+    historySignIn:"চ্যাটের ইতিহাস সংরক্ষণ ও দেখতে সাইন ইন করুন।",
+    loading:"লোড হচ্ছে…", noConversations:"এখনও কোনো পুরোনো কথোপকথন নেই।",
+    deleteConversation:"কথোপকথন মুছুন", close:"বন্ধ করুন",
+    attached:"সংযুক্ত", attachedPreview:"সংযুক্তির প্রিভিউ",
+    imageAttached:"ছবি সংযুক্ত হয়েছে", removeImage:"ছবি সরান",
+    attachImage:"ছবি সংযুক্ত করুন",
+    chooseModel:"আপনার পরবর্তী বার্তা কোন মডেল পাঠাবে তা বেছে নিন",
+    opusExhausted:"এই মাসের Opus ক্রেডিট শেষ — সাধারণ মডেলে পাঠানো হয়েছে।",
+    editTask:"কাজ সম্পাদনা", saveChanges:"পরিবর্তন সংরক্ষণ", priority:"অগ্রাধিকার",
+    taskTitlePlaceholder:"কী করতে হবে?", optional:"(ঐচ্ছিক)",
+    notesPlaceholder:"মনে রাখার মতো যেকোনো বিবরণ…",
+    typeMilestoneDesc:"একটি নির্দিষ্ট শেষ আছে", typeOngoingDesc:"নির্দিষ্ট কোনো শেষ নেই",
+    every2Days:"প্রতি 2 দিনে", every3Days:"প্রতি 3 দিনে",
+    weekdays:"কর্মদিবস", weekends:"সপ্তাহান্ত", biweekly:"প্রতি 2 সপ্তাহে", monthly:"মাসিক",
+    searchOrCustom:"খুঁজুন বা নিজে লিখুন…", clickToChange:"পরিবর্তন করতে ক্লিক করুন",
+    searchCategories:"বিভাগ খুঁজুন…", typeOwnCategory:"নিজের বিভাগ লিখুন…",
+    selectDate:"একটি তারিখ বাছুন",
+    // Category labels. Prefixed so they stay visibly grouped and
+    // cannot collide with a UI key of the same name.
+    cat_health:"স্বাস্থ্য ও ফিটনেস", cat_fitness:"ফিটনেস ও ব্যায়াম", cat_nutrition:"পুষ্টি ও খাদ্য", cat_mental:"মানসিক স্বাস্থ্য",
+    cat_medical:"চিকিৎসা", cat_faith:"বিশ্বাস ও আধ্যাত্মিকতা", cat_personal:"ব্যক্তিগত উন্নয়ন", cat_reading:"পড়া ও বই",
+    cat_music:"সংগীত", cat_creative:"সৃজনশীলতা ও শিল্প", cat_language:"ভাষা শেখা", cat_study:"পড়াশোনা",
+    cat_research:"গবেষণা", cat_writing:"লেখা", cat_education:"শিক্ষা", cat_career:"কর্মজীবন",
+    cat_interview:"সাক্ষাৎকার", cat_networking:"নেটওয়ার্কিং", cat_project:"প্রকল্প", cat_hr:"এইচআর ও কর্মী",
+    cat_business:"ব্যবসা", cat_side_hustle:"পার্শ্ব-আয়", cat_marketing:"বিপণন", cat_sales:"বিক্রয়",
+    cat_design:"ডিজাইন", cat_content:"কনটেন্ট তৈরি", cat_customer:"গ্রাহক সেবা", cat_finance:"অর্থ",
+    cat_trading:"ট্রেডিং ও বিনিয়োগ", cat_savings:"সঞ্চয় ও লক্ষ্য", cat_investment:"বিনিয়োগ", cat_debt:"ঋণ ও দেনা",
+    cat_tax:"কর ও হিসাব", cat_insurance:"বিমা", cat_subscriptions:"সাবস্ক্রিপশন", cat_legal:"আইনি",
+    cat_legal_work:"আইনি কাজ", cat_compliance:"সম্মতি", cat_admin:"প্রশাসন ও বাসস্থান", cat_home:"বাড়ি ও মেরামত",
+    cat_property:"সম্পত্তি", cat_utilities:"ইউটিলিটি ও বিল", cat_vehicle:"যানবাহন", cat_driving:"ড্রাইভিং",
+    cat_shopping:"কেনাকাটা ও কাজ", cat_family:"পরিবার", cat_childcare:"শিশু যত্ন", cat_pets:"পোষা প্রাণী",
+    cat_social:"সামাজিক জীবন", cat_events:"অনুষ্ঠান", cat_technology:"প্রযুক্তি", cat_travel:"ভ্রমণ ও ছুটি",
+    cat_volunteering:"স্বেচ্ছাসেবা", cat_charity:"দান ও সহায়তা", cat_community:"সম্প্রদায়", cat_environment:"পরিবেশ",
+    cat_sports:"খেলাধুলা", cat_cooking:"রান্না ও রেসিপি", cat_other:"অন্যান্য",
+    tasksThisDay:"এই দিনের কাজ", noEventsThisDay:"এই দিনে কোনো ইভেন্ট বা কাজ নেই।",
+    hasTask:"কাজ আছে", hasRoutine:"রুটিন আছে",
+    holType_public:"সরকারি", holType_religious:"ধর্মীয়",
+    holType_awareness:"সচেতনতা", holType_cultural:"সাংস্কৃতিক",
+    holType_islamic:"ইসলামি", holType_bank:"ব্যাংক ছুটি",
+    // Holiday names. Only the internationally observed dates are
+    // translated; nation-specific ones keep their English names.
+    hol_newYear:"নববর্ষ দিবস", hol_holocaustMemorial:"হলোকস্ট স্মরণ দিবস",
+    hol_valentines:"ভ্যালেন্টাইন্স ডে", hol_womensDay:"আন্তর্জাতিক নারী দিবস",
+    hol_downSyndrome:"বিশ্ব ডাউন সিনড্রোম দিবস", hol_nowruz:"নওরোজ (পারস্য নববর্ষ)",
+    hol_waterDay:"বিশ্ব পানি দিবস", hol_healthDay:"বিশ্ব স্বাস্থ্য দিবস",
+    hol_earthDay:"ধরিত্রী দিবস", hol_labourDay:"আন্তর্জাতিক শ্রমিক দিবস",
+    hol_familiesDay:"আন্তর্জাতিক পরিবার দিবস", hol_childrensDay:"বিশ্ব শিশু দিবস",
+    hol_environmentDay:"বিশ্ব পরিবেশ দিবস", hol_musicDay:"বিশ্ব সংগীত দিবস",
+    hol_youthDay:"আন্তর্জাতিক যুব দিবস", hol_peaceDay:"আন্তর্জাতিক শান্তি দিবস",
+    hol_olderPersons:"আন্তর্জাতিক প্রবীণ দিবস", hol_teachersDay:"বিশ্ব শিক্ষক দিবস",
+    hol_mentalHealthDay:"বিশ্ব মানসিক স্বাস্থ্য দিবস", hol_foodDay:"বিশ্ব খাদ্য দিবস",
+    hol_aidsDay:"বিশ্ব এইডস দিবস", hol_humanRights:"মানবাধিকার দিবস",
+    hol_christmas:"বড়দিন", hol_newYearsEve:"নববর্ষের প্রাক্কাল",
+    hol_ramadan:"রমজান শুরু (আনুমানিক)", hol_eidFitr:"ঈদুল ফিতর (আনুমানিক)",
+    hol_eidAdha:"ঈদুল আজহা (আনুমানিক)", hol_islamicNewYear:"হিজরি নববর্ষ (আনুমানিক)",
+    hol_arafah:"আরাফাহ দিবস (আনুমানিক)",
   },
   es:{
     appName:"The Docket", daily:"Rutina Diaria", allTasks:"Todas las Tareas",
     week:"Semana", archive:"Terminadas y Eliminadas",
-    newTask:"Nueva Tarea", save:"Guardar", cancel:"Cancelar", addStep:"Añadir",
+    newTask:"Nueva Tarea", cancel:"Cancelar", addStep:"Añadir",
     prayerSetting:"Horarios de oración precisos",
     prayerLoading:"📍 Obteniendo tu ubicación…",
     prayerDone:"✓ Horarios de oración actualizados",
@@ -255,18 +597,75 @@ const T:Record<Lang,Record<string,string>> = {
     allOpen:"Todo Abierto", ongoing:"En curso", completable:"Completable",
     category:"Categoría", show:"Mostrar", overdue:"ATRASADO",
     urgent:"urgente", high:"alta", medium:"media",
-    chatPlaceholder:"p. ej. añade una tarea para repasar",
     working:"Trabajando en ello…",
     steps:"Pasos", taskTitle:"Tarea", notes:"Notas",
     dueDate:"Fecha límite", nature:"Tipo", recurring:"Recurrente",
     oneOff:"Puntual", daily2:"Diaria", weekly:"Semanal",
     milestone:"Completable", ongoing2:"Continua",
     finishedDeleted:"Terminadas y Eliminadas",
+    calendar:"Calendario", addTask:"Añadir Tarea",
+    chatAsk:"Pregunta a Docket…", chatHistory:"Historial de chats", newChat:"Chat nuevo",
+    historySignIn:"Inicia sesión para guardar y ver tu historial de chats.",
+    loading:"Cargando…", noConversations:"Aún no hay conversaciones.",
+    deleteConversation:"Eliminar conversación", close:"Cerrar",
+    attached:"Adjunto", attachedPreview:"Vista previa del adjunto",
+    imageAttached:"Imagen adjunta", removeImage:"Quitar la imagen",
+    attachImage:"Adjuntar una imagen",
+    chooseModel:"Elige qué modelo enviará tus próximos mensajes",
+    opusExhausted:"Créditos de Opus agotados este mes — enviado con el modelo estándar.",
+    editTask:"Editar Tarea", saveChanges:"Guardar Cambios", priority:"Prioridad",
+    taskTitlePlaceholder:"¿Qué hay que hacer?", optional:"(opcional)",
+    notesPlaceholder:"Cualquier detalle que merezca recordarse…",
+    typeMilestoneDesc:"Tiene un final claro", typeOngoingDesc:"Sin final fijo",
+    every2Days:"Cada 2 días", every3Days:"Cada 3 días",
+    weekdays:"Entre semana", weekends:"Fines de semana", biweekly:"Cada 2 semanas", monthly:"Mensual",
+    searchOrCustom:"Busca o escribe una propia…", clickToChange:"Haz clic para cambiar",
+    searchCategories:"Buscar categorías…", typeOwnCategory:"Escribe tu propia categoría…",
+    selectDate:"Elige una fecha",
+    // Category labels. Prefixed so they stay visibly grouped and
+    // cannot collide with a UI key of the same name.
+    cat_health:"Salud y Forma", cat_fitness:"Forma y Ejercicio", cat_nutrition:"Nutrición y Dieta", cat_mental:"Salud Mental",
+    cat_medical:"Médico", cat_faith:"Fe y Espiritualidad", cat_personal:"Desarrollo Personal", cat_reading:"Lectura y Libros",
+    cat_music:"Música", cat_creative:"Creatividad y Arte", cat_language:"Aprender Idiomas", cat_study:"Estudio",
+    cat_research:"Investigación", cat_writing:"Escritura", cat_education:"Educación", cat_career:"Carrera",
+    cat_interview:"Entrevistas", cat_networking:"Contactos", cat_project:"Proyectos", cat_hr:"RR. HH. y Personal",
+    cat_business:"Negocios", cat_side_hustle:"Trabajo Extra", cat_marketing:"Marketing", cat_sales:"Ventas",
+    cat_design:"Diseño", cat_content:"Creación de Contenido", cat_customer:"Atención al Cliente", cat_finance:"Finanzas",
+    cat_trading:"Trading e Inversión", cat_savings:"Ahorro y Metas", cat_investment:"Inversiones", cat_debt:"Deudas y Préstamos",
+    cat_tax:"Impuestos y Contabilidad", cat_insurance:"Seguros", cat_subscriptions:"Suscripciones", cat_legal:"Legal",
+    cat_legal_work:"Trabajo Legal", cat_compliance:"Cumplimiento", cat_admin:"Trámites y Vivienda", cat_home:"Hogar y Bricolaje",
+    cat_property:"Propiedad", cat_utilities:"Servicios y Facturas", cat_vehicle:"Vehículo", cat_driving:"Conducción",
+    cat_shopping:"Compras y Recados", cat_family:"Familia", cat_childcare:"Cuidado Infantil", cat_pets:"Mascotas",
+    cat_social:"Vida Social", cat_events:"Eventos", cat_technology:"Tecnología", cat_travel:"Viajes y Vacaciones",
+    cat_volunteering:"Voluntariado", cat_charity:"Donaciones y Caridad", cat_community:"Comunidad", cat_environment:"Medio Ambiente",
+    cat_sports:"Deportes", cat_cooking:"Cocina y Recetas", cat_other:"Otro",
+    tasksThisDay:"Tareas de este día", noEventsThisDay:"No hay eventos ni tareas este día.",
+    hasTask:"Tiene tarea", hasRoutine:"Tiene rutina",
+    holType_public:"Festivo", holType_religious:"Religioso",
+    holType_awareness:"Concienciación", holType_cultural:"Cultural",
+    holType_islamic:"Islámico", holType_bank:"Festivo bancario",
+    // Holiday names. Only the internationally observed dates are
+    // translated; nation-specific ones keep their English names.
+    hol_newYear:"Año Nuevo", hol_holocaustMemorial:"Día de la Memoria del Holocausto",
+    hol_valentines:"San Valentín", hol_womensDay:"Día Internacional de la Mujer",
+    hol_downSyndrome:"Día Mundial del Síndrome de Down", hol_nowruz:"Nowruz (Año Nuevo persa)",
+    hol_waterDay:"Día Mundial del Agua", hol_healthDay:"Día Mundial de la Salud",
+    hol_earthDay:"Día de la Tierra", hol_labourDay:"Día Internacional de los Trabajadores",
+    hol_familiesDay:"Día Internacional de las Familias", hol_childrensDay:"Día Mundial de la Infancia",
+    hol_environmentDay:"Día Mundial del Medio Ambiente", hol_musicDay:"Día Mundial de la Música",
+    hol_youthDay:"Día Internacional de la Juventud", hol_peaceDay:"Día Internacional de la Paz",
+    hol_olderPersons:"Día Internacional de las Personas Mayores", hol_teachersDay:"Día Mundial de los Docentes",
+    hol_mentalHealthDay:"Día Mundial de la Salud Mental", hol_foodDay:"Día Mundial de la Alimentación",
+    hol_aidsDay:"Día Mundial del Sida", hol_humanRights:"Día de los Derechos Humanos",
+    hol_christmas:"Navidad", hol_newYearsEve:"Nochevieja",
+    hol_ramadan:"Inicio del Ramadán (aprox.)", hol_eidFitr:"Eid al-Fitr (aprox.)",
+    hol_eidAdha:"Eid al-Adha (aprox.)", hol_islamicNewYear:"Año Nuevo islámico (aprox.)",
+    hol_arafah:"Día de Arafat (aprox.)",
   },
   hi:{
     appName:"The Docket", daily:"दैनिक दिनचर्या", allTasks:"सभी कार्य",
     week:"सप्ताह", archive:"पूर्ण और हटाए गए",
-    newTask:"नया कार्य", save:"सहेजें", cancel:"रद्द करें", addStep:"जोड़ें",
+    newTask:"नया कार्य", cancel:"रद्द करें", addStep:"जोड़ें",
     prayerSetting:"सटीक नमाज़ के समय",
     prayerLoading:"📍 आपका स्थान पता किया जा रहा है…",
     prayerDone:"✓ आज के नमाज़ के समय अपडेट हो गए",
@@ -282,18 +681,75 @@ const T:Record<Lang,Record<string,string>> = {
     allOpen:"सभी खुले", ongoing:"जारी", completable:"पूर्ण होने योग्य",
     category:"श्रेणी", show:"दिखाएँ", overdue:"विलंबित",
     urgent:"अत्यावश्यक", high:"उच्च", medium:"मध्यम",
-    chatPlaceholder:"उदा. दोहराने के लिए कार्य जोड़ें",
     working:"काम जारी है…",
     steps:"चरण", taskTitle:"कार्य", notes:"नोट्स",
     dueDate:"नियत तारीख", nature:"प्रकार", recurring:"आवर्ती",
     oneOff:"एक बार", daily2:"दैनिक", weekly:"साप्ताहिक",
     milestone:"पूर्ण होने योग्य", ongoing2:"निरंतर",
     finishedDeleted:"पूर्ण और हटाए गए",
+    calendar:"कैलेंडर", addTask:"कार्य जोड़ें",
+    chatAsk:"डॉकेट से पूछें…", chatHistory:"चैट इतिहास", newChat:"नई चैट",
+    historySignIn:"अपना चैट इतिहास सहेजने और देखने के लिए साइन इन करें।",
+    loading:"लोड हो रहा है…", noConversations:"अभी कोई पुरानी बातचीत नहीं।",
+    deleteConversation:"बातचीत हटाएँ", close:"बंद करें",
+    attached:"संलग्न", attachedPreview:"संलग्नक का पूर्वावलोकन",
+    imageAttached:"छवि संलग्न है", removeImage:"छवि हटाएँ",
+    attachImage:"छवि संलग्न करें",
+    chooseModel:"चुनें कि आपके अगले संदेश कौन सा मॉडल भेजेगा",
+    opusExhausted:"इस माह Opus क्रेडिट समाप्त — मानक मॉडल से भेजा गया।",
+    editTask:"कार्य संपादित करें", saveChanges:"बदलाव सहेजें", priority:"प्राथमिकता",
+    taskTitlePlaceholder:"क्या करना है?", optional:"(वैकल्पिक)",
+    notesPlaceholder:"याद रखने लायक कोई भी विवरण…",
+    typeMilestoneDesc:"इसका स्पष्ट अंत है", typeOngoingDesc:"कोई निश्चित अंत नहीं",
+    every2Days:"हर 2 दिन में", every3Days:"हर 3 दिन में",
+    weekdays:"कार्यदिवस", weekends:"सप्ताहांत", biweekly:"हर 2 सप्ताह में", monthly:"मासिक",
+    searchOrCustom:"खोजें या स्वयं लिखें…", clickToChange:"बदलने के लिए क्लिक करें",
+    searchCategories:"श्रेणियाँ खोजें…", typeOwnCategory:"अपनी श्रेणी लिखें…",
+    selectDate:"तारीख चुनें",
+    // Category labels. Prefixed so they stay visibly grouped and
+    // cannot collide with a UI key of the same name.
+    cat_health:"स्वास्थ्य और फिटनेस", cat_fitness:"फिटनेस और व्यायाम", cat_nutrition:"पोषण और आहार", cat_mental:"मानसिक स्वास्थ्य",
+    cat_medical:"चिकित्सा", cat_faith:"आस्था और आध्यात्म", cat_personal:"व्यक्तिगत विकास", cat_reading:"पढ़ना और किताबें",
+    cat_music:"संगीत", cat_creative:"रचनात्मकता और कला", cat_language:"भाषा सीखना", cat_study:"अध्ययन",
+    cat_research:"शोध", cat_writing:"लेखन", cat_education:"शिक्षा", cat_career:"करियर",
+    cat_interview:"साक्षात्कार", cat_networking:"नेटवर्किंग", cat_project:"परियोजनाएँ", cat_hr:"एचआर और कर्मचारी",
+    cat_business:"व्यवसाय", cat_side_hustle:"अतिरिक्त काम", cat_marketing:"मार्केटिंग", cat_sales:"बिक्री",
+    cat_design:"डिज़ाइन", cat_content:"कंटेंट निर्माण", cat_customer:"ग्राहक सेवा", cat_finance:"वित्त",
+    cat_trading:"ट्रेडिंग और निवेश", cat_savings:"बचत और लक्ष्य", cat_investment:"निवेश", cat_debt:"कर्ज़ और ऋण",
+    cat_tax:"कर और लेखा", cat_insurance:"बीमा", cat_subscriptions:"सदस्यताएँ", cat_legal:"कानूनी",
+    cat_legal_work:"कानूनी कार्य", cat_compliance:"अनुपालन", cat_admin:"प्रशासन और आवास", cat_home:"घर और मरम्मत",
+    cat_property:"संपत्ति", cat_utilities:"उपयोगिता और बिल", cat_vehicle:"वाहन", cat_driving:"ड्राइविंग",
+    cat_shopping:"खरीदारी और काम", cat_family:"परिवार", cat_childcare:"बच्चों की देखभाल", cat_pets:"पालतू जानवर",
+    cat_social:"सामाजिक जीवन", cat_events:"कार्यक्रम", cat_technology:"प्रौद्योगिकी", cat_travel:"यात्रा और छुट्टियाँ",
+    cat_volunteering:"स्वयंसेवा", cat_charity:"दान और परोपकार", cat_community:"समुदाय", cat_environment:"पर्यावरण",
+    cat_sports:"खेल", cat_cooking:"खाना और व्यंजन", cat_other:"अन्य",
+    tasksThisDay:"इस दिन के कार्य", noEventsThisDay:"इस दिन कोई कार्यक्रम या कार्य नहीं।",
+    hasTask:"कार्य है", hasRoutine:"दिनचर्या है",
+    holType_public:"सार्वजनिक", holType_religious:"धार्मिक",
+    holType_awareness:"जागरूकता", holType_cultural:"सांस्कृतिक",
+    holType_islamic:"इस्लामी", holType_bank:"बैंक अवकाश",
+    // Holiday names. Only the internationally observed dates are
+    // translated; nation-specific ones keep their English names.
+    hol_newYear:"नववर्ष दिवस", hol_holocaustMemorial:"होलोकॉस्ट स्मृति दिवस",
+    hol_valentines:"वैलेंटाइन डे", hol_womensDay:"अंतर्राष्ट्रीय महिला दिवस",
+    hol_downSyndrome:"विश्व डाउन सिंड्रोम दिवस", hol_nowruz:"नवरोज़ (फ़ारसी नववर्ष)",
+    hol_waterDay:"विश्व जल दिवस", hol_healthDay:"विश्व स्वास्थ्य दिवस",
+    hol_earthDay:"पृथ्वी दिवस", hol_labourDay:"अंतर्राष्ट्रीय श्रमिक दिवस",
+    hol_familiesDay:"अंतर्राष्ट्रीय परिवार दिवस", hol_childrensDay:"विश्व बाल दिवस",
+    hol_environmentDay:"विश्व पर्यावरण दिवस", hol_musicDay:"विश्व संगीत दिवस",
+    hol_youthDay:"अंतर्राष्ट्रीय युवा दिवस", hol_peaceDay:"अंतर्राष्ट्रीय शांति दिवस",
+    hol_olderPersons:"अंतर्राष्ट्रीय वृद्धजन दिवस", hol_teachersDay:"विश्व शिक्षक दिवस",
+    hol_mentalHealthDay:"विश्व मानसिक स्वास्थ्य दिवस", hol_foodDay:"विश्व खाद्य दिवस",
+    hol_aidsDay:"विश्व एड्स दिवस", hol_humanRights:"मानवाधिकार दिवस",
+    hol_christmas:"क्रिसमस", hol_newYearsEve:"नववर्ष की पूर्वसंध्या",
+    hol_ramadan:"रमज़ान आरंभ (लगभग)", hol_eidFitr:"ईद-उल-फ़ित्र (लगभग)",
+    hol_eidAdha:"ईद-उल-अज़हा (लगभग)", hol_islamicNewYear:"इस्लामी नववर्ष (लगभग)",
+    hol_arafah:"अराफ़ा का दिन (लगभग)",
   },
   pt:{
     appName:"The Docket", daily:"Rotina Diária", allTasks:"Todas as Tarefas",
     week:"Semana", archive:"Concluídas e Excluídas",
-    newTask:"Nova Tarefa", save:"Salvar", cancel:"Cancelar", addStep:"Adicionar",
+    newTask:"Nova Tarefa", cancel:"Cancelar", addStep:"Adicionar",
     prayerSetting:"Horários de oração precisos",
     prayerLoading:"📍 Obtendo sua localização…",
     prayerDone:"✓ Horários de oração atualizados",
@@ -309,18 +765,75 @@ const T:Record<Lang,Record<string,string>> = {
     allOpen:"Tudo Aberto", ongoing:"Em andamento", completable:"Concluível",
     category:"Categoria", show:"Mostrar", overdue:"ATRASADO",
     urgent:"urgente", high:"alta", medium:"média",
-    chatPlaceholder:"ex. adicione uma tarefa para revisar",
     working:"Trabalhando nisso…",
     steps:"Etapas", taskTitle:"Tarefa", notes:"Notas",
     dueDate:"Data limite", nature:"Tipo", recurring:"Recorrente",
     oneOff:"Única", daily2:"Diária", weekly:"Semanal",
     milestone:"Concluível", ongoing2:"Contínua",
     finishedDeleted:"Concluídas e Excluídas",
+    calendar:"Calendário", addTask:"Adicionar Tarefa",
+    chatAsk:"Pergunte ao Docket…", chatHistory:"Histórico de conversas", newChat:"Nova conversa",
+    historySignIn:"Entre para salvar e ver seu histórico de conversas.",
+    loading:"Carregando…", noConversations:"Ainda não há conversas.",
+    deleteConversation:"Excluir conversa", close:"Fechar",
+    attached:"Anexo", attachedPreview:"Prévia do anexo",
+    imageAttached:"Imagem anexada", removeImage:"Remover imagem",
+    attachImage:"Anexar uma imagem",
+    chooseModel:"Escolha qual modelo enviará suas próximas mensagens",
+    opusExhausted:"Créditos Opus esgotados neste mês — enviado com o modelo padrão.",
+    editTask:"Editar Tarefa", saveChanges:"Salvar Alterações", priority:"Prioridade",
+    taskTitlePlaceholder:"O que precisa ser feito?", optional:"(opcional)",
+    notesPlaceholder:"Qualquer detalhe que valha a pena lembrar…",
+    typeMilestoneDesc:"Tem um fim claro", typeOngoingDesc:"Sem fim definido",
+    every2Days:"A cada 2 dias", every3Days:"A cada 3 dias",
+    weekdays:"Dias úteis", weekends:"Fins de semana", biweekly:"A cada 2 semanas", monthly:"Mensal",
+    searchOrCustom:"Busque ou digite a sua…", clickToChange:"Clique para mudar",
+    searchCategories:"Buscar categorias…", typeOwnCategory:"Digite sua própria categoria…",
+    selectDate:"Escolha uma data",
+    // Category labels. Prefixed so they stay visibly grouped and
+    // cannot collide with a UI key of the same name.
+    cat_health:"Saúde e Bem-estar", cat_fitness:"Exercício e Treino", cat_nutrition:"Nutrição e Dieta", cat_mental:"Saúde Mental",
+    cat_medical:"Médico", cat_faith:"Fé e Espiritualidade", cat_personal:"Desenvolvimento Pessoal", cat_reading:"Leitura e Livros",
+    cat_music:"Música", cat_creative:"Criatividade e Artes", cat_language:"Aprender Idiomas", cat_study:"Estudo",
+    cat_research:"Pesquisa", cat_writing:"Escrita", cat_education:"Educação", cat_career:"Carreira",
+    cat_interview:"Entrevistas", cat_networking:"Networking", cat_project:"Projetos", cat_hr:"RH e Pessoas",
+    cat_business:"Negócios", cat_side_hustle:"Renda Extra", cat_marketing:"Marketing", cat_sales:"Vendas",
+    cat_design:"Design", cat_content:"Criação de Conteúdo", cat_customer:"Atendimento ao Cliente", cat_finance:"Finanças",
+    cat_trading:"Trading e Investimento", cat_savings:"Poupança e Metas", cat_investment:"Investimentos", cat_debt:"Dívidas e Empréstimos",
+    cat_tax:"Impostos e Contabilidade", cat_insurance:"Seguros", cat_subscriptions:"Assinaturas", cat_legal:"Jurídico",
+    cat_legal_work:"Trabalho Jurídico", cat_compliance:"Conformidade", cat_admin:"Administração e Moradia", cat_home:"Casa e Reformas",
+    cat_property:"Imóveis", cat_utilities:"Contas e Serviços", cat_vehicle:"Veículo", cat_driving:"Direção",
+    cat_shopping:"Compras e Tarefas", cat_family:"Família", cat_childcare:"Cuidado Infantil", cat_pets:"Animais",
+    cat_social:"Vida Social", cat_events:"Eventos", cat_technology:"Tecnologia", cat_travel:"Viagens e Férias",
+    cat_volunteering:"Voluntariado", cat_charity:"Doações e Caridade", cat_community:"Comunidade", cat_environment:"Meio Ambiente",
+    cat_sports:"Esportes", cat_cooking:"Culinária e Receitas", cat_other:"Outro",
+    tasksThisDay:"Tarefas deste dia", noEventsThisDay:"Nenhum evento ou tarefa neste dia.",
+    hasTask:"Tem tarefa", hasRoutine:"Tem rotina",
+    holType_public:"Feriado", holType_religious:"Religioso",
+    holType_awareness:"Conscientização", holType_cultural:"Cultural",
+    holType_islamic:"Islâmico", holType_bank:"Feriado bancário",
+    // Holiday names. Only the internationally observed dates are
+    // translated; nation-specific ones keep their English names.
+    hol_newYear:"Ano Novo", hol_holocaustMemorial:"Dia da Memória do Holocausto",
+    hol_valentines:"Dia dos Namorados", hol_womensDay:"Dia Internacional da Mulher",
+    hol_downSyndrome:"Dia Mundial da Síndrome de Down", hol_nowruz:"Nowruz (Ano Novo persa)",
+    hol_waterDay:"Dia Mundial da Água", hol_healthDay:"Dia Mundial da Saúde",
+    hol_earthDay:"Dia da Terra", hol_labourDay:"Dia Internacional dos Trabalhadores",
+    hol_familiesDay:"Dia Internacional das Famílias", hol_childrensDay:"Dia Mundial da Criança",
+    hol_environmentDay:"Dia Mundial do Meio Ambiente", hol_musicDay:"Dia Mundial da Música",
+    hol_youthDay:"Dia Internacional da Juventude", hol_peaceDay:"Dia Internacional da Paz",
+    hol_olderPersons:"Dia Internacional do Idoso", hol_teachersDay:"Dia Mundial dos Professores",
+    hol_mentalHealthDay:"Dia Mundial da Saúde Mental", hol_foodDay:"Dia Mundial da Alimentação",
+    hol_aidsDay:"Dia Mundial de Luta contra a AIDS", hol_humanRights:"Dia dos Direitos Humanos",
+    hol_christmas:"Natal", hol_newYearsEve:"Véspera de Ano Novo",
+    hol_ramadan:"Início do Ramadã (aprox.)", hol_eidFitr:"Eid al-Fitr (aprox.)",
+    hol_eidAdha:"Eid al-Adha (aprox.)", hol_islamicNewYear:"Ano Novo islâmico (aprox.)",
+    hol_arafah:"Dia de Arafat (aprox.)",
   },
   ru:{
     appName:"The Docket", daily:"Ежедневный распорядок", allTasks:"Все задачи",
     week:"Неделя", archive:"Завершённые и удалённые",
-    newTask:"Новая задача", save:"Сохранить", cancel:"Отмена", addStep:"Добавить",
+    newTask:"Новая задача", cancel:"Отмена", addStep:"Добавить",
     prayerSetting:"Точное время молитв",
     prayerLoading:"📍 Определяем ваше местоположение…",
     prayerDone:"✓ Время молитв обновлено на сегодня",
@@ -336,18 +849,75 @@ const T:Record<Lang,Record<string,string>> = {
     allOpen:"Все открытые", ongoing:"В процессе", completable:"Завершаемые",
     category:"Категория", show:"Показать", overdue:"ПРОСРОЧЕНО",
     urgent:"срочно", high:"высокий", medium:"средний",
-    chatPlaceholder:"напр. добавить задачу для повторения",
     working:"Работаю…",
     steps:"Шаги", taskTitle:"Задача", notes:"Заметки",
     dueDate:"Срок", nature:"Тип", recurring:"Повторяющаяся",
     oneOff:"Разовая", daily2:"Ежедневно", weekly:"Еженедельно",
     milestone:"Завершаемая", ongoing2:"Постоянная",
     finishedDeleted:"Завершённые и удалённые",
+    calendar:"Календарь", addTask:"Добавить задачу",
+    chatAsk:"Спросите Docket…", chatHistory:"История чатов", newChat:"Новый чат",
+    historySignIn:"Войдите, чтобы сохранять и просматривать историю чатов.",
+    loading:"Загрузка…", noConversations:"Прошлых бесед пока нет.",
+    deleteConversation:"Удалить беседу", close:"Закрыть",
+    attached:"Вложение", attachedPreview:"Предпросмотр вложения",
+    imageAttached:"Изображение прикреплено", removeImage:"Убрать изображение",
+    attachImage:"Прикрепить изображение",
+    chooseModel:"Выберите, какая модель отправит следующие сообщения",
+    opusExhausted:"Кредиты Opus на этот месяц исчерпаны — отправлено стандартной моделью.",
+    editTask:"Изменить задачу", saveChanges:"Сохранить изменения", priority:"Приоритет",
+    taskTitlePlaceholder:"Что нужно сделать?", optional:"(необязательно)",
+    notesPlaceholder:"Любые детали, которые стоит запомнить…",
+    typeMilestoneDesc:"Есть чёткое завершение", typeOngoingDesc:"Без чёткого конца",
+    every2Days:"Каждые 2 дня", every3Days:"Каждые 3 дня",
+    weekdays:"По будням", weekends:"По выходным", biweekly:"Раз в 2 недели", monthly:"Ежемесячно",
+    searchOrCustom:"Найдите или введите свою…", clickToChange:"Нажмите, чтобы изменить",
+    searchCategories:"Поиск категорий…", typeOwnCategory:"Введите свою категорию…",
+    selectDate:"Выберите дату",
+    // Category labels. Prefixed so they stay visibly grouped and
+    // cannot collide with a UI key of the same name.
+    cat_health:"Здоровье и форма", cat_fitness:"Фитнес и тренировки", cat_nutrition:"Питание и диета", cat_mental:"Психическое здоровье",
+    cat_medical:"Медицина", cat_faith:"Вера и духовность", cat_personal:"Саморазвитие", cat_reading:"Чтение и книги",
+    cat_music:"Музыка", cat_creative:"Творчество и искусство", cat_language:"Изучение языков", cat_study:"Учёба",
+    cat_research:"Исследования", cat_writing:"Письмо", cat_education:"Образование", cat_career:"Карьера",
+    cat_interview:"Собеседования", cat_networking:"Нетворкинг", cat_project:"Проекты", cat_hr:"HR и персонал",
+    cat_business:"Бизнес", cat_side_hustle:"Подработка", cat_marketing:"Маркетинг", cat_sales:"Продажи",
+    cat_design:"Дизайн", cat_content:"Создание контента", cat_customer:"Поддержка клиентов", cat_finance:"Финансы",
+    cat_trading:"Трейдинг и инвестиции", cat_savings:"Сбережения и цели", cat_investment:"Инвестиции", cat_debt:"Долги и кредиты",
+    cat_tax:"Налоги и учёт", cat_insurance:"Страхование", cat_subscriptions:"Подписки", cat_legal:"Юридическое",
+    cat_legal_work:"Юридическая работа", cat_compliance:"Комплаенс", cat_admin:"Администрация и жильё", cat_home:"Дом и ремонт",
+    cat_property:"Недвижимость", cat_utilities:"Услуги и счета", cat_vehicle:"Транспорт", cat_driving:"Вождение",
+    cat_shopping:"Покупки и дела", cat_family:"Семья", cat_childcare:"Уход за детьми", cat_pets:"Питомцы",
+    cat_social:"Общение", cat_events:"Мероприятия", cat_technology:"Технологии", cat_travel:"Путешествия и отпуск",
+    cat_volunteering:"Волонтёрство", cat_charity:"Благотворительность", cat_community:"Сообщество", cat_environment:"Экология",
+    cat_sports:"Спорт", cat_cooking:"Готовка и рецепты", cat_other:"Другое",
+    tasksThisDay:"Задачи на этот день", noEventsThisDay:"В этот день нет событий или задач.",
+    hasTask:"Есть задача", hasRoutine:"Есть распорядок",
+    holType_public:"Государственный", holType_religious:"Религиозный",
+    holType_awareness:"Информационный", holType_cultural:"Культурный",
+    holType_islamic:"Исламский", holType_bank:"Банковский выходной",
+    // Holiday names. Only the internationally observed dates are
+    // translated; nation-specific ones keep their English names.
+    hol_newYear:"Новый год", hol_holocaustMemorial:"День памяти жертв Холокоста",
+    hol_valentines:"День святого Валентина", hol_womensDay:"Международный женский день",
+    hol_downSyndrome:"Всемирный день человека с синдромом Дауна", hol_nowruz:"Навруз (персидский Новый год)",
+    hol_waterDay:"Всемирный день водных ресурсов", hol_healthDay:"Всемирный день здоровья",
+    hol_earthDay:"День Земли", hol_labourDay:"Международный день труда",
+    hol_familiesDay:"Международный день семей", hol_childrensDay:"Всемирный день ребёнка",
+    hol_environmentDay:"Всемирный день окружающей среды", hol_musicDay:"Всемирный день музыки",
+    hol_youthDay:"Международный день молодёжи", hol_peaceDay:"Международный день мира",
+    hol_olderPersons:"Международный день пожилых людей", hol_teachersDay:"Всемирный день учителя",
+    hol_mentalHealthDay:"Всемирный день психического здоровья", hol_foodDay:"Всемирный день продовольствия",
+    hol_aidsDay:"Всемирный день борьбы со СПИДом", hol_humanRights:"День прав человека",
+    hol_christmas:"Рождество", hol_newYearsEve:"Канун Нового года",
+    hol_ramadan:"Начало Рамадана (прибл.)", hol_eidFitr:"Ураза-байрам (прибл.)",
+    hol_eidAdha:"Курбан-байрам (прибл.)", hol_islamicNewYear:"Исламский Новый год (прибл.)",
+    hol_arafah:"День Арафа (прибл.)",
   },
   zh:{
     appName:"The Docket", daily:"每日例程", allTasks:"全部任务",
     week:"本周", archive:"已完成与已删除",
-    newTask:"新建任务", save:"保存", cancel:"取消", addStep:"添加",
+    newTask:"新建任务", cancel:"取消", addStep:"添加",
     prayerSetting:"精确礼拜时间",
     prayerLoading:"📍 正在获取你的位置…",
     prayerDone:"✓ 今日礼拜时间已更新",
@@ -363,13 +933,70 @@ const T:Record<Lang,Record<string,string>> = {
     allOpen:"全部进行中", ongoing:"持续", completable:"可完成",
     category:"分类", show:"显示", overdue:"已逾期",
     urgent:"紧急", high:"高", medium:"中",
-    chatPlaceholder:"例如：添加一个复习任务",
     working:"处理中…",
     steps:"步骤", taskTitle:"任务", notes:"备注",
     dueDate:"截止日期", nature:"类型", recurring:"重复",
     oneOff:"一次性", daily2:"每日", weekly:"每周",
     milestone:"可完成", ongoing2:"持续进行",
     finishedDeleted:"已完成与已删除",
+    calendar:"日历", addTask:"添加任务",
+    chatAsk:"向 Docket 提问…", chatHistory:"聊天记录", newChat:"新建对话",
+    historySignIn:"登录后即可保存和查看聊天记录。",
+    loading:"加载中…", noConversations:"暂无历史对话。",
+    deleteConversation:"删除对话", close:"关闭",
+    attached:"附件", attachedPreview:"附件预览",
+    imageAttached:"已附加图片", removeImage:"移除图片",
+    attachImage:"附加图片",
+    chooseModel:"选择由哪个模型发送你接下来的消息",
+    opusExhausted:"本月 Opus 额度已用完 — 已使用标准模型发送。",
+    editTask:"编辑任务", saveChanges:"保存更改", priority:"优先级",
+    taskTitlePlaceholder:"需要做什么？", optional:"（可选）",
+    notesPlaceholder:"任何值得记住的细节…",
+    typeMilestoneDesc:"有明确的结束", typeOngoingDesc:"没有固定结束",
+    every2Days:"每 2 天", every3Days:"每 3 天",
+    weekdays:"工作日", weekends:"周末", biweekly:"每 2 周", monthly:"每月",
+    searchOrCustom:"搜索或自行输入…", clickToChange:"点击更改",
+    searchCategories:"搜索分类…", typeOwnCategory:"输入你自己的分类…",
+    selectDate:"选择日期",
+    // Category labels. Prefixed so they stay visibly grouped and
+    // cannot collide with a UI key of the same name.
+    cat_health:"健康与体能", cat_fitness:"健身与运动", cat_nutrition:"营养与饮食", cat_mental:"心理健康",
+    cat_medical:"医疗", cat_faith:"信仰与灵修", cat_personal:"个人成长", cat_reading:"阅读与书籍",
+    cat_music:"音乐", cat_creative:"创意与艺术", cat_language:"语言学习", cat_study:"学习",
+    cat_research:"研究", cat_writing:"写作", cat_education:"教育", cat_career:"职业",
+    cat_interview:"面试", cat_networking:"人脉", cat_project:"项目", cat_hr:"人力资源",
+    cat_business:"商业", cat_side_hustle:"副业", cat_marketing:"市场营销", cat_sales:"销售",
+    cat_design:"设计", cat_content:"内容创作", cat_customer:"客户服务", cat_finance:"财务",
+    cat_trading:"交易与投资", cat_savings:"储蓄与目标", cat_investment:"投资", cat_debt:"债务与贷款",
+    cat_tax:"税务与会计", cat_insurance:"保险", cat_subscriptions:"订阅", cat_legal:"法律",
+    cat_legal_work:"法务工作", cat_compliance:"合规", cat_admin:"行政与住房", cat_home:"家居与装修",
+    cat_property:"房产", cat_utilities:"水电与账单", cat_vehicle:"车辆", cat_driving:"驾驶",
+    cat_shopping:"购物与杂事", cat_family:"家庭", cat_childcare:"育儿", cat_pets:"宠物",
+    cat_social:"社交生活", cat_events:"活动", cat_technology:"科技", cat_travel:"旅行与假期",
+    cat_volunteering:"志愿服务", cat_charity:"慈善捐赠", cat_community:"社区", cat_environment:"环境",
+    cat_sports:"运动", cat_cooking:"烹饪与食谱", cat_other:"其他",
+    tasksThisDay:"当天任务", noEventsThisDay:"这一天没有活动或任务。",
+    hasTask:"有任务", hasRoutine:"有例程",
+    holType_public:"公共假日", holType_religious:"宗教",
+    holType_awareness:"公益日", holType_cultural:"文化",
+    holType_islamic:"伊斯兰", holType_bank:"银行假日",
+    // Holiday names. Only the internationally observed dates are
+    // translated; nation-specific ones keep their English names.
+    hol_newYear:"元旦", hol_holocaustMemorial:"国际大屠杀纪念日",
+    hol_valentines:"情人节", hol_womensDay:"国际妇女节",
+    hol_downSyndrome:"世界唐氏综合征日", hol_nowruz:"诺鲁孜节（波斯新年）",
+    hol_waterDay:"世界水日", hol_healthDay:"世界卫生日",
+    hol_earthDay:"世界地球日", hol_labourDay:"国际劳动节",
+    hol_familiesDay:"国际家庭日", hol_childrensDay:"世界儿童日",
+    hol_environmentDay:"世界环境日", hol_musicDay:"世界音乐日",
+    hol_youthDay:"国际青年日", hol_peaceDay:"国际和平日",
+    hol_olderPersons:"国际老年人日", hol_teachersDay:"世界教师日",
+    hol_mentalHealthDay:"世界精神卫生日", hol_foodDay:"世界粮食日",
+    hol_aidsDay:"世界艾滋病日", hol_humanRights:"人权日",
+    hol_christmas:"圣诞节", hol_newYearsEve:"除夕",
+    hol_ramadan:"斋月开始（约）", hol_eidFitr:"开斋节（约）",
+    hol_eidAdha:"宰牲节（约）", hol_islamicNewYear:"伊斯兰新年（约）",
+    hol_arafah:"阿拉法特日（约）",
   },
 };
 
@@ -463,6 +1090,35 @@ function dowNames(locale:string,startDay:number):string[]{
 // startDay. The old form hardcoded the Monday case as (getDay()+6)%7.
 function leadingBlanks(firstOfMonth:Date,startDay:number):number{
   return (firstOfMonth.getDay()-startDay+7)%7;
+}
+
+// Dates go through toLocaleDateString, which renders digits in whatever
+// numbering system the locale resolves to — beng for bn-BD, latn for the
+// other ten. Everything else on screen (day numbers, clock, times, counts)
+// was a raw JS number React printed as ASCII, so a Bengali user saw "১৭
+// সেপ" under the day strip and "17" in the chip directly above it: one date,
+// two numeral systems.
+//
+// These map ASCII digits onto the locale's own, leaving what each locale
+// resolves to entirely alone — Arabic stays latn, as decided. Working on
+// strings rather than numbers keeps zero-padding ("07:30") and separators
+// intact, which Intl.NumberFormat would drop.
+const localeDigitCache=new Map<string,string[]|null>();
+function localeDigits(locale:string):string[]|null{
+  if(localeDigitCache.has(locale)) return localeDigitCache.get(locale)!;
+  const f=new Intl.NumberFormat(locale,{useGrouping:false});
+  const d=Array.from({length:10},(_,i)=>f.format(i));
+  // null for a locale that already uses ASCII, so the ten that do skip the
+  // replace entirely rather than paying for a no-op scan of every string.
+  const v=d.every((x,i)=>x===String(i))?null:d;
+  localeDigitCache.set(locale,v);
+  return v;
+}
+function localeNum(value:string|number,locale:string):string{
+  const s=String(value);
+  const d=localeDigits(locale);
+  if(!d) return s;
+  return s.replace(/[0-9]/g,ch=>d[Number(ch)]);
 }
 
 // A horizontal scroller under direction:rtl starts at scrollLeft 0 on its
@@ -592,6 +1248,23 @@ const CATS:Record<string,{label:string;icon:string}> = {
   cooking:     {label:"Cooking & Recipes",   icon:"ti-chef-hat"},
   other:       {label:"Other",               icon:"ti-dots-circle-horizontal"},
 };
+
+// The display name for a category. CATS keeps its English label as the source
+// of truth — the AI prompt and the category search both read it — while the
+// translated text lives in T under a cat_ prefix.
+//
+// A value that isn't in CATS is one the user typed themselves through the
+// picker's "type your own category" box. That is their own words in their own
+// language, so it is returned untouched rather than run through a lookup that
+// would never match.
+function catLabel(key:string,t:(k:string)=>string):string{
+  const c=CATS[key];
+  if(!c) return key;
+  const tr=t("cat_"+key);
+  // t() returns the key itself when nothing is defined; fall back to English
+  // rather than printing "cat_health" at someone.
+  return tr==="cat_"+key?c.label:tr;
+}
 
 const CAT_STYLES:Record<string,{bg:string;color:string}> = {
   health:      {bg:"#E4E9F9",color:"#3D52A0"},
@@ -738,9 +1411,10 @@ async function getSupabaseClient(){
 // ── Shared small components ──────────────────────────────────────────────────
 
 function CatPill({category,done}:{category:string;done?:boolean}){
+  const{t}=useApp();
   const s=CAT_STYLES[category]??CAT_STYLE_DEFAULT;
   const cat=CATS[category];
-  const label=cat?.label??category;
+  const label=catLabel(category,t);
   const icon=cat?.icon??"ti-dots-circle-horizontal";
   return(
     <span style={{background:s.bg,color:s.color,padding:"4px 11px 4px 8px",borderRadius:50,
@@ -775,10 +1449,15 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
   const[open,setOpen]=useState(false);
   const[customMode,setCustomMode]=useState(false);
   const[customVal,setCustomVal]=useState("");
-  const filtered=Object.entries(CATS).filter(([k,v])=>
-    v.label.toLowerCase().includes(search.toLowerCase())||
-    k.toLowerCase().includes(search.toLowerCase())
-  );
+  // Matched against the translated name, the English one and the raw key, so
+  // someone typing in their own language finds the category and someone who
+  // knows it by its English name still does too.
+  const filtered=Object.entries(CATS).filter(([k,v])=>{
+    const q=search.toLowerCase();
+    return catLabel(k,t).toLowerCase().includes(q)||
+      v.label.toLowerCase().includes(q)||
+      k.toLowerCase().includes(q);
+  });
   const selected=CATS[value];
   const s=CAT_STYLES[value]??CAT_STYLE_DEFAULT;
   return(
@@ -792,9 +1471,9 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
         <span style={{background:s.bg,color:s.color,padding:"3px 10px 3px 8px",
           borderRadius:50,fontSize:11.5,fontWeight:700,flexShrink:0,display:"flex",alignItems:"center",gap:5}}>
           {selected&&<i className={`ti ${selected.icon}`} style={{fontSize:13}} aria-hidden="true"/>}
-          {selected?selected.label:value||"Category"}
+          {selected?catLabel(value,t):value||t("category")}
         </span>
-        <span style={{color:C.muted2,fontSize:12,flex:1}}>{open?"Search or type custom…":"Click to change"}</span>
+        <span style={{color:C.muted2,fontSize:12,flex:1}}>{open?t("searchOrCustom"):t("clickToChange")}</span>
         <span style={{color:C.muted2,fontSize:11}}>{open?"▲":"▼"}</span>
       </div>
       {open&&(
@@ -804,7 +1483,7 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
           <div style={{padding:"8px 10px",borderBottom:`1px solid ${C.border}`,display:"flex",gap:6}}>
             <input autoFocus value={search}
               onChange={e=>{setSearch(e.target.value);setCustomMode(false);}}
-              placeholder="Search categories…"
+              placeholder={t("searchCategories")}
               style={{flex:1,border:"none",outline:"none",fontSize:13,
                 background:"transparent",color:C.navy,fontFamily:"inherit"}}/>
             <button onClick={()=>{setCustomMode(true);setSearch("");}}
@@ -816,7 +1495,7 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
           {customMode&&(
             <div style={{padding:"10px 12px",borderBottom:`1px solid ${C.border}`,display:"flex",gap:6}}>
               <input autoFocus value={customVal} onChange={e=>setCustomVal(e.target.value)}
-                placeholder="Type your own category…"
+                placeholder={t("typeOwnCategory")}
                 onKeyDown={e=>{if(e.key==="Enter"&&customVal.trim()){onChange(customVal.trim());setOpen(false);setCustomVal("");setCustomMode(false);}}}
                 style={{flex:1,border:`1.5px solid ${C.primary}`,borderRadius:7,padding:"7px 9px",
                   outline:"none",fontSize:13,background:C.surface,color:C.navy,fontFamily:"inherit"}}/>
@@ -842,7 +1521,7 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
                   onMouseLeave={e=>(e.currentTarget.style.background=k===value?C.surface2:"transparent")}>
                   <i className={`ti ${v.icon}`} style={{fontSize:16,width:22,textAlign:"center",flexShrink:0,color:st.color}} aria-hidden="true"/>
                   <span style={{background:st.bg,color:st.color,padding:"3px 10px",
-                    borderRadius:6,fontSize:12,fontWeight:600}}>{v.label}</span>
+                    borderRadius:6,fontSize:12,fontWeight:600}}>{catLabel(k,t)}</span>
                 </div>
               );
             })}
@@ -859,7 +1538,7 @@ function CategoryPicker({value,onChange}:{value:string;onChange:(v:any)=>void}){
 // uses (firstDay/daysInMonth/startDow, 7-col grid with empty offset cells)
 // but without CalendarView's task/event overlay — this only needs day cells.
 function DatePicker({value,onChange,dark}:{value:string;onChange:(v:string)=>void;dark:boolean}){
-  const{lang,dir}=useApp();
+  const{lang,dir,t}=useApp();
   const locale=localeFor(lang);
   const C=getC(dark);
   const[open,setOpen]=useState(false);
@@ -881,7 +1560,7 @@ function DatePicker({value,onChange,dark}:{value:string;onChange:(v:string)=>voi
 
   const displayLabel=parsed
     ?parsed.toLocaleDateString(locale,{weekday:"short",day:"numeric",month:"short",year:"numeric"})
-    :"Select a date";
+    :t("selectDate");
 
   return(
     <div style={{position:"relative"}}>
@@ -981,19 +1660,19 @@ function TaskModal({initial,onClose,onSave}:{
     {v:"medium",label:t("medium"),icon:"ti-minus",color:"#4C5FD5",bg:"rgba(76,95,213,0.1)"},
   ];
   const typeOpts=[
-    {v:"milestone",label:t("milestone"),icon:"ti-circle-check",desc:"Has a clear end"},
-    {v:"ongoing",label:t("ongoing2"),icon:"ti-repeat",desc:"No fixed finish"},
+    {v:"milestone",label:t("milestone"),icon:"ti-circle-check",desc:t("typeMilestoneDesc")},
+    {v:"ongoing",label:t("ongoing2"),icon:"ti-repeat",desc:t("typeOngoingDesc")},
   ];
   const recurringOpts=[
     {v:"",label:t("oneOff")},
     {v:"daily",label:t("daily2")},
-    {v:"every_2_days",label:"Every 2 days"},
-    {v:"every_3_days",label:"Every 3 days"},
-    {v:"weekdays",label:"Weekdays"},
-    {v:"weekends",label:"Weekends"},
+    {v:"every_2_days",label:t("every2Days")},
+    {v:"every_3_days",label:t("every3Days")},
+    {v:"weekdays",label:t("weekdays")},
+    {v:"weekends",label:t("weekends")},
     {v:"weekly",label:t("weekly")},
-    {v:"biweekly",label:"Bi-weekly"},
-    {v:"monthly",label:"Monthly"},
+    {v:"biweekly",label:t("biweekly")},
+    {v:"monthly",label:t("monthly")},
   ];
 
   const inp:React.CSSProperties={
@@ -1025,7 +1704,7 @@ function TaskModal({initial,onClose,onSave}:{
             </div>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
               fontSize:17,color:C.navy}}>
-              {initial?.id?"Edit Task":t("newTask")}
+              {initial?.id?t("editTask"):t("newTask")}
             </p>
           </div>
           <button onClick={onClose} style={{background:"none",border:"none",
@@ -1041,7 +1720,7 @@ function TaskModal({initial,onClose,onSave}:{
             <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
               textTransform:"uppercase",marginBottom:8}}>{t("taskTitle")}</p>
             <input value={title} onChange={e=>setTitle(e.target.value)}
-              placeholder="What needs to be done?"
+              placeholder={t("taskTitlePlaceholder")}
               autoFocus
               style={inp}
               onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
@@ -1059,7 +1738,7 @@ function TaskModal({initial,onClose,onSave}:{
           {/* Priority */}
           <div style={{marginBottom:16}}>
             <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
-              textTransform:"uppercase",marginBottom:8}}>Priority</p>
+              textTransform:"uppercase",marginBottom:8}}>{t("priority")}</p>
             <div style={{display:"flex",gap:8}}>
               {priorityOpts.map(p=>(
                 <button key={p.v} onClick={()=>setPriority(p.v as Priority)}
@@ -1130,9 +1809,9 @@ function TaskModal({initial,onClose,onSave}:{
           {/* Notes */}
           <div style={{marginBottom:4}}>
             <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
-              textTransform:"uppercase",marginBottom:8}}>{t("notes")} <span style={{fontWeight:400,textTransform:"none",letterSpacing:0}}>(optional)</span></p>
+              textTransform:"uppercase",marginBottom:8}}>{t("notes")} <span style={{fontWeight:400,textTransform:"none",letterSpacing:0}}>{t("optional")}</span></p>
             <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={2}
-              placeholder="Any details worth remembering…"
+              placeholder={t("notesPlaceholder")}
               style={{...inp,resize:"vertical"}}
               onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
               onBlur={e=>(e.target.style.borderColor=C.border)}/>
@@ -1162,7 +1841,7 @@ function TaskModal({initial,onClose,onSave}:{
               opacity:title.trim()?1:0.6,cursor:title.trim()?"pointer":"not-allowed",
               boxShadow:title.trim()?"0 6px 20px rgba(76,95,213,0.4)":"none"}}>
             <i className="ti ti-check" style={{fontSize:14,marginRight:6}} aria-hidden="true"/>
-            {initial?.id?"Save Changes":"Add Task"}
+            {initial?.id?t("saveChanges"):t("addTask")}
           </button>
         </div>
       </div>
@@ -1226,7 +1905,7 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
           {task.date&&<span style={{fontSize:10,fontWeight:600,padding:"3px 8px",borderRadius:7,
             background:overdue?C.urgentSoft:C.surface2,
             color:overdue?C.urgent:C.muted}}>
-            {overdue?`${t("overdue")} · `:""}{fmtDate(task.date,locale)}{task.time?` · ${task.time}`:""}
+            {overdue?`${t("overdue")} · `:""}{fmtDate(task.date,locale)}{task.time?` · ${localeNum(task.time,locale)}`:""}
           </span>}
           {task.recurring&&<span style={{fontSize:10,fontWeight:600,padding:"3px 8px",
             borderRadius:7,background:C.sageSoft,color:C.sage}}>{task.recurring}</span>}
@@ -1238,7 +1917,7 @@ function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemove
               border:"none",cursor:"pointer"}}>
             {cl.length>0&&<span style={{background:"#E4E9F9",color:C.primary,
               padding:"2px 7px",borderRadius:6,fontFamily:"monospace",fontSize:9.5}}>
-              {clDone}/{cl.length}</span>}
+              {localeNum(clDone,locale)}/{localeNum(cl.length,locale)}</span>}
             {expanded?"▲":"▼"} {t("steps")}
           </button>
           {expanded&&<div style={{marginTop:7,background:C.surface2,borderRadius:10,padding:"9px 11px"}}>
@@ -3231,7 +3910,8 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
 
 // ── All Tasks Sidebar ────────────────────────────────────────────────────────
 function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFilter:(f:Filter)=>void;}){
-  const{dark,t}=useApp();
+  const{dark,t,lang}=useApp();
+  const locale=localeFor(lang);
   const C=getC(dark);
   const open=tasks.filter(t=>!t.done&&!t.deleted);
   const archived=tasks.filter(t=>t.done||t.deleted);
@@ -3248,7 +3928,7 @@ function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFil
         color:active?"white":C.muted,marginBottom:3,
         boxShadow:active?"0 4px 14px rgba(76,95,213,0.4)":"none"}}>
         <span>{label}</span>
-        <span style={{fontFamily:"monospace",fontSize:11,opacity:0.75}}>{count}</span>
+        <span style={{fontFamily:"monospace",fontSize:11,opacity:0.75}}>{localeNum(count,locale)}</span>
       </button>
     );
   }
@@ -3264,8 +3944,10 @@ function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFil
       <p style={{fontSize:10,fontWeight:700,letterSpacing:1.5,color:C.muted2,
         textTransform:"uppercase",padding:"6px 10px 6px"}}>{t("category")}</p>
       <div style={{maxHeight:260,overflowY:"auto",paddingRight:2}}>
-        {catEntries.map(([k,v])=>(
-          <Btn key={k} f={k as Filter} label={v.label} count={open.filter(t=>t.category===k).length}/>
+        {/* Only the key is needed now — the label comes from catLabel, not
+            from the CATS entry's English text. */}
+        {catEntries.map(([k])=>(
+          <Btn key={k} f={k as Filter} label={catLabel(k,t)} count={open.filter(x=>x.category===k).length}/>
         ))}
       </div>
       <div style={{height:1,background:C.border,margin:"6px 4px"}}/>
@@ -3278,14 +3960,15 @@ function TimelineRow({item,onCheck}:{
   item:{time:string;label:string;category:string;done:boolean;streak:number;conflict:boolean;};
   onCheck:()=>void;
 }){
-  const{dark}=useApp();
+  const{dark,lang}=useApp();
+  const locale=localeFor(lang);
   const C=getC(dark);
   return(
     <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",
       borderBottom:`1px solid ${C.border}`}}>
       <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11.5,
         color:C.muted,width:48,flexShrink:0,fontWeight:500}}>
-        {item.time||"—"}
+        {item.time?localeNum(item.time,locale):"—"}
       </span>
       <Checkbox checked={item.done} onClick={onCheck} small/>
       <div style={{flex:1}}>
@@ -3577,15 +4260,30 @@ async function getAuthHeader():Promise<Record<string,string>>{
 // "2 hours ago" for anything within the last day, otherwise a short date in
 // the caller's locale — the same source every other date in the app now uses
 // (fmtDate, the calendar views), with the year added only when it isn't the
-// current one. The relative half is still English; it belongs with the rest
-// of the untranslated chat strings, not here.
+// current one.
+//
+// The relative half goes through Intl rather than translation keys. The old
+// form built it as `${n} minute${n===1?"":"s"} ago`, and that English
+// one-or-many rule is simply wrong for most of the eleven: Russian needs
+// three plural forms (минуту / минуты / минут), Arabic six including a dual
+// (دقيقة واحدة / دقيقتين / 5 دقائق). No set of static keys expresses that.
+// RelativeTimeFormat carries each locale's CLDR plural rules, so this is
+// both correct everywhere and zero keys.
+const rtfCache=new Map<string,Intl.RelativeTimeFormat>();
+function relTimeFmt(locale:string):Intl.RelativeTimeFormat{
+  let f=rtfCache.get(locale);
+  if(!f){ f=new Intl.RelativeTimeFormat(locale,{numeric:"auto"}); rtfCache.set(locale,f); }
+  return f;
+}
 function formatConversationTime(iso:string,locale:string="en-GB"):string{
   const date=new Date(iso);
   const diffMin=Math.round((Date.now()-date.getTime())/60000);
-  if(diffMin<1) return "Just now";
-  if(diffMin<60) return `${diffMin} minute${diffMin===1?"":"s"} ago`;
+  // numeric:"auto" is what turns 0 into the locale's idiomatic "now" rather
+  // than a literal "in 0 seconds".
+  if(diffMin<1) return relTimeFmt(locale).format(0,"second");
+  if(diffMin<60) return relTimeFmt(locale).format(-diffMin,"minute");
   const diffHr=Math.round(diffMin/60);
-  if(diffHr<24) return `${diffHr} hour${diffHr===1?"":"s"} ago`;
+  if(diffHr<24) return relTimeFmt(locale).format(-diffHr,"hour");
   const sameYear=date.getFullYear()===new Date().getFullYear();
   return date.toLocaleDateString(locale,{day:"numeric",month:"short",...(sameYear?{}:{year:"numeric"})});
 }
@@ -4259,13 +4957,13 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
           borderRadius:999,background:dark?"#1E2043":"#FFFFFF",
           border:`0.5px solid ${C.border}`,
           boxShadow:dark?"0 2px 14px rgba(0,0,0,0.45)":"0 2px 12px rgba(0,0,0,0.08)"}}>
-          <button onClick={()=>setCurrentView("daily")} title="Daily Routine"
+          <button onClick={()=>setCurrentView("daily")} title={t("daily")}
             style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
               border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
             <i className="ti ti-list-check" style={{fontSize:21,
               color:currentView==="daily"?C.accent:C.muted}} aria-hidden="true"/>
           </button>
-          <button onClick={()=>setCurrentView("calendar")} title="Calendar"
+          <button onClick={()=>setCurrentView("calendar")} title={t("calendar")}
             style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
               border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
             <i className="ti ti-calendar" style={{fontSize:21,
@@ -4281,7 +4979,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
               title={open?"Close Docket AI":"Open Docket AI"}/>
           </div>
           <div style={{width:1,height:22,background:C.border,flexShrink:0,margin:"0 2px"}}/>
-          <button onClick={()=>setCurrentView("all")} title="All Tasks"
+          <button onClick={()=>setCurrentView("all")} title={t("allTasks")}
             style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
               border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
             <i className="ti ti-checkbox" style={{fontSize:21,
@@ -4290,7 +4988,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
           {/* Add-task — an action, not a view, so it never takes the active
               state; it stays accent-coloured as the bar's primary action.
               Same handler as the old standalone floating FAB. */}
-          <button onClick={onAddTask} title="Add task"
+          <button onClick={onAddTask} title={t("addTask")}
             style={{width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
               border:"none",background:"transparent",cursor:"pointer",borderRadius:"50%"}}>
             <i className="ti ti-plus" style={{fontSize:23,color:C.accent}} aria-hidden="true"/>
@@ -4454,7 +5152,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                   borderBottom:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
                   display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
                   <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:13,color:C.navy}}>
-                    Chat history
+                    {t("chatHistory")}
                   </p>
                   <button onClick={()=>setHistoryOpen(false)} className="pill-btn"
                     style={{width:28,height:28,border:"none",background:"transparent",
@@ -4473,20 +5171,20 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                       background:"linear-gradient(145deg,#6677E8,#4C5FD5)",color:"white",
                       boxShadow:"0 6px 18px rgba(76,95,213,0.28)"}}>
                     <i className="ti ti-plus" style={{fontSize:14}} aria-hidden="true"/>
-                    New chat
+                    {t("newChat")}
                   </button>
                 </div>
 
                 <div style={{flex:1,overflowY:"auto",padding:"6px 10px"}}>
                   {!user?.id?(
                     <p style={{fontSize:11.5,color:C.muted,padding:"16px 10px",textAlign:"center"}}>
-                      Sign in to save and view your chat history.
+                      {t("historySignIn")}
                     </p>
                   ):historyLoading?(
-                    <p style={{fontSize:11.5,color:C.muted,padding:"16px 10px",textAlign:"center"}}>Loading…</p>
+                    <p style={{fontSize:11.5,color:C.muted,padding:"16px 10px",textAlign:"center"}}>{t("loading")}</p>
                   ):conversations.length===0?(
                     <p style={{fontSize:11.5,color:C.muted,padding:"16px 10px",textAlign:"center"}}>
-                      No past conversations yet.
+                      {t("noConversations")}
                     </p>
                   ):conversations.map(c=>(
                     <div key={c.id} onClick={()=>openConversation(c.id)}
@@ -4503,7 +5201,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                       </div>
                       <button onClick={e=>deleteConversation(c.id,e)}
                         disabled={deletingId===c.id}
-                        title="Delete conversation"
+                        title={t("deleteConversation")}
                         style={{width:24,height:24,borderRadius:8,border:"none",background:"transparent",
                           cursor:"pointer",color:C.muted2,flexShrink:0,display:"flex",
                           alignItems:"center",justifyContent:"center"}}
@@ -4573,7 +5271,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                     updated when the input row moved to the de-boxed look. */}
                 <div ref={historyButtonGroupRef} style={{position:"absolute",top:10,right:10,display:"flex",gap:10}}>
                   <button onClick={()=>setHistoryOpen(o=>!o)}
-                    title="Chat history" className="pill-btn"
+                    title={t("chatHistory")} className="pill-btn"
                     style={{width:36,height:36,
                       background:historyOpen?(dark?"rgba(76,95,213,0.35)":"rgba(76,95,213,0.18)"):"transparent",
                       border:historyOpen?inputBtnBorder:"none",
@@ -4605,7 +5303,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                   transition:"all 0.3s"}}>
                   <ChatBlob ref={orbRef} size={expanded?42:34} active={loading}
                     onClick={requestClose}
-                    title="Close"/>
+                    title={t("close")}/>
                 </div>
               </div>
 
@@ -4640,7 +5338,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                       </div>
                     )}
                     {m.role==="user"&&m.imageDataUrl&&(
-                      <img src={m.imageDataUrl} alt="Attached"
+                      <img src={m.imageDataUrl} alt={t("attached")}
                         style={{display:"block",maxWidth:"100%",borderRadius:10,
                           marginBottom:m.content?6:0}}/>
                     )}
@@ -4651,7 +5349,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                       <p style={{fontSize:10.5,color:C.muted2,marginTop:6,paddingTop:6,
                         borderTop:`1px solid ${dark?"rgba(255,255,255,0.08)":C.border}`,fontStyle:"italic"}}>
                         <i className="ti ti-info-circle" style={{fontSize:11,marginRight:3}} aria-hidden="true"/>
-                        Opus credits used up this month — sent with the standard model instead.
+                        {t("opusExhausted")}
                       </p>
                     )}
                   </div>
@@ -4685,10 +5383,10 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                     padding:"6px 10px",borderRadius:12,
                     background:dark?"rgba(255,255,255,0.05)":"#F0EFFC",
                     border:`1px solid ${C.border}`}}>
-                    <img src={pendingImage} alt="Attached preview"
+                    <img src={pendingImage} alt={t("attachedPreview")}
                       style={{width:36,height:36,borderRadius:8,objectFit:"cover",flexShrink:0}}/>
-                    <span style={{fontSize:11,color:C.muted,flex:1}}>Image attached</span>
-                    <button onClick={()=>setPendingImage(null)} title="Remove image"
+                    <span style={{fontSize:11,color:C.muted,flex:1}}>{t("imageAttached")}</span>
+                    <button onClick={()=>setPendingImage(null)} title={t("removeImage")}
                       style={{background:"none",border:"none",cursor:"pointer",color:C.muted2,padding:4}}>
                       <i className="ti ti-x" style={{fontSize:14}} aria-hidden="true"/>
                     </button>
@@ -4722,7 +5420,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                     // reports the resize), just gives it a head start
                     // instead of waiting solely on that event's own timing.
                     onBlur={updateFromViewport}
-                    placeholder="Ask Docket…"
+                    placeholder={t("chatAsk")}
                     // minWidth:0 overrides the browser's non-zero intrinsic
                     // min-width for text inputs, which flex:1 alone doesn't
                     // touch — without it, this row's fixed-width siblings
@@ -4746,7 +5444,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                           them are untouched. */}
                       <button onClick={()=>setModelMenuOpen(v=>!v)}
                         className="pill-btn"
-                        title="Choose which model sends your next messages"
+                        title={t("chooseModel")}
                         style={{display:"flex",alignItems:"center",gap:4,height:36,
                           padding:"0 6px",whiteSpace:"nowrap",
                           border:"none",background:"transparent",color:C.muted,
@@ -4803,7 +5501,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                       their filled accent color so they're still clearly
                       "on," they just no longer have a permanent border/fill
                       while idle. */}
-                  <button onClick={()=>fileInputRef.current?.click()} title="Attach an image"
+                  <button onClick={()=>fileInputRef.current?.click()} title={t("attachImage")}
                     className="pill-btn"
                     style={{width:36,height:36,
                       background:pendingImage?C.primary:"transparent",
@@ -4851,50 +5549,70 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
 }
 
 // ── Calendar View ────────────────────────────────────────────────────────────
-const HOLIDAYS:Record<string,{name:string;type:"public"|"religious"|"awareness"|"cultural"}[]> = {
-  "01-01":[{name:"New Year's Day",type:"public"}],
+// `key` marks a holiday as internationally observed and therefore worth
+// translating. An entry without one is nation-specific and keeps its
+// English name deliberately — see holidayLabel.
+const HOLIDAYS:Record<string,{name:string;type:"public"|"religious"|"awareness"|"cultural";key?:string}[]> = {
+  "01-01":[{name:"New Year's Day",type:"public",key:"newYear"}],
   "01-15":[{name:"Martin Luther King Jr. Day",type:"public"}],
-  "01-27":[{name:"Holocaust Memorial Day",type:"awareness"}],
-  "02-14":[{name:"Valentine's Day",type:"cultural"}],
-  "03-08":[{name:"International Women's Day",type:"awareness"}],
+  "01-27":[{name:"Holocaust Memorial Day",type:"awareness",key:"holocaustMemorial"}],
+  "02-14":[{name:"Valentine's Day",type:"cultural",key:"valentines"}],
+  "03-08":[{name:"International Women's Day",type:"awareness",key:"womensDay"}],
   "03-17":[{name:"St Patrick's Day",type:"cultural"}],
-  "03-21":[{name:"World Down Syndrome Day",type:"awareness"},{name:"Nowruz (Persian New Year)",type:"cultural"}],
-  "03-22":[{name:"World Water Day",type:"awareness"}],
+  "03-21":[{name:"World Down Syndrome Day",type:"awareness",key:"downSyndrome"},{name:"Nowruz (Persian New Year)",type:"cultural",key:"nowruz"}],
+  "03-22":[{name:"World Water Day",type:"awareness",key:"waterDay"}],
   "04-01":[{name:"April Fool's Day",type:"cultural"}],
-  "04-07":[{name:"World Health Day",type:"awareness"}],
-  "04-22":[{name:"Earth Day",type:"awareness"}],
-  "05-01":[{name:"International Labour Day",type:"public"}],
+  "04-07":[{name:"World Health Day",type:"awareness",key:"healthDay"}],
+  "04-22":[{name:"Earth Day",type:"awareness",key:"earthDay"}],
+  "05-01":[{name:"International Labour Day",type:"public",key:"labourDay"}],
   "05-04":[{name:"Star Wars Day",type:"cultural"}],
-  "05-15":[{name:"International Day of Families",type:"awareness"}],
-  "06-01":[{name:"World Children's Day",type:"awareness"}],
-  "06-05":[{name:"World Environment Day",type:"awareness"}],
-  "06-21":[{name:"World Music Day",type:"cultural"}],
+  "05-15":[{name:"International Day of Families",type:"awareness",key:"familiesDay"}],
+  "06-01":[{name:"World Children's Day",type:"awareness",key:"childrensDay"}],
+  "06-05":[{name:"World Environment Day",type:"awareness",key:"environmentDay"}],
+  "06-21":[{name:"World Music Day",type:"cultural",key:"musicDay"}],
   "07-04":[{name:"US Independence Day",type:"public"}],
-  "08-12":[{name:"International Youth Day",type:"awareness"}],
-  "09-21":[{name:"International Day of Peace",type:"awareness"}],
-  "10-01":[{name:"International Day of Older Persons",type:"awareness"}],
-  "10-05":[{name:"World Teachers' Day",type:"awareness"}],
-  "10-10":[{name:"World Mental Health Day",type:"awareness"}],
-  "10-16":[{name:"World Food Day",type:"awareness"}],
+  "08-12":[{name:"International Youth Day",type:"awareness",key:"youthDay"}],
+  "09-21":[{name:"International Day of Peace",type:"awareness",key:"peaceDay"}],
+  "10-01":[{name:"International Day of Older Persons",type:"awareness",key:"olderPersons"}],
+  "10-05":[{name:"World Teachers' Day",type:"awareness",key:"teachersDay"}],
+  "10-10":[{name:"World Mental Health Day",type:"awareness",key:"mentalHealthDay"}],
+  "10-16":[{name:"World Food Day",type:"awareness",key:"foodDay"}],
   "10-31":[{name:"Halloween",type:"cultural"}],
   "11-05":[{name:"Guy Fawkes Night (UK)",type:"cultural"}],
   "11-11":[{name:"Remembrance Day",type:"public"}],
-  "12-01":[{name:"World AIDS Day",type:"awareness"}],
-  "12-10":[{name:"Human Rights Day",type:"awareness"}],
-  "12-25":[{name:"Christmas Day",type:"public"}],
+  "12-01":[{name:"World AIDS Day",type:"awareness",key:"aidsDay"}],
+  "12-10":[{name:"Human Rights Day",type:"awareness",key:"humanRights"}],
+  "12-25":[{name:"Christmas Day",type:"public",key:"christmas"}],
   "12-26":[{name:"Boxing Day (UK)",type:"public"}],
-  "12-31":[{name:"New Year's Eve",type:"cultural"}],
+  "12-31":[{name:"New Year's Eve",type:"cultural",key:"newYearsEve"}],
 };
 // UK Bank Holidays 2026
 const UK_BANK_2026:string[]=["2026-01-01","2026-04-03","2026-04-06","2026-05-04","2026-05-25","2026-08-31","2026-12-25","2026-12-28"];
 // Islamic dates vary yearly — approximate 2026 dates
-const ISLAMIC_2026:Record<string,string>={
-  "2026-01-20":"Ramadan begins (approx)",
-  "2026-02-18":"Eid al-Fitr (approx)",
-  "2026-04-26":"Eid al-Adha (approx)",
-  "2026-05-16":"Islamic New Year (approx)",
-  "2026-07-25":"Day of Arafah (approx)",
+const ISLAMIC_2026:Record<string,{name:string;key:string}>={
+  "2026-01-20":{name:"Ramadan begins (approx)",key:"ramadan"},
+  "2026-02-18":{name:"Eid al-Fitr (approx)",key:"eidFitr"},
+  "2026-04-26":{name:"Eid al-Adha (approx)",key:"eidAdha"},
+  "2026-05-16":{name:"Islamic New Year (approx)",key:"islamicNewYear"},
+  "2026-07-25":{name:"Day of Arafah (approx)",key:"arafah"},
 };
+
+// A holiday's display name. Entries carrying a `key` are internationally
+// observed and have translations; the rest are nation-specific — Guy Fawkes
+// Night, Boxing Day, US Independence Day — and keep their English names on
+// purpose, since a Bengali rendering of a British bank holiday helps nobody.
+function holidayLabel(ev:{name:string;key?:string},t:(k:string)=>string):string{
+  if(!ev.key) return ev.name;
+  const tr=t("hol_"+ev.key);
+  return tr==="hol_"+ev.key?ev.name:tr;
+}
+// The category shown on the legend pills and on each event's badge. Was
+// rendered by upper-casing the raw type ("awareness" → "Awareness"), which
+// only ever produced English.
+function holidayType(type:string,t:(k:string)=>string):string{
+  const tr=t("holType_"+type);
+  return tr==="holType_"+type?type.charAt(0).toUpperCase()+type.slice(1):tr;
+}
 
 const TYPE_STYLE:Record<string,{bg:string;color:string;icon:string}>={
   public:    {bg:"#E4E9F9",color:"#3D52A0",icon:"ti-flag"},
@@ -4906,7 +5624,7 @@ const TYPE_STYLE:Record<string,{bg:string;color:string;icon:string}>={
 };
 
 function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:ReturnType<typeof getC>}){
-  const{lang,dir}=useApp();
+  const{lang,dir,t}=useApp();
   const locale=localeFor(lang);
   const now=new Date();
   const[viewMonth,setViewMonth]=useState(now.getMonth());
@@ -4923,10 +5641,12 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
   function getDayData(day:number){
     const iso=`${monthISO}-${String(day).padStart(2,"0")}`;
     const mmdd=iso.slice(5);
-    const events:{name:string;type:string}[]=[];
+    const events:{name:string;type:string;key?:string}[]=[];
+    // No key: a UK bank holiday is not an observance anyone outside the UK
+    // needs rendered in their own language.
     if(UK_BANK_2026.includes(iso)) events.push({name:"UK Bank Holiday",type:"bank"});
-    if(ISLAMIC_2026[iso]) events.push({name:ISLAMIC_2026[iso],type:"islamic"});
-    (HOLIDAYS[mmdd]||[]).forEach(h=>events.push({name:h.name,type:h.type}));
+    if(ISLAMIC_2026[iso]) events.push({...ISLAMIC_2026[iso],type:"islamic"});
+    (HOLIDAYS[mmdd]||[]).forEach(h=>events.push({name:h.name,type:h.type,key:h.key}));
     const dayTasks=tasks.filter(t=>t.date===iso&&!t.deleted);
     const dayKey=["sun","mon","tue","wed","thu","fri","sat"][new Date(iso+"T12:00:00").getDay()];
     const dayRoutines=routines.filter(r=>(r.days??[]).includes(dayKey));
@@ -4939,7 +5659,7 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
         <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:22,color:C.navy}}>
-          Calendar
+          {t("calendar")}
         </p>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <button onClick={()=>{if(viewMonth===0){setViewMonth(11);setViewYear(y=>y-1);}else setViewMonth(m=>m-1);}}
@@ -4964,7 +5684,7 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
           <span key={k} style={{background:v.bg,color:v.color,fontSize:10,fontWeight:600,
             padding:"3px 8px",borderRadius:6,display:"inline-flex",alignItems:"center",gap:4}}>
             <i className={`ti ${v.icon}`} style={{fontSize:11}} aria-hidden="true"/>
-            {k.charAt(0).toUpperCase()+k.slice(1)}
+            {holidayType(k,t)}
           </span>
         ))}
       </div>
@@ -5001,7 +5721,7 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
                 <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:isToday?700:500,
                   fontSize:13,color:isToday?C.primary:C.navy,
                   background:isToday?"transparent":"none"}}>
-                  {day}
+                  {localeNum(day,locale)}
                 </span>
                 <div style={{marginTop:2,display:"flex",flexDirection:"column",gap:1}}>
                   {events.slice(0,2).map((ev,ei)=>{
@@ -5010,7 +5730,7 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
                       <div key={ei} style={{background:st.bg,color:st.color,fontSize:8.5,
                         fontWeight:600,padding:"1px 4px",borderRadius:3,
                         whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
-                        <i className={`ti ${st.icon}`} style={{fontSize:8}} aria-hidden="true"/> {ev.name}
+                        <i className={`ti ${st.icon}`} style={{fontSize:8}} aria-hidden="true"/> {holidayLabel(ev,t)}
                       </div>
                     );
                   })}
@@ -5044,9 +5764,9 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
                   <div key={i} style={{display:"flex",alignItems:"center",gap:8,
                     padding:"6px 0",borderBottom:i<selData.events.length-1?`1px solid ${C.border}`:"none"}}>
                     <i className={`ti ${st.icon}`} style={{fontSize:16,color:st.color,flexShrink:0}} aria-hidden="true"/>
-                    <span style={{fontSize:13,fontWeight:600,color:C.navy}}>{ev.name}</span>
+                    <span style={{fontSize:13,fontWeight:600,color:C.navy}}>{holidayLabel(ev,t)}</span>
                     <span style={{background:st.bg,color:st.color,fontSize:10,fontWeight:600,
-                      padding:"2px 7px",borderRadius:5,marginLeft:"auto"}}>{ev.type}</span>
+                      padding:"2px 7px",borderRadius:5,marginInlineStart:"auto"}}>{holidayType(ev.type,t)}</span>
                   </div>
                 );
               })}
@@ -5055,7 +5775,7 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
           {selData.tasks.length>0&&(
             <div>
               <p style={{fontSize:10,fontWeight:700,color:C.muted2,letterSpacing:1,
-                textTransform:"uppercase",marginBottom:6}}>Tasks this day</p>
+                textTransform:"uppercase",marginBottom:6}}>{t("tasksThisDay")}</p>
               {selData.tasks.map(t=>(
                 <div key={t.id} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 0"}}>
                   <CatPill category={t.category}/>
@@ -5065,15 +5785,15 @@ function CalendarView({tasks,routines,C}:{tasks:Task[];routines:Routine[];C:Retu
             </div>
           )}
           {selData.events.length===0&&selData.tasks.length===0&&(
-            <p style={{fontSize:13,color:C.muted2}}>No events or tasks on this day.</p>
+            <p style={{fontSize:13,color:C.muted2}}>{t("noEventsThisDay")}</p>
           )}
         </div>
       )}
 
       {/* Dot legend */}
       <div style={{display:"flex",gap:14,marginTop:10,fontSize:10.5,color:C.muted}}>
-        <span><span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:C.urgent,marginRight:4,verticalAlign:"middle"}}/>Has task</span>
-        <span><span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:C.sage,marginRight:4,verticalAlign:"middle"}}/>Has routine</span>
+        <span><span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:C.urgent,marginRight:4,verticalAlign:"middle"}}/>{t("hasTask")}</span>
+        <span><span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:C.sage,marginRight:4,verticalAlign:"middle"}}/>{t("hasRoutine")}</span>
       </div>
     </div>
   );
@@ -5105,8 +5825,8 @@ function LiveClock({dark,C}:{dark:boolean;C:ReturnType<typeof getC>}){
       <div>
         <p style={{fontFamily:"'IBM Plex Mono',monospace",fontWeight:500,
           fontSize:42,color:C.primary,letterSpacing:"-1px",lineHeight:1}}>
-          {hh}<span style={{opacity:0.5,animation:"pulse 1s infinite"}}>:</span>{mm}
-          <span style={{fontSize:24,color:C.muted,marginLeft:6}}>{ss}</span>
+          {localeNum(hh,locale)}<span style={{opacity:0.5,animation:"pulse 1s infinite"}}>:</span>{localeNum(mm,locale)}
+          <span style={{fontSize:24,color:C.muted,marginInlineStart:6}}>{localeNum(ss,locale)}</span>
         </p>
         <p style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:13,fontWeight:500,
           color:C.muted,marginTop:4}}>
@@ -5118,7 +5838,7 @@ function LiveClock({dark,C}:{dark:boolean;C:ReturnType<typeof getC>}){
           color:C.muted2,letterSpacing:"2px",textTransform:"uppercase"}}>{t("week")}</p>
         <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:28,
           color:C.navy,lineHeight:1,marginTop:2}}>
-          {weekNum}
+          {localeNum(weekNum,locale)}
         </p>
         <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,
           color:C.muted2,letterSpacing:"1px",textTransform:"uppercase",marginTop:2}}>
@@ -6679,7 +7399,7 @@ export default function Home(){
                       <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
                         fontSize:16,marginTop:2,
                         color:active?"#FFFFFF":isToday?C.primary:dark?"rgba(255,255,255,0.85)":C.navy}}>
-                        {day.dayNum}
+                        {localeNum(day.dayNum,locale)}
                       </p>
                       {isToday&&!active&&<div style={{width:4,height:4,borderRadius:"50%",
                         background:C.primary,margin:"2px auto 0"}}/>}
