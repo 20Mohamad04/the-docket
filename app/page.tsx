@@ -465,6 +465,23 @@ function leadingBlanks(firstOfMonth:Date,startDay:number):number{
   return (firstOfMonth.getDay()-startDay+7)%7;
 }
 
+// A horizontal scroller under direction:rtl starts at scrollLeft 0 on its
+// RIGHT edge and runs NEGATIVE to -(scrollWidth-clientWidth) — the CSSOM-View
+// behaviour every current engine implements. Code written against the LTR
+// range 0..max therefore reads a negative number and clamps it to zero, which
+// is what pinned the day strip's thumb outside its track and froze its date
+// label on weekDates[0].
+//
+// These convert to and from a direction-agnostic "distance from the start
+// edge", always 0..max, so the thumb maths, the drag clamp and the index
+// lookup can each stay written the one way they already were.
+function scrollStart(el:HTMLElement,rtl:boolean):number{
+  return rtl?-el.scrollLeft:el.scrollLeft;
+}
+function setScrollStart(el:HTMLElement,rtl:boolean,v:number){
+  el.scrollLeft=rtl?-v:v;
+}
+
 // ── Theme colours (light + dark) ──────────────────────────────────────────────
 // Body scroll lock, shared by the chat panel's own effect and the app-level
 // avatar-card/modal one so the two can't drift apart.
@@ -514,10 +531,6 @@ const AppCtx = createContext<{dark:boolean;lang:Lang;t:(k:string)=>string;dir:"l
 function useApp(){ return useContext(AppCtx); }
 
 const DAYS = ["mon","tue","wed","thu","fri","sat","sun"];
-const DAY_LABELS:Record<string,string> = {
-  mon:"Monday",tue:"Tuesday",wed:"Wednesday",thu:"Thursday",
-  fri:"Friday",sat:"Saturday",sun:"Sunday",
-};
 const CATS:Record<string,{label:string;icon:string}> = {
   health:      {label:"Health & Fitness",    icon:"ti-heart-rate-monitor"},
   fitness:     {label:"Fitness & Exercise",  icon:"ti-run"},
@@ -5583,6 +5596,7 @@ export default function Home(){
 
   const C=getC(dark);
   const dir:("ltr"|"rtl")=RTL_LANGS.includes(lang)?"rtl":"ltr";
+  const rtl=dir==="rtl";
   const locale=localeFor(lang);
   const t=(k:string)=>T[lang]?.[k]??T.en[k]??k;
 
@@ -6070,7 +6084,10 @@ export default function Home(){
     return Array.from({length:204},(_,i)=>{
       const d=new Date(start);d.setDate(start.getDate()+i);
       const key=["sun","mon","tue","wed","thu","fri","sat"][d.getDay()];
-      return{key,date:d.toISOString().slice(0,10),dayNum:d.getDate(),
+      // dow is the raw getDay() index, kept so the chip's weekday label can be
+      // looked up straight out of a Sunday-first dowNames() array rather than
+      // from a hardcoded English map.
+      return{key,dow:d.getDay(),date:d.toISOString().slice(0,10),dayNum:d.getDate(),
         label:d.toLocaleDateString(locale,{day:"numeric",month:"short"}),
         month:d.toLocaleDateString(locale,{month:"short"})};
     });
@@ -6114,12 +6131,29 @@ export default function Home(){
   // bottom-up), so today's chip is there to scroll to.
   const dayScrollElRef=React.useRef<HTMLDivElement|null>(null);
   const didInitialDayScrollRef=React.useRef(false);
+  const scrollDayStripToToday=React.useCallback((el:HTMLDivElement|null)=>{
+    // inline:"start" is direction-aware — the left edge in LTR, the right one
+    // in RTL — so this needs no branch of its own.
+    el?.querySelector("#day-picker-today")?.scrollIntoView({inline:"start",block:"nearest"});
+  },[]);
   const attachDayScrollEl=React.useCallback((el:HTMLDivElement|null)=>{
     dayScrollElRef.current=el;
     if(!el||didInitialDayScrollRef.current)return;
     didInitialDayScrollRef.current=true;
-    el.querySelector("#day-picker-today")?.scrollIntoView({inline:"start",block:"nearest"});
-  },[]);
+    scrollDayStripToToday(el);
+  },[scrollDayStripToToday]);
+  // The stored language arrives in an effect, so the first paint is always LTR
+  // and an Arabic user's strip flips direction a moment later. The browser
+  // keeps the old scroll offset across that flip, which lands them somewhere
+  // arbitrary in a 204-day range, and the ref above means the initial scroll
+  // never re-runs on its own. Re-aim it whenever the direction actually
+  // changes — not on mount, where the callback ref has already done it.
+  const prevDirRef=React.useRef(dir);
+  React.useEffect(()=>{
+    if(prevDirRef.current===dir)return;
+    prevDirRef.current=dir;
+    scrollDayStripToToday(dayScrollElRef.current);
+  },[dir,scrollDayStripToToday]);
   const dayTrackRef=React.useRef<HTMLDivElement|null>(null);
   const dayDragRef=React.useRef<{startX:number;startLeft:number;max:number;range:number}|null>(null);
   const[dayScrollMetrics,setDayScrollMetrics]=useState({left:0,max:1,client:1});
@@ -6150,7 +6184,9 @@ export default function Home(){
       if(!el)return;
       const max=Math.max(1,el.scrollWidth-el.clientWidth);
       const client=el.clientWidth;
-      const left=el.scrollLeft;
+      // Distance from the start edge, never the raw signed scrollLeft — see
+      // scrollStart. Everything below this line is direction-agnostic.
+      const left=scrollStart(el,rtl);
       if(left!==lastLeft||max!==lastMax||client!==lastClient){
         lastLeft=left;lastMax=max;lastClient=client;
         setDayScrollMetrics({left,max,client});
@@ -6173,7 +6209,9 @@ export default function Home(){
     measure();
     raf=requestAnimationFrame(tick);
     return()=>cancelAnimationFrame(raf);
-  },[currentView]);
+    // rtl is read inside measure(); a language switch has to rebind the loop
+    // or it keeps reading scrollLeft with the old direction's sign.
+  },[currentView,rtl]);
 
   function dayTrackPointerDown(e:React.PointerEvent<HTMLDivElement>){
     const track=dayTrackRef.current,el=dayScrollElRef.current;
@@ -6184,13 +6222,16 @@ export default function Home(){
     const thumbFrac=Math.max(0.06,Math.min(1,el.clientWidth/Math.max(1,el.scrollWidth)));
     const thumbPx=thumbFrac*rect.width;
     const range=Math.max(1,rect.width-thumbPx);
-    dayDragRef.current={startX:e.clientX,startLeft:el.scrollLeft,max,range};
+    dayDragRef.current={startX:e.clientX,startLeft:scrollStart(el,rtl),max,range};
   }
   function dayTrackPointerMove(e:React.PointerEvent<HTMLDivElement>){
     const drag=dayDragRef.current,el=dayScrollElRef.current;
     if(!drag||!el)return;
-    const dx=e.clientX-drag.startX;
-    el.scrollLeft=Math.min(drag.max,Math.max(0,drag.startLeft+dx*(drag.max/drag.range)));
+    // Dragging left increases the distance from the start edge in LTR and
+    // decreases it in RTL, where the start edge is on the right.
+    const dx=(e.clientX-drag.startX)*(rtl?-1:1);
+    setScrollStart(el,rtl,
+      Math.min(drag.max,Math.max(0,drag.startLeft+dx*(drag.max/drag.range))));
   }
   function dayTrackPointerEnd(){dayDragRef.current=null;}
 
@@ -6589,14 +6630,20 @@ export default function Home(){
             <LiveClock dark={dark} C={C}/>
             {/* Week day picker with arrows */}
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+              {/* Earlier dates. The flex row reverses under RTL, so this
+                  button lands on the right — the side earlier dates scroll in
+                  from — but scrollBy takes a PHYSICAL delta, so the sign has
+                  to flip to keep meaning "back in time" rather than forward.
+                  The glyph flips with it, or it points away from the
+                  direction the strip actually moves. */}
               <button onClick={()=>{
                   const el=document.getElementById("day-picker-scroll");
-                  if(el) el.scrollBy({left:-180,behavior:"smooth"});
+                  if(el) el.scrollBy({left:rtl?180:-180,behavior:"smooth"});
                 }}
                 style={{width:32,height:32,borderRadius:9,flexShrink:0,border:`1px solid ${C.border}`,
                   background:C.surface,cursor:"pointer",color:C.navy,
                   display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <i className="ti ti-chevron-left" style={{fontSize:15}} aria-hidden="true"/>
+                <i className={`ti ti-chevron-${rtl?"right":"left"}`} style={{fontSize:15}} aria-hidden="true"/>
               </button>
               <div id="day-picker-scroll" ref={attachDayScrollEl}
                 style={{display:"flex",gap:6,overflowX:"auto",flex:1,
@@ -6622,7 +6669,12 @@ export default function Home(){
                       <p style={{fontSize:9,fontWeight:700,textTransform:"uppercase",
                         letterSpacing:0.5,
                         color:active?"rgba(255,255,255,0.9)":isToday?C.primary:C.muted}}>
-                        {(DAY_LABELS[day.key]||day.key).slice(0,3)}
+                        {/* No .slice(0,3): Intl's short form is already the
+                            locale's abbreviation, and truncating it cuts
+                            Arabic mid-word and can split a Devanagari
+                            grapheme cluster. Sunday-first array, indexed by
+                            the raw getDay() value. */}
+                        {dowNames(locale,0)[day.dow]}
                       </p>
                       <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
                         fontSize:16,marginTop:2,
@@ -6637,14 +6689,15 @@ export default function Home(){
                   );
                 })}
               </div>
+              {/* Later dates — the mirror of the button above. */}
               <button onClick={()=>{
                   const el=document.getElementById("day-picker-scroll");
-                  if(el) el.scrollBy({left:180,behavior:"smooth"});
+                  if(el) el.scrollBy({left:rtl?-180:180,behavior:"smooth"});
                 }}
                 style={{width:32,height:32,borderRadius:9,flexShrink:0,border:`1px solid ${C.border}`,
                   background:C.surface,cursor:"pointer",color:C.navy,
                   display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <i className="ti ti-chevron-right" style={{fontSize:15}} aria-hidden="true"/>
+                <i className={`ti ti-chevron-${rtl?"left":"right"}`} style={{fontSize:15}} aria-hidden="true"/>
               </button>
             </div>
             {/* Draggable scrollbar for the day strip above — inset by 40px
@@ -6663,9 +6716,12 @@ export default function Home(){
                 display:"flex",alignItems:"center",cursor:"pointer",touchAction:"none"}}>
               <div style={{position:"absolute",left:0,right:0,height:5,borderRadius:3,
                 background:dark?"rgba(255,255,255,0.08)":"rgba(15,23,42,0.07)"}}/>
+              {/* Offset from the START edge, which is the right one in RTL —
+                  a physical `left` here is what put the thumb outside its
+                  track. dayScrollMetrics.left is already start-relative. */}
               <div style={{position:"absolute",height:5,borderRadius:3,background:C.primary,
                 opacity:0.85,pointerEvents:"none",
-                left:`${dayScrollMetrics.max>0?(dayScrollMetrics.left/dayScrollMetrics.max)*(1-Math.max(0.06,Math.min(1,dayScrollMetrics.client/(dayScrollMetrics.client+dayScrollMetrics.max))))*100:0}%`,
+                [rtl?"right":"left"]:`${dayScrollMetrics.max>0?(dayScrollMetrics.left/dayScrollMetrics.max)*(1-Math.max(0.06,Math.min(1,dayScrollMetrics.client/(dayScrollMetrics.client+dayScrollMetrics.max))))*100:0}%`,
                 width:`${Math.max(0.06,Math.min(1,dayScrollMetrics.client/(dayScrollMetrics.client+dayScrollMetrics.max)))*100}%`}}/>
             </div>
             <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,
