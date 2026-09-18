@@ -188,7 +188,7 @@ const T:Record<Lang,Record<string,string>> = {
     signInTab:"Sign In", registerTab:"Register",
     fullNameOptional:"Full name (optional)", emailAddress:"Email address",
     passwordMin:"Password (min. 6 characters)", password:"Password", confirmPassword:"Confirm password",
-    agreeTo:"I agree to the", andWord:"and", privacyPolicy:"Privacy Policy",
+    agreeTo:"I agree to the ", andWord:" and ", privacyPolicy:"Privacy Policy",
     pleaseWait:"Please wait…", signedIn:"✓ Signed in!",
     signInArrow:"Sign In →", createAccountArrow:"Create Account →",
     goToSignIn:"Go to Sign In", forgotPassword:"Forgot your password?",
@@ -309,7 +309,7 @@ const T:Record<Lang,Record<string,string>> = {
     signInTab:"تسجيل الدخول", registerTab:"إنشاء حساب",
     fullNameOptional:"الاسم الكامل (اختياري)", emailAddress:"البريد الإلكتروني",
     passwordMin:"كلمة المرور (6 أحرف على الأقل)", password:"كلمة المرور", confirmPassword:"تأكيد كلمة المرور",
-    agreeTo:"أوافق على", andWord:"و", privacyPolicy:"سياسة الخصوصية",
+    agreeTo:"أوافق على ", andWord:" و", privacyPolicy:"سياسة الخصوصية",
     pleaseWait:"يرجى الانتظار…", signedIn:"✓ تم تسجيل الدخول!",
     signInArrow:"تسجيل الدخول ←", createAccountArrow:"إنشاء حساب ←",
     goToSignIn:"الذهاب إلى تسجيل الدخول", forgotPassword:"نسيت كلمة المرور؟",
@@ -430,7 +430,7 @@ const T:Record<Lang,Record<string,string>> = {
     signInTab:"Connexion", registerTab:"Inscription",
     fullNameOptional:"Nom complet (facultatif)", emailAddress:"Adresse e-mail",
     passwordMin:"Mot de passe (min. 6 caractères)", password:"Mot de passe", confirmPassword:"Confirmer le mot de passe",
-    agreeTo:"J'accepte les", andWord:"et la", privacyPolicy:"Politique de confidentialité",
+    agreeTo:"J'accepte les ", andWord:" et la ", privacyPolicy:"Politique de confidentialité",
     pleaseWait:"Veuillez patienter…", signedIn:"✓ Connecté !",
     signInArrow:"Se connecter →", createAccountArrow:"Créer un compte →",
     goToSignIn:"Aller à la connexion", forgotPassword:"Mot de passe oublié ?",
@@ -551,7 +551,7 @@ const T:Record<Lang,Record<string,string>> = {
     signInTab:"Giriş", registerTab:"Kayıt",
     fullNameOptional:"Ad soyad (isteğe bağlı)", emailAddress:"E-posta adresi",
     passwordMin:"Parola (en az 6 karakter)", password:"Parola", confirmPassword:"Parolayı onayla",
-    agreeTo:"Şunları kabul ediyorum", andWord:"ve", privacyPolicy:"Gizlilik Politikası",
+    agreeTo:"Şunları kabul ediyorum ", andWord:" ve ", privacyPolicy:"Gizlilik Politikası",
     pleaseWait:"Lütfen bekleyin…", signedIn:"✓ Giriş yapıldı!",
     signInArrow:"Giriş Yap →", createAccountArrow:"Hesap Oluştur →",
     goToSignIn:"Girişe git", forgotPassword:"Parolanızı mı unuttunuz?",
@@ -672,7 +672,7 @@ const T:Record<Lang,Record<string,string>> = {
     signInTab:"سائن ان", registerTab:"رجسٹر",
     fullNameOptional:"پورا نام (اختیاری)", emailAddress:"ای میل پتہ",
     passwordMin:"پاس ورڈ (کم از کم 6 حروف)", password:"پاس ورڈ", confirmPassword:"پاس ورڈ کی تصدیق",
-    agreeTo:"میں اتفاق کرتا ہوں", andWord:"اور", privacyPolicy:"پرائیویسی پالیسی",
+    agreeTo:"میں اتفاق کرتا ہوں ", andWord:" اور ", privacyPolicy:"پرائیویسی پالیسی",
     pleaseWait:"براہ کرم انتظار کریں…", signedIn:"✓ سائن ان ہو گئے!",
     signInArrow:"سائن ان ←", createAccountArrow:"اکاؤنٹ بنائیں ←",
     goToSignIn:"سائن ان پر جائیں", forgotPassword:"پاس ورڈ بھول گئے؟",
@@ -793,7 +793,7 @@ const T:Record<Lang,Record<string,string>> = {
     signInTab:"সাইন ইন", registerTab:"নিবন্ধন",
     fullNameOptional:"পুরো নাম (ঐচ্ছিক)", emailAddress:"ইমেইল ঠিকানা",
     passwordMin:"পাসওয়ার্ড (অন্তত 6 অক্ষর)", password:"পাসওয়ার্ড", confirmPassword:"পাসওয়ার্ড নিশ্চিত করুন",
-    agreeTo:"আমি সম্মত", andWord:"এবং", privacyPolicy:"গোপনীয়তা নীতি",
+    agreeTo:"আমি সম্মত ", andWord:" এবং ", privacyPolicy:"গোপনীয়তা নীতি",
     pleaseWait:"অনুগ্রহ করে অপেক্ষা করুন…", signedIn:"✓ সাইন ইন হয়েছে!",
     signInArrow:"সাইন ইন →", createAccountArrow:"অ্যাকাউন্ট তৈরি করুন →",
     goToSignIn:"সাইন ইনে যান", forgotPassword:"পাসওয়ার্ড ভুলে গেছেন?",
@@ -914,7 +914,7 @@ const T:Record<Lang,Record<string,string>> = {
     signInTab:"Iniciar sesión", registerTab:"Registrarse",
     fullNameOptional:"Nombre completo (opcional)", emailAddress:"Correo electrónico",
     passwordMin:"Contraseña (mín. 6 caracteres)", password:"Contraseña", confirmPassword:"Confirmar contraseña",
-    agreeTo:"Acepto los", andWord:"y la", privacyPolicy:"Política de Privacidad",
+    agreeTo:"Acepto los ", andWord:" y la ", privacyPolicy:"Política de Privacidad",
     pleaseWait:"Espera…", signedIn:"✓ ¡Sesión iniciada!",
     signInArrow:"Iniciar sesión →", createAccountArrow:"Crear cuenta →",
     goToSignIn:"Ir a iniciar sesión", forgotPassword:"¿Olvidaste tu contraseña?",
@@ -1035,7 +1035,7 @@ const T:Record<Lang,Record<string,string>> = {
     signInTab:"साइन इन", registerTab:"रजिस्टर",
     fullNameOptional:"पूरा नाम (वैकल्पिक)", emailAddress:"ईमेल पता",
     passwordMin:"पासवर्ड (कम से कम 6 वर्ण)", password:"पासवर्ड", confirmPassword:"पासवर्ड की पुष्टि करें",
-    agreeTo:"मैं सहमत हूँ", andWord:"और", privacyPolicy:"गोपनीयता नीति",
+    agreeTo:"मैं सहमत हूँ ", andWord:" और ", privacyPolicy:"गोपनीयता नीति",
     pleaseWait:"कृपया प्रतीक्षा करें…", signedIn:"✓ साइन इन हो गए!",
     signInArrow:"साइन इन →", createAccountArrow:"खाता बनाएँ →",
     goToSignIn:"साइन इन पर जाएँ", forgotPassword:"पासवर्ड भूल गए?",
@@ -1156,7 +1156,7 @@ const T:Record<Lang,Record<string,string>> = {
     signInTab:"Entrar", registerTab:"Cadastrar",
     fullNameOptional:"Nome completo (opcional)", emailAddress:"E-mail",
     passwordMin:"Senha (mín. 6 caracteres)", password:"Senha", confirmPassword:"Confirmar senha",
-    agreeTo:"Concordo com os", andWord:"e a", privacyPolicy:"Política de Privacidade",
+    agreeTo:"Concordo com os ", andWord:" e a ", privacyPolicy:"Política de Privacidade",
     pleaseWait:"Aguarde…", signedIn:"✓ Conectado!",
     signInArrow:"Entrar →", createAccountArrow:"Criar conta →",
     goToSignIn:"Ir para entrar", forgotPassword:"Esqueceu sua senha?",
@@ -1277,7 +1277,7 @@ const T:Record<Lang,Record<string,string>> = {
     signInTab:"Вход", registerTab:"Регистрация",
     fullNameOptional:"Полное имя (необязательно)", emailAddress:"Адрес эл. почты",
     passwordMin:"Пароль (минимум 6 символов)", password:"Пароль", confirmPassword:"Подтвердите пароль",
-    agreeTo:"Я принимаю", andWord:"и", privacyPolicy:"Политику конфиденциальности",
+    agreeTo:"Я принимаю ", andWord:" и ", privacyPolicy:"Политику конфиденциальности",
     pleaseWait:"Подождите…", signedIn:"✓ Вход выполнен!",
     signInArrow:"Войти →", createAccountArrow:"Создать аккаунт →",
     goToSignIn:"Перейти ко входу", forgotPassword:"Забыли пароль?",
@@ -2629,10 +2629,17 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
             <input type="checkbox" checked={registerAgreed} onChange={e=>setRegisterAgreed(e.target.checked)}
               style={{marginTop:2,width:15,height:15,flexShrink:0,accentColor:"#4C5FD5",cursor:"pointer"}}/>
             <span style={{fontSize:11.5,color:C.muted,lineHeight:1.5}}>
-              {t("agreeTo")}{" "}
+              {/* Separator lives in the translation, same as andWord below:
+                  Chinese takes no space before the link, every other language
+                  here does. */}
+              {t("agreeTo")}
               <span onClick={e=>{e.preventDefault();onOpenLegal("terms");}}
                 style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>{t("termsConditions")}</span>
-              {" "}{t("andWord")}{" "}
+              {/* No {" "} around this: the spacing lives in the translation,
+                  because not every language puts a space on both sides. Arabic
+                  attaches و directly to the following word and Chinese uses no
+                  word spacing at all. */}
+              {t("andWord")}
               <span onClick={e=>{e.preventDefault();onOpenLegal("privacy");}}
                 style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>{t("privacyPolicy")}</span>
             </span>
@@ -7001,7 +7008,22 @@ export default function Home(){
     document.body.style.background = dark?"#080A14":"#E9E6F4";
     document.body.style.minHeight = "100%";
   },[dark]);
-  useEffect(()=>{ localStorage.setItem("docket-lang",lang); },[lang]);
+  useEffect(()=>{
+    localStorage.setItem("docket-lang",lang);
+    // dir goes on <html>, not on a wrapper div. Three of this component's
+    // return paths render outside the main wrapper — the auth gate, the
+    // session-check spinner, and the onboarding screen — and every modal is
+    // position:fixed, so a wrapper-level `direction` reached none of them.
+    // The effect was that the very first screen an Arabic or Urdu user saw,
+    // the sign-in form, was translated but still laid out left to right.
+    // The document element covers every tree at once and is also what the
+    // browser keys its own scrollbar side and caret behaviour off.
+    document.documentElement.setAttribute("dir",dir);
+    // Separate from direction: this is what tells a screen reader which
+    // language to pronounce. layout.tsx can only hardcode lang="en" because
+    // the choice lives in client state.
+    document.documentElement.setAttribute("lang",lang);
+  },[lang,dir]);
 
   // Prayer names to update
   const PRAYER_NAMES=["Fajr","Dhuhr","Asr","Maghrib","Isha"];
@@ -7534,7 +7556,10 @@ export default function Home(){
       </div>
     )}
     <div style={{minHeight:"100vh",background:C.bg,position:"relative",
-      fontFamily:"'Inter',sans-serif",color:C.navy,direction:dir,
+      // direction is set on <html> (see the lang effect) so that it also
+      // covers the auth gate, the spinner and the onboarding screen, which
+      // render outside this wrapper. Deliberately not repeated here.
+      fontFamily:"'Inter',sans-serif",color:C.navy,
       backgroundAttachment:"fixed",
       backgroundImage:dark
         ?"radial-gradient(ellipse at top left, rgba(112,145,230,0.12), transparent 50%), radial-gradient(ellipse at bottom right, rgba(61,82,160,0.08), transparent 50%)"
