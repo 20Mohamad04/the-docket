@@ -157,6 +157,43 @@ const T:Record<Lang,Record<string,string>> = {
     hol_ramadan:"Ramadan begins (approx)", hol_eidFitr:"Eid al-Fitr (approx)",
     hol_eidAdha:"Eid al-Adha (approx)", hol_islamicNewYear:"Islamic New Year (approx)",
     hol_arafah:"Day of Arafah (approx)",
+    subscription:"Subscription", widgetsShortcuts:"Widgets & Shortcuts",
+    siriShortcuts:"Siri & Shortcuts", helpFeedback:"Help & Feedback",
+    privacyPermissions:"Privacy & Permissions", termsConditions:"Terms & Conditions",
+    signOut:"Sign out", switchToLight:"Switch to light mode", switchToDark:"Switch to dark mode",
+    account:"Account", displayName:"Display Name", saveLabel:"Save", email:"Email",
+    emailChangeNote:"Email changes require re-verification. Contact support to update.",
+    marketingOptIn:"Email me about product updates and tips",
+    plan:"Plan", freePlan:"Free Plan", renewsOn:"Renews {date}",
+    activeSubscription:"Active subscription",
+    upgradeBlurb:"Upgrade for unlimited Opus access and more",
+    manageSubscription:"Manage Subscription", tryProFree:"Try Pro Free for 7 Days",
+    signOutOf:"Sign out of {email}",
+    errFillAll:"Please fill in all fields.", errPasswordMismatch:"Passwords do not match.",
+    errPasswordShort:"Password must be at least 6 characters.",
+    errAgreeTerms:"Please agree to the Terms & Conditions and Privacy Policy to continue.",
+    msgCheckInbox:"Check your inbox at {email} for a confirmation link. Click it then return here to sign in.",
+    errEmailNotConfirmed:"Please confirm your email first. Check your inbox for the verification link we sent.",
+    errBadCredentials:"Incorrect email or password. Please try again.",
+    msgWelcomeBack:"Welcome back, {name}!", errGeneric:"Something went wrong.",
+    errEmailFirst:"Enter your email address above first.",
+    msgResetSent:"Password reset link sent to {email}. Click the link in the email to set a new password.",
+    msgResendSent:"Confirmation email resent to {email}",
+    resetTitle:"Reset your password",
+    resetBlurb:"Enter your email and we will send you a link to reset your password.",
+    yourEmailAddress:"Your email address", sending:"Sending…", sendResetLink:"Send Reset Link",
+    continueGoogle:"Continue with Google", continueApple:"Continue with Apple", orUseEmail:"or use email",
+    welcomeHeading:"Welcome", joinHeading:"Join The Docket",
+    signInSubtitle:"Sign in to sync your data", registerSubtitle:"Create your free account",
+    signInTab:"Sign In", registerTab:"Register",
+    fullNameOptional:"Full name (optional)", emailAddress:"Email address",
+    passwordMin:"Password (min. 6 characters)", password:"Password", confirmPassword:"Confirm password",
+    agreeTo:"I agree to the", andWord:"and", privacyPolicy:"Privacy Policy",
+    pleaseWait:"Please wait…", signedIn:"✓ Signed in!",
+    signInArrow:"Sign In →", createAccountArrow:"Create Account →",
+    goToSignIn:"Go to Sign In", forgotPassword:"Forgot your password?",
+    didntReceive:"Didn't receive the email? Check your spam folder or", resendIt:"resend it",
+    legalEnglishNotice:"This document is provided in English. The English version governs in the event of any discrepancy with a translation.",
   },
   ar:{
     appName:"الدفتر", daily:"الروتين اليومي", allTasks:"جميع المهام",
@@ -241,6 +278,43 @@ const T:Record<Lang,Record<string,string>> = {
     hol_ramadan:"بداية رمضان (تقريبي)", hol_eidFitr:"عيد الفطر (تقريبي)",
     hol_eidAdha:"عيد الأضحى (تقريبي)", hol_islamicNewYear:"رأس السنة الهجرية (تقريبي)",
     hol_arafah:"يوم عرفة (تقريبي)",
+    subscription:"الاشتراك", widgetsShortcuts:"الأدوات والاختصارات",
+    siriShortcuts:"سيري والاختصارات", helpFeedback:"المساعدة والملاحظات",
+    privacyPermissions:"الخصوصية والأذونات", termsConditions:"الشروط والأحكام",
+    signOut:"تسجيل الخروج", switchToLight:"التبديل إلى الوضع الفاتح", switchToDark:"التبديل إلى الوضع الداكن",
+    account:"الحساب", displayName:"الاسم المعروض", saveLabel:"حفظ", email:"البريد الإلكتروني",
+    emailChangeNote:"تغيير البريد الإلكتروني يتطلب إعادة تحقق. تواصل مع الدعم للتحديث.",
+    marketingOptIn:"أرسل لي تحديثات المنتج والنصائح",
+    plan:"الخطة", freePlan:"الخطة المجانية", renewsOn:"يتجدد في {date}",
+    activeSubscription:"اشتراك نشط",
+    upgradeBlurb:"قم بالترقية للحصول على وصول غير محدود إلى Opus والمزيد",
+    manageSubscription:"إدارة الاشتراك", tryProFree:"جرّب Pro مجانًا لمدة 7 أيام",
+    signOutOf:"تسجيل الخروج من {email}",
+    errFillAll:"يرجى ملء جميع الحقول.", errPasswordMismatch:"كلمتا المرور غير متطابقتين.",
+    errPasswordShort:"يجب ألا تقل كلمة المرور عن 6 أحرف.",
+    errAgreeTerms:"يرجى الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة.",
+    msgCheckInbox:"تحقق من بريدك على {email} للعثور على رابط التأكيد. اضغط عليه ثم عد إلى هنا لتسجيل الدخول.",
+    errEmailNotConfirmed:"يرجى تأكيد بريدك الإلكتروني أولًا. تحقق من صندوق الوارد بحثًا عن رابط التحقق.",
+    errBadCredentials:"البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.",
+    msgWelcomeBack:"مرحبًا بعودتك، {name}!", errGeneric:"حدث خطأ ما.",
+    errEmailFirst:"أدخل بريدك الإلكتروني في الأعلى أولًا.",
+    msgResetSent:"تم إرسال رابط إعادة التعيين إلى {email}. اضغط على الرابط في البريد لتعيين كلمة مرور جديدة.",
+    msgResendSent:"تمت إعادة إرسال بريد التأكيد إلى {email}",
+    resetTitle:"إعادة تعيين كلمة المرور",
+    resetBlurb:"أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.",
+    yourEmailAddress:"بريدك الإلكتروني", sending:"جاري الإرسال…", sendResetLink:"إرسال رابط إعادة التعيين",
+    continueGoogle:"المتابعة باستخدام Google", continueApple:"المتابعة باستخدام Apple", orUseEmail:"أو استخدم البريد الإلكتروني",
+    welcomeHeading:"مرحبًا", joinHeading:"انضم إلى The Docket",
+    signInSubtitle:"سجّل الدخول لمزامنة بياناتك", registerSubtitle:"أنشئ حسابك المجاني",
+    signInTab:"تسجيل الدخول", registerTab:"إنشاء حساب",
+    fullNameOptional:"الاسم الكامل (اختياري)", emailAddress:"البريد الإلكتروني",
+    passwordMin:"كلمة المرور (6 أحرف على الأقل)", password:"كلمة المرور", confirmPassword:"تأكيد كلمة المرور",
+    agreeTo:"أوافق على", andWord:"و", privacyPolicy:"سياسة الخصوصية",
+    pleaseWait:"يرجى الانتظار…", signedIn:"✓ تم تسجيل الدخول!",
+    signInArrow:"تسجيل الدخول ←", createAccountArrow:"إنشاء حساب ←",
+    goToSignIn:"الذهاب إلى تسجيل الدخول", forgotPassword:"نسيت كلمة المرور؟",
+    didntReceive:"لم يصلك البريد؟ تحقق من مجلد الرسائل غير المرغوب فيها أو", resendIt:"أعد الإرسال",
+    legalEnglishNotice:"هذا المستند متوفر باللغة الإنجليزية. النسخة الإنجليزية هي المعتمدة في حال وجود أي اختلاف مع أي ترجمة.",
   },
   fr:{
     appName:"The Docket", daily:"Routine Quotidienne", allTasks:"Toutes les Tâches",
@@ -325,6 +399,43 @@ const T:Record<Lang,Record<string,string>> = {
     hol_ramadan:"Début du Ramadan (approx.)", hol_eidFitr:"Aïd el-Fitr (approx.)",
     hol_eidAdha:"Aïd el-Adha (approx.)", hol_islamicNewYear:"Nouvel An musulman (approx.)",
     hol_arafah:"Jour d'Arafat (approx.)",
+    subscription:"Abonnement", widgetsShortcuts:"Widgets et raccourcis",
+    siriShortcuts:"Siri et raccourcis", helpFeedback:"Aide et commentaires",
+    privacyPermissions:"Confidentialité et autorisations", termsConditions:"Conditions générales",
+    signOut:"Se déconnecter", switchToLight:"Passer au mode clair", switchToDark:"Passer au mode sombre",
+    account:"Compte", displayName:"Nom affiché", saveLabel:"Enregistrer", email:"E-mail",
+    emailChangeNote:"Changer d'e-mail nécessite une nouvelle vérification. Contactez le support.",
+    marketingOptIn:"M'envoyer les nouveautés et conseils par e-mail",
+    plan:"Formule", freePlan:"Formule gratuite", renewsOn:"Renouvellement le {date}",
+    activeSubscription:"Abonnement actif",
+    upgradeBlurb:"Passez à la version supérieure pour un accès illimité à Opus et plus",
+    manageSubscription:"Gérer l'abonnement", tryProFree:"Essayez Pro gratuitement 7 jours",
+    signOutOf:"Se déconnecter de {email}",
+    errFillAll:"Veuillez remplir tous les champs.", errPasswordMismatch:"Les mots de passe ne correspondent pas.",
+    errPasswordShort:"Le mot de passe doit contenir au moins 6 caractères.",
+    errAgreeTerms:"Veuillez accepter les Conditions générales et la Politique de confidentialité pour continuer.",
+    msgCheckInbox:"Consultez votre boîte de réception à {email} pour le lien de confirmation. Cliquez dessus puis revenez ici pour vous connecter.",
+    errEmailNotConfirmed:"Veuillez d'abord confirmer votre e-mail. Vérifiez votre boîte de réception.",
+    errBadCredentials:"E-mail ou mot de passe incorrect. Veuillez réessayer.",
+    msgWelcomeBack:"Bon retour, {name} !", errGeneric:"Une erreur est survenue.",
+    errEmailFirst:"Saisissez d'abord votre adresse e-mail ci-dessus.",
+    msgResetSent:"Lien de réinitialisation envoyé à {email}. Cliquez sur le lien pour définir un nouveau mot de passe.",
+    msgResendSent:"E-mail de confirmation renvoyé à {email}",
+    resetTitle:"Réinitialiser votre mot de passe",
+    resetBlurb:"Saisissez votre e-mail et nous vous enverrons un lien de réinitialisation.",
+    yourEmailAddress:"Votre adresse e-mail", sending:"Envoi…", sendResetLink:"Envoyer le lien",
+    continueGoogle:"Continuer avec Google", continueApple:"Continuer avec Apple", orUseEmail:"ou par e-mail",
+    welcomeHeading:"Bienvenue", joinHeading:"Rejoindre The Docket",
+    signInSubtitle:"Connectez-vous pour synchroniser vos données", registerSubtitle:"Créez votre compte gratuit",
+    signInTab:"Connexion", registerTab:"Inscription",
+    fullNameOptional:"Nom complet (facultatif)", emailAddress:"Adresse e-mail",
+    passwordMin:"Mot de passe (min. 6 caractères)", password:"Mot de passe", confirmPassword:"Confirmer le mot de passe",
+    agreeTo:"J'accepte les", andWord:"et la", privacyPolicy:"Politique de confidentialité",
+    pleaseWait:"Veuillez patienter…", signedIn:"✓ Connecté !",
+    signInArrow:"Se connecter →", createAccountArrow:"Créer un compte →",
+    goToSignIn:"Aller à la connexion", forgotPassword:"Mot de passe oublié ?",
+    didntReceive:"E-mail non reçu ? Vérifiez vos spams ou", resendIt:"renvoyez-le",
+    legalEnglishNotice:"Ce document est fourni en anglais. La version anglaise prévaut en cas de divergence avec une traduction.",
   },
   tr:{
     appName:"The Docket", daily:"Günlük Rutin", allTasks:"Tüm Görevler",
@@ -409,6 +520,43 @@ const T:Record<Lang,Record<string,string>> = {
     hol_ramadan:"Ramazan başlangıcı (yaklaşık)", hol_eidFitr:"Ramazan Bayramı (yaklaşık)",
     hol_eidAdha:"Kurban Bayramı (yaklaşık)", hol_islamicNewYear:"Hicri Yılbaşı (yaklaşık)",
     hol_arafah:"Arefe Günü (yaklaşık)",
+    subscription:"Abonelik", widgetsShortcuts:"Widget'lar ve Kısayollar",
+    siriShortcuts:"Siri ve Kısayollar", helpFeedback:"Yardım ve Geri Bildirim",
+    privacyPermissions:"Gizlilik ve İzinler", termsConditions:"Şartlar ve Koşullar",
+    signOut:"Çıkış yap", switchToLight:"Açık moda geç", switchToDark:"Koyu moda geç",
+    account:"Hesap", displayName:"Görünen Ad", saveLabel:"Kaydet", email:"E-posta",
+    emailChangeNote:"E-posta değişikliği yeniden doğrulama gerektirir. Güncellemek için destekle iletişime geçin.",
+    marketingOptIn:"Ürün güncellemeleri ve ipuçlarını e-posta ile gönder",
+    plan:"Plan", freePlan:"Ücretsiz Plan", renewsOn:"{date} tarihinde yenilenir",
+    activeSubscription:"Etkin abonelik",
+    upgradeBlurb:"Sınırsız Opus erişimi ve daha fazlası için yükseltin",
+    manageSubscription:"Aboneliği Yönet", tryProFree:"Pro'yu 7 Gün Ücretsiz Deneyin",
+    signOutOf:"{email} hesabından çıkış yap",
+    errFillAll:"Lütfen tüm alanları doldurun.", errPasswordMismatch:"Parolalar eşleşmiyor.",
+    errPasswordShort:"Parola en az 6 karakter olmalıdır.",
+    errAgreeTerms:"Devam etmek için Şartlar ve Koşullar ile Gizlilik Politikasını kabul edin.",
+    msgCheckInbox:"Onay bağlantısı için {email} adresindeki gelen kutunuzu kontrol edin. Bağlantıya tıklayıp buraya dönün.",
+    errEmailNotConfirmed:"Lütfen önce e-postanızı onaylayın. Gönderdiğimiz doğrulama bağlantısı için gelen kutunuza bakın.",
+    errBadCredentials:"E-posta veya parola hatalı. Lütfen tekrar deneyin.",
+    msgWelcomeBack:"Tekrar hoş geldin, {name}!", errGeneric:"Bir şeyler ters gitti.",
+    errEmailFirst:"Önce yukarıya e-posta adresinizi girin.",
+    msgResetSent:"Parola sıfırlama bağlantısı {email} adresine gönderildi. Yeni parola belirlemek için bağlantıya tıklayın.",
+    msgResendSent:"Onay e-postası {email} adresine tekrar gönderildi",
+    resetTitle:"Parolanızı sıfırlayın",
+    resetBlurb:"E-postanızı girin, size bir sıfırlama bağlantısı gönderelim.",
+    yourEmailAddress:"E-posta adresiniz", sending:"Gönderiliyor…", sendResetLink:"Sıfırlama Bağlantısı Gönder",
+    continueGoogle:"Google ile devam et", continueApple:"Apple ile devam et", orUseEmail:"veya e-posta kullan",
+    welcomeHeading:"Hoş geldiniz", joinHeading:"The Docket'e katılın",
+    signInSubtitle:"Verilerinizi eşitlemek için giriş yapın", registerSubtitle:"Ücretsiz hesabınızı oluşturun",
+    signInTab:"Giriş", registerTab:"Kayıt",
+    fullNameOptional:"Ad soyad (isteğe bağlı)", emailAddress:"E-posta adresi",
+    passwordMin:"Parola (en az 6 karakter)", password:"Parola", confirmPassword:"Parolayı onayla",
+    agreeTo:"Şunları kabul ediyorum", andWord:"ve", privacyPolicy:"Gizlilik Politikası",
+    pleaseWait:"Lütfen bekleyin…", signedIn:"✓ Giriş yapıldı!",
+    signInArrow:"Giriş Yap →", createAccountArrow:"Hesap Oluştur →",
+    goToSignIn:"Girişe git", forgotPassword:"Parolanızı mı unuttunuz?",
+    didntReceive:"E-posta gelmedi mi? Spam klasörünü kontrol edin veya", resendIt:"tekrar gönderin",
+    legalEnglishNotice:"Bu belge İngilizce olarak sunulmaktadır. Çeviriyle herhangi bir tutarsızlık olması hâlinde İngilizce sürüm geçerlidir.",
   },
   ur:{
     appName:"The Docket", daily:"روزانہ معمول", allTasks:"تمام کام",
@@ -493,6 +641,43 @@ const T:Record<Lang,Record<string,string>> = {
     hol_ramadan:"رمضان کا آغاز (تخمینی)", hol_eidFitr:"عید الفطر (تخمینی)",
     hol_eidAdha:"عید الاضحیٰ (تخمینی)", hol_islamicNewYear:"اسلامی نیا سال (تخمینی)",
     hol_arafah:"یومِ عرفہ (تخمینی)",
+    subscription:"سبسکرپشن", widgetsShortcuts:"ویجٹس اور شارٹ کٹس",
+    siriShortcuts:"سری اور شارٹ کٹس", helpFeedback:"مدد اور رائے",
+    privacyPermissions:"رازداری اور اجازتیں", termsConditions:"شرائط و ضوابط",
+    signOut:"سائن آؤٹ", switchToLight:"روشن موڈ پر جائیں", switchToDark:"تاریک موڈ پر جائیں",
+    account:"اکاؤنٹ", displayName:"ظاہر ہونے والا نام", saveLabel:"محفوظ کریں", email:"ای میل",
+    emailChangeNote:"ای میل کی تبدیلی کے لیے دوبارہ تصدیق ضروری ہے۔ اپ ڈیٹ کے لیے سپورٹ سے رابطہ کریں۔",
+    marketingOptIn:"مجھے پروڈکٹ اپ ڈیٹس اور مشورے ای میل کریں",
+    plan:"پلان", freePlan:"مفت پلان", renewsOn:"{date} کو تجدید ہوگی",
+    activeSubscription:"فعال سبسکرپشن",
+    upgradeBlurb:"لامحدود Opus رسائی اور مزید کے لیے اپ گریڈ کریں",
+    manageSubscription:"سبسکرپشن کا انتظام", tryProFree:"Pro کو 7 دن مفت آزمائیں",
+    signOutOf:"{email} سے سائن آؤٹ کریں",
+    errFillAll:"براہ کرم تمام خانے پُر کریں۔", errPasswordMismatch:"پاس ورڈ مماثل نہیں ہیں۔",
+    errPasswordShort:"پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔",
+    errAgreeTerms:"جاری رکھنے کے لیے شرائط و ضوابط اور پرائیویسی پالیسی سے اتفاق کریں۔",
+    msgCheckInbox:"تصدیقی لنک کے لیے {email} پر اپنا ان باکس دیکھیں۔ لنک پر کلک کریں اور یہاں واپس آئیں۔",
+    errEmailNotConfirmed:"پہلے اپنے ای میل کی تصدیق کریں۔ بھیجے گئے تصدیقی لنک کے لیے ان باکس دیکھیں۔",
+    errBadCredentials:"ای میل یا پاس ورڈ غلط ہے۔ دوبارہ کوشش کریں۔",
+    msgWelcomeBack:"خوش آمدید، {name}!", errGeneric:"کچھ غلط ہو گیا۔",
+    errEmailFirst:"پہلے اوپر اپنا ای میل پتہ درج کریں۔",
+    msgResetSent:"پاس ورڈ ری سیٹ لنک {email} پر بھیج دیا گیا۔ نیا پاس ورڈ بنانے کے لیے لنک پر کلک کریں۔",
+    msgResendSent:"تصدیقی ای میل دوبارہ {email} پر بھیجا گیا",
+    resetTitle:"اپنا پاس ورڈ ری سیٹ کریں",
+    resetBlurb:"اپنا ای میل درج کریں، ہم آپ کو ری سیٹ لنک بھیجیں گے۔",
+    yourEmailAddress:"آپ کا ای میل پتہ", sending:"بھیجا جا رہا ہے…", sendResetLink:"ری سیٹ لنک بھیجیں",
+    continueGoogle:"Google کے ساتھ جاری رکھیں", continueApple:"Apple کے ساتھ جاری رکھیں", orUseEmail:"یا ای میل استعمال کریں",
+    welcomeHeading:"خوش آمدید", joinHeading:"The Docket میں شامل ہوں",
+    signInSubtitle:"اپنا ڈیٹا ہم آہنگ کرنے کے لیے سائن ان کریں", registerSubtitle:"اپنا مفت اکاؤنٹ بنائیں",
+    signInTab:"سائن ان", registerTab:"رجسٹر",
+    fullNameOptional:"پورا نام (اختیاری)", emailAddress:"ای میل پتہ",
+    passwordMin:"پاس ورڈ (کم از کم 6 حروف)", password:"پاس ورڈ", confirmPassword:"پاس ورڈ کی تصدیق",
+    agreeTo:"میں اتفاق کرتا ہوں", andWord:"اور", privacyPolicy:"پرائیویسی پالیسی",
+    pleaseWait:"براہ کرم انتظار کریں…", signedIn:"✓ سائن ان ہو گئے!",
+    signInArrow:"سائن ان ←", createAccountArrow:"اکاؤنٹ بنائیں ←",
+    goToSignIn:"سائن ان پر جائیں", forgotPassword:"پاس ورڈ بھول گئے؟",
+    didntReceive:"ای میل نہیں ملا؟ اسپیم فولڈر دیکھیں یا", resendIt:"دوبارہ بھیجیں",
+    legalEnglishNotice:"یہ دستاویز انگریزی میں فراہم کی گئی ہے۔ کسی بھی ترجمے سے اختلاف کی صورت میں انگریزی نسخہ ہی معتبر ہوگا۔",
   },
   bn:{
     appName:"The Docket", daily:"দৈনিক রুটিন", allTasks:"সব কাজ",
@@ -577,6 +762,43 @@ const T:Record<Lang,Record<string,string>> = {
     hol_ramadan:"রমজান শুরু (আনুমানিক)", hol_eidFitr:"ঈদুল ফিতর (আনুমানিক)",
     hol_eidAdha:"ঈদুল আজহা (আনুমানিক)", hol_islamicNewYear:"হিজরি নববর্ষ (আনুমানিক)",
     hol_arafah:"আরাফাহ দিবস (আনুমানিক)",
+    subscription:"সাবস্ক্রিপশন", widgetsShortcuts:"উইজেট ও শর্টকাট",
+    siriShortcuts:"সিরি ও শর্টকাট", helpFeedback:"সহায়তা ও মতামত",
+    privacyPermissions:"গোপনীয়তা ও অনুমতি", termsConditions:"শর্তাবলি",
+    signOut:"সাইন আউট", switchToLight:"হালকা মোডে যান", switchToDark:"ডার্ক মোডে যান",
+    account:"অ্যাকাউন্ট", displayName:"প্রদর্শিত নাম", saveLabel:"সংরক্ষণ", email:"ইমেইল",
+    emailChangeNote:"ইমেইল পরিবর্তনে পুনরায় যাচাই প্রয়োজন। হালনাগাদ করতে সহায়তায় যোগাযোগ করুন।",
+    marketingOptIn:"পণ্যের হালনাগাদ ও পরামর্শ ইমেইলে পাঠান",
+    plan:"প্ল্যান", freePlan:"ফ্রি প্ল্যান", renewsOn:"{date} তারিখে নবায়ন হবে",
+    activeSubscription:"সক্রিয় সাবস্ক্রিপশন",
+    upgradeBlurb:"সীমাহীন Opus অ্যাক্সেস ও আরও কিছুর জন্য আপগ্রেড করুন",
+    manageSubscription:"সাবস্ক্রিপশন পরিচালনা", tryProFree:"Pro ৭ দিন বিনামূল্যে দেখুন",
+    signOutOf:"{email} থেকে সাইন আউট করুন",
+    errFillAll:"অনুগ্রহ করে সব ঘর পূরণ করুন।", errPasswordMismatch:"পাসওয়ার্ড মিলছে না।",
+    errPasswordShort:"পাসওয়ার্ড অন্তত 6 অক্ষরের হতে হবে।",
+    errAgreeTerms:"চালিয়ে যেতে শর্তাবলি ও গোপনীয়তা নীতিতে সম্মত হোন।",
+    msgCheckInbox:"নিশ্চিতকরণ লিঙ্কের জন্য {email} ঠিকানার ইনবক্স দেখুন। লিঙ্কে ক্লিক করে এখানে ফিরে আসুন।",
+    errEmailNotConfirmed:"আগে আপনার ইমেইল নিশ্চিত করুন। আমাদের পাঠানো যাচাই লিঙ্কের জন্য ইনবক্স দেখুন।",
+    errBadCredentials:"ইমেইল বা পাসওয়ার্ড ভুল। আবার চেষ্টা করুন।",
+    msgWelcomeBack:"আবার স্বাগতম, {name}!", errGeneric:"কিছু একটা ভুল হয়েছে।",
+    errEmailFirst:"আগে উপরে আপনার ইমেইল ঠিকানা লিখুন।",
+    msgResetSent:"পাসওয়ার্ড রিসেট লিঙ্ক {email} ঠিকানায় পাঠানো হয়েছে। নতুন পাসওয়ার্ড দিতে লিঙ্কে ক্লিক করুন।",
+    msgResendSent:"নিশ্চিতকরণ ইমেইল আবার {email} ঠিকানায় পাঠানো হয়েছে",
+    resetTitle:"আপনার পাসওয়ার্ড রিসেট করুন",
+    resetBlurb:"আপনার ইমেইল দিন, আমরা রিসেট লিঙ্ক পাঠাব।",
+    yourEmailAddress:"আপনার ইমেইল ঠিকানা", sending:"পাঠানো হচ্ছে…", sendResetLink:"রিসেট লিঙ্ক পাঠান",
+    continueGoogle:"Google দিয়ে চালিয়ে যান", continueApple:"Apple দিয়ে চালিয়ে যান", orUseEmail:"অথবা ইমেইল ব্যবহার করুন",
+    welcomeHeading:"স্বাগতম", joinHeading:"The Docket-এ যোগ দিন",
+    signInSubtitle:"ডেটা সিঙ্ক করতে সাইন ইন করুন", registerSubtitle:"আপনার বিনামূল্যের অ্যাকাউন্ট তৈরি করুন",
+    signInTab:"সাইন ইন", registerTab:"নিবন্ধন",
+    fullNameOptional:"পুরো নাম (ঐচ্ছিক)", emailAddress:"ইমেইল ঠিকানা",
+    passwordMin:"পাসওয়ার্ড (অন্তত 6 অক্ষর)", password:"পাসওয়ার্ড", confirmPassword:"পাসওয়ার্ড নিশ্চিত করুন",
+    agreeTo:"আমি সম্মত", andWord:"এবং", privacyPolicy:"গোপনীয়তা নীতি",
+    pleaseWait:"অনুগ্রহ করে অপেক্ষা করুন…", signedIn:"✓ সাইন ইন হয়েছে!",
+    signInArrow:"সাইন ইন →", createAccountArrow:"অ্যাকাউন্ট তৈরি করুন →",
+    goToSignIn:"সাইন ইনে যান", forgotPassword:"পাসওয়ার্ড ভুলে গেছেন?",
+    didntReceive:"ইমেইল পাননি? স্প্যাম ফোল্ডার দেখুন অথবা", resendIt:"আবার পাঠান",
+    legalEnglishNotice:"এই নথিটি ইংরেজিতে সরবরাহ করা হয়েছে। অনুবাদের সাথে কোনো অসঙ্গতি থাকলে ইংরেজি সংস্করণই প্রযোজ্য হবে।",
   },
   es:{
     appName:"The Docket", daily:"Rutina Diaria", allTasks:"Todas las Tareas",
@@ -661,6 +883,43 @@ const T:Record<Lang,Record<string,string>> = {
     hol_ramadan:"Inicio del Ramadán (aprox.)", hol_eidFitr:"Eid al-Fitr (aprox.)",
     hol_eidAdha:"Eid al-Adha (aprox.)", hol_islamicNewYear:"Año Nuevo islámico (aprox.)",
     hol_arafah:"Día de Arafat (aprox.)",
+    subscription:"Suscripción", widgetsShortcuts:"Widgets y accesos directos",
+    siriShortcuts:"Siri y accesos directos", helpFeedback:"Ayuda y comentarios",
+    privacyPermissions:"Privacidad y permisos", termsConditions:"Términos y Condiciones",
+    signOut:"Cerrar sesión", switchToLight:"Cambiar a modo claro", switchToDark:"Cambiar a modo oscuro",
+    account:"Cuenta", displayName:"Nombre visible", saveLabel:"Guardar", email:"Correo electrónico",
+    emailChangeNote:"Cambiar el correo requiere volver a verificarlo. Contacta con soporte para actualizarlo.",
+    marketingOptIn:"Enviarme novedades y consejos por correo",
+    plan:"Plan", freePlan:"Plan gratuito", renewsOn:"Se renueva el {date}",
+    activeSubscription:"Suscripción activa",
+    upgradeBlurb:"Mejora tu plan para acceso ilimitado a Opus y más",
+    manageSubscription:"Gestionar suscripción", tryProFree:"Prueba Pro gratis 7 días",
+    signOutOf:"Cerrar sesión de {email}",
+    errFillAll:"Por favor, completa todos los campos.", errPasswordMismatch:"Las contraseñas no coinciden.",
+    errPasswordShort:"La contraseña debe tener al menos 6 caracteres.",
+    errAgreeTerms:"Acepta los Términos y Condiciones y la Política de Privacidad para continuar.",
+    msgCheckInbox:"Revisa tu bandeja de entrada en {email} para el enlace de confirmación. Haz clic y vuelve aquí para iniciar sesión.",
+    errEmailNotConfirmed:"Confirma tu correo primero. Revisa tu bandeja de entrada para el enlace de verificación.",
+    errBadCredentials:"Correo o contraseña incorrectos. Inténtalo de nuevo.",
+    msgWelcomeBack:"¡Bienvenido de nuevo, {name}!", errGeneric:"Algo salió mal.",
+    errEmailFirst:"Introduce primero tu correo arriba.",
+    msgResetSent:"Enlace de restablecimiento enviado a {email}. Haz clic en el enlace para crear una nueva contraseña.",
+    msgResendSent:"Correo de confirmación reenviado a {email}",
+    resetTitle:"Restablece tu contraseña",
+    resetBlurb:"Introduce tu correo y te enviaremos un enlace para restablecer la contraseña.",
+    yourEmailAddress:"Tu correo electrónico", sending:"Enviando…", sendResetLink:"Enviar enlace",
+    continueGoogle:"Continuar con Google", continueApple:"Continuar con Apple", orUseEmail:"o usa el correo",
+    welcomeHeading:"Bienvenido", joinHeading:"Únete a The Docket",
+    signInSubtitle:"Inicia sesión para sincronizar tus datos", registerSubtitle:"Crea tu cuenta gratuita",
+    signInTab:"Iniciar sesión", registerTab:"Registrarse",
+    fullNameOptional:"Nombre completo (opcional)", emailAddress:"Correo electrónico",
+    passwordMin:"Contraseña (mín. 6 caracteres)", password:"Contraseña", confirmPassword:"Confirmar contraseña",
+    agreeTo:"Acepto los", andWord:"y la", privacyPolicy:"Política de Privacidad",
+    pleaseWait:"Espera…", signedIn:"✓ ¡Sesión iniciada!",
+    signInArrow:"Iniciar sesión →", createAccountArrow:"Crear cuenta →",
+    goToSignIn:"Ir a iniciar sesión", forgotPassword:"¿Olvidaste tu contraseña?",
+    didntReceive:"¿No recibiste el correo? Revisa tu carpeta de spam o", resendIt:"reenvíalo",
+    legalEnglishNotice:"Este documento se proporciona en inglés. La versión en inglés prevalecerá en caso de cualquier discrepancia con una traducción.",
   },
   hi:{
     appName:"The Docket", daily:"दैनिक दिनचर्या", allTasks:"सभी कार्य",
@@ -745,6 +1004,43 @@ const T:Record<Lang,Record<string,string>> = {
     hol_ramadan:"रमज़ान आरंभ (लगभग)", hol_eidFitr:"ईद-उल-फ़ित्र (लगभग)",
     hol_eidAdha:"ईद-उल-अज़हा (लगभग)", hol_islamicNewYear:"इस्लामी नववर्ष (लगभग)",
     hol_arafah:"अराफ़ा का दिन (लगभग)",
+    subscription:"सदस्यता", widgetsShortcuts:"विजेट और शॉर्टकट",
+    siriShortcuts:"सिरी और शॉर्टकट", helpFeedback:"सहायता और प्रतिक्रिया",
+    privacyPermissions:"गोपनीयता और अनुमतियाँ", termsConditions:"नियम और शर्तें",
+    signOut:"साइन आउट", switchToLight:"लाइट मोड पर जाएँ", switchToDark:"डार्क मोड पर जाएँ",
+    account:"खाता", displayName:"प्रदर्शित नाम", saveLabel:"सहेजें", email:"ईमेल",
+    emailChangeNote:"ईमेल बदलने पर पुनः सत्यापन आवश्यक है। अपडेट के लिए सहायता से संपर्क करें।",
+    marketingOptIn:"मुझे उत्पाद अपडेट और सुझाव ईमेल करें",
+    plan:"योजना", freePlan:"निःशुल्क योजना", renewsOn:"{date} को नवीनीकरण",
+    activeSubscription:"सक्रिय सदस्यता",
+    upgradeBlurb:"असीमित Opus पहुँच और अधिक के लिए अपग्रेड करें",
+    manageSubscription:"सदस्यता प्रबंधित करें", tryProFree:"Pro को 7 दिन निःशुल्क आज़माएँ",
+    signOutOf:"{email} से साइन आउट करें",
+    errFillAll:"कृपया सभी फ़ील्ड भरें।", errPasswordMismatch:"पासवर्ड मेल नहीं खाते।",
+    errPasswordShort:"पासवर्ड कम से कम 6 वर्णों का होना चाहिए।",
+    errAgreeTerms:"जारी रखने के लिए नियम और शर्तें तथा गोपनीयता नीति स्वीकार करें।",
+    msgCheckInbox:"पुष्टिकरण लिंक के लिए {email} पर अपना इनबॉक्स देखें। लिंक पर क्लिक करके यहाँ लौटें।",
+    errEmailNotConfirmed:"पहले अपना ईमेल सत्यापित करें। भेजे गए सत्यापन लिंक के लिए इनबॉक्स देखें।",
+    errBadCredentials:"ईमेल या पासवर्ड ग़लत है। कृपया पुनः प्रयास करें।",
+    msgWelcomeBack:"वापसी पर स्वागत है, {name}!", errGeneric:"कुछ ग़लत हो गया।",
+    errEmailFirst:"पहले ऊपर अपना ईमेल पता दर्ज करें।",
+    msgResetSent:"पासवर्ड रीसेट लिंक {email} पर भेजा गया। नया पासवर्ड बनाने के लिए लिंक पर क्लिक करें।",
+    msgResendSent:"पुष्टिकरण ईमेल पुनः {email} पर भेजा गया",
+    resetTitle:"अपना पासवर्ड रीसेट करें",
+    resetBlurb:"अपना ईमेल दर्ज करें, हम आपको रीसेट लिंक भेजेंगे।",
+    yourEmailAddress:"आपका ईमेल पता", sending:"भेजा जा रहा है…", sendResetLink:"रीसेट लिंक भेजें",
+    continueGoogle:"Google से जारी रखें", continueApple:"Apple से जारी रखें", orUseEmail:"या ईमेल का उपयोग करें",
+    welcomeHeading:"स्वागत है", joinHeading:"The Docket से जुड़ें",
+    signInSubtitle:"अपना डेटा सिंक करने के लिए साइन इन करें", registerSubtitle:"अपना निःशुल्क खाता बनाएँ",
+    signInTab:"साइन इन", registerTab:"रजिस्टर",
+    fullNameOptional:"पूरा नाम (वैकल्पिक)", emailAddress:"ईमेल पता",
+    passwordMin:"पासवर्ड (कम से कम 6 वर्ण)", password:"पासवर्ड", confirmPassword:"पासवर्ड की पुष्टि करें",
+    agreeTo:"मैं सहमत हूँ", andWord:"और", privacyPolicy:"गोपनीयता नीति",
+    pleaseWait:"कृपया प्रतीक्षा करें…", signedIn:"✓ साइन इन हो गए!",
+    signInArrow:"साइन इन →", createAccountArrow:"खाता बनाएँ →",
+    goToSignIn:"साइन इन पर जाएँ", forgotPassword:"पासवर्ड भूल गए?",
+    didntReceive:"ईमेल नहीं मिला? स्पैम फ़ोल्डर देखें या", resendIt:"पुनः भेजें",
+    legalEnglishNotice:"यह दस्तावेज़ अंग्रेज़ी में प्रदान किया गया है। किसी भी अनुवाद से भिन्नता की स्थिति में अंग्रेज़ी संस्करण मान्य होगा।",
   },
   pt:{
     appName:"The Docket", daily:"Rotina Diária", allTasks:"Todas as Tarefas",
@@ -829,6 +1125,43 @@ const T:Record<Lang,Record<string,string>> = {
     hol_ramadan:"Início do Ramadã (aprox.)", hol_eidFitr:"Eid al-Fitr (aprox.)",
     hol_eidAdha:"Eid al-Adha (aprox.)", hol_islamicNewYear:"Ano Novo islâmico (aprox.)",
     hol_arafah:"Dia de Arafat (aprox.)",
+    subscription:"Assinatura", widgetsShortcuts:"Widgets e atalhos",
+    siriShortcuts:"Siri e atalhos", helpFeedback:"Ajuda e comentários",
+    privacyPermissions:"Privacidade e permissões", termsConditions:"Termos e Condições",
+    signOut:"Sair", switchToLight:"Mudar para o modo claro", switchToDark:"Mudar para o modo escuro",
+    account:"Conta", displayName:"Nome de exibição", saveLabel:"Salvar", email:"E-mail",
+    emailChangeNote:"Alterar o e-mail exige nova verificação. Fale com o suporte para atualizar.",
+    marketingOptIn:"Enviar novidades e dicas por e-mail",
+    plan:"Plano", freePlan:"Plano gratuito", renewsOn:"Renova em {date}",
+    activeSubscription:"Assinatura ativa",
+    upgradeBlurb:"Faça upgrade para acesso ilimitado ao Opus e mais",
+    manageSubscription:"Gerenciar assinatura", tryProFree:"Teste o Pro grátis por 7 dias",
+    signOutOf:"Sair de {email}",
+    errFillAll:"Preencha todos os campos.", errPasswordMismatch:"As senhas não coincidem.",
+    errPasswordShort:"A senha deve ter pelo menos 6 caracteres.",
+    errAgreeTerms:"Aceite os Termos e Condições e a Política de Privacidade para continuar.",
+    msgCheckInbox:"Verifique sua caixa de entrada em {email} para o link de confirmação. Clique nele e volte aqui para entrar.",
+    errEmailNotConfirmed:"Confirme seu e-mail primeiro. Procure o link de verificação na sua caixa de entrada.",
+    errBadCredentials:"E-mail ou senha incorretos. Tente novamente.",
+    msgWelcomeBack:"Bem-vindo de volta, {name}!", errGeneric:"Algo deu errado.",
+    errEmailFirst:"Digite seu e-mail acima primeiro.",
+    msgResetSent:"Link de redefinição enviado para {email}. Clique no link para definir uma nova senha.",
+    msgResendSent:"E-mail de confirmação reenviado para {email}",
+    resetTitle:"Redefina sua senha",
+    resetBlurb:"Digite seu e-mail e enviaremos um link para redefinir sua senha.",
+    yourEmailAddress:"Seu e-mail", sending:"Enviando…", sendResetLink:"Enviar link",
+    continueGoogle:"Continuar com Google", continueApple:"Continuar com Apple", orUseEmail:"ou use o e-mail",
+    welcomeHeading:"Bem-vindo", joinHeading:"Entre no The Docket",
+    signInSubtitle:"Entre para sincronizar seus dados", registerSubtitle:"Crie sua conta gratuita",
+    signInTab:"Entrar", registerTab:"Cadastrar",
+    fullNameOptional:"Nome completo (opcional)", emailAddress:"E-mail",
+    passwordMin:"Senha (mín. 6 caracteres)", password:"Senha", confirmPassword:"Confirmar senha",
+    agreeTo:"Concordo com os", andWord:"e a", privacyPolicy:"Política de Privacidade",
+    pleaseWait:"Aguarde…", signedIn:"✓ Conectado!",
+    signInArrow:"Entrar →", createAccountArrow:"Criar conta →",
+    goToSignIn:"Ir para entrar", forgotPassword:"Esqueceu sua senha?",
+    didntReceive:"Não recebeu o e-mail? Verifique o spam ou", resendIt:"reenvie",
+    legalEnglishNotice:"Este documento é fornecido em inglês. A versão em inglês prevalece em caso de qualquer divergência com uma tradução.",
   },
   ru:{
     appName:"The Docket", daily:"Ежедневный распорядок", allTasks:"Все задачи",
@@ -913,6 +1246,43 @@ const T:Record<Lang,Record<string,string>> = {
     hol_ramadan:"Начало Рамадана (прибл.)", hol_eidFitr:"Ураза-байрам (прибл.)",
     hol_eidAdha:"Курбан-байрам (прибл.)", hol_islamicNewYear:"Исламский Новый год (прибл.)",
     hol_arafah:"День Арафа (прибл.)",
+    subscription:"Подписка", widgetsShortcuts:"Виджеты и быстрые команды",
+    siriShortcuts:"Siri и быстрые команды", helpFeedback:"Помощь и отзывы",
+    privacyPermissions:"Конфиденциальность и разрешения", termsConditions:"Условия использования",
+    signOut:"Выйти", switchToLight:"Переключить на светлую тему", switchToDark:"Переключить на тёмную тему",
+    account:"Аккаунт", displayName:"Отображаемое имя", saveLabel:"Сохранить", email:"Эл. почта",
+    emailChangeNote:"Смена почты требует повторного подтверждения. Обратитесь в поддержку.",
+    marketingOptIn:"Присылать новости о продукте и советы",
+    plan:"Тариф", freePlan:"Бесплатный тариф", renewsOn:"Продление {date}",
+    activeSubscription:"Активная подписка",
+    upgradeBlurb:"Перейдите на платный тариф для безлимитного доступа к Opus и не только",
+    manageSubscription:"Управление подпиской", tryProFree:"Попробуйте Pro бесплатно 7 дней",
+    signOutOf:"Выйти из {email}",
+    errFillAll:"Пожалуйста, заполните все поля.", errPasswordMismatch:"Пароли не совпадают.",
+    errPasswordShort:"Пароль должен содержать не менее 6 символов.",
+    errAgreeTerms:"Чтобы продолжить, примите Условия использования и Политику конфиденциальности.",
+    msgCheckInbox:"Проверьте почту {email} — там ссылка для подтверждения. Перейдите по ней и вернитесь сюда для входа.",
+    errEmailNotConfirmed:"Сначала подтвердите адрес почты. Проверьте входящие — мы отправили ссылку.",
+    errBadCredentials:"Неверная почта или пароль. Попробуйте ещё раз.",
+    msgWelcomeBack:"С возвращением, {name}!", errGeneric:"Что-то пошло не так.",
+    errEmailFirst:"Сначала введите адрес почты выше.",
+    msgResetSent:"Ссылка для сброса пароля отправлена на {email}. Перейдите по ней, чтобы задать новый пароль.",
+    msgResendSent:"Письмо с подтверждением повторно отправлено на {email}",
+    resetTitle:"Сброс пароля",
+    resetBlurb:"Введите адрес почты, и мы отправим ссылку для сброса пароля.",
+    yourEmailAddress:"Ваш адрес эл. почты", sending:"Отправка…", sendResetLink:"Отправить ссылку",
+    continueGoogle:"Продолжить с Google", continueApple:"Продолжить с Apple", orUseEmail:"или через почту",
+    welcomeHeading:"Добро пожаловать", joinHeading:"Присоединяйтесь к The Docket",
+    signInSubtitle:"Войдите, чтобы синхронизировать данные", registerSubtitle:"Создайте бесплатный аккаунт",
+    signInTab:"Вход", registerTab:"Регистрация",
+    fullNameOptional:"Полное имя (необязательно)", emailAddress:"Адрес эл. почты",
+    passwordMin:"Пароль (минимум 6 символов)", password:"Пароль", confirmPassword:"Подтвердите пароль",
+    agreeTo:"Я принимаю", andWord:"и", privacyPolicy:"Политику конфиденциальности",
+    pleaseWait:"Подождите…", signedIn:"✓ Вход выполнен!",
+    signInArrow:"Войти →", createAccountArrow:"Создать аккаунт →",
+    goToSignIn:"Перейти ко входу", forgotPassword:"Забыли пароль?",
+    didntReceive:"Письмо не пришло? Проверьте папку со спамом или", resendIt:"отправьте снова",
+    legalEnglishNotice:"Этот документ предоставляется на английском языке. В случае любых расхождений с переводом преимущественную силу имеет английская версия.",
   },
   zh:{
     appName:"The Docket", daily:"每日例程", allTasks:"全部任务",
@@ -997,6 +1367,43 @@ const T:Record<Lang,Record<string,string>> = {
     hol_ramadan:"斋月开始（约）", hol_eidFitr:"开斋节（约）",
     hol_eidAdha:"宰牲节（约）", hol_islamicNewYear:"伊斯兰新年（约）",
     hol_arafah:"阿拉法特日（约）",
+    subscription:"订阅", widgetsShortcuts:"小组件与快捷指令",
+    siriShortcuts:"Siri 与快捷指令", helpFeedback:"帮助与反馈",
+    privacyPermissions:"隐私与权限", termsConditions:"条款与条件",
+    signOut:"退出登录", switchToLight:"切换到浅色模式", switchToDark:"切换到深色模式",
+    account:"账户", displayName:"显示名称", saveLabel:"保存", email:"电子邮件",
+    emailChangeNote:"更改电子邮件需要重新验证。如需更新请联系支持。",
+    marketingOptIn:"通过邮件接收产品更新与使用技巧",
+    plan:"方案", freePlan:"免费方案", renewsOn:"{date} 续订",
+    activeSubscription:"订阅生效中",
+    upgradeBlurb:"升级以获得无限 Opus 访问及更多功能",
+    manageSubscription:"管理订阅", tryProFree:"免费试用 Pro 7 天",
+    signOutOf:"退出 {email}",
+    errFillAll:"请填写所有字段。", errPasswordMismatch:"两次输入的密码不一致。",
+    errPasswordShort:"密码至少需要 6 个字符。",
+    errAgreeTerms:"请先同意条款与条件以及隐私政策再继续。",
+    msgCheckInbox:"请在 {email} 的收件箱中查收确认链接。点击链接后返回此处登录。",
+    errEmailNotConfirmed:"请先确认你的电子邮件。查看收件箱中我们发送的验证链接。",
+    errBadCredentials:"邮箱或密码不正确，请重试。",
+    msgWelcomeBack:"欢迎回来，{name}！", errGeneric:"出了点问题。",
+    errEmailFirst:"请先在上方输入你的邮箱地址。",
+    msgResetSent:"密码重置链接已发送至 {email}。点击邮件中的链接设置新密码。",
+    msgResendSent:"确认邮件已重新发送至 {email}",
+    resetTitle:"重置密码",
+    resetBlurb:"输入你的邮箱，我们会发送重置密码的链接。",
+    yourEmailAddress:"你的邮箱地址", sending:"发送中…", sendResetLink:"发送重置链接",
+    continueGoogle:"使用 Google 继续", continueApple:"使用 Apple 继续", orUseEmail:"或使用邮箱",
+    welcomeHeading:"欢迎", joinHeading:"加入 The Docket",
+    signInSubtitle:"登录以同步你的数据", registerSubtitle:"创建你的免费账户",
+    signInTab:"登录", registerTab:"注册",
+    fullNameOptional:"全名（可选）", emailAddress:"邮箱地址",
+    passwordMin:"密码（至少 6 个字符）", password:"密码", confirmPassword:"确认密码",
+    agreeTo:"我同意", andWord:"和", privacyPolicy:"隐私政策",
+    pleaseWait:"请稍候…", signedIn:"✓ 已登录！",
+    signInArrow:"登录 →", createAccountArrow:"创建账户 →",
+    goToSignIn:"前往登录", forgotPassword:"忘记密码？",
+    didntReceive:"没收到邮件？请检查垃圾邮件文件夹，或", resendIt:"重新发送",
+    legalEnglishNotice:"本文件以英文提供。如译文与英文版本有任何出入，概以英文版本为准。",
   },
 };
 
@@ -1248,6 +1655,18 @@ const CATS:Record<string,{label:string;icon:string}> = {
   cooking:     {label:"Cooking & Recipes",   icon:"ti-chef-hat"},
   other:       {label:"Other",               icon:"ti-dots-circle-horizontal"},
 };
+
+// Interpolating counterpart to t(). Values go in through {name} placeholders
+// so each translation decides where they belong in its own grammar, instead of
+// being concatenated onto a translated fragment — that concatenation is what
+// put the Latin word "Renews" in front of an Arabic date and let the bidi
+// algorithm reorder the whole line.
+//
+// An unknown placeholder is left in place rather than blanked, so a typo shows
+// up as "{emial}" on screen instead of silently vanishing.
+function tf(k:string,vars:Record<string,string|number>,t:(k:string)=>string):string{
+  return t(k).replace(/\{(\w+)\}/g,(m,name)=>name in vars?String(vars[name]):m);
+}
 
 // The display name for a category. CATS keeps its English label as the source
 // of truth — the AI prompt and the category search both read it — while the
@@ -1961,6 +2380,7 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
   onSuccess?:()=>void;
   onClose?:()=>void;
 }){
+  const{t}=useApp();
   const C=getC(dark);
   const[view,setView]=useState<"main"|"forgot">("main");
   const[authTab,setAuthTab]=useState<"login"|"register">("login");
@@ -1975,15 +2395,15 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
   const SITE_URL=typeof window!=="undefined"?window.location.origin:"";
 
   async function handleAuth(){
-    if(!email||!password){setAuthMsg("Please fill in all fields.");setAuthStatus("error");return;}
+    if(!email||!password){setAuthMsg(t("errFillAll"));setAuthStatus("error");return;}
     if(authTab==="register"&&password!==confirmPassword){
-      setAuthMsg("Passwords do not match.");setAuthStatus("error");return;
+      setAuthMsg(t("errPasswordMismatch"));setAuthStatus("error");return;
     }
     if(authTab==="register"&&password.length<6){
-      setAuthMsg("Password must be at least 6 characters.");setAuthStatus("error");return;
+      setAuthMsg(t("errPasswordShort"));setAuthStatus("error");return;
     }
     if(authTab==="register"&&!registerAgreed){
-      setAuthMsg("Please agree to the Terms & Conditions and Privacy Policy to continue.");setAuthStatus("error");return;
+      setAuthMsg(t("errAgreeTerms"));setAuthStatus("error");return;
     }
     setAuthStatus("loading");setAuthMsg("");
     const sb=await getSupabaseClient();
@@ -1996,15 +2416,15 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
         });
         if(error){setAuthMsg(error.message);setAuthStatus("error");return;}
         setAuthStatus("confirm");
-        setAuthMsg("✓ Account created! Check "+email+" for a confirmation link. Click it then return here to sign in.");
+        setAuthMsg("✓ "+tf("msgCheckInbox",{email},t));
       } else {
         const{data,error}=await sb.auth.signInWithPassword({email,password});
         if(error){
           if(error.message.toLowerCase().includes("email not confirmed")||error.message.toLowerCase().includes("not confirmed")){
-            setAuthMsg("Please confirm your email first. Check your inbox for the verification link we sent.");
+            setAuthMsg(t("errEmailNotConfirmed"));
             setAuthStatus("confirm");
           } else if(error.message.toLowerCase().includes("invalid")){
-            setAuthMsg("Incorrect email or password. Please try again.");
+            setAuthMsg(t("errBadCredentials"));
             setAuthStatus("error");
           } else {
             setAuthMsg(error.message);setAuthStatus("error");
@@ -2015,11 +2435,11 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
           const displayName=data.user.user_metadata?.full_name||data.user.email?.split("@")[0]||"User";
           onUserChange({name:displayName,email:data.user.email||"",avatar:data.user.user_metadata?.avatar_url,id:data.user.id});
           setAuthStatus("success");
-          setAuthMsg("Welcome back, "+displayName+"!");
+          setAuthMsg(tf("msgWelcomeBack",{name:displayName},t));
           setTimeout(()=>onSuccess?.(),1500);
         }
       }
-    }catch(e:any){setAuthMsg(e.message||"Something went wrong.");setAuthStatus("error");}
+    }catch(e:any){setAuthMsg(e.message||t("errGeneric"));setAuthStatus("error");}
   }
 
   async function handleOAuth(provider:"google"|"apple"){
@@ -2031,7 +2451,7 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
   }
 
   async function handleForgotPassword(){
-    if(!email){setAuthMsg("Enter your email address above first.");setAuthStatus("error");return;}
+    if(!email){setAuthMsg(t("errEmailFirst"));setAuthStatus("error");return;}
     setAuthStatus("loading");
     const sb=await getSupabaseClient();
     if(!sb){setAuthStatus("error");return;}
@@ -2039,7 +2459,7 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
       const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:SITE_URL+"?reset=true"});
       if(error){setAuthMsg(error.message);setAuthStatus("error");return;}
       setAuthStatus("confirm");
-      setAuthMsg("✓ Password reset email sent to "+email+". Click the link in the email to set a new password.");
+      setAuthMsg("✓ "+tf("msgResetSent",{email},t));
     }catch(e:any){setAuthMsg(e.message);setAuthStatus("error");}
   }
 
@@ -2068,12 +2488,12 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
           <i className="ti ti-mail" style={{fontSize:26,color:"white"}} aria-hidden="true"/>
         </div>
         <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:20,
-          color:C.navy,marginBottom:8}}>Reset your password</p>
+          color:C.navy,marginBottom:8}}>{t("resetTitle")}</p>
         <p style={{fontSize:13,color:C.muted,marginBottom:20,lineHeight:1.5}}>
-          Enter your email and we'll send you a link to reset your password.
+          {t("resetBlurb")}
         </p>
         <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
-          placeholder="Your email address" style={inp}
+          placeholder={t("yourEmailAddress")} style={inp}
           onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
           onBlur={e=>(e.target.style.borderColor=C.border)}
           onKeyDown={e=>e.key==="Enter"&&handleForgotPassword()}/>
@@ -2093,7 +2513,7 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
               background:"linear-gradient(145deg,#6677E8,#4C5FD5)",color:"white",border:"none",
               opacity:authStatus==="loading"?0.7:1,
               boxShadow:"0 6px 20px rgba(76,95,213,0.4)"}}>
-            {authStatus==="loading"?"Sending…":"Send Reset Link"}
+            {authStatus==="loading"?t("sending"):t("sendResetLink")}
           </button>
         )}
       </div>
@@ -2112,10 +2532,10 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
           </div>
           <div>
             <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:17,color:C.navy}}>
-              {authTab==="login"?"Welcome":"Join The Docket"}
+              {authTab==="login"?t("welcomeHeading"):t("joinHeading")}
             </p>
             <p style={{fontSize:11,color:C.muted}}>
-              {authTab==="login"?"Sign in to sync your data":"Create your free account"}
+              {authTab==="login"?t("signInSubtitle"):t("registerSubtitle")}
             </p>
           </div>
         </div>
@@ -2141,7 +2561,7 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
-          Continue with Google
+          {t("continueGoogle")}
         </button>
         <button onClick={()=>handleOAuth("apple")}
           style={{width:"100%",padding:"12px 16px",borderRadius:12,cursor:"pointer",
@@ -2153,14 +2573,14 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
           <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
             <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 3.99zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
           </svg>
-          Continue with Apple
+          {t("continueApple")}
         </button>
       </div>
 
       {/* Divider */}
       <div style={{display:"flex",alignItems:"center",gap:12,padding:"16px 24px 0"}}>
         <div style={{flex:1,height:1,background:C.border}}/>
-        <span style={{fontSize:11,color:C.muted2,fontWeight:500}}>or use email</span>
+        <span style={{fontSize:11,color:C.muted2,fontWeight:500}}>{t("orUseEmail")}</span>
         <div style={{flex:1,height:1,background:C.border}}/>
       </div>
 
@@ -2174,7 +2594,7 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
               background:authTab===tab?"linear-gradient(135deg,#4C5FD5,#2A3699)":"transparent",
               color:authTab===tab?"white":C.muted,
               boxShadow:authTab===tab?"0 4px 12px rgba(76,95,213,0.4)":"none"}}>
-            {tab==="login"?"Sign In":"Register"}
+            {tab==="login"?t("signInTab"):t("registerTab")}
           </button>
         ))}
       </div>
@@ -2183,23 +2603,23 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
       <div style={{padding:"16px 24px 24px"}}>
         {authTab==="register"&&(
           <input value={name} onChange={e=>setName(e.target.value)}
-            placeholder="Full name (optional)" style={inp}
+            placeholder={t("fullNameOptional")} style={inp}
             onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
             onBlur={e=>(e.target.style.borderColor=C.border)}/>
         )}
         <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
-          placeholder="Email address" style={inp}
+          placeholder={t("emailAddress")} style={inp}
           onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
           onBlur={e=>(e.target.style.borderColor=C.border)}/>
         <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
-          placeholder={authTab==="register"?"Password (min. 6 characters)":"Password"}
+          placeholder={authTab==="register"?t("passwordMin"):t("password")}
           style={inp}
           onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
           onBlur={e=>(e.target.style.borderColor=C.border)}
           onKeyDown={e=>e.key==="Enter"&&authTab==="login"&&handleAuth()}/>
         {authTab==="register"&&(
           <input type="password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}
-            placeholder="Confirm password" style={{...inp,marginBottom:16}}
+            placeholder={t("confirmPassword")} style={{...inp,marginBottom:16}}
             onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
             onBlur={e=>(e.target.style.borderColor=C.border)}
             onKeyDown={e=>e.key==="Enter"&&handleAuth()}/>
@@ -2209,12 +2629,12 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
             <input type="checkbox" checked={registerAgreed} onChange={e=>setRegisterAgreed(e.target.checked)}
               style={{marginTop:2,width:15,height:15,flexShrink:0,accentColor:"#4C5FD5",cursor:"pointer"}}/>
             <span style={{fontSize:11.5,color:C.muted,lineHeight:1.5}}>
-              I agree to the{" "}
+              {t("agreeTo")}{" "}
               <span onClick={e=>{e.preventDefault();onOpenLegal("terms");}}
-                style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>Terms & Conditions</span>
-              {" "}and{" "}
+                style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>{t("termsConditions")}</span>
+              {" "}{t("andWord")}{" "}
               <span onClick={e=>{e.preventDefault();onOpenLegal("privacy");}}
-                style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>Privacy Policy</span>
+                style={{color:C.primary,fontWeight:600,textDecoration:"underline",cursor:"pointer"}}>{t("privacyPolicy")}</span>
             </span>
           </label>
         )}
@@ -2235,7 +2655,7 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
                 :"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",
               color:"white",border:"none",cursor:"pointer",opacity:authStatus==="loading"?0.7:1,
               boxShadow:"0 6px 20px rgba(76,95,213,0.45)"}}>
-            {authStatus==="loading"?"Please wait…":authStatus==="success"?"✓ Signed in!":authTab==="login"?"Sign In →":"Create Account →"}
+            {authStatus==="loading"?t("pleaseWait"):authStatus==="success"?t("signedIn"):authTab==="login"?t("signInArrow"):t("createAccountArrow")}
           </button>
         )}
         {authStatus==="confirm"&&authTab==="register"&&(
@@ -2243,14 +2663,14 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
             style={{width:"100%",padding:"14px",fontSize:14,fontWeight:700,
               background:"linear-gradient(145deg,#6677E8,#4C5FD5)",color:"white",border:"none",
               boxShadow:"0 6px 20px rgba(76,95,213,0.4)"}}>
-            Go to Sign In
+            {t("goToSignIn")}
           </button>
         )}
         {authTab==="login"&&authStatus!=="confirm"&&(
           <p style={{textAlign:"center",fontSize:12,color:C.muted2,marginTop:12}}>
             <span style={{color:C.primary,cursor:"pointer",fontWeight:600}}
               onClick={()=>{setView("forgot");setAuthStatus("idle");setAuthMsg("");}}>
-              Forgot your password?
+              {t("forgotPassword")}
             </span>
           </p>
         )}
@@ -2258,14 +2678,14 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
           <div style={{marginTop:12,padding:"12px",borderRadius:10,
             background:dark?"#1E2235":"#F0F4FF",textAlign:"center"}}>
             <p style={{fontSize:12,color:C.muted,lineHeight:1.5}}>
-              Didn't receive the email? Check your spam folder or{" "}
+              {t("didntReceive")}{" "}
               <span style={{color:C.primary,cursor:"pointer",fontWeight:600}}
                 onClick={async()=>{
                   const sb=await getSupabaseClient();
                   if(!sb) return;
                   await sb.auth.resend({type:"signup",email});
-                  setAuthMsg("Confirmation email resent to "+email);
-                }}>resend it</span>.
+                  setAuthMsg(tf("msgResendSent",{email},t));
+                }}>{t("resendIt")}</span>.
             </p>
           </div>
         )}
@@ -3076,7 +3496,8 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
   subPeriodEnd?:string|null;
   subTier?:string|null;
 }){
-  const locale=localeFor(useApp().lang);
+  const{lang,t}=useApp();
+  const locale=localeFor(lang);
   const C=getC(dark);
   const[authStatus,setAuthStatus]=useState<"idle"|"loading"|"success"|"error"|"confirm">("idle");
   const[authMsg,setAuthMsg]=useState("");
@@ -3276,10 +3697,10 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
           <div style={{background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",
             border:`1px solid ${C.border}`,borderRadius:16,padding:"16px 18px",marginBottom:14}}>
             <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
-              textTransform:"uppercase",marginBottom:14}}>Account</p>
+              textTransform:"uppercase",marginBottom:14}}>{t("account")}</p>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               <div>
-                <p style={{fontSize:11,fontWeight:600,color:C.muted,marginBottom:5}}>Display Name</p>
+                <p style={{fontSize:11,fontWeight:600,color:C.muted,marginBottom:5}}>{t("displayName")}</p>
                 <div style={{display:"flex",gap:8}}>
                   <input defaultValue={user.name} id="profile-name"
                     style={{flex:1,padding:"11px 14px",borderRadius:10,
@@ -3300,24 +3721,24 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                     style={{padding:"0 16px",borderRadius:10,fontSize:12,fontWeight:700,
                       background:"linear-gradient(135deg,#4C5FD5,#2A3699)",color:"white",
                       whiteSpace:"nowrap"}}>
-                    Save
+                    {t("saveLabel")}
                   </button>
                 </div>
               </div>
               <div>
-                <p style={{fontSize:11,fontWeight:600,color:C.muted,marginBottom:5}}>Email</p>
+                <p style={{fontSize:11,fontWeight:600,color:C.muted,marginBottom:5}}>{t("email")}</p>
                 <input value={user.email} disabled
                   style={{width:"100%",padding:"11px 14px",borderRadius:10,
                     border:`1.5px solid ${C.border}`,fontSize:14,
                     background:dark?"#13151f":"#F0F0F8",
                     color:C.muted,fontFamily:"inherit",cursor:"not-allowed"}}/>
-                <p style={{fontSize:10,color:C.muted2,marginTop:4}}>Email changes require re-verification. Contact support to update.</p>
+                <p style={{fontSize:10,color:C.muted2,marginTop:4}}>{t("emailChangeNote")}</p>
               </div>
             </div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
               marginTop:14,paddingTop:14,borderTop:`1px solid ${C.border}`}}>
               <p style={{fontSize:12,fontWeight:600,color:C.navy,paddingRight:12}}>
-                Email me about product updates and tips
+                {t("marketingOptIn")}
               </p>
               <button className="sq-btn" onClick={toggleEmailOptIn}
                 style={{width:52,height:28,borderRadius:14,
@@ -3343,7 +3764,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
           <div style={{background:dark?"rgba(255,255,255,0.04)":"#F8F7FE",
             border:`1px solid ${C.border}`,borderRadius:16,padding:"16px 18px",marginBottom:14}}>
             <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
-              textTransform:"uppercase",marginBottom:14}}>Plan</p>
+              textTransform:"uppercase",marginBottom:14}}>{t("plan")}</p>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
               <div style={{width:40,height:40,borderRadius:11,flexShrink:0,
                 background:isPro?"linear-gradient(145deg,#F5B342,#D98E1F)":C.surface,
@@ -3355,14 +3776,25 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
               </div>
               <div>
                 <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:16,color:C.navy}}>
-                  {isPro?(subTier==="max"?"The Docket Max":"The Docket Pro"):"Free Plan"}
+                  {isPro?(subTier==="max"?"The Docket Max":"The Docket Pro"):t("freePlan")}
                 </p>
                 <p style={{fontSize:11.5,color:C.muted}}>
+                  {/* The date is placed through the translation's {date}
+                      placeholder and wrapped in <bdi>, never concatenated onto
+                      the label. The old `Renews ${date}` form put a Latin word
+                      in front of an Arabic date inside an RTL paragraph; the
+                      date itself was right but bidi reordered the runs around
+                      it. <bdi> isolates the date so its direction cannot leak
+                      into the sentence, whatever the locale formats it as. */}
                   {isPro
                     ?(subPeriodEnd
-                        ?`Renews ${new Date(subPeriodEnd).toLocaleDateString(locale,{day:"numeric",month:"long",year:"numeric"})}`
-                        :"Active subscription")
-                    :"Upgrade for unlimited Opus access and more"}
+                        ?(()=>{
+                            const[before,after=""]=t("renewsOn").split("{date}");
+                            return<>{before}<bdi>{new Date(subPeriodEnd)
+                              .toLocaleDateString(locale,{day:"numeric",month:"long",year:"numeric"})}</bdi>{after}</>;
+                          })()
+                        :t("activeSubscription"))
+                    :t("upgradeBlurb")}
                 </p>
               </div>
             </div>
@@ -3383,7 +3815,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                   padding:"12px 14px",borderRadius:12,border:`1px solid ${C.border}`,
                   background:C.surface2,color:C.navy,fontSize:13,fontWeight:600}}>
                 <i className="ti ti-settings" style={{fontSize:16,color:"#C9A84C"}} aria-hidden="true"/>
-                Manage Subscription
+                {t("manageSubscription")}
               </button>
             ) : (
               <button className="sq-btn" onClick={async()=>{
@@ -3404,7 +3836,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                   background:"linear-gradient(135deg,#4C5FD5,#2A3699)",color:"white",
                   fontSize:13,fontWeight:700}}>
                 <i className="ti ti-crown" style={{fontSize:16}} aria-hidden="true"/>
-                Try Pro Free for 7 Days
+                {t("tryProFree")}
               </button>
             )}
           </div>
@@ -3541,7 +3973,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
               background:"rgba(217,79,61,0.06)",
               color:C.urgent,fontSize:13,fontWeight:600}}>
             <i className="ti ti-logout" style={{fontSize:16}} aria-hidden="true"/>
-            Sign out of {user.email}
+            {tf("signOutOf",{email:user.email},t)}
           </button>
         </div>
       </div>
@@ -3840,7 +4272,19 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
           {/* One markdown document, rendered with the chat's renderers
               retuned for long-form reading. maxWidth caps the measure at a
               comfortable line length independently of the modal's own width. */}
-          <div className="legal-md" style={{maxWidth:680,margin:"0 auto",fontSize:12.5,color:C.muted}}>
+          {/* The documents themselves stay in English — machine-translating
+              a contract that states a liability cap and a refund obligation
+              is a legal exposure, not a UX improvement. This notice is the
+              one translated element on the page, and it says exactly that. */}
+          <p style={{maxWidth:680,margin:"0 auto 18px",padding:"10px 12px",borderRadius:10,
+            background:dark?"rgba(255,255,255,0.05)":"rgba(15,23,42,0.04)",
+            border:`1px solid ${C.border}`,fontSize:11.5,lineHeight:1.55,color:C.muted2}}>
+            {t("legalEnglishNotice")}
+          </p>
+          {/* dir="ltr" because the document below is English whatever the UI
+              language is. Without it the whole policy inherits the app's RTL
+              direction and renders right-aligned with its punctuation adrift. */}
+          <div className="legal-md" dir="ltr" style={{maxWidth:680,margin:"0 auto",fontSize:12.5,color:C.muted,textAlign:"start"}}>
             <ReactMarkdown components={legalMarkdownComponents}>{PRIVACY_POLICY_MD}</ReactMarkdown>
           </div>
         </div>
@@ -3863,7 +4307,19 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
           <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.muted}}><i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/></button>
         </div>
         <div style={{padding:"24px 28px",overflowY:"auto",flex:1}}>
-          <div className="legal-md" style={{maxWidth:680,margin:"0 auto",fontSize:12.5,color:C.muted}}>
+          {/* The documents themselves stay in English — machine-translating
+              a contract that states a liability cap and a refund obligation
+              is a legal exposure, not a UX improvement. This notice is the
+              one translated element on the page, and it says exactly that. */}
+          <p style={{maxWidth:680,margin:"0 auto 18px",padding:"10px 12px",borderRadius:10,
+            background:dark?"rgba(255,255,255,0.05)":"rgba(15,23,42,0.04)",
+            border:`1px solid ${C.border}`,fontSize:11.5,lineHeight:1.55,color:C.muted2}}>
+            {t("legalEnglishNotice")}
+          </p>
+          {/* dir="ltr" because the document below is English whatever the UI
+              language is. Without it the whole policy inherits the app's RTL
+              direction and renders right-aligned with its punctuation adrift. */}
+          <div className="legal-md" dir="ltr" style={{maxWidth:680,margin:"0 auto",fontSize:12.5,color:C.muted,textAlign:"start"}}>
             <ReactMarkdown components={legalMarkdownComponents}>{TERMS_MD}</ReactMarkdown>
           </div>
         </div>
@@ -7207,7 +7663,7 @@ export default function Home(){
             </button>
             <button onClick={()=>cardOpenModal("subscription")} style={cardRowStyle}>
               <i className="ti ti-crown" style={cardIconStyle} aria-hidden="true"/>
-              Subscription
+              {t("subscription")}
             </button>
 
             <div style={{height:1,background:C.border}}/>
@@ -7217,7 +7673,7 @@ export default function Home(){
               <i className="ti ti-moon" style={cardIconStyle} aria-hidden="true"/>
               <span style={{flex:1}}>{t("darkMode")}</span>
               <button onClick={()=>setDark(d=>!d)} style={cardSwitchStyle(dark)}
-                title={dark?"Switch to light mode":"Switch to dark mode"}>
+                title={dark?t("switchToLight"):t("switchToDark")}>
                 <span style={cardKnobStyle(dark)}/>
               </button>
             </div>
@@ -7305,25 +7761,25 @@ export default function Home(){
             <div style={{height:1,background:C.border}}/>
             <button onClick={()=>cardOpenModal("widgets")} style={cardRowStyle}>
               <i className="ti ti-layout-grid" style={cardIconStyle} aria-hidden="true"/>
-              Widgets &amp; Shortcuts
+              {t("widgetsShortcuts")}
             </button>
             <button onClick={()=>cardOpenModal("siri")} style={cardRowStyle}>
               <i className="ti ti-microphone" style={cardIconStyle} aria-hidden="true"/>
-              Siri &amp; Shortcuts
+              {t("siriShortcuts")}
             </button>
 
             <div style={{height:1,background:C.border}}/>
             <button onClick={()=>cardOpenModal("help")} style={cardRowStyle}>
               <i className="ti ti-help-circle" style={cardIconStyle} aria-hidden="true"/>
-              Help &amp; Feedback
+              {t("helpFeedback")}
             </button>
             <button onClick={()=>cardOpenModal("privacy")} style={cardRowStyle}>
               <i className="ti ti-shield-lock" style={cardIconStyle} aria-hidden="true"/>
-              Privacy &amp; Permissions
+              {t("privacyPermissions")}
             </button>
             <button onClick={()=>cardOpenModal("terms")} style={cardRowStyle}>
               <i className="ti ti-file-description" style={cardIconStyle} aria-hidden="true"/>
-              Terms &amp; Conditions
+              {t("termsConditions")}
             </button>
 
             {/* Only a real account can be signed out of — same gating the
@@ -7332,7 +7788,7 @@ export default function Home(){
               <div style={{height:1,background:C.border}}/>
               <button onClick={handleCardSignOut} style={{...cardRowStyle,color:C.urgent}}>
                 <i className="ti ti-logout" style={{...cardIconStyle,color:C.urgent}} aria-hidden="true"/>
-                Sign out
+                {t("signOut")}
               </button>
             </>)}
           </div>

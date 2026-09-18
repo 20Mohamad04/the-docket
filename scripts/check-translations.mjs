@@ -77,7 +77,12 @@ for (const code of langs) {
 // Counts t("key") anywhere outside the table itself, so a key's own definition
 // never counts as a use.
 const body = src.slice(0, tStart) + src.slice(tEnd);
-const used = new Set([...body.matchAll(/\bt\("(\w+)"\)/g)].map((x) => x[1]));
+// t("key") and tf("key", ...) both count as a use — tf is the interpolating
+// form, and a key only reachable through it is no less live.
+const used = new Set([
+  ...[...body.matchAll(/\bt\("(\w+)"\)/g)].map((x) => x[1]),
+  ...[...body.matchAll(/\btf\("(\w+)"\s*,/g)].map((x) => x[1]),
+]);
 
 // Some families are looked up dynamically — catLabel does t("cat_" + key), so
 // no literal t("cat_health") exists anywhere. Without this, 59 live keys read
