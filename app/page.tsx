@@ -59,6 +59,18 @@ const AVATAR_CARD_GAP=8;
 const AVATAR_CARD_TOP=NAV_PAD+AVATAR_BTN+AVATAR_CARD_GAP;
 const AVATAR_CARD_WIDTH=280;
 const CARD_ANIM_MS=200;
+// Subscription carousel. One card centred and interactive, the other two
+// flanking it blurred and scaled down — replacing a three-column grid that
+// collapsed to a stack you had to scroll through on a phone. SHIFT is how far
+// a side card sits from centre: less than the card's own width, so the two
+// behind it still peek out and read as tappable.
+const CAROUSEL_CARD_W=236;
+const CAROUSEL_SHIFT=150;
+const CAROUSEL_H=330;
+// Free-tier Nova allowance. Mirrors FREE_SONNET_DAILY_LIMIT in
+// app/api/ask/route.ts, which is where it is actually enforced — this copy
+// exists only so the card can state the number.
+const FREE_NOVA_DAILY_LIMIT=10;
 
 interface Step { id:number; text:string; done:boolean; }
 interface Task {
@@ -108,7 +120,7 @@ const T:Record<Lang,Record<string,string>> = {
     imageAttached:"Image attached", removeImage:"Remove image",
     attachImage:"Attach an image",
     chooseModel:"Choose which model sends your next messages",
-    opusExhausted:"Opus credits used up this month — sent with the standard model instead.",
+    opusExhausted:"Vega credits used up this month — sent with Nova instead.",
     editTask:"Edit Task", saveChanges:"Save Changes", priority:"Priority",
     taskTitlePlaceholder:"What needs to be done?", optional:"(optional)",
     notesPlaceholder:"Any details worth remembering…",
@@ -166,7 +178,7 @@ const T:Record<Lang,Record<string,string>> = {
     marketingOptIn:"Email me about product updates and tips",
     plan:"Plan", freePlan:"Free Plan", renewsOn:"Renews {date}",
     activeSubscription:"Active subscription",
-    upgradeBlurb:"Upgrade for unlimited Opus access and more",
+    upgradeBlurb:"Upgrade for unlimited Nova, Vega credits and more",
     manageSubscription:"Manage Subscription", tryProFree:"Try Pro Free for 7 Days",
     signOutOf:"Sign out of {email}",
     errFillAll:"Please fill in all fields.", errPasswordMismatch:"Passwords do not match.",
@@ -229,7 +241,7 @@ const T:Record<Lang,Record<string,string>> = {
     imageAttached:"تم إرفاق صورة", removeImage:"إزالة الصورة",
     attachImage:"إرفاق صورة",
     chooseModel:"اختر النموذج الذي سيرسل رسائلك التالية",
-    opusExhausted:"انتهى رصيد Opus هذا الشهر — تم الإرسال بالنموذج القياسي.",
+    opusExhausted:"انتهى رصيد Vega هذا الشهر — تم الإرسال باستخدام Nova بدلًا منه.",
     editTask:"تعديل المهمة", saveChanges:"حفظ التغييرات", priority:"الأولوية",
     taskTitlePlaceholder:"ما الذي يجب إنجازه؟", optional:"(اختياري)",
     notesPlaceholder:"أي تفاصيل تستحق التذكّر…",
@@ -287,7 +299,7 @@ const T:Record<Lang,Record<string,string>> = {
     marketingOptIn:"أرسل لي تحديثات المنتج والنصائح",
     plan:"الخطة", freePlan:"الخطة المجانية", renewsOn:"يتجدد في {date}",
     activeSubscription:"اشتراك نشط",
-    upgradeBlurb:"قم بالترقية للحصول على وصول غير محدود إلى Opus والمزيد",
+    upgradeBlurb:"قم بالترقية للحصول على Nova غير محدود ورصيد Vega والمزيد",
     manageSubscription:"إدارة الاشتراك", tryProFree:"جرّب Pro مجانًا لمدة 7 أيام",
     signOutOf:"تسجيل الخروج من {email}",
     errFillAll:"يرجى ملء جميع الحقول.", errPasswordMismatch:"كلمتا المرور غير متطابقتين.",
@@ -350,7 +362,7 @@ const T:Record<Lang,Record<string,string>> = {
     imageAttached:"Image jointe", removeImage:"Retirer l'image",
     attachImage:"Joindre une image",
     chooseModel:"Choisissez le modèle qui enverra vos prochains messages",
-    opusExhausted:"Crédits Opus épuisés ce mois-ci — envoyé avec le modèle standard.",
+    opusExhausted:"Crédits Vega épuisés ce mois-ci — envoyé avec Nova à la place.",
     editTask:"Modifier la tâche", saveChanges:"Enregistrer les modifications", priority:"Priorité",
     taskTitlePlaceholder:"Qu'y a-t-il à faire ?", optional:"(facultatif)",
     notesPlaceholder:"Des détails à retenir…",
@@ -408,7 +420,7 @@ const T:Record<Lang,Record<string,string>> = {
     marketingOptIn:"M'envoyer les nouveautés et conseils par e-mail",
     plan:"Formule", freePlan:"Formule gratuite", renewsOn:"Renouvellement le {date}",
     activeSubscription:"Abonnement actif",
-    upgradeBlurb:"Passez à la version supérieure pour un accès illimité à Opus et plus",
+    upgradeBlurb:"Passez à la version supérieure pour Nova illimité, des crédits Vega et plus",
     manageSubscription:"Gérer l'abonnement", tryProFree:"Essayez Pro gratuitement 7 jours",
     signOutOf:"Se déconnecter de {email}",
     errFillAll:"Veuillez remplir tous les champs.", errPasswordMismatch:"Les mots de passe ne correspondent pas.",
@@ -471,7 +483,7 @@ const T:Record<Lang,Record<string,string>> = {
     imageAttached:"Görsel eklendi", removeImage:"Görseli kaldır",
     attachImage:"Görsel ekle",
     chooseModel:"Sonraki mesajlarınızı hangi modelin göndereceğini seçin",
-    opusExhausted:"Bu ay Opus krediniz bitti — standart modelle gönderildi.",
+    opusExhausted:"Bu ay Vega krediniz bitti — bunun yerine Nova ile gönderildi.",
     editTask:"Görevi Düzenle", saveChanges:"Değişiklikleri Kaydet", priority:"Öncelik",
     taskTitlePlaceholder:"Ne yapılması gerekiyor?", optional:"(isteğe bağlı)",
     notesPlaceholder:"Hatırlanmaya değer ayrıntılar…",
@@ -529,7 +541,7 @@ const T:Record<Lang,Record<string,string>> = {
     marketingOptIn:"Ürün güncellemeleri ve ipuçlarını e-posta ile gönder",
     plan:"Plan", freePlan:"Ücretsiz Plan", renewsOn:"{date} tarihinde yenilenir",
     activeSubscription:"Etkin abonelik",
-    upgradeBlurb:"Sınırsız Opus erişimi ve daha fazlası için yükseltin",
+    upgradeBlurb:"Sınırsız Nova, Vega kredileri ve daha fazlası için yükseltin",
     manageSubscription:"Aboneliği Yönet", tryProFree:"Pro'yu 7 Gün Ücretsiz Deneyin",
     signOutOf:"{email} hesabından çıkış yap",
     errFillAll:"Lütfen tüm alanları doldurun.", errPasswordMismatch:"Parolalar eşleşmiyor.",
@@ -592,7 +604,7 @@ const T:Record<Lang,Record<string,string>> = {
     imageAttached:"تصویر منسلک ہے", removeImage:"تصویر ہٹائیں",
     attachImage:"تصویر منسلک کریں",
     chooseModel:"منتخب کریں کہ آپ کے اگلے پیغامات کون سا ماڈل بھیجے",
-    opusExhausted:"اس ماہ Opus کریڈٹ ختم — معیاری ماڈل سے بھیجا گیا۔",
+    opusExhausted:"اس ماہ Vega کریڈٹ ختم — اس کے بجائے Nova سے بھیجا گیا۔",
     editTask:"کام میں ترمیم", saveChanges:"تبدیلیاں محفوظ کریں", priority:"ترجیح",
     taskTitlePlaceholder:"کیا کرنا ہے؟", optional:"(اختیاری)",
     notesPlaceholder:"یاد رکھنے کے قابل کوئی تفصیل…",
@@ -650,7 +662,7 @@ const T:Record<Lang,Record<string,string>> = {
     marketingOptIn:"مجھے پروڈکٹ اپ ڈیٹس اور مشورے ای میل کریں",
     plan:"پلان", freePlan:"مفت پلان", renewsOn:"{date} کو تجدید ہوگی",
     activeSubscription:"فعال سبسکرپشن",
-    upgradeBlurb:"لامحدود Opus رسائی اور مزید کے لیے اپ گریڈ کریں",
+    upgradeBlurb:"لامحدود Nova، Vega کریڈٹ اور مزید کے لیے اپ گریڈ کریں",
     manageSubscription:"سبسکرپشن کا انتظام", tryProFree:"Pro کو 7 دن مفت آزمائیں",
     signOutOf:"{email} سے سائن آؤٹ کریں",
     errFillAll:"براہ کرم تمام خانے پُر کریں۔", errPasswordMismatch:"پاس ورڈ مماثل نہیں ہیں۔",
@@ -713,7 +725,7 @@ const T:Record<Lang,Record<string,string>> = {
     imageAttached:"ছবি সংযুক্ত হয়েছে", removeImage:"ছবি সরান",
     attachImage:"ছবি সংযুক্ত করুন",
     chooseModel:"আপনার পরবর্তী বার্তা কোন মডেল পাঠাবে তা বেছে নিন",
-    opusExhausted:"এই মাসের Opus ক্রেডিট শেষ — সাধারণ মডেলে পাঠানো হয়েছে।",
+    opusExhausted:"এই মাসের Vega ক্রেডিট শেষ — পরিবর্তে Nova দিয়ে পাঠানো হয়েছে।",
     editTask:"কাজ সম্পাদনা", saveChanges:"পরিবর্তন সংরক্ষণ", priority:"অগ্রাধিকার",
     taskTitlePlaceholder:"কী করতে হবে?", optional:"(ঐচ্ছিক)",
     notesPlaceholder:"মনে রাখার মতো যেকোনো বিবরণ…",
@@ -771,7 +783,7 @@ const T:Record<Lang,Record<string,string>> = {
     marketingOptIn:"পণ্যের হালনাগাদ ও পরামর্শ ইমেইলে পাঠান",
     plan:"প্ল্যান", freePlan:"ফ্রি প্ল্যান", renewsOn:"{date} তারিখে নবায়ন হবে",
     activeSubscription:"সক্রিয় সাবস্ক্রিপশন",
-    upgradeBlurb:"সীমাহীন Opus অ্যাক্সেস ও আরও কিছুর জন্য আপগ্রেড করুন",
+    upgradeBlurb:"সীমাহীন Nova, Vega ক্রেডিট ও আরও কিছুর জন্য আপগ্রেড করুন",
     manageSubscription:"সাবস্ক্রিপশন পরিচালনা", tryProFree:"Pro ৭ দিন বিনামূল্যে দেখুন",
     signOutOf:"{email} থেকে সাইন আউট করুন",
     errFillAll:"অনুগ্রহ করে সব ঘর পূরণ করুন।", errPasswordMismatch:"পাসওয়ার্ড মিলছে না।",
@@ -834,7 +846,7 @@ const T:Record<Lang,Record<string,string>> = {
     imageAttached:"Imagen adjunta", removeImage:"Quitar la imagen",
     attachImage:"Adjuntar una imagen",
     chooseModel:"Elige qué modelo enviará tus próximos mensajes",
-    opusExhausted:"Créditos de Opus agotados este mes — enviado con el modelo estándar.",
+    opusExhausted:"Créditos de Vega agotados este mes — enviado con Nova en su lugar.",
     editTask:"Editar Tarea", saveChanges:"Guardar Cambios", priority:"Prioridad",
     taskTitlePlaceholder:"¿Qué hay que hacer?", optional:"(opcional)",
     notesPlaceholder:"Cualquier detalle que merezca recordarse…",
@@ -892,7 +904,7 @@ const T:Record<Lang,Record<string,string>> = {
     marketingOptIn:"Enviarme novedades y consejos por correo",
     plan:"Plan", freePlan:"Plan gratuito", renewsOn:"Se renueva el {date}",
     activeSubscription:"Suscripción activa",
-    upgradeBlurb:"Mejora tu plan para acceso ilimitado a Opus y más",
+    upgradeBlurb:"Mejora tu plan para Nova ilimitado, créditos Vega y más",
     manageSubscription:"Gestionar suscripción", tryProFree:"Prueba Pro gratis 7 días",
     signOutOf:"Cerrar sesión de {email}",
     errFillAll:"Por favor, completa todos los campos.", errPasswordMismatch:"Las contraseñas no coinciden.",
@@ -955,7 +967,7 @@ const T:Record<Lang,Record<string,string>> = {
     imageAttached:"छवि संलग्न है", removeImage:"छवि हटाएँ",
     attachImage:"छवि संलग्न करें",
     chooseModel:"चुनें कि आपके अगले संदेश कौन सा मॉडल भेजेगा",
-    opusExhausted:"इस माह Opus क्रेडिट समाप्त — मानक मॉडल से भेजा गया।",
+    opusExhausted:"इस माह Vega क्रेडिट समाप्त — इसके बजाय Nova से भेजा गया।",
     editTask:"कार्य संपादित करें", saveChanges:"बदलाव सहेजें", priority:"प्राथमिकता",
     taskTitlePlaceholder:"क्या करना है?", optional:"(वैकल्पिक)",
     notesPlaceholder:"याद रखने लायक कोई भी विवरण…",
@@ -1013,7 +1025,7 @@ const T:Record<Lang,Record<string,string>> = {
     marketingOptIn:"मुझे उत्पाद अपडेट और सुझाव ईमेल करें",
     plan:"योजना", freePlan:"निःशुल्क योजना", renewsOn:"{date} को नवीनीकरण",
     activeSubscription:"सक्रिय सदस्यता",
-    upgradeBlurb:"असीमित Opus पहुँच और अधिक के लिए अपग्रेड करें",
+    upgradeBlurb:"असीमित Nova, Vega क्रेडिट और अधिक के लिए अपग्रेड करें",
     manageSubscription:"सदस्यता प्रबंधित करें", tryProFree:"Pro को 7 दिन निःशुल्क आज़माएँ",
     signOutOf:"{email} से साइन आउट करें",
     errFillAll:"कृपया सभी फ़ील्ड भरें।", errPasswordMismatch:"पासवर्ड मेल नहीं खाते।",
@@ -1076,7 +1088,7 @@ const T:Record<Lang,Record<string,string>> = {
     imageAttached:"Imagem anexada", removeImage:"Remover imagem",
     attachImage:"Anexar uma imagem",
     chooseModel:"Escolha qual modelo enviará suas próximas mensagens",
-    opusExhausted:"Créditos Opus esgotados neste mês — enviado com o modelo padrão.",
+    opusExhausted:"Créditos Vega esgotados neste mês — enviado com Nova.",
     editTask:"Editar Tarefa", saveChanges:"Salvar Alterações", priority:"Prioridade",
     taskTitlePlaceholder:"O que precisa ser feito?", optional:"(opcional)",
     notesPlaceholder:"Qualquer detalhe que valha a pena lembrar…",
@@ -1134,7 +1146,7 @@ const T:Record<Lang,Record<string,string>> = {
     marketingOptIn:"Enviar novidades e dicas por e-mail",
     plan:"Plano", freePlan:"Plano gratuito", renewsOn:"Renova em {date}",
     activeSubscription:"Assinatura ativa",
-    upgradeBlurb:"Faça upgrade para acesso ilimitado ao Opus e mais",
+    upgradeBlurb:"Faça upgrade para Nova ilimitado, créditos Vega e mais",
     manageSubscription:"Gerenciar assinatura", tryProFree:"Teste o Pro grátis por 7 dias",
     signOutOf:"Sair de {email}",
     errFillAll:"Preencha todos os campos.", errPasswordMismatch:"As senhas não coincidem.",
@@ -1197,7 +1209,7 @@ const T:Record<Lang,Record<string,string>> = {
     imageAttached:"Изображение прикреплено", removeImage:"Убрать изображение",
     attachImage:"Прикрепить изображение",
     chooseModel:"Выберите, какая модель отправит следующие сообщения",
-    opusExhausted:"Кредиты Opus на этот месяц исчерпаны — отправлено стандартной моделью.",
+    opusExhausted:"Кредиты Vega на этот месяц исчерпаны — отправлено через Nova.",
     editTask:"Изменить задачу", saveChanges:"Сохранить изменения", priority:"Приоритет",
     taskTitlePlaceholder:"Что нужно сделать?", optional:"(необязательно)",
     notesPlaceholder:"Любые детали, которые стоит запомнить…",
@@ -1255,7 +1267,7 @@ const T:Record<Lang,Record<string,string>> = {
     marketingOptIn:"Присылать новости о продукте и советы",
     plan:"Тариф", freePlan:"Бесплатный тариф", renewsOn:"Продление {date}",
     activeSubscription:"Активная подписка",
-    upgradeBlurb:"Перейдите на платный тариф для безлимитного доступа к Opus и не только",
+    upgradeBlurb:"Перейдите на платный тариф: безлимитный Nova, кредиты Vega и не только",
     manageSubscription:"Управление подпиской", tryProFree:"Попробуйте Pro бесплатно 7 дней",
     signOutOf:"Выйти из {email}",
     errFillAll:"Пожалуйста, заполните все поля.", errPasswordMismatch:"Пароли не совпадают.",
@@ -1318,7 +1330,7 @@ const T:Record<Lang,Record<string,string>> = {
     imageAttached:"已附加图片", removeImage:"移除图片",
     attachImage:"附加图片",
     chooseModel:"选择由哪个模型发送你接下来的消息",
-    opusExhausted:"本月 Opus 额度已用完 — 已使用标准模型发送。",
+    opusExhausted:"本月 Vega 额度已用完 — 已改用 Nova 发送。",
     editTask:"编辑任务", saveChanges:"保存更改", priority:"优先级",
     taskTitlePlaceholder:"需要做什么？", optional:"（可选）",
     notesPlaceholder:"任何值得记住的细节…",
@@ -1376,7 +1388,7 @@ const T:Record<Lang,Record<string,string>> = {
     marketingOptIn:"通过邮件接收产品更新与使用技巧",
     plan:"方案", freePlan:"免费方案", renewsOn:"{date} 续订",
     activeSubscription:"订阅生效中",
-    upgradeBlurb:"升级以获得无限 Opus 访问及更多功能",
+    upgradeBlurb:"升级以获得无限 Nova、Vega 额度及更多功能",
     manageSubscription:"管理订阅", tryProFree:"免费试用 Pro 7 天",
     signOutOf:"退出 {email}",
     errFillAll:"请填写所有字段。", errPasswordMismatch:"两次输入的密码不一致。",
@@ -3503,7 +3515,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
   subPeriodEnd?:string|null;
   subTier?:string|null;
 }){
-  const{lang,t}=useApp();
+  const{lang,t,dir}=useApp();
   const locale=localeFor(lang);
   const C=getC(dark);
   const[authStatus,setAuthStatus]=useState<"idle"|"loading"|"success"|"error"|"confirm">("idle");
@@ -3518,26 +3530,44 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
   // `modal` changed away from "subscription" without a full remount.
   // Defaults to "pro", matching the existing "recommended" default.
   const[selectedTier,setSelectedTier]=useState<"free"|"pro"|"max">("pro");
-  // Independently reads the same usage table (sonnet_count/opus_count) that
-  // powers the "Opus — N left" indicator in the chat input, so the Usage
-  // card's numbers always agree with it. Pro-only — usage tracking never
-  // runs server-side for accounts with no active subscription (no billing
-  // period to key it against), so there's nothing real to show non-Pro users.
+  // The period the counters belong to, resolved exactly as the server's
+  // resolveSonnetPeriod does it: a subscriber's billing period, today's UTC
+  // date for everyone else. The two genuinely differ — free-tier Nova is
+  // capped per day, not per billing month.
+  const usagePeriodEnd=isPro&&subPeriodEnd?subPeriodEnd:todayISO();
+
+  // Reads the same usage row that powers the chat input's "Vega — N left"
+  // indicator, so the two can never disagree.
+  //
+  // Deliberately NOT Pro-gated any more. The server tracks free-tier Nova as
+  // well — trackSonnetUsage was extended to cover it once the 10/day cap
+  // became enforced — so a free user does have a real row worth showing. The
+  // comment that used to sit here claimed the opposite and was stale.
+  //
+  // period_end is checked rather than trusted, mirroring bumpUsage: the server
+  // zeroes both counters when the stored period stops matching, but only on
+  // its next write. Until then a stale row still holds the previous period's
+  // numbers, and reading them blind would show yesterday's count against
+  // today's limit.
   const[usage,setUsage]=useState<{sonnet_count:number;opus_count:number}|null>(null);
   useEffect(()=>{
-    if(!isPro||!user?.id){setUsage(null);return;}
+    if(!user?.id){setUsage(null);return;}
     let cancelled=false;
     (async()=>{
       const sb=await getSupabaseClient();
       if(!sb)return;
       const{data,error}=await sb.from("usage")
-        .select("sonnet_count,opus_count").eq("user_id",user.id).maybeSingle();
+        .select("period_end,sonnet_count,opus_count").eq("user_id",user.id).maybeSingle();
       if(cancelled)return;
       if(error){console.error("Failed to load usage:",error);return;}
-      setUsage({sonnet_count:data?.sonnet_count??0,opus_count:data?.opus_count??0});
+      const stale=!data||data.period_end!==usagePeriodEnd;
+      setUsage({
+        sonnet_count:stale?0:(data.sonnet_count??0),
+        opus_count:stale?0:(data.opus_count??0),
+      });
     })();
     return()=>{cancelled=true;};
-  },[isPro,user?.id]);
+  },[user?.id,usagePeriodEnd]);
 
   // Email marketing preference, stored in the same auth user_metadata as
   // full_name. The `user` prop here is a normalized {name,email,avatar,id}
@@ -3855,12 +3885,12 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
               textTransform:"uppercase",marginBottom:14}}>Usage this period</p>
             {isPro?(
               <>
-                {/* Sonnet — uncapped for Pro, so this is a plain count rather than a fill bar with a fabricated denominator */}
+                {/* Nova — uncapped for any subscriber, so this is a plain count rather than a fill bar with a fabricated denominator */}
                 <div style={{marginBottom:14}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
                     <span style={{fontSize:12,fontWeight:600,color:C.navy,display:"flex",alignItems:"center",gap:6}}>
                       <i className="ti ti-message-circle" style={{fontSize:14,color:C.primary}} aria-hidden="true"/>
-                      Sonnet 5 messages
+                      Nova messages
                     </span>
                     <span style={{fontSize:12,color:C.navy}}>
                       <span style={{fontWeight:700}}>{usage?usage.sonnet_count:"–"}</span>
@@ -3872,12 +3902,12 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                       background:"linear-gradient(90deg,#6677E8,#4C5FD5)"}}/>
                   </div>
                 </div>
-                {/* Opus — real 50/period cap, same usage-table row as the chat input's "Opus — N left" indicator */}
+                {/* Vega — real per-period cap, same usage-table row as the chat input's "Vega — N left" indicator */}
                 <div>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
                     <span style={{fontSize:12,fontWeight:600,color:C.navy,display:"flex",alignItems:"center",gap:6}}>
                       <i className="ti ti-brain" style={{fontSize:14,color:"#8670E8"}} aria-hidden="true"/>
-                      Opus 4.8 credits
+                      Vega credits
                     </span>
                     <span style={{fontSize:12,fontWeight:700,color:C.navy}}>
                       {usage?usage.opus_count:"–"} / {opusLimitForTier(subTier)}
@@ -3897,7 +3927,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                   <i className="ti ti-chart-bar" style={{fontSize:17,color:C.primary}} aria-hidden="true"/>
                 </div>
                 <p style={{fontSize:12,color:C.muted,lineHeight:1.4}}>
-                  Usage tracking is included with Pro — see exactly how many Sonnet and Opus messages you've used each billing period.
+                  Usage tracking is included with Pro — see exactly how many Nova and Vega messages you've used each billing period.
                 </p>
               </div>
             )}
@@ -4025,144 +4055,234 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
         else{setAuthMsg("Payment error: "+data.error);setAuthStatus("error");}
       }catch(e:any){setAuthMsg("Something went wrong: "+e.message);setAuthStatus("error");}
     }
+
+    // Which tier this account is actually on. A credit bar only shows a real
+    // "used" figure for this one — you cannot have consumed anything on a plan
+    // you are not subscribed to, and inventing a 0% bar for the other two
+    // would read as "you have used none of your Pro credits" to someone who
+    // has no Pro subscription at all.
+    const currentTier:"free"|"pro"|"max"=isPro?(subTier==="max"?"max":"pro"):"free";
+    const signedIn=!!user?.id;
+
+    // Free-tier Nova resets at the next UTC midnight; a subscriber's credits
+    // reset at the end of the Stripe billing period. Rendered through <bdi> at
+    // the call site so a localised date can never reorder the sentence
+    // around it.
+    function resetLabel(tier:"free"|"pro"|"max"):string{
+      if(tier!=="free"&&subPeriodEnd){
+        return new Date(subPeriodEnd).toLocaleDateString(locale,{day:"numeric",month:"short"});
+      }
+      if(tier==="free"){
+        const t=new Date();t.setUTCDate(t.getUTCDate()+1);
+        return t.toLocaleDateString(locale,{day:"numeric",month:"short"});
+      }
+      return "";
+    }
+
+    // One credit row. `used` is null for a plan the account is not on, which
+    // renders the allowance with no fill and no percentage rather than a
+    // misleading empty bar.
+    function CreditBar({icon,color,label,used,limit,unlimited,reset}:{
+      icon:string;color:string;label:string;
+      used:number|null;limit:number|null;unlimited?:boolean;reset:string;
+    }){
+      const pct=unlimited?100:(used!=null&&limit?Math.min(100,(used/limit)*100):0);
+      return(
+        <div style={{marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:8,marginBottom:5}}>
+            <span style={{fontSize:11.5,fontWeight:600,color:C.navy,display:"flex",alignItems:"center",gap:6,minWidth:0}}>
+              <i className={`ti ${icon}`} style={{fontSize:13,color,flexShrink:0}} aria-hidden="true"/>
+              {label}
+            </span>
+            <span style={{fontSize:11.5,fontWeight:700,color:C.navy,whiteSpace:"nowrap"}}>
+              {unlimited
+                ?"Unlimited"
+                :used!=null
+                  ?<>{localeNum(used,locale)} / {localeNum(limit??0,locale)}</>
+                  :<>{localeNum(limit??0,locale)}</>}
+            </span>
+          </div>
+          <div style={{height:5,borderRadius:3,background:C.border,overflow:"hidden"}}>
+            <div style={{height:"100%",width:`${pct}%`,borderRadius:3,
+              background:`linear-gradient(90deg,${color}88,${color})`,
+              transition:`width ${PANEL_OPEN_MS}ms ${PANEL_EASE}`}}/>
+          </div>
+          {reset&&(
+            <p style={{fontSize:9.5,color:C.muted2,marginTop:4}}>
+              Resets <bdi>{reset}</bdi>
+            </p>
+          )}
+        </div>
+      );
+    }
+
     const plans=[
       {id:"free",name:"Free",icon:"ti-user",accent:C.muted,price:"£0",priceSuffix:"/month",
         iconBg:C.surface,iconBorder:`1.5px solid ${C.border}`,
-        features:[
-          {icon:"ti-message-circle",label:"Sonnet messages",value:"10/day"},
-          {icon:"ti-brain",label:"Opus messages",value:"—"},
-          {icon:"ti-devices",label:"Device sync",value:"This device only"},
-          {icon:"ti-moon-stars",label:"Prayer times",value:"Manual"},
-          {icon:"ti-headset",label:"Support",value:"Community"},
-          {icon:"ti-rocket",label:"Early access",value:"—"},
-        ],
-        cta:"Continue Free",onClick:onClose,ctaStyle:{background:"transparent",color:C.navy,border:`1.5px solid ${C.border}`}},
+        bars:[{icon:"ti-message-circle",color:C.primary,label:"Nova",
+               used:currentTier==="free"&&signedIn&&usage?usage.sonnet_count:null,
+               limit:FREE_NOVA_DAILY_LIMIT,unlimited:false,reset:resetLabel("free")}],
+        note:"10 messages a day · no Vega access",
+        cta:"Continue Free",onClick:onClose,
+        ctaStyle:{background:"transparent",color:C.navy,border:`1.5px solid ${C.border}`}},
       {id:"pro",name:"Pro",icon:"ti-crown",accent:C.primary,price:"£4.99",priceSuffix:"/month",
-        // Plain text label only now, not a frame/badge — see the card
-        // render below for why (was conflicting with the selection frame).
-        recommended:true,
-        disclosure:"7 days free, then £4.99/month. Renews automatically until cancelled.",
+        disclosure:"7 days free, then £4.99/month. Cancel anytime.",
         iconBg:"linear-gradient(145deg,#6677E8,#4C5FD5)",iconShadow:"0 4px 14px rgba(76,95,213,0.4)",
-        features:[
-          {icon:"ti-message-circle",label:"Sonnet messages",value:"Unlimited"},
-          {icon:"ti-brain",label:"Opus messages",value:"50/month"},
-          {icon:"ti-devices",label:"Device sync",value:"All devices"},
-          {icon:"ti-moon-stars",label:"Prayer times",value:"Auto"},
-          {icon:"ti-headset",label:"Support",value:"Priority 24h"},
-          {icon:"ti-rocket",label:"Early access",value:"✓"},
+        bars:[
+          {icon:"ti-message-circle",color:C.primary,label:"Nova",
+           used:null,limit:null,unlimited:true,reset:""},
+          {icon:"ti-brain",color:"#8670E8",label:"Vega",
+           used:currentTier==="pro"&&signedIn&&usage?usage.opus_count:null,
+           limit:opusLimitForTier("pro"),unlimited:false,reset:resetLabel("pro")},
         ],
         cta:user?.id?"Start My Free 7 Days →":"Sign in to Start Free Trial",onClick:()=>handleSubCheckout("pro"),
         ctaStyle:{background:"linear-gradient(145deg,#6677E8,#4C5FD5,#2A3699)",color:"white",border:"none",boxShadow:"0 6px 20px rgba(76,95,213,0.4)"}},
       {id:"max",name:"Max",icon:"ti-bolt",accent:"#8670E8",price:"£14.99",priceSuffix:"/month",
-        disclosure:"7 days free, then £14.99/month. Renews automatically until cancelled.",
+        disclosure:"7 days free, then £14.99/month. Cancel anytime.",
         iconBg:"linear-gradient(145deg,#A78BFA,#8670E8)",iconShadow:"0 4px 14px rgba(134,112,232,0.4)",
-        features:[
-          {icon:"ti-message-circle",label:"Sonnet messages",value:"500/month"},
-          {icon:"ti-brain",label:"Opus messages",value:"120/month"},
-          {icon:"ti-devices",label:"Device sync",value:"All devices"},
-          {icon:"ti-moon-stars",label:"Prayer times",value:"Auto"},
-          {icon:"ti-headset",label:"Support",value:"Priority 24h"},
-          {icon:"ti-rocket",label:"Early access",value:"✓"},
+        bars:[
+          // Unlimited, matching what the server actually grants:
+          // resolveSonnetEligibility allows any entitled subscriber through
+          // with no count check. The card used to advertise 500/month, a cap
+          // that has never existed in the code.
+          {icon:"ti-message-circle",color:C.primary,label:"Nova",
+           used:null,limit:null,unlimited:true,reset:""},
+          {icon:"ti-brain",color:"#8670E8",label:"Vega",
+           used:currentTier==="max"&&signedIn&&usage?usage.opus_count:null,
+           limit:opusLimitForTier("max"),unlimited:false,reset:resetLabel("max")},
         ],
         cta:user?.id?"Try Docket Max →":"Sign in to Try Max",onClick:()=>handleSubCheckout("max"),
         ctaStyle:{background:"linear-gradient(145deg,#A78BFA,#8670E8,#5B3FBF)",color:"white",border:"none",boxShadow:"0 6px 20px rgba(134,112,232,0.35)"}},
     ];
+
+    const centerIdx=plans.findIndex(p=>p.id===selectedTier);
     return(
+    // No overflowY here. The backdrop used to scroll as well as the panel,
+    // which meant two nested scrollers fighting over the same gesture.
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
       background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",
-      display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}>
+      display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      {/* maxHeight + overflowY stay purely as an overflow valve for very short
+          viewports. The carousel itself never needs them: it shows one card at
+          a time instead of stacking three to scroll through. */}
       <div onClick={e=>e.stopPropagation()}
-        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:820,
-          maxHeight:"90vh",display:"flex",flexDirection:"column",
-          boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,overflow:"hidden"}}>
-        {/* Header */}
-        <div style={{background:"linear-gradient(135deg,#4C5FD5,#6677E8,#8670E8)",
-          padding:"22px 24px",position:"relative",flexShrink:0,textAlign:"center"}}>
-          <button onClick={onClose} style={{position:"absolute",top:14,right:14,
-            background:"rgba(255,255,255,0.15)",border:"none",cursor:"pointer",
-            width:28,height:28,borderRadius:7,color:"white",
-            display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <i className="ti ti-x" style={{fontSize:15}} aria-hidden="true"/></button>
-          <div style={{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,0.2)",
-            margin:"0 auto 10px",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <i className="ti ti-sparkles" style={{fontSize:22,color:"#FFD700"}} aria-hidden="true"/></div>
-          <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:19,
-            color:"white",marginBottom:4}}>Choose Your Plan</p>
-          <p style={{fontSize:12,color:"rgba(255,255,255,0.85)"}}>
-            Free forever, or unlock more with Pro or Max
-          </p>
-        </div>
-        {/* Scrollable content */}
-        <div style={{flex:1,overflowY:"auto",padding:"20px"}}>
-          {authStatus==="error"&&authMsg&&(
-            <div style={{padding:"10px 14px",borderRadius:10,marginBottom:16,fontSize:13,
-              background:"rgba(217,79,61,0.1)",color:C.urgent,
-              border:`1px solid rgba(217,79,61,0.25)`}}>
-              {authMsg}
-            </div>
-          )}
-          <div className="pricing-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:16}}>
-            {plans.map(plan=>{
-              const selected=selectedTier===plan.id;
-              return(
-              <div key={plan.id} onClick={()=>setSelectedTier(plan.id as "free"|"pro"|"max")}
-                style={{position:"relative",display:"flex",flexDirection:"column",cursor:"pointer",
-                borderRadius:18,padding:"20px 18px",
-                // One signal now, not two competing ones: the blue frame is
-                // driven ONLY by selection (selectedTier, pre-set to "pro"
-                // so it shows on load). "Recommended" is plain text below,
-                // with no border/background/badge of its own, so it can
-                // never visually compete with — or get mistaken for — the
-                // selection frame, including when Pro is both recommended
-                // and selected at once.
-                border:selected?`2px solid ${C.primary}`:`1.5px solid ${C.border}`,
-                background:dark?"rgba(255,255,255,0.02)":"#FAFAFC",
-                boxShadow:selected?"0 16px 40px rgba(76,95,213,0.25)":"none"}}>
-                {plan.recommended&&(
-                  <p style={{textAlign:"center",fontSize:9.5,fontWeight:700,letterSpacing:0.5,
-                    textTransform:"uppercase",color:C.muted2,marginBottom:8}}>Recommended</p>
-                )}
-                <div style={{width:44,height:44,borderRadius:12,margin:"0 auto 12px",
-                  background:plan.iconBg,border:plan.iconBorder,
-                  display:"flex",alignItems:"center",justifyContent:"center",
-                  boxShadow:plan.iconShadow||"none"}}>
-                  <i className={`ti ${plan.icon}`} style={{fontSize:21,color:plan.iconBorder?C.muted:"white"}} aria-hidden="true"/>
-                </div>
-                <p style={{textAlign:"center",fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
-                  fontSize:16,color:C.navy,marginBottom:4}}>{plan.name}</p>
-                <div style={{textAlign:"center",marginBottom:plan.disclosure?4:14}}>
-                  <span style={{fontSize:23,fontWeight:800,fontFamily:"'Space Grotesk',sans-serif",color:C.navy}}>{plan.price}</span>
-                  <span style={{fontSize:11,color:C.muted}}>{plan.priceSuffix}</span>
-                </div>
-                {plan.disclosure&&(
-                  <p style={{textAlign:"center",fontSize:10,fontWeight:700,color:C.sage,lineHeight:1.4,marginBottom:14}}>
-                    <i className="ti ti-shield-check" style={{fontSize:11}} aria-hidden="true"/> {plan.disclosure}
-                  </p>
-                )}
-                <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:16,flex:1}}>
-                  {plan.features.map(f=>(
-                    <div key={f.label} style={{display:"flex",alignItems:"center",gap:7}}>
-                      <i className={`ti ${f.icon}`} style={{fontSize:13,color:plan.accent,flexShrink:0,width:15}} aria-hidden="true"/>
-                      <span style={{fontSize:11,color:C.muted,flex:1}}>{f.label}</span>
-                      <span style={{fontSize:11,fontWeight:700,color:C.navy,textAlign:"right"}}>{f.value}</span>
-                    </div>
-                  ))}
-                </div>
-                <button className="sq-btn" onClick={plan.onClick}
-                  style={{width:"100%",padding:"11px",borderRadius:12,fontSize:12.5,fontWeight:800,
-                    ...plan.ctaStyle}}>
-                  {plan.cta}
-                </button>
-              </div>
-              );
-            })}
+        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:560,
+          maxHeight:"90vh",overflowY:"auto",position:"relative",
+          boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,
+          padding:"22px 20px 18px"}}>
+        {/* Plain close button on the panel itself — the gradient header that
+            used to carry it is gone, so this matches the Privacy/Terms
+            modals and the avatar card instead. */}
+        <button onClick={onClose} aria-label={t("close")}
+          style={{position:"absolute",top:14,insetInlineEnd:14,zIndex:5,
+            background:"none",border:"none",cursor:"pointer",color:C.muted,
+            width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <i className="ti ti-x" style={{fontSize:19}} aria-hidden="true"/>
+        </button>
+
+        {authStatus==="error"&&authMsg&&(
+          <div style={{padding:"10px 14px",borderRadius:10,marginBottom:14,fontSize:13,
+            background:"rgba(217,79,61,0.1)",color:C.urgent,
+            border:`1px solid rgba(217,79,61,0.25)`}}>
+            {authMsg}
           </div>
-          <p style={{display:"flex",alignItems:"center",justifyContent:"center",flexWrap:"wrap",gap:4,
-            fontSize:11,color:C.muted2,marginTop:6}}>
-            Cancel anytime before day 7 and you won't be charged · Secure payment via Stripe
-            <i className="ti ti-lock" style={{fontSize:11,color:C.muted2}} aria-hidden="true"/>
-          </p>
+        )}
+
+        {/* ── Carousel stage ──────────────────────────────────────────────
+            Cards are absolutely positioned and transformed by their offset
+            from the centred one, rather than laid out in a scroller: the
+            point of the redesign is that nothing scrolls. The stage keeps a
+            fixed height so the panel does not resize as cards change. */}
+        <div style={{position:"relative",height:CAROUSEL_H,marginBottom:14}}>
+          {plans.map((plan,i)=>{
+            const offset=i-centerIdx;
+            const center=offset===0;
+            // translateX is physical, so the sign flips under RTL or tapping
+            // the left-hand card would send it the wrong way.
+            const dx=offset*CAROUSEL_SHIFT*(dir==="rtl"?-1:1);
+            return(
+            <div key={plan.id}
+              onClick={()=>{ if(!center) setSelectedTier(plan.id as "free"|"pro"|"max"); }}
+              aria-hidden={!center}
+              style={{position:"absolute",top:0,left:"50%",width:CAROUSEL_CARD_W,
+                height:"100%",marginInlineStart:-(CAROUSEL_CARD_W/2),
+                display:"flex",flexDirection:"column",
+                cursor:center?"default":"pointer",
+                borderRadius:20,padding:"18px 16px",
+                border:center?`2px solid ${C.primary}`:`1.5px solid ${C.border}`,
+                background:dark?"rgba(255,255,255,0.03)":"#FAFAFC",
+                boxShadow:center?"0 16px 40px rgba(76,95,213,0.25)":"none",
+                transform:`translateX(${dx}px) scale(${center?1:0.88})`,
+                opacity:center?1:0.5,
+                filter:center?"none":"blur(2px)",
+                zIndex:center?3:1,
+                transition:[
+                  `transform ${PANEL_OPEN_MS}ms ${PANEL_EASE}`,
+                  `opacity ${PANEL_OPEN_MS}ms ${PANEL_EASE}`,
+                  `filter ${PANEL_OPEN_MS}ms ${PANEL_EASE}`,
+                  `border-color ${PANEL_OPEN_MS}ms ${PANEL_EASE}`,
+                  `box-shadow ${PANEL_OPEN_MS}ms ${PANEL_EASE}`,
+                ].join(", ")}}>
+              <div style={{width:40,height:40,borderRadius:12,margin:"0 auto 10px",
+                background:plan.iconBg,border:plan.iconBorder,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                boxShadow:plan.iconShadow||"none"}}>
+                <i className={`ti ${plan.icon}`} style={{fontSize:20,color:plan.iconBorder?C.muted:"white"}} aria-hidden="true"/>
+              </div>
+              <p style={{textAlign:"center",fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
+                fontSize:16,color:C.navy,marginBottom:2}}>{plan.name}</p>
+              <div style={{textAlign:"center",marginBottom:10}}>
+                <span style={{fontSize:22,fontWeight:800,fontFamily:"'Space Grotesk',sans-serif",color:C.navy}}>{plan.price}</span>
+                <span style={{fontSize:11,color:C.muted}}>{plan.priceSuffix}</span>
+              </div>
+              <div style={{flex:1}}>
+                {plan.bars.map(b=>(
+                  <CreditBar key={b.label} icon={b.icon} color={b.color} label={b.label}
+                    used={b.used} limit={b.limit} unlimited={b.unlimited} reset={b.reset}/>
+                ))}
+                {plan.note&&(
+                  <p style={{fontSize:9.5,color:C.muted2,lineHeight:1.4}}>{plan.note}</p>
+                )}
+              </div>
+              {plan.disclosure&&(
+                <p style={{textAlign:"center",fontSize:9.5,fontWeight:700,color:C.sage,
+                  lineHeight:1.35,marginBottom:9}}>
+                  <i className="ti ti-shield-check" style={{fontSize:10}} aria-hidden="true"/> {plan.disclosure}
+                </p>
+              )}
+              <button className="sq-btn"
+                onClick={e=>{ e.stopPropagation(); plan.onClick(); }}
+                tabIndex={center?0:-1}
+                style={{width:"100%",padding:"10px",borderRadius:12,fontSize:12,fontWeight:800,
+                  ...plan.ctaStyle}}>
+                {plan.cta}
+              </button>
+            </div>
+            );
+          })}
         </div>
+
+        {/* Dots — a second way to reach a tier, for anyone who would rather
+            aim at a target than at a blurred card behind another one. */}
+        <div role="tablist" aria-label="Plans"
+          style={{display:"flex",justifyContent:"center",gap:8,marginBottom:12}}>
+          {plans.map(p=>{
+            const active=p.id===selectedTier;
+            return(
+              <button key={p.id} role="tab" aria-selected={active} aria-label={p.name}
+                onClick={()=>setSelectedTier(p.id as "free"|"pro"|"max")}
+                style={{width:active?22:8,height:8,borderRadius:4,border:"none",cursor:"pointer",
+                  padding:0,background:active?C.primary:C.border,
+                  transition:`width ${PANEL_OPEN_MS}ms ${PANEL_EASE}, background ${PANEL_OPEN_MS}ms ${PANEL_EASE}`}}/>
+            );
+          })}
+        </div>
+
+        <p style={{display:"flex",alignItems:"center",justifyContent:"center",flexWrap:"wrap",gap:4,
+          fontSize:10.5,color:C.muted2,textAlign:"center"}}>
+          Cancel anytime before day 7 and you won't be charged · Secure payment via Stripe
+          <i className="ti ti-lock" style={{fontSize:10.5,color:C.muted2}} aria-hidden="true"/>
+        </p>
       </div>
     </div>
     );
@@ -6490,12 +6610,12 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
           <div style={{textAlign:"left"}}>
             <p style={{fontWeight:700,fontSize:15,color:C.primary,marginBottom:2}}>Try Pro free for 7 days</p>
             <p style={{fontSize:12,color:C.muted,lineHeight:1.4}}>
-              Then £4.99/mo (16p a day) · 50 Opus messages/mo · Sync everywhere · Cancel anytime
+              Then £4.99/mo (16p a day) · 50 Vega credits/mo · Sync everywhere · Cancel anytime
             </p>
           </div>
         </div>
         <div style={{marginTop:12,display:"flex",gap:6,flexWrap:"wrap"}}>
-          {["Everything in free","Unlimited Sonnet messages","Sync across devices","Prayer time auto-update","Advanced analytics","Priority support"].map(f=>(
+          {["Everything in free","Unlimited Nova messages","Sync across devices","Prayer time auto-update","Advanced analytics","Priority support"].map(f=>(
             <span key={f} style={{fontSize:10,fontWeight:600,padding:"3px 9px",borderRadius:50,
               background:"rgba(76,95,213,0.1)",border:"1px solid rgba(76,95,213,0.2)",
               color:C.primary}}>{f}</span>
@@ -6522,12 +6642,12 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
           <div style={{textAlign:"left"}}>
             <p style={{fontWeight:700,fontSize:15,color:"#8670E8",marginBottom:2}}>Go further with Max</p>
             <p style={{fontSize:12,color:C.muted,lineHeight:1.4}}>
-              £14.99/mo · 500 Sonnet + 120 Opus messages/mo · Priority support
+              £14.99/mo · Unlimited Nova + 120 Vega credits/mo · Priority support
             </p>
           </div>
         </div>
         <div style={{marginTop:12,display:"flex",gap:6,flexWrap:"wrap"}}>
-          {["Everything in Pro","500 Sonnet messages/mo","120 Opus messages/mo","Priority support","Early access"].map(f=>(
+          {["Everything in Pro","Unlimited Nova messages","120 Vega credits/mo","Priority support","Early access"].map(f=>(
             <span key={f} style={{fontSize:10,fontWeight:600,padding:"3px 9px",borderRadius:50,
               background:"rgba(134,112,232,0.1)",border:"1px solid rgba(134,112,232,0.2)",
               color:"#8670E8"}}>{f}</span>
