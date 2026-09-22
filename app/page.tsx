@@ -67,10 +67,23 @@ const CARD_ANIM_MS=200;
 const CAROUSEL_CARD_W=236;
 const CAROUSEL_SHIFT=150;
 const CAROUSEL_H=330;
+// Both expressed as CSS so they can shrink on a genuinely small screen
+// rather than being clipped away. The vw figures keep the same card-to-shift
+// ratio as the pixel values (150/236), so the composition holds as it
+// scales. They only engage below roughly 370px wide — above that the min()
+// picks the pixel value and nothing changes.
+const CAROUSEL_CARD_W_CSS=`min(${CAROUSEL_CARD_W}px, 64vw)`;
+const CAROUSEL_SHIFT_CSS=`min(${CAROUSEL_SHIFT}px, 41vw)`;
 // Free-tier Nova allowance. Mirrors FREE_SONNET_DAILY_LIMIT in
 // app/api/ask/route.ts, which is where it is actually enforced — this copy
 // exists only so the card can state the number.
 const FREE_NOVA_DAILY_LIMIT=10;
+// Vega low-credit warning: the share of the cap that triggers it, and the
+// localStorage prefix its dismissal is stored under. The key is completed
+// with the usage period, so a dismissal lasts exactly as long as the credits
+// it was about.
+const VEGA_WARN_PCT=90;
+const VEGA_WARN_KEY="docket-vega-warn-";
 
 interface Step { id:number; text:string; done:boolean; }
 interface Task {
@@ -206,6 +219,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"Go to Sign In", forgotPassword:"Forgot your password?",
     didntReceive:"Didn't receive the email? Check your spam folder or", resendIt:"resend it",
     legalEnglishNotice:"This document is provided in English. The English version governs in the event of any discrepancy with a translation.",
+    vegaLowWarning:"Vega running low — {used} of {limit} credits used this period.",
   },
   ar:{
     appName:"الدفتر", daily:"الروتين اليومي", allTasks:"جميع المهام",
@@ -327,6 +341,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"الذهاب إلى تسجيل الدخول", forgotPassword:"نسيت كلمة المرور؟",
     didntReceive:"لم يصلك البريد؟ تحقق من مجلد الرسائل غير المرغوب فيها أو", resendIt:"أعد الإرسال",
     legalEnglishNotice:"هذا المستند متوفر باللغة الإنجليزية. النسخة الإنجليزية هي المعتمدة في حال وجود أي اختلاف مع أي ترجمة.",
+    vegaLowWarning:"رصيد Vega على وشك النفاد — استُخدم {used} من {limit} هذه الفترة.",
   },
   fr:{
     appName:"The Docket", daily:"Routine Quotidienne", allTasks:"Toutes les Tâches",
@@ -448,6 +463,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"Aller à la connexion", forgotPassword:"Mot de passe oublié ?",
     didntReceive:"E-mail non reçu ? Vérifiez vos spams ou", resendIt:"renvoyez-le",
     legalEnglishNotice:"Ce document est fourni en anglais. La version anglaise prévaut en cas de divergence avec une traduction.",
+    vegaLowWarning:"Crédits Vega bientôt épuisés — {used} sur {limit} utilisés cette période.",
   },
   tr:{
     appName:"The Docket", daily:"Günlük Rutin", allTasks:"Tüm Görevler",
@@ -569,6 +585,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"Girişe git", forgotPassword:"Parolanızı mı unuttunuz?",
     didntReceive:"E-posta gelmedi mi? Spam klasörünü kontrol edin veya", resendIt:"tekrar gönderin",
     legalEnglishNotice:"Bu belge İngilizce olarak sunulmaktadır. Çeviriyle herhangi bir tutarsızlık olması hâlinde İngilizce sürüm geçerlidir.",
+    vegaLowWarning:"Vega krediniz azalıyor — bu dönemde {limit} kredinin {used} tanesi kullanıldı.",
   },
   ur:{
     appName:"The Docket", daily:"روزانہ معمول", allTasks:"تمام کام",
@@ -690,6 +707,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"سائن ان پر جائیں", forgotPassword:"پاس ورڈ بھول گئے؟",
     didntReceive:"ای میل نہیں ملا؟ اسپیم فولڈر دیکھیں یا", resendIt:"دوبارہ بھیجیں",
     legalEnglishNotice:"یہ دستاویز انگریزی میں فراہم کی گئی ہے۔ کسی بھی ترجمے سے اختلاف کی صورت میں انگریزی نسخہ ہی معتبر ہوگا۔",
+    vegaLowWarning:"Vega کریڈٹ کم ہو رہے ہیں — اس مدت میں {limit} میں سے {used} استعمال ہوئے۔",
   },
   bn:{
     appName:"The Docket", daily:"দৈনিক রুটিন", allTasks:"সব কাজ",
@@ -811,6 +829,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"সাইন ইনে যান", forgotPassword:"পাসওয়ার্ড ভুলে গেছেন?",
     didntReceive:"ইমেইল পাননি? স্প্যাম ফোল্ডার দেখুন অথবা", resendIt:"আবার পাঠান",
     legalEnglishNotice:"এই নথিটি ইংরেজিতে সরবরাহ করা হয়েছে। অনুবাদের সাথে কোনো অসঙ্গতি থাকলে ইংরেজি সংস্করণই প্রযোজ্য হবে।",
+    vegaLowWarning:"Vega ক্রেডিট ফুরিয়ে আসছে — এই মেয়াদে {limit}-এর মধ্যে {used} ব্যবহৃত।",
   },
   es:{
     appName:"The Docket", daily:"Rutina Diaria", allTasks:"Todas las Tareas",
@@ -932,6 +951,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"Ir a iniciar sesión", forgotPassword:"¿Olvidaste tu contraseña?",
     didntReceive:"¿No recibiste el correo? Revisa tu carpeta de spam o", resendIt:"reenvíalo",
     legalEnglishNotice:"Este documento se proporciona en inglés. La versión en inglés prevalecerá en caso de cualquier discrepancia con una traducción.",
+    vegaLowWarning:"Créditos Vega casi agotados: {used} de {limit} usados este periodo.",
   },
   hi:{
     appName:"The Docket", daily:"दैनिक दिनचर्या", allTasks:"सभी कार्य",
@@ -1053,6 +1073,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"साइन इन पर जाएँ", forgotPassword:"पासवर्ड भूल गए?",
     didntReceive:"ईमेल नहीं मिला? स्पैम फ़ोल्डर देखें या", resendIt:"पुनः भेजें",
     legalEnglishNotice:"यह दस्तावेज़ अंग्रेज़ी में प्रदान किया गया है। किसी भी अनुवाद से भिन्नता की स्थिति में अंग्रेज़ी संस्करण मान्य होगा।",
+    vegaLowWarning:"Vega क्रेडिट कम हो रहे हैं — इस अवधि में {limit} में से {used} उपयोग हुए।",
   },
   pt:{
     appName:"The Docket", daily:"Rotina Diária", allTasks:"Todas as Tarefas",
@@ -1174,6 +1195,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"Ir para entrar", forgotPassword:"Esqueceu sua senha?",
     didntReceive:"Não recebeu o e-mail? Verifique o spam ou", resendIt:"reenvie",
     legalEnglishNotice:"Este documento é fornecido em inglês. A versão em inglês prevalece em caso de qualquer divergência com uma tradução.",
+    vegaLowWarning:"Créditos Vega quase esgotados — {used} de {limit} usados neste período.",
   },
   ru:{
     appName:"The Docket", daily:"Ежедневный распорядок", allTasks:"Все задачи",
@@ -1295,6 +1317,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"Перейти ко входу", forgotPassword:"Забыли пароль?",
     didntReceive:"Письмо не пришло? Проверьте папку со спамом или", resendIt:"отправьте снова",
     legalEnglishNotice:"Этот документ предоставляется на английском языке. В случае любых расхождений с переводом преимущественную силу имеет английская версия.",
+    vegaLowWarning:"Кредиты Vega на исходе — использовано {used} из {limit} за период.",
   },
   zh:{
     appName:"The Docket", daily:"每日例程", allTasks:"全部任务",
@@ -1416,6 +1439,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"前往登录", forgotPassword:"忘记密码？",
     didntReceive:"没收到邮件？请检查垃圾邮件文件夹，或", resendIt:"重新发送",
     legalEnglishNotice:"本文件以英文提供。如译文与英文版本有任何出入，概以英文版本为准。",
+    vegaLowWarning:"Vega 额度即将用完 — 本期已使用 {limit} 中的 {used}。",
   },
 };
 
@@ -4167,7 +4191,10 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
           a time instead of stacking three to scroll through. */}
       <div onClick={e=>e.stopPropagation()}
         style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:560,
-          maxHeight:"90vh",overflowY:"auto",position:"relative",
+          // overflowX pinned explicitly: with overflowY:auto, leaving
+          // overflow-x at its default `visible` makes CSS compute it to
+          // `auto`, which is where the stray horizontal scrollbar came from.
+          maxHeight:"90vh",overflowY:"auto",overflowX:"hidden",position:"relative",
           boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,
           padding:"22px 20px 18px"}}>
         {/* Plain close button on the panel itself — the gradient header that
@@ -4193,27 +4220,46 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
             from the centred one, rather than laid out in a scroller: the
             point of the redesign is that nothing scrolls. The stage keeps a
             fixed height so the panel does not resize as cards change. */}
-        <div style={{position:"relative",height:CAROUSEL_H,marginBottom:14}}>
+        {/* overflow:hidden is load-bearing, not cosmetic. The panel has
+            overflowY:auto, and CSS resolves an overflow-x of `visible` to
+            `auto` whenever the other axis is not visible — so a card
+            extending past the panel produced a horizontal scrollbar along
+            the bottom of the modal. Clipping here keeps side cards inside
+            the frame, which is also how they are meant to look. */}
+        <div style={{position:"relative",height:CAROUSEL_H,marginBottom:14,overflow:"hidden"}}>
           {plans.map((plan,i)=>{
             const offset=i-centerIdx;
             const center=offset===0;
+            // Clamped to one step. With three tiers, centring an end card
+            // gives the other two offsets of +1 and +2 (or -1 and -2), and
+            // the unclamped form dropped both on the same side — two cards
+            // at identical scale and opacity, overlapping into unreadable
+            // text, with the far one hanging outside the panel entirely.
+            //
+            // The far card parks in the neighbour's slot at opacity 0 rather
+            // than being unmounted, so when it does become the neighbour it
+            // fades in where it already is instead of flying in from
+            // somewhere it was never shown.
+            const slot=Math.max(-1,Math.min(1,offset));
+            const outer=Math.abs(offset)>1;
             // translateX is physical, so the sign flips under RTL or tapping
             // the left-hand card would send it the wrong way.
-            const dx=offset*CAROUSEL_SHIFT*(dir==="rtl"?-1:1);
+            const dirSign=slot*(dir==="rtl"?-1:1);
             return(
             <div key={plan.id}
-              onClick={()=>{ if(!center) setSelectedTier(plan.id as "free"|"pro"|"max"); }}
+              onClick={()=>{ if(!center&&!outer) setSelectedTier(plan.id as "free"|"pro"|"max"); }}
               aria-hidden={!center}
-              style={{position:"absolute",top:0,left:"50%",width:CAROUSEL_CARD_W,
-                height:"100%",marginInlineStart:-(CAROUSEL_CARD_W/2),
+              style={{position:"absolute",top:0,left:"50%",width:CAROUSEL_CARD_W_CSS,
+                height:"100%",marginInlineStart:`calc(${CAROUSEL_CARD_W_CSS} / -2)`,
                 display:"flex",flexDirection:"column",
-                cursor:center?"default":"pointer",
+                cursor:center?"default":outer?"default":"pointer",
+                pointerEvents:outer?"none":"auto",
                 borderRadius:20,padding:"18px 16px",
                 border:center?`2px solid ${C.primary}`:`1.5px solid ${C.border}`,
                 background:dark?"rgba(255,255,255,0.03)":"#FAFAFC",
                 boxShadow:center?"0 16px 40px rgba(76,95,213,0.25)":"none",
-                transform:`translateX(${dx}px) scale(${center?1:0.88})`,
-                opacity:center?1:0.5,
+                transform:`translateX(calc(${dirSign} * ${CAROUSEL_SHIFT_CSS})) scale(${center?1:0.88})`,
+                opacity:center?1:outer?0:0.5,
                 filter:center?"none":"blur(2px)",
                 zIndex:center?3:1,
                 transition:[
@@ -5155,6 +5201,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   const[selectedModel,setSelectedModel]=useState<"sonnet"|"opus">("sonnet");
   const[modelMenuOpen,setModelMenuOpen]=useState(false);
   const[opusCount,setOpusCount]=useState<number|null>(null);
+  const[usagePeriod,setUsagePeriod]=useState<string|null>(null);
   const[loading,setLoading]=useState(false);
   // Phase 1 of persistent chat history — null until /api/ask creates (or
   // resolves) a conversation for this chat session, then reused for every
@@ -5345,19 +5392,59 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
     };
   };
 
-  // Real Opus-credits indicator (Phase 2) — reads the usage row /api/ask
-  // writes. Refetched on mount/user change and again after every send() so
-  // the "(N left)" count reflects the just-sent message right away.
+  // Real Vega-credits figure — reads the usage row /api/ask writes. Refetched
+  // on mount/user change and again after every send(), so the low-credit
+  // warning below reacts to the message just sent.
+  //
+  // period_end is read too, for two reasons. It decides whether the stored
+  // count still belongs to the current period: the server zeroes both
+  // counters when the period rolls, but only on its next write, so until then
+  // a stale row still holds the old numbers and would have this warning fire
+  // against credits the user has already got back. And it keys the dismissal
+  // below, so dismissing the warning silences it for that period rather than
+  // forever.
   const refreshOpusCount=useCallback(async()=>{
-    if(!user?.id){setOpusCount(null);return;}
+    if(!user?.id){setOpusCount(null);setUsagePeriod(null);return;}
     const sb=await getSupabaseClient();
     if(!sb)return;
     const{data,error}=await sb.from("usage")
-      .select("opus_count").eq("user_id",user.id).maybeSingle();
-    if(error){console.error("Failed to load Opus usage count:",error);return;}
-    setOpusCount(data?.opus_count??0);
+      .select("period_end,opus_count").eq("user_id",user.id).maybeSingle();
+    if(error){console.error("Failed to load Vega usage count:",error);return;}
+    // An elapsed period_end means the row predates the current period.
+    // Comparing dates works for both shapes the server writes: a free user's
+    // own UTC date, and a subscriber's billing-period end.
+    const stale=!data||!data.period_end||data.period_end<todayISO();
+    setOpusCount(stale?0:(data.opus_count??0));
+    setUsagePeriod(stale?null:data.period_end);
   },[user?.id]);
   useEffect(()=>{refreshOpusCount();},[refreshOpusCount]);
+
+  // Warns once a period when Vega credits get close to the cap. Deliberately
+  // stops short of 100%: an exhausted quota already announces itself on the
+  // assistant's own message (opusExhausted), and two notices for one
+  // condition is one too many.
+  //
+  // Driven off opusCount rather than called from send(), because
+  // refreshOpusCount already runs on mount AND after every send — hanging it
+  // off the value means the two paths can never disagree about when to fire.
+  const vegaLimit=opusLimitForTier(tier);
+  const[vegaWarn,setVegaWarn]=useState(false);
+  useEffect(()=>{
+    if(!isPro||opusCount==null||!usagePeriod){setVegaWarn(false);return;}
+    const pct=(opusCount/vegaLimit)*100;
+    if(pct<VEGA_WARN_PCT||pct>=100){setVegaWarn(false);return;}
+    let dismissed=false;
+    // Wrapped: storage throws outright in some privacy modes, and a warning
+    // that cannot read its own dismissal flag should still show.
+    try{dismissed=localStorage.getItem(VEGA_WARN_KEY+usagePeriod)==="1";}catch{}
+    setVegaWarn(!dismissed);
+  },[isPro,opusCount,vegaLimit,usagePeriod]);
+  function dismissVegaWarn(){
+    setVegaWarn(false);
+    // Keyed by period, not a bare flag: the point of dismissing is "I know,
+    // stop telling me" for these credits, not for every period from now on.
+    try{if(usagePeriod)localStorage.setItem(VEGA_WARN_KEY+usagePeriod,"1");}catch{}
+  }
 
   async function send(){
     if((!input.trim()&&!pendingImage)||loading)return;
@@ -5877,6 +5964,31 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                   {/* X removed — the blob below is now the close control. */}
                 </div>
 
+                {/* Low-Vega warning. Sits below the header rather than at the
+                    very top-right, where the button group above already is.
+                    insetInlineEnd, not right, so it stays on the correct side
+                    in Arabic and Urdu. */}
+                {vegaWarn&&(
+                  <div role="status" style={{position:"absolute",top:54,insetInlineEnd:12,zIndex:12,
+                    maxWidth:280,display:"flex",alignItems:"flex-start",gap:8,
+                    padding:"9px 10px 9px 12px",borderRadius:12,
+                    background:dark?"rgba(60,45,20,0.92)":"rgba(255,248,230,0.97)",
+                    border:`1px solid ${dark?"rgba(201,168,76,0.35)":"rgba(201,168,76,0.4)"}`,
+                    boxShadow:"0 8px 24px rgba(0,0,0,0.18)"}}>
+                    <i className="ti ti-alert-triangle" aria-hidden="true"
+                      style={{fontSize:14,flexShrink:0,marginTop:1,color:"#C9A84C"}}/>
+                    <span style={{fontSize:11.5,lineHeight:1.45,color:C.navy,flex:1}}>
+                      {tf("vegaLowWarning",{used:localeNum(opusCount??0,locale),
+                                            limit:localeNum(vegaLimit,locale)},t)}
+                    </span>
+                    <button onClick={dismissVegaWarn} aria-label={t("close")}
+                      style={{background:"none",border:"none",cursor:"pointer",padding:0,
+                        color:C.muted,flexShrink:0,lineHeight:1}}>
+                      <i className="ti ti-x" style={{fontSize:13}} aria-hidden="true"/>
+                    </button>
+                  </div>
+                )}
+
                 {/* The blob doubles as the close control while open (was
                     the X button above) — tapping it does the same full
                     close as the old X did (stop any playing speech, close
@@ -6058,7 +6170,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                               border:"none",borderTop:`1px solid ${dark?"rgba(255,255,255,0.08)":C.border}`,
                               background:selectedModel==="opus"?(dark?"rgba(255,255,255,0.06)":"#F0EFFC"):"transparent",
                               color:C.navy,textAlign:"left",fontFamily:"inherit"}}>
-                            <span>Vega{opusCount!=null?` — ${Math.max(0,opusLimitForTier(tier)-opusCount)} left`:""}</span>
+                            <span>Vega</span>
                             {selectedModel==="opus"&&<i className="ti ti-check" style={{fontSize:13,color:C.primary,marginLeft:8}} aria-hidden="true"/>}
                           </button>
                         </div>
