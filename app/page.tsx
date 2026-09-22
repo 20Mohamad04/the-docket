@@ -4928,6 +4928,16 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   // as invisible. This gives the mic/send/model-selector buttons an
   // actually-visible idle border in both themes.
   const inputBtnBorder=dark?"1.5px solid rgba(255,255,255,0.18)":"1.5px solid rgba(76,95,213,0.28)";
+  // The composer's surface, shared rather than copied. The input pill and the
+  // low-credit notice above it are meant to read as one piece of furniture;
+  // duplicating these four values would match today and drift the first time
+  // the pill is restyled. Layout (padding, display) stays with each user.
+  const composerSurface:React.CSSProperties={
+    background:dark?"#1A1D3E":"#FFFFFF",
+    borderRadius:24,
+    border:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
+    boxShadow:dark?"0 8px 24px rgba(0,0,0,0.35)":"0 8px 24px rgba(76,95,213,0.12)",
+  };
   const[open,setOpen]=useState(false);
   const[expanded,setExpanded]=useState(false);
   // The bar's real rendered height, measured rather than assumed — the same
@@ -5469,8 +5479,36 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
     try{dismissed=localStorage.getItem(VEGA_WARN_KEY+usagePeriod)==="1";}catch{}
     setVegaWarn(!dismissed);
   },[isPro,opusCount,vegaLimit,usagePeriod,debugVegaPct]);
+  // Two-step visibility, the same shape the avatar card uses: `mounted` keeps
+  // the element in the DOM so its exit transition can run, `shown` drives the
+  // transition itself, and the unmount lands after it. Without the split,
+  // dismissing would remove the node mid-frame and nothing would animate.
+  const[vegaWarnMounted,setVegaWarnMounted]=useState(false);
+  const[vegaWarnShown,setVegaWarnShown]=useState(false);
+  const vegaExitTimer=React.useRef<number|null>(null);
+  useEffect(()=>{
+    if(vegaWarn){
+      // Re-arming mid-exit: cancel the pending unmount and reverse, rather
+      // than letting the timer tear down a warning that is current again.
+      if(vegaExitTimer.current!=null){window.clearTimeout(vegaExitTimer.current);vegaExitTimer.current=null;}
+      setVegaWarnMounted(true);
+      // A frame after mounting, so the browser has a starting style to
+      // transition from — setting both in one tick just paints the end state.
+      const id=requestAnimationFrame(()=>setVegaWarnShown(true));
+      return()=>cancelAnimationFrame(id);
+    }
+    setVegaWarnShown(false);
+  },[vegaWarn]);
+  useEffect(()=>()=>{ if(vegaExitTimer.current!=null)window.clearTimeout(vegaExitTimer.current); },[]);
+
   function dismissVegaWarn(){
-    setVegaWarn(false);
+    if(vegaExitTimer.current!=null)return;
+    setVegaWarnShown(false);
+    vegaExitTimer.current=window.setTimeout(()=>{
+      vegaExitTimer.current=null;
+      setVegaWarnMounted(false);
+      setVegaWarn(false);
+    },PANEL_CLOSE_MS);
     // Keyed by period, not a bare flag: the point of dismissing is "I know,
     // stop telling me" for these credits, not for every period from now on.
     try{if(usagePeriod)localStorage.setItem(VEGA_WARN_KEY+usagePeriod,"1");}catch{}
@@ -5994,31 +6032,6 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                   {/* X removed — the blob below is now the close control. */}
                 </div>
 
-                {/* Low-Vega warning. Sits below the header rather than at the
-                    very top-right, where the button group above already is.
-                    insetInlineEnd, not right, so it stays on the correct side
-                    in Arabic and Urdu. */}
-                {vegaWarn&&(
-                  <div role="status" style={{position:"absolute",top:54,insetInlineEnd:12,zIndex:12,
-                    maxWidth:280,display:"flex",alignItems:"flex-start",gap:8,
-                    padding:"9px 10px 9px 12px",borderRadius:12,
-                    background:dark?"rgba(60,45,20,0.92)":"rgba(255,248,230,0.97)",
-                    border:`1px solid ${dark?"rgba(201,168,76,0.35)":"rgba(201,168,76,0.4)"}`,
-                    boxShadow:"0 8px 24px rgba(0,0,0,0.18)"}}>
-                    <i className="ti ti-alert-triangle" aria-hidden="true"
-                      style={{fontSize:14,flexShrink:0,marginTop:1,color:"#C9A84C"}}/>
-                    <span style={{fontSize:11.5,lineHeight:1.45,color:C.navy,flex:1}}>
-                      {tf("vegaLowWarning",{used:localeNum(opusCount??0,locale),
-                                            limit:localeNum(vegaLimit,locale)},t)}
-                    </span>
-                    <button onClick={dismissVegaWarn} aria-label={t("close")}
-                      style={{background:"none",border:"none",cursor:"pointer",padding:0,
-                        color:C.muted,flexShrink:0,lineHeight:1}}>
-                      <i className="ti ti-x" style={{fontSize:13}} aria-hidden="true"/>
-                    </button>
-                  </div>
-                )}
-
                 {/* The blob doubles as the close control while open (was
                     the X button above) — tapping it does the same full
                     close as the old X did (stop any playing speech, close
@@ -6070,6 +6083,13 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                     {m.role==="assistant"
                       ?<ReactMarkdown components={markdownComponents}>{m.content}</ReactMarkdown>
                       :m.content}
+                    {/* The message still arrived — it was answered by Nova
+                        because this period's Vega credits are spent. That
+                        degrade is deliberate (see resolveOpusEligibility's
+                        overLimit branch in app/api/ask/route.ts): a paying
+                        subscriber who has used their premium allowance gets a
+                        different model, never a refused message. This note
+                        exists so they know which one answered. */}
                     {m.opusFallback&&(
                       <p style={{fontSize:10.5,color:C.muted2,marginTop:6,paddingTop:6,
                         borderTop:`1px solid ${dark?"rgba(255,255,255,0.08)":C.border}`,fontStyle:"italic"}}>
@@ -6120,6 +6140,42 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                 {imageError&&(
                   <p style={{fontSize:11,color:C.urgent,marginBottom:8}}>{imageError}</p>
                 )}
+                {/* Low-Vega notice. A third sibling in this stack, above the
+                    input pill and sharing its surface, so it reads as the
+                    composer carrying a warning rather than a card parked on
+                    top of the conversation. The amber is confined to the icon
+                    and the border for the same reason.
+                    Width needs no arithmetic — it inherits this wrapper's
+                    padding, so it lines up with the pill exactly. */}
+                {vegaWarnMounted&&(
+                  <div role="status"
+                    style={{...composerSurface,
+                      display:"flex",alignItems:"center",gap:9,
+                      padding:"9px 10px 9px 15px",marginBottom:8,
+                      borderColor:dark?"rgba(201,168,76,0.4)":"rgba(201,168,76,0.45)",
+                      // Fade and settle toward the pill it belongs to, rather
+                      // than blinking out. Only opacity and transform animate:
+                      // the row's height is left alone deliberately, so this
+                      // cannot thrash layout the way transitioning geometry
+                      // did in the chat panel. The gap it occupied closes in
+                      // one step at unmount, by which point it is invisible.
+                      opacity:vegaWarnShown?1:0,
+                      transform:vegaWarnShown?"translateY(0)":"translateY(4px)",
+                      transition:`opacity ${PANEL_CLOSE_MS}ms ${PANEL_EASE}, transform ${PANEL_CLOSE_MS}ms ${PANEL_EASE}`}}>
+                    <i className="ti ti-alert-triangle" aria-hidden="true"
+                      style={{fontSize:14,flexShrink:0,color:"#C9A84C"}}/>
+                    <span style={{fontSize:11.5,lineHeight:1.4,color:C.navy,flex:1,minWidth:0}}>
+                      {tf("vegaLowWarning",{used:localeNum(opusCount??0,locale),
+                                            limit:localeNum(vegaLimit,locale)},t)}
+                    </span>
+                    <button onClick={dismissVegaWarn} aria-label={t("close")}
+                      className="pill-btn"
+                      style={{width:26,height:26,flexShrink:0,border:"none",
+                        background:"transparent",cursor:"pointer",color:C.muted}}>
+                      <i className="ti ti-x" style={{fontSize:13}} aria-hidden="true"/>
+                    </button>
+                  </div>
+                )}
                 {/* Chosen fill: a solid, elevated surface (unchanged
                     approach, refined values) rather than anything
                     translucent — it sits directly over the gradient panel
@@ -6131,11 +6187,8 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                     tint in light mode — reads as "premium lifted pill"
                     rather than "boxed input," while still being clearly
                     Docket's own palette, not a ChatGPT reskin. */}
-                <div style={{display:"flex",gap:10,alignItems:"center",
-                  background:dark?"#1A1D3E":"#FFFFFF",
-                  borderRadius:24,padding:"8px 8px 8px 18px",
-                  border:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(20,20,43,0.08)"}`,
-                  boxShadow:dark?"0 8px 24px rgba(0,0,0,0.35)":"0 8px 24px rgba(76,95,213,0.12)"}}>
+                <div style={{...composerSurface,display:"flex",gap:10,alignItems:"center",
+                  padding:"8px 8px 8px 18px"}}>
                   <input value={input} onChange={e=>setInput(e.target.value)}
                     onKeyDown={e=>e.key==="Enter"&&send()}
                     // Optimistic early re-measure for when this blur means

@@ -737,8 +737,17 @@ export async function POST(req: Request) {
           maxTokens = 8192;
           opusPeriodEnd = eligibility.periodEnd;
         } else if (eligibility.overLimit) {
-          // Genuinely Pro, but used up this period's Opus credits — fall
-          // back to Sonnet and tell the frontend so it can show a note.
+          // Genuinely Pro, but this period's Opus credits are spent. Falling
+          // back to Sonnet is the INTENDED behaviour, not a gap to be closed
+          // later: a hard stop was considered and rejected. Exhausting the
+          // premium allowance degrades the model a paying subscriber gets, it
+          // does not take chat away from them — refusing the message would
+          // turn a spent perk into a broken product.
+          //
+          // The frontend is told via opusFallback so it can note which model
+          // actually answered, and a separate warning appears client-side at
+          // 90% of the cap so the degrade is never the first the user hears
+          // of it. Please don't "fix" this into an error response.
           opusFallback = true;
         }
         // Otherwise: not genuinely Pro (or we couldn't verify) — silently
