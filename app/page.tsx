@@ -5435,9 +5435,20 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   },[]);
   // ─── END TEMPORARY DEBUG ─────────────────────────────────────────────
 
+  // Guards against out-of-order responses. Two of these can overlap — a rapid
+  // second send, a user?.id change, the debug override arriving while a fetch
+  // is already in flight — and they can resolve in either order. Without a
+  // guard the OLDER response wins and writes a stale count over a newer one.
+  // Each call stamps itself; a result is discarded if a later call has since
+  // started. Mirrors the `cancelled` flag InfoModal's copy of this fetch
+  // already uses, which this one was missing.
+  const usageReqId=React.useRef(0);
   const refreshOpusCount=useCallback(async()=>{
+    const reqId=++usageReqId.current;
     // TEMPORARY DEBUG: short-circuits the real read entirely, so the fake
-    // figure survives the refresh that runs after every send.
+    // figure survives the refresh that runs after every send. Bumping reqId
+    // above also invalidates any real fetch still in flight, which is what
+    // stops the override being clobbered a moment after it applies.
     if(debugVegaPct!=null){
       setOpusCount(Math.round((debugVegaPct/100)*opusLimitForTier(tier)));
       setUsagePeriod("debug");
@@ -5452,6 +5463,8 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
     // An elapsed period_end means the row predates the current period.
     // Comparing dates works for both shapes the server writes: a free user's
     // own UTC date, and a subscriber's billing-period end.
+    // Superseded while we were awaiting — a newer call owns the state now.
+    if(reqId!==usageReqId.current)return;
     const stale=!data||!data.period_end||data.period_end<todayISO();
     setOpusCount(stale?0:(data.opus_count??0));
     setUsagePeriod(stale?null:data.period_end);
