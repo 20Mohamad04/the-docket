@@ -5403,7 +5403,36 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   // against credits the user has already got back. And it keys the dismissal
   // below, so dismissing the warning silences it for that period rather than
   // forever.
+  // ─── TEMPORARY DEBUG — REMOVE AFTER VERIFYING THE VEGA WARNING ───────
+  // ?debugVegaUsage=<percent> fakes the Vega credit figure so the low-credit
+  // warning can be seen without spending ~45 real messages.
+  //
+  // Read in an effect rather than during render: the server has no
+  // window.location, so reading it inline would make the server markup and
+  // the first client render disagree.
+  //
+  // This only ever sets local React state. It performs no Supabase write,
+  // and the server's own usage tracking in /api/ask neither sees nor is
+  // affected by it — the real row is left exactly as it was.
+  const[debugVegaPct,setDebugVegaPct]=useState<number|null>(null);
+  useEffect(()=>{
+    const raw=new URLSearchParams(window.location.search).get("debugVegaUsage");
+    if(raw==null)return;
+    const n=Number(raw);
+    if(!Number.isFinite(n)||n<0||n>200)return;
+    console.warn(`[debug] Vega usage simulated at ${n}% — displayed credits are fake, nothing is written.`);
+    setDebugVegaPct(n);
+  },[]);
+  // ─── END TEMPORARY DEBUG ─────────────────────────────────────────────
+
   const refreshOpusCount=useCallback(async()=>{
+    // TEMPORARY DEBUG: short-circuits the real read entirely, so the fake
+    // figure survives the refresh that runs after every send.
+    if(debugVegaPct!=null){
+      setOpusCount(Math.round((debugVegaPct/100)*opusLimitForTier(tier)));
+      setUsagePeriod("debug");
+      return;
+    }
     if(!user?.id){setOpusCount(null);setUsagePeriod(null);return;}
     const sb=await getSupabaseClient();
     if(!sb)return;
@@ -5416,7 +5445,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
     const stale=!data||!data.period_end||data.period_end<todayISO();
     setOpusCount(stale?0:(data.opus_count??0));
     setUsagePeriod(stale?null:data.period_end);
-  },[user?.id]);
+  },[user?.id,debugVegaPct,tier]);
   useEffect(()=>{refreshOpusCount();},[refreshOpusCount]);
 
   // Warns once a period when Vega credits get close to the cap. Deliberately
@@ -5430,7 +5459,8 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   const vegaLimit=opusLimitForTier(tier);
   const[vegaWarn,setVegaWarn]=useState(false);
   useEffect(()=>{
-    if(!isPro||opusCount==null||!usagePeriod){setVegaWarn(false);return;}
+    // `||debugVegaPct!=null` is TEMPORARY DEBUG: remove with the rest.
+    if(!(isPro||debugVegaPct!=null)||opusCount==null||!usagePeriod){setVegaWarn(false);return;}
     const pct=(opusCount/vegaLimit)*100;
     if(pct<VEGA_WARN_PCT||pct>=100){setVegaWarn(false);return;}
     let dismissed=false;
@@ -5438,7 +5468,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
     // that cannot read its own dismissal flag should still show.
     try{dismissed=localStorage.getItem(VEGA_WARN_KEY+usagePeriod)==="1";}catch{}
     setVegaWarn(!dismissed);
-  },[isPro,opusCount,vegaLimit,usagePeriod]);
+  },[isPro,opusCount,vegaLimit,usagePeriod,debugVegaPct]);
   function dismissVegaWarn(){
     setVegaWarn(false);
     // Keyed by period, not a bare flag: the point of dismissing is "I know,
