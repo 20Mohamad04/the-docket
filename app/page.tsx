@@ -219,7 +219,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"Go to Sign In", forgotPassword:"Forgot your password?",
     didntReceive:"Didn't receive the email? Check your spam folder or", resendIt:"resend it",
     legalEnglishNotice:"This document is provided in English. The English version governs in the event of any discrepancy with a translation.",
-    vegaLowWarning:"Vega running low — {used} of {limit} credits used this period.",
+    vegaLowWarning:"Vega running low — you've used {pct}% of your credits this period.",
   },
   ar:{
     appName:"الدفتر", daily:"الروتين اليومي", allTasks:"جميع المهام",
@@ -341,7 +341,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"الذهاب إلى تسجيل الدخول", forgotPassword:"نسيت كلمة المرور؟",
     didntReceive:"لم يصلك البريد؟ تحقق من مجلد الرسائل غير المرغوب فيها أو", resendIt:"أعد الإرسال",
     legalEnglishNotice:"هذا المستند متوفر باللغة الإنجليزية. النسخة الإنجليزية هي المعتمدة في حال وجود أي اختلاف مع أي ترجمة.",
-    vegaLowWarning:"رصيد Vega على وشك النفاد — استُخدم {used} من {limit} هذه الفترة.",
+    vegaLowWarning:"رصيد Vega على وشك النفاد — استخدمت {pct}٪ من رصيدك هذه الفترة.",
   },
   fr:{
     appName:"The Docket", daily:"Routine Quotidienne", allTasks:"Toutes les Tâches",
@@ -463,7 +463,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"Aller à la connexion", forgotPassword:"Mot de passe oublié ?",
     didntReceive:"E-mail non reçu ? Vérifiez vos spams ou", resendIt:"renvoyez-le",
     legalEnglishNotice:"Ce document est fourni en anglais. La version anglaise prévaut en cas de divergence avec une traduction.",
-    vegaLowWarning:"Crédits Vega bientôt épuisés — {used} sur {limit} utilisés cette période.",
+    vegaLowWarning:"Crédits Vega bientôt épuisés — vous avez utilisé {pct} % de vos crédits cette période.",
   },
   tr:{
     appName:"The Docket", daily:"Günlük Rutin", allTasks:"Tüm Görevler",
@@ -585,7 +585,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"Girişe git", forgotPassword:"Parolanızı mı unuttunuz?",
     didntReceive:"E-posta gelmedi mi? Spam klasörünü kontrol edin veya", resendIt:"tekrar gönderin",
     legalEnglishNotice:"Bu belge İngilizce olarak sunulmaktadır. Çeviriyle herhangi bir tutarsızlık olması hâlinde İngilizce sürüm geçerlidir.",
-    vegaLowWarning:"Vega krediniz azalıyor — bu dönemde {limit} kredinin {used} tanesi kullanıldı.",
+    vegaLowWarning:"Vega krediniz azalıyor — bu dönemde kredinizin %{pct}'ini kullandınız.",
   },
   ur:{
     appName:"The Docket", daily:"روزانہ معمول", allTasks:"تمام کام",
@@ -707,7 +707,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"سائن ان پر جائیں", forgotPassword:"پاس ورڈ بھول گئے؟",
     didntReceive:"ای میل نہیں ملا؟ اسپیم فولڈر دیکھیں یا", resendIt:"دوبارہ بھیجیں",
     legalEnglishNotice:"یہ دستاویز انگریزی میں فراہم کی گئی ہے۔ کسی بھی ترجمے سے اختلاف کی صورت میں انگریزی نسخہ ہی معتبر ہوگا۔",
-    vegaLowWarning:"Vega کریڈٹ کم ہو رہے ہیں — اس مدت میں {limit} میں سے {used} استعمال ہوئے۔",
+    vegaLowWarning:"Vega کریڈٹ کم ہو رہے ہیں — آپ نے اس مدت میں اپنے {pct}٪ کریڈٹ استعمال کر لیے ہیں۔",
   },
   bn:{
     appName:"The Docket", daily:"দৈনিক রুটিন", allTasks:"সব কাজ",
@@ -829,7 +829,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"সাইন ইনে যান", forgotPassword:"পাসওয়ার্ড ভুলে গেছেন?",
     didntReceive:"ইমেইল পাননি? স্প্যাম ফোল্ডার দেখুন অথবা", resendIt:"আবার পাঠান",
     legalEnglishNotice:"এই নথিটি ইংরেজিতে সরবরাহ করা হয়েছে। অনুবাদের সাথে কোনো অসঙ্গতি থাকলে ইংরেজি সংস্করণই প্রযোজ্য হবে।",
-    vegaLowWarning:"Vega ক্রেডিট ফুরিয়ে আসছে — এই মেয়াদে {limit}-এর মধ্যে {used} ব্যবহৃত।",
+    vegaLowWarning:"Vega ক্রেডিট ফুরিয়ে আসছে — এই মেয়াদে আপনি আপনার {pct}% ক্রেডিট ব্যবহার করেছেন।",
   },
   es:{
     appName:"The Docket", daily:"Rutina Diaria", allTasks:"Todas las Tareas",
@@ -951,7 +951,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"Ir a iniciar sesión", forgotPassword:"¿Olvidaste tu contraseña?",
     didntReceive:"¿No recibiste el correo? Revisa tu carpeta de spam o", resendIt:"reenvíalo",
     legalEnglishNotice:"Este documento se proporciona en inglés. La versión en inglés prevalecerá en caso de cualquier discrepancia con una traducción.",
-    vegaLowWarning:"Créditos Vega casi agotados: {used} de {limit} usados este periodo.",
+    vegaLowWarning:"Créditos Vega casi agotados: has usado el {pct} % de tus créditos este periodo.",
   },
   hi:{
     appName:"The Docket", daily:"दैनिक दिनचर्या", allTasks:"सभी कार्य",
@@ -1073,7 +1073,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"साइन इन पर जाएँ", forgotPassword:"पासवर्ड भूल गए?",
     didntReceive:"ईमेल नहीं मिला? स्पैम फ़ोल्डर देखें या", resendIt:"पुनः भेजें",
     legalEnglishNotice:"यह दस्तावेज़ अंग्रेज़ी में प्रदान किया गया है। किसी भी अनुवाद से भिन्नता की स्थिति में अंग्रेज़ी संस्करण मान्य होगा।",
-    vegaLowWarning:"Vega क्रेडिट कम हो रहे हैं — इस अवधि में {limit} में से {used} उपयोग हुए।",
+    vegaLowWarning:"Vega क्रेडिट कम हो रहे हैं — आपने इस अवधि में अपने {pct}% क्रेडिट उपयोग कर लिए हैं।",
   },
   pt:{
     appName:"The Docket", daily:"Rotina Diária", allTasks:"Todas as Tarefas",
@@ -1195,7 +1195,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"Ir para entrar", forgotPassword:"Esqueceu sua senha?",
     didntReceive:"Não recebeu o e-mail? Verifique o spam ou", resendIt:"reenvie",
     legalEnglishNotice:"Este documento é fornecido em inglês. A versão em inglês prevalece em caso de qualquer divergência com uma tradução.",
-    vegaLowWarning:"Créditos Vega quase esgotados — {used} de {limit} usados neste período.",
+    vegaLowWarning:"Créditos Vega quase esgotados — você usou {pct}% dos seus créditos neste período.",
   },
   ru:{
     appName:"The Docket", daily:"Ежедневный распорядок", allTasks:"Все задачи",
@@ -1317,7 +1317,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"Перейти ко входу", forgotPassword:"Забыли пароль?",
     didntReceive:"Письмо не пришло? Проверьте папку со спамом или", resendIt:"отправьте снова",
     legalEnglishNotice:"Этот документ предоставляется на английском языке. В случае любых расхождений с переводом преимущественную силу имеет английская версия.",
-    vegaLowWarning:"Кредиты Vega на исходе — использовано {used} из {limit} за период.",
+    vegaLowWarning:"Кредиты Vega на исходе — вы использовали {pct}% кредитов за период.",
   },
   zh:{
     appName:"The Docket", daily:"每日例程", allTasks:"全部任务",
@@ -1439,7 +1439,7 @@ const T:Record<Lang,Record<string,string>> = {
     goToSignIn:"前往登录", forgotPassword:"忘记密码？",
     didntReceive:"没收到邮件？请检查垃圾邮件文件夹，或", resendIt:"重新发送",
     legalEnglishNotice:"本文件以英文提供。如译文与英文版本有任何出入，概以英文版本为准。",
-    vegaLowWarning:"Vega 额度即将用完 — 本期已使用 {limit} 中的 {used}。",
+    vegaLowWarning:"Vega 额度即将用完 — 本期你已使用 {pct}% 的额度。",
   },
 };
 
@@ -5480,6 +5480,10 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   // refreshOpusCount already runs on mount AND after every send — hanging it
   // off the value means the two paths can never disagree about when to fire.
   const vegaLimit=opusLimitForTier(tier);
+  // Rounded once, here, so the figure the warning states is the same one the
+  // threshold below tested — computing it twice invites them to disagree at
+  // the boundary (89.6% would test as under and display as 90%).
+  const vegaPct=opusCount!=null&&vegaLimit>0?Math.round((opusCount/vegaLimit)*100):0;
   const[vegaWarn,setVegaWarn]=useState(false);
   useEffect(()=>{
     // `||debugVegaPct!=null` is TEMPORARY DEBUG: remove with the rest.
@@ -6178,8 +6182,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                     <i className="ti ti-alert-triangle" aria-hidden="true"
                       style={{fontSize:14,flexShrink:0,color:"#C9A84C"}}/>
                     <span style={{fontSize:11.5,lineHeight:1.4,color:C.navy,flex:1,minWidth:0}}>
-                      {tf("vegaLowWarning",{used:localeNum(opusCount??0,locale),
-                                            limit:localeNum(vegaLimit,locale)},t)}
+                      {tf("vegaLowWarning",{pct:localeNum(vegaPct,locale)},t)}
                     </span>
                     <button onClick={dismissVegaWarn} aria-label={t("close")}
                       className="pill-btn"
