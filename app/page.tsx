@@ -5413,47 +5413,16 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   // against credits the user has already got back. And it keys the dismissal
   // below, so dismissing the warning silences it for that period rather than
   // forever.
-  // ─── TEMPORARY DEBUG — REMOVE AFTER VERIFYING THE VEGA WARNING ───────
-  // ?debugVegaUsage=<percent> fakes the Vega credit figure so the low-credit
-  // warning can be seen without spending ~45 real messages.
-  //
-  // Read in an effect rather than during render: the server has no
-  // window.location, so reading it inline would make the server markup and
-  // the first client render disagree.
-  //
-  // This only ever sets local React state. It performs no Supabase write,
-  // and the server's own usage tracking in /api/ask neither sees nor is
-  // affected by it — the real row is left exactly as it was.
-  const[debugVegaPct,setDebugVegaPct]=useState<number|null>(null);
-  useEffect(()=>{
-    const raw=new URLSearchParams(window.location.search).get("debugVegaUsage");
-    if(raw==null)return;
-    const n=Number(raw);
-    if(!Number.isFinite(n)||n<0||n>200)return;
-    console.warn(`[debug] Vega usage simulated at ${n}% — displayed credits are fake, nothing is written.`);
-    setDebugVegaPct(n);
-  },[]);
-  // ─── END TEMPORARY DEBUG ─────────────────────────────────────────────
-
   // Guards against out-of-order responses. Two of these can overlap — a rapid
-  // second send, a user?.id change, the debug override arriving while a fetch
-  // is already in flight — and they can resolve in either order. Without a
-  // guard the OLDER response wins and writes a stale count over a newer one.
-  // Each call stamps itself; a result is discarded if a later call has since
-  // started. Mirrors the `cancelled` flag InfoModal's copy of this fetch
-  // already uses, which this one was missing.
+  // second send, or a user?.id change while a fetch is already in flight —
+  // and they can resolve in either order. Without a guard the OLDER response
+  // wins and writes a stale count over a newer one. Each call stamps itself;
+  // a result is discarded if a later call has since started. Mirrors the
+  // `cancelled` flag InfoModal's copy of this fetch already uses, which this
+  // one was written without.
   const usageReqId=React.useRef(0);
   const refreshOpusCount=useCallback(async()=>{
     const reqId=++usageReqId.current;
-    // TEMPORARY DEBUG: short-circuits the real read entirely, so the fake
-    // figure survives the refresh that runs after every send. Bumping reqId
-    // above also invalidates any real fetch still in flight, which is what
-    // stops the override being clobbered a moment after it applies.
-    if(debugVegaPct!=null){
-      setOpusCount(Math.round((debugVegaPct/100)*opusLimitForTier(tier)));
-      setUsagePeriod("debug");
-      return;
-    }
     if(!user?.id){setOpusCount(null);setUsagePeriod(null);return;}
     const sb=await getSupabaseClient();
     if(!sb)return;
@@ -5468,7 +5437,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
     const stale=!data||!data.period_end||data.period_end<todayISO();
     setOpusCount(stale?0:(data.opus_count??0));
     setUsagePeriod(stale?null:data.period_end);
-  },[user?.id,debugVegaPct,tier]);
+  },[user?.id]);
   useEffect(()=>{refreshOpusCount();},[refreshOpusCount]);
 
   // Warns once a period when Vega credits get close to the cap. Deliberately
@@ -5486,8 +5455,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   const vegaPct=opusCount!=null&&vegaLimit>0?Math.round((opusCount/vegaLimit)*100):0;
   const[vegaWarn,setVegaWarn]=useState(false);
   useEffect(()=>{
-    // `||debugVegaPct!=null` is TEMPORARY DEBUG: remove with the rest.
-    if(!(isPro||debugVegaPct!=null)||opusCount==null||!usagePeriod){setVegaWarn(false);return;}
+    if(!isPro||opusCount==null||!usagePeriod){setVegaWarn(false);return;}
     const pct=(opusCount/vegaLimit)*100;
     if(pct<VEGA_WARN_PCT||pct>=100){setVegaWarn(false);return;}
     let dismissed=false;
@@ -5495,7 +5463,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
     // that cannot read its own dismissal flag should still show.
     try{dismissed=localStorage.getItem(VEGA_WARN_KEY+usagePeriod)==="1";}catch{}
     setVegaWarn(!dismissed);
-  },[isPro,opusCount,vegaLimit,usagePeriod,debugVegaPct]);
+  },[isPro,opusCount,vegaLimit,usagePeriod]);
   // Two-step visibility, the same shape the avatar card uses: `mounted` keeps
   // the element in the DOM so its exit transition can run, `shown` drives the
   // transition itself, and the unmount lands after it. Without the split,
@@ -5503,6 +5471,20 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
   const[vegaWarnMounted,setVegaWarnMounted]=useState(false);
   const[vegaWarnShown,setVegaWarnShown]=useState(false);
   const vegaExitTimer=React.useRef<number|null>(null);
+  // The single exit path. Both routes out share it — the × below, and the
+  // warning simply ceasing to apply (credits reset, tier change, sign-out).
+  // Only the × used to clear vegaWarnMounted, so every other route left the
+  // element in the DOM at opacity 0, holding its ~40px of space above the
+  // input pill for the rest of the session.
+  const beginVegaExit=useCallback(()=>{
+    if(vegaExitTimer.current!=null)return;
+    setVegaWarnShown(false);
+    vegaExitTimer.current=window.setTimeout(()=>{
+      vegaExitTimer.current=null;
+      setVegaWarnMounted(false);
+      setVegaWarn(false);
+    },PANEL_CLOSE_MS);
+  },[]);
   useEffect(()=>{
     if(vegaWarn){
       // Re-arming mid-exit: cancel the pending unmount and reverse, rather
@@ -5514,18 +5496,14 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
       const id=requestAnimationFrame(()=>setVegaWarnShown(true));
       return()=>cancelAnimationFrame(id);
     }
-    setVegaWarnShown(false);
-  },[vegaWarn]);
+    // Cleared by something other than the × — run the same exit rather than
+    // just hiding it, so it actually leaves.
+    if(vegaWarnMounted) beginVegaExit();
+  },[vegaWarn,vegaWarnMounted,beginVegaExit]);
   useEffect(()=>()=>{ if(vegaExitTimer.current!=null)window.clearTimeout(vegaExitTimer.current); },[]);
 
   function dismissVegaWarn(){
-    if(vegaExitTimer.current!=null)return;
-    setVegaWarnShown(false);
-    vegaExitTimer.current=window.setTimeout(()=>{
-      vegaExitTimer.current=null;
-      setVegaWarnMounted(false);
-      setVegaWarn(false);
-    },PANEL_CLOSE_MS);
+    beginVegaExit();
     // Keyed by period, not a bare flag: the point of dismissing is "I know,
     // stop telling me" for these credits, not for every period from now on.
     try{if(usagePeriod)localStorage.setItem(VEGA_WARN_KEY+usagePeriod,"1");}catch{}
