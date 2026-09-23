@@ -1815,6 +1815,24 @@ function computeStreak(r:Routine){
   return streak;
 }
 
+// The one place client-side ids are minted. Ids only need to be unique within
+// a single account — the primary key is (user_id, id) — so the largest
+// existing value plus one is sufficient, and unlike Date.now() it is correct
+// when several are created in the same millisecond.
+//
+// That mattered: handleAiActions calls addTask and addStep inside a forEach,
+// so an AI reply creating three tasks gave all three the same Date.now(), and
+// the upsert collapsed them into one row. Three steps on one task got the same
+// id too, which made removing one remove all three.
+//
+// Must be called INSIDE the functional updater, against the array being built,
+// or consecutive calls in one tick all read the same pre-update state and the
+// collision comes straight back. reduce rather than Math.max(...spread), which
+// overflows the stack on a large enough array.
+function nextId(existing:{id:number}[]):number{
+  return existing.reduce((m,x)=>x.id>m?x.id:m,0)+1;
+}
+
 function defaultTasks():Task[]{ return []; }
 function defaultRoutines():Routine[]{ return []; }
 
@@ -7221,9 +7239,9 @@ export default function Home(){
       }
     }else{
       // First time this account has synced — push whatever's on this device up
-      if(tasks.length>0) await sb.from("tasks").upsert(tasks.map(t=>taskToRow(t,userId)));
+      if(tasks.length>0) await sb.from("tasks").upsert(tasks.map(t=>taskToRow(t,userId)),{onConflict:"user_id,id"});
       if(routines.length>0){
-        await sb.from("routines").upsert(routines.map(r=>routineToRow(r,userId)));
+        await sb.from("routines").upsert(routines.map(r=>routineToRow(r,userId)),{onConflict:"user_id,id"});
         prevRoutineIdsRef.current=routines.map(r=>r.id);
       }
     }
@@ -7275,7 +7293,7 @@ export default function Home(){
     (async()=>{
       const sb=await getSupabaseClient();
       if(!sb||tasks.length===0)return;
-      await sb.from("tasks").upsert(tasks.map(t=>taskToRow(t,uid)));
+      await sb.from("tasks").upsert(tasks.map(t=>taskToRow(t,uid)),{onConflict:"user_id,id"});
     })();
   },[tasks,isLoaded,user?.id]);
 
@@ -7285,10 +7303,14 @@ export default function Home(){
     (async()=>{
       const sb=await getSupabaseClient();
       if(!sb)return;
-      if(routines.length>0) await sb.from("routines").upsert(routines.map(r=>routineToRow(r,uid)));
+      if(routines.length>0) await sb.from("routines").upsert(routines.map(r=>routineToRow(r,uid)),{onConflict:"user_id,id"});
       const currentIds=routines.map(r=>r.id);
       const removed=prevRoutineIdsRef.current.filter(id=>!currentIds.includes(id));
-      if(removed.length>0) await sb.from("routines").delete().in("id",removed);
+      // Scoped to the owner rather than leaning on RLS to filter it. Two
+      // reasons: ids are only unique per account now, and after the composite
+      // key there is no index led by id alone, so an unscoped .in() would fall
+      // back to a sequential scan.
+      if(removed.length>0) await sb.from("routines").delete().eq("user_id",uid).in("id",removed);
       prevRoutineIdsRef.current=currentIds;
     })();
   },[routines,isLoaded,user?.id]);
@@ -7434,7 +7456,7 @@ export default function Home(){
   },[isLoaded,cloudPullDone]);
 
   const addTask=useCallback((data:Omit<Task,"id"|"done"|"deleted"|"checklist">)=>{
-    setTasks(p=>[...p,{id:Date.now(),...data,done:false,deleted:false,checklist:[]}]);
+    setTasks(p=>[...p,{id:nextId(p),...data,done:false,deleted:false,checklist:[]}]);
   },[]);
   const updateTask=useCallback((id:number,changes:Partial<Task>)=>{
     setTasks(p=>p.map(t=>t.id===id?{...t,...changes}:t));
@@ -7471,7 +7493,8 @@ export default function Home(){
       if(user?.id&&archivedIds.length>0){
         const sb=await getSupabaseClient();
         if(sb){
-          const{error}=await sb.from("tasks").delete().in("id",archivedIds);
+          // Owner-scoped for the same reason as the routines delete above.
+          const{error}=await sb.from("tasks").delete().eq("user_id",user.id).in("id",archivedIds);
           if(error) console.error("Failed to delete archived tasks from Supabase:",error);
         }
       }
@@ -7480,7 +7503,7 @@ export default function Home(){
     }
   }
   const addStep=useCallback((taskId:number,text:string)=>{
-    setTasks(p=>p.map(t=>t.id!==taskId?t:{...t,checklist:[...t.checklist,{id:Date.now(),text,done:false}]}));
+    setTasks(p=>p.map(t=>t.id!==taskId?t:{...t,checklist:[...t.checklist,{id:nextId(t.checklist),text,done:false}]}));
   },[]);
   const toggleStep=useCallback((taskId:number,stepId:number)=>{
     setTasks(p=>p.map(t=>t.id!==taskId?t:{...t,checklist:t.checklist.map(s=>s.id===stepId?{...s,done:!s.done}:s)}));
@@ -7520,7 +7543,7 @@ export default function Home(){
         const r=a.routine??{};
         const days=Array.isArray(r.days)?r.days.filter((d:string)=>DAYS.includes(d)):DAYS;
         setRoutines(prev=>[...prev,{
-          id:Math.max(0,...prev.map((x:Routine)=>x.id))+1,
+          id:nextId(prev),
           label:r.label??"New routine",
           category:r.category??"health",
           days,
@@ -7802,14 +7825,25 @@ export default function Home(){
         if(error) console.error("Failed to record onboarding completion on account:",error);
       })();
     }
-    const welcomeTasks:Task[]=[];
-    if(goals.includes("health")) welcomeTasks.push({id:Date.now()+1,title:"Start a daily exercise habit",category:"fitness",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
-    if(goals.includes("study")) welcomeTasks.push({id:Date.now()+2,title:"Set a daily study goal",category:"study",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
-    if(goals.includes("finance")) welcomeTasks.push({id:Date.now()+3,title:"Review my finances this week",category:"finance",priority:"medium",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]});
-    if(goals.includes("faith")) welcomeTasks.push({id:Date.now()+4,title:"Establish a daily prayer routine",category:"faith",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
-    if(goals.includes("business")) welcomeTasks.push({id:Date.now()+5,title:"Define my top business priority this week",category:"business",priority:"high",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]});
-    if(goals.includes("work")) welcomeTasks.push({id:Date.now()+6,title:"Set this week's career goal",category:"career",priority:"medium",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]});
-    if(welcomeTasks.length>0) setTasks(welcomeTasks);
+    // Ids are assigned inside the updater below, against the array being
+    // built, so these carry none of their own.
+    const welcomeTasks:Omit<Task,"id">[]=[];
+    if(goals.includes("health")) welcomeTasks.push({title:"Start a daily exercise habit",category:"fitness",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
+    if(goals.includes("study")) welcomeTasks.push({title:"Set a daily study goal",category:"study",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
+    if(goals.includes("finance")) welcomeTasks.push({title:"Review my finances this week",category:"finance",priority:"medium",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]});
+    if(goals.includes("faith")) welcomeTasks.push({title:"Establish a daily prayer routine",category:"faith",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
+    if(goals.includes("business")) welcomeTasks.push({title:"Define my top business priority this week",category:"business",priority:"high",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]});
+    if(goals.includes("work")) welcomeTasks.push({title:"Set this week's career goal",category:"career",priority:"medium",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]});
+    if(welcomeTasks.length>0){
+      // Appends. This used to replace the whole array, which was only ever
+      // safe because docket-onboarded is supposed to stop the wizard running
+      // twice — a guard standing between working code and silent data loss.
+      setTasks(prev=>{
+        const out=[...prev];
+        for(const w of welcomeTasks) out.push({id:nextId(out),...w});
+        return out;
+      });
+    }
     setOnboarding(false);
   }
 
