@@ -220,6 +220,7 @@ const T:Record<Lang,Record<string,string>> = {
     didntReceive:"Didn't receive the email? Check your spam folder or", resendIt:"resend it",
     legalEnglishNotice:"This document is provided in English. The English version governs in the event of any discrepancy with a translation.",
     vegaLowWarning:"Vega running low — you've used {pct}% of your credits this period.",
+    syncBehind:"Saved on this device, but not yet backed up to your account. This will retry on its own.",
   },
   ar:{
     appName:"الدفتر", daily:"الروتين اليومي", allTasks:"جميع المهام",
@@ -342,6 +343,7 @@ const T:Record<Lang,Record<string,string>> = {
     didntReceive:"لم يصلك البريد؟ تحقق من مجلد الرسائل غير المرغوب فيها أو", resendIt:"أعد الإرسال",
     legalEnglishNotice:"هذا المستند متوفر باللغة الإنجليزية. النسخة الإنجليزية هي المعتمدة في حال وجود أي اختلاف مع أي ترجمة.",
     vegaLowWarning:"رصيد Vega على وشك النفاد — استخدمت {pct}٪ من رصيدك هذه الفترة.",
+    syncBehind:"محفوظ على هذا الجهاز، لكن لم يُنسخ إلى حسابك بعد. ستتم إعادة المحاولة تلقائيًا.",
   },
   fr:{
     appName:"The Docket", daily:"Routine Quotidienne", allTasks:"Toutes les Tâches",
@@ -464,6 +466,7 @@ const T:Record<Lang,Record<string,string>> = {
     didntReceive:"E-mail non reçu ? Vérifiez vos spams ou", resendIt:"renvoyez-le",
     legalEnglishNotice:"Ce document est fourni en anglais. La version anglaise prévaut en cas de divergence avec une traduction.",
     vegaLowWarning:"Crédits Vega bientôt épuisés — vous avez utilisé {pct} % de vos crédits cette période.",
+    syncBehind:"Enregistré sur cet appareil, mais pas encore sauvegardé sur votre compte. Une nouvelle tentative aura lieu automatiquement.",
   },
   tr:{
     appName:"The Docket", daily:"Günlük Rutin", allTasks:"Tüm Görevler",
@@ -586,6 +589,7 @@ const T:Record<Lang,Record<string,string>> = {
     didntReceive:"E-posta gelmedi mi? Spam klasörünü kontrol edin veya", resendIt:"tekrar gönderin",
     legalEnglishNotice:"Bu belge İngilizce olarak sunulmaktadır. Çeviriyle herhangi bir tutarsızlık olması hâlinde İngilizce sürüm geçerlidir.",
     vegaLowWarning:"Vega krediniz azalıyor — bu dönemde kredinizin %{pct}'ini kullandınız.",
+    syncBehind:"Bu cihaza kaydedildi, ancak henüz hesabınıza yedeklenmedi. Otomatik olarak yeniden denenecek.",
   },
   ur:{
     appName:"The Docket", daily:"روزانہ معمول", allTasks:"تمام کام",
@@ -708,6 +712,7 @@ const T:Record<Lang,Record<string,string>> = {
     didntReceive:"ای میل نہیں ملا؟ اسپیم فولڈر دیکھیں یا", resendIt:"دوبارہ بھیجیں",
     legalEnglishNotice:"یہ دستاویز انگریزی میں فراہم کی گئی ہے۔ کسی بھی ترجمے سے اختلاف کی صورت میں انگریزی نسخہ ہی معتبر ہوگا۔",
     vegaLowWarning:"Vega کریڈٹ کم ہو رہے ہیں — آپ نے اس مدت میں اپنے {pct}٪ کریڈٹ استعمال کر لیے ہیں۔",
+    syncBehind:"اس ڈیوائس پر محفوظ ہے، مگر ابھی آپ کے اکاؤنٹ میں بیک اپ نہیں ہوا۔ خودبخود دوبارہ کوشش ہوگی۔",
   },
   bn:{
     appName:"The Docket", daily:"দৈনিক রুটিন", allTasks:"সব কাজ",
@@ -830,6 +835,7 @@ const T:Record<Lang,Record<string,string>> = {
     didntReceive:"ইমেইল পাননি? স্প্যাম ফোল্ডার দেখুন অথবা", resendIt:"আবার পাঠান",
     legalEnglishNotice:"এই নথিটি ইংরেজিতে সরবরাহ করা হয়েছে। অনুবাদের সাথে কোনো অসঙ্গতি থাকলে ইংরেজি সংস্করণই প্রযোজ্য হবে।",
     vegaLowWarning:"Vega ক্রেডিট ফুরিয়ে আসছে — এই মেয়াদে আপনি আপনার {pct}% ক্রেডিট ব্যবহার করেছেন।",
+    syncBehind:"এই ডিভাইসে সংরক্ষিত, তবে এখনও আপনার অ্যাকাউন্টে ব্যাকআপ হয়নি। স্বয়ংক্রিয়ভাবে আবার চেষ্টা করা হবে।",
   },
   es:{
     appName:"The Docket", daily:"Rutina Diaria", allTasks:"Todas las Tareas",
@@ -952,6 +958,7 @@ const T:Record<Lang,Record<string,string>> = {
     didntReceive:"¿No recibiste el correo? Revisa tu carpeta de spam o", resendIt:"reenvíalo",
     legalEnglishNotice:"Este documento se proporciona en inglés. La versión en inglés prevalecerá en caso de cualquier discrepancia con una traducción.",
     vegaLowWarning:"Créditos Vega casi agotados: has usado el {pct} % de tus créditos este periodo.",
+    syncBehind:"Guardado en este dispositivo, pero aún no en tu cuenta. Se reintentará automáticamente.",
   },
   hi:{
     appName:"The Docket", daily:"दैनिक दिनचर्या", allTasks:"सभी कार्य",
@@ -1074,6 +1081,7 @@ const T:Record<Lang,Record<string,string>> = {
     didntReceive:"ईमेल नहीं मिला? स्पैम फ़ोल्डर देखें या", resendIt:"पुनः भेजें",
     legalEnglishNotice:"यह दस्तावेज़ अंग्रेज़ी में प्रदान किया गया है। किसी भी अनुवाद से भिन्नता की स्थिति में अंग्रेज़ी संस्करण मान्य होगा।",
     vegaLowWarning:"Vega क्रेडिट कम हो रहे हैं — आपने इस अवधि में अपने {pct}% क्रेडिट उपयोग कर लिए हैं।",
+    syncBehind:"इस डिवाइस पर सहेजा गया, लेकिन अभी तक आपके खाते में बैकअप नहीं हुआ। यह अपने आप पुनः प्रयास करेगा।",
   },
   pt:{
     appName:"The Docket", daily:"Rotina Diária", allTasks:"Todas as Tarefas",
@@ -1196,6 +1204,7 @@ const T:Record<Lang,Record<string,string>> = {
     didntReceive:"Não recebeu o e-mail? Verifique o spam ou", resendIt:"reenvie",
     legalEnglishNotice:"Este documento é fornecido em inglês. A versão em inglês prevalece em caso de qualquer divergência com uma tradução.",
     vegaLowWarning:"Créditos Vega quase esgotados — você usou {pct}% dos seus créditos neste período.",
+    syncBehind:"Salvo neste dispositivo, mas ainda não na sua conta. Vai tentar novamente sozinho.",
   },
   ru:{
     appName:"The Docket", daily:"Ежедневный распорядок", allTasks:"Все задачи",
@@ -1318,6 +1327,7 @@ const T:Record<Lang,Record<string,string>> = {
     didntReceive:"Письмо не пришло? Проверьте папку со спамом или", resendIt:"отправьте снова",
     legalEnglishNotice:"Этот документ предоставляется на английском языке. В случае любых расхождений с переводом преимущественную силу имеет английская версия.",
     vegaLowWarning:"Кредиты Vega на исходе — вы использовали {pct}% кредитов за период.",
+    syncBehind:"Сохранено на этом устройстве, но ещё не выгружено в аккаунт. Повтор произойдёт автоматически.",
   },
   zh:{
     appName:"The Docket", daily:"每日例程", allTasks:"全部任务",
@@ -1440,6 +1450,7 @@ const T:Record<Lang,Record<string,string>> = {
     didntReceive:"没收到邮件？请检查垃圾邮件文件夹，或", resendIt:"重新发送",
     legalEnglishNotice:"本文件以英文提供。如译文与英文版本有任何出入，概以英文版本为准。",
     vegaLowWarning:"Vega 额度即将用完 — 本期你已使用 {pct}% 的额度。",
+    syncBehind:"已保存在此设备，但尚未备份到你的账户。稍后会自动重试。",
   },
 };
 
@@ -7216,6 +7227,23 @@ export default function Home(){
   useEffect(()=>{if(isLoaded)localStorage.setItem(STORAGE_ROUTINES,JSON.stringify(routines));},[routines,isLoaded]);
 
   // ── Cloud sync (Supabase) — only for real signed-in accounts, not guests ──
+  // Every cloud write reports through here. Silence is what let the id
+  // collision run for two months: all six call sites discarded the returned
+  // error, so a sync that never landed looked exactly like one that did.
+  //
+  // The flag is deliberately a state, not a log — "this device is ahead of
+  // your account right now" — so a later success clears it without anything
+  // having to remember what failed. The console keeps the detail.
+  const[syncFailed,setSyncFailed]=useState(false);
+  const noteSync=useCallback((table:string,op:string,userId:string,rows:number,error:any)=>{
+    if(error){
+      console.error(`[sync] ${op} on ${table} failed — user ${userId}, ${rows} row(s):`,error);
+      setSyncFailed(true);
+    }else{
+      setSyncFailed(false);
+    }
+  },[]);
+
   const cloudSyncingRef=React.useRef(false); // guard: true while pulling cloud data down, to skip the immediate echo-push back up
   const prevRoutineIdsRef=React.useRef<number[]>([]);
 
@@ -7239,9 +7267,13 @@ export default function Home(){
       }
     }else{
       // First time this account has synced — push whatever's on this device up
-      if(tasks.length>0) await sb.from("tasks").upsert(tasks.map(t=>taskToRow(t,userId)),{onConflict:"user_id,id"});
+      if(tasks.length>0){
+        const{error}=await sb.from("tasks").upsert(tasks.map(t=>taskToRow(t,userId)),{onConflict:"user_id,id"});
+        noteSync("tasks","first-sync upsert",userId,tasks.length,error);
+      }
       if(routines.length>0){
-        await sb.from("routines").upsert(routines.map(r=>routineToRow(r,userId)),{onConflict:"user_id,id"});
+        const{error}=await sb.from("routines").upsert(routines.map(r=>routineToRow(r,userId)),{onConflict:"user_id,id"});
+        noteSync("routines","first-sync upsert",userId,routines.length,error);
         prevRoutineIdsRef.current=routines.map(r=>r.id);
       }
     }
@@ -7293,9 +7325,10 @@ export default function Home(){
     (async()=>{
       const sb=await getSupabaseClient();
       if(!sb||tasks.length===0)return;
-      await sb.from("tasks").upsert(tasks.map(t=>taskToRow(t,uid)),{onConflict:"user_id,id"});
+      const{error}=await sb.from("tasks").upsert(tasks.map(t=>taskToRow(t,uid)),{onConflict:"user_id,id"});
+      noteSync("tasks","upsert",uid,tasks.length,error);
     })();
-  },[tasks,isLoaded,user?.id]);
+  },[tasks,isLoaded,user?.id,noteSync]);
 
   useEffect(()=>{
     if(!isLoaded||!user?.id||cloudSyncingRef.current)return;
@@ -7303,17 +7336,27 @@ export default function Home(){
     (async()=>{
       const sb=await getSupabaseClient();
       if(!sb)return;
-      if(routines.length>0) await sb.from("routines").upsert(routines.map(r=>routineToRow(r,uid)),{onConflict:"user_id,id"});
+      if(routines.length>0){
+        const{error}=await sb.from("routines").upsert(routines.map(r=>routineToRow(r,uid)),{onConflict:"user_id,id"});
+        noteSync("routines","upsert",uid,routines.length,error);
+      }
       const currentIds=routines.map(r=>r.id);
       const removed=prevRoutineIdsRef.current.filter(id=>!currentIds.includes(id));
       // Scoped to the owner rather than leaning on RLS to filter it. Two
       // reasons: ids are only unique per account now, and after the composite
       // key there is no index led by id alone, so an unscoped .in() would fall
       // back to a sequential scan.
-      if(removed.length>0) await sb.from("routines").delete().eq("user_id",uid).in("id",removed);
+      if(removed.length>0){
+        const{error}=await sb.from("routines").delete().eq("user_id",uid).in("id",removed);
+        noteSync("routines","delete",uid,removed.length,error);
+        // Only advance the baseline once the delete actually landed. Moving it
+        // regardless would forget which ids still need removing, and they would
+        // never be retried.
+        if(error)return;
+      }
       prevRoutineIdsRef.current=currentIds;
     })();
-  },[routines,isLoaded,user?.id]);
+  },[routines,isLoaded,user?.id,noteSync]);
 
   // Set only when the *stored* setting was already on, so the mount refresh
   // below never double-fires alongside a manual toggle (which does its own
@@ -7495,7 +7538,7 @@ export default function Home(){
         if(sb){
           // Owner-scoped for the same reason as the routines delete above.
           const{error}=await sb.from("tasks").delete().eq("user_id",user.id).in("id",archivedIds);
-          if(error) console.error("Failed to delete archived tasks from Supabase:",error);
+          noteSync("tasks","delete (clear archive)",user.id,archivedIds.length,error);
         }
       }
     }finally{
@@ -8023,6 +8066,21 @@ export default function Home(){
               </div>
               <i className="ti ti-chevron-right" style={{fontSize:15,flexShrink:0,color:C.muted2}} aria-hidden="true"/>
             </button>
+
+            {/* Sync state, not a sync error. Deliberately a passive row here
+                rather than a toast: the two sync effects fire on every task and
+                routine change, so a per-failure notification would storm the
+                moment anyone goes offline, and it is not something the user can
+                act on. Nothing is lost when it shows — the work is in local
+                storage and the next edit retries — so the wording says "not
+                backed up yet", not "failed to save". */}
+            {syncFailed&&(<>
+              <div style={{height:1,background:C.border}}/>
+              <div style={{...cardRowStyle,cursor:"default",alignItems:"flex-start"}}>
+                <i className="ti ti-cloud-off" style={{...cardIconStyle,color:C.urgent,marginTop:2}} aria-hidden="true"/>
+                <span style={{flex:1,fontSize:11,lineHeight:1.45,color:C.muted}}>{t("syncBehind")}</span>
+              </div>
+            </>)}
 
             <div style={{height:1,background:C.border}}/>
             <button onClick={()=>cardGoToView("archive")} style={cardRowStyle}>
