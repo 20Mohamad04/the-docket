@@ -221,6 +221,7 @@ const T:Record<Lang,Record<string,string>> = {
     legalEnglishNotice:"This document is provided in English. The English version governs in the event of any discrepancy with a translation.",
     vegaLowWarning:"Vega running low — you've used {pct}% of your credits this period.",
     syncBehind:"Saved on this device, but not yet backed up to your account. This will retry on its own.",
+    allCategories:"All Categories",
   },
   ar:{
     appName:"الدفتر", daily:"الروتين اليومي", allTasks:"جميع المهام",
@@ -344,6 +345,7 @@ const T:Record<Lang,Record<string,string>> = {
     legalEnglishNotice:"هذا المستند متوفر باللغة الإنجليزية. النسخة الإنجليزية هي المعتمدة في حال وجود أي اختلاف مع أي ترجمة.",
     vegaLowWarning:"رصيد Vega على وشك النفاد — استخدمت {pct}٪ من رصيدك هذه الفترة.",
     syncBehind:"محفوظ على هذا الجهاز، لكن لم يُنسخ إلى حسابك بعد. ستتم إعادة المحاولة تلقائيًا.",
+    allCategories:"جميع الفئات",
   },
   fr:{
     appName:"The Docket", daily:"Routine Quotidienne", allTasks:"Toutes les Tâches",
@@ -467,6 +469,7 @@ const T:Record<Lang,Record<string,string>> = {
     legalEnglishNotice:"Ce document est fourni en anglais. La version anglaise prévaut en cas de divergence avec une traduction.",
     vegaLowWarning:"Crédits Vega bientôt épuisés — vous avez utilisé {pct} % de vos crédits cette période.",
     syncBehind:"Enregistré sur cet appareil, mais pas encore sauvegardé sur votre compte. Une nouvelle tentative aura lieu automatiquement.",
+    allCategories:"Toutes les catégories",
   },
   tr:{
     appName:"The Docket", daily:"Günlük Rutin", allTasks:"Tüm Görevler",
@@ -590,6 +593,7 @@ const T:Record<Lang,Record<string,string>> = {
     legalEnglishNotice:"Bu belge İngilizce olarak sunulmaktadır. Çeviriyle herhangi bir tutarsızlık olması hâlinde İngilizce sürüm geçerlidir.",
     vegaLowWarning:"Vega krediniz azalıyor — bu dönemde kredinizin %{pct}'ini kullandınız.",
     syncBehind:"Bu cihaza kaydedildi, ancak henüz hesabınıza yedeklenmedi. Otomatik olarak yeniden denenecek.",
+    allCategories:"Tüm Kategoriler",
   },
   ur:{
     appName:"The Docket", daily:"روزانہ معمول", allTasks:"تمام کام",
@@ -713,6 +717,7 @@ const T:Record<Lang,Record<string,string>> = {
     legalEnglishNotice:"یہ دستاویز انگریزی میں فراہم کی گئی ہے۔ کسی بھی ترجمے سے اختلاف کی صورت میں انگریزی نسخہ ہی معتبر ہوگا۔",
     vegaLowWarning:"Vega کریڈٹ کم ہو رہے ہیں — آپ نے اس مدت میں اپنے {pct}٪ کریڈٹ استعمال کر لیے ہیں۔",
     syncBehind:"اس ڈیوائس پر محفوظ ہے، مگر ابھی آپ کے اکاؤنٹ میں بیک اپ نہیں ہوا۔ خودبخود دوبارہ کوشش ہوگی۔",
+    allCategories:"تمام زمرے",
   },
   bn:{
     appName:"The Docket", daily:"দৈনিক রুটিন", allTasks:"সব কাজ",
@@ -836,6 +841,7 @@ const T:Record<Lang,Record<string,string>> = {
     legalEnglishNotice:"এই নথিটি ইংরেজিতে সরবরাহ করা হয়েছে। অনুবাদের সাথে কোনো অসঙ্গতি থাকলে ইংরেজি সংস্করণই প্রযোজ্য হবে।",
     vegaLowWarning:"Vega ক্রেডিট ফুরিয়ে আসছে — এই মেয়াদে আপনি আপনার {pct}% ক্রেডিট ব্যবহার করেছেন।",
     syncBehind:"এই ডিভাইসে সংরক্ষিত, তবে এখনও আপনার অ্যাকাউন্টে ব্যাকআপ হয়নি। স্বয়ংক্রিয়ভাবে আবার চেষ্টা করা হবে।",
+    allCategories:"সব বিভাগ",
   },
   es:{
     appName:"The Docket", daily:"Rutina Diaria", allTasks:"Todas las Tareas",
@@ -959,6 +965,7 @@ const T:Record<Lang,Record<string,string>> = {
     legalEnglishNotice:"Este documento se proporciona en inglés. La versión en inglés prevalecerá en caso de cualquier discrepancia con una traducción.",
     vegaLowWarning:"Créditos Vega casi agotados: has usado el {pct} % de tus créditos este periodo.",
     syncBehind:"Guardado en este dispositivo, pero aún no en tu cuenta. Se reintentará automáticamente.",
+    allCategories:"Todas las categorías",
   },
   hi:{
     appName:"The Docket", daily:"दैनिक दिनचर्या", allTasks:"सभी कार्य",
@@ -1082,6 +1089,7 @@ const T:Record<Lang,Record<string,string>> = {
     legalEnglishNotice:"यह दस्तावेज़ अंग्रेज़ी में प्रदान किया गया है। किसी भी अनुवाद से भिन्नता की स्थिति में अंग्रेज़ी संस्करण मान्य होगा।",
     vegaLowWarning:"Vega क्रेडिट कम हो रहे हैं — आपने इस अवधि में अपने {pct}% क्रेडिट उपयोग कर लिए हैं।",
     syncBehind:"इस डिवाइस पर सहेजा गया, लेकिन अभी तक आपके खाते में बैकअप नहीं हुआ। यह अपने आप पुनः प्रयास करेगा।",
+    allCategories:"सभी श्रेणियाँ",
   },
   pt:{
     appName:"The Docket", daily:"Rotina Diária", allTasks:"Todas as Tarefas",
@@ -1205,6 +1213,7 @@ const T:Record<Lang,Record<string,string>> = {
     legalEnglishNotice:"Este documento é fornecido em inglês. A versão em inglês prevalece em caso de qualquer divergência com uma tradução.",
     vegaLowWarning:"Créditos Vega quase esgotados — você usou {pct}% dos seus créditos neste período.",
     syncBehind:"Salvo neste dispositivo, mas ainda não na sua conta. Vai tentar novamente sozinho.",
+    allCategories:"Todas as categorias",
   },
   ru:{
     appName:"The Docket", daily:"Ежедневный распорядок", allTasks:"Все задачи",
@@ -1328,6 +1337,7 @@ const T:Record<Lang,Record<string,string>> = {
     legalEnglishNotice:"Этот документ предоставляется на английском языке. В случае любых расхождений с переводом преимущественную силу имеет английская версия.",
     vegaLowWarning:"Кредиты Vega на исходе — вы использовали {pct}% кредитов за период.",
     syncBehind:"Сохранено на этом устройстве, но ещё не выгружено в аккаунт. Повтор произойдёт автоматически.",
+    allCategories:"Все категории",
   },
   zh:{
     appName:"The Docket", daily:"每日例程", allTasks:"全部任务",
@@ -1451,6 +1461,7 @@ const T:Record<Lang,Record<string,string>> = {
     legalEnglishNotice:"本文件以英文提供。如译文与英文版本有任何出入，概以英文版本为准。",
     vegaLowWarning:"Vega 额度即将用完 — 本期你已使用 {pct}% 的额度。",
     syncBehind:"已保存在此设备，但尚未备份到你的账户。稍后会自动重试。",
+    allCategories:"全部分类",
   },
 };
 
@@ -4574,11 +4585,22 @@ function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFil
   const open=tasks.filter(t=>!t.done&&!t.deleted);
   const archived=tasks.filter(t=>t.done||t.deleted);
   const catEntries=Object.entries(CATS);
+  const[catMenuOpen,setCatMenuOpen]=useState(false);
+  // `filter` is a single value covering both sections — "all"/"ongoing"/
+  // "milestone"/"done" or one of the 59 categories — so there is no separate
+  // "no category" state to read. The trigger derives its label instead: a
+  // category name when one is selected, "All Categories" otherwise. Picking a
+  // category therefore deselects whatever was active in Show above, which is
+  // simply true of a single-filter model rather than something to paper over.
+  const activeCat=catEntries.some(([k])=>k===filter)?filter as string:null;
 
   function Btn({f,label,count}:{f:Filter;label:string;count:number}){
     const active=filter===f;
     return(
-      <button onClick={()=>setFilter(f)} style={{width:"100%",display:"flex",
+      // Collapsing on select is harmless for the Show rows, which are never
+      // inside the dropdown, so the behaviour lives here rather than in two
+      // separate handlers.
+      <button onClick={()=>{setFilter(f);setCatMenuOpen(false);}} style={{width:"100%",display:"flex",
         justifyContent:"space-between",alignItems:"center",
         padding:"10px 12px",borderRadius:10,fontSize:13.5,fontWeight:600,
         border:"none",cursor:"pointer",
@@ -4601,13 +4623,49 @@ function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFil
       <div style={{height:1,background:C.border,margin:"6px 4px"}}/>
       <p style={{fontSize:10,fontWeight:700,letterSpacing:1.5,color:C.muted2,
         textTransform:"uppercase",padding:"6px 10px 6px"}}>{t("category")}</p>
-      <div style={{maxHeight:260,overflowY:"auto",paddingRight:2}}>
-        {/* Only the key is needed now — the label comes from catLabel, not
-            from the CATS entry's English text. */}
-        {catEntries.map(([k])=>(
-          <Btn key={k} f={k as Filter} label={catLabel(k,t)} count={open.filter(x=>x.category===k).length}/>
-        ))}
-      </div>
+      {/* Expands in flow rather than floating. Not for the avatar card's
+          reason — nothing here clips — but because this column is 200px wide
+          on desktop, too narrow for 59 labelled counts, and a popover would
+          have to overflow it onto the task list. Below 640px the grid
+          collapses and the sidebar sits directly above those tasks, where a
+          floating panel would cover them and an in-flow one just pushes them
+          down. */}
+      <button onClick={()=>setCatMenuOpen(o=>!o)} aria-expanded={catMenuOpen}
+        style={{width:"100%",display:"flex",justifyContent:"space-between",
+          alignItems:"center",gap:8,
+          padding:"10px 12px",borderRadius:10,fontSize:13.5,fontWeight:600,
+          border:"none",cursor:"pointer",
+          // Carries the same active treatment as the Btn rows, so a category
+          // filter still reads as on at a glance once the list is collapsed.
+          background:activeCat?"linear-gradient(135deg,#4C5FD5 0%,#2A3699 100%)":"transparent",
+          color:activeCat?"white":C.muted,marginBottom:3,
+          boxShadow:activeCat?"0 4px 14px rgba(76,95,213,0.4)":"none",
+          fontFamily:"inherit",textAlign:"start"}}>
+        <span style={{flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+          {activeCat?catLabel(activeCat,t):t("allCategories")}
+        </span>
+        <i className="ti ti-chevron-down" aria-hidden="true"
+          style={{fontSize:14,flexShrink:0,
+            transform:catMenuOpen?"rotate(180deg)":"rotate(0deg)",
+            transition:"transform 0.2s ease"}}/>
+      </button>
+      {catMenuOpen&&(
+        // Same cap and scroll the flat list had — 59 entries needs it.
+        <div role="listbox" aria-label={t("category")}
+          style={{maxHeight:260,overflowY:"auto",marginBottom:3,
+            background:dark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.025)",
+            borderRadius:10,padding:"4px 4px 1px"}}>
+          {/* The way back out. Without it, choosing a category leaves the
+              dropdown with no option that clears it. "all" is the same value
+              the Show section's All Open button uses — one filter, one value. */}
+          <Btn f="all" label={t("allCategories")} count={open.length}/>
+          {/* Only the key is needed now — the label comes from catLabel, not
+              from the CATS entry's English text. */}
+          {catEntries.map(([k])=>(
+            <Btn key={k} f={k as Filter} label={catLabel(k,t)} count={open.filter(x=>x.category===k).length}/>
+          ))}
+        </div>
+      )}
       <div style={{height:1,background:C.border,margin:"6px 4px"}}/>
     </div>
   );
