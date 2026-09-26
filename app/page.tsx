@@ -185,10 +185,10 @@ const T:Record<Lang,Record<string,string>> = {
     subscription:"Subscription", widgetsShortcuts:"Widgets & Shortcuts",
     siriShortcuts:"Siri & Shortcuts", helpFeedback:"Help & Feedback",
     privacyPermissions:"Privacy & Permissions", termsConditions:"Terms & Conditions",
-    signOut:"Sign out", switchToLight:"Switch to light mode", switchToDark:"Switch to dark mode",
+    switchToLight:"Switch to light mode", switchToDark:"Switch to dark mode",
     account:"Account", displayName:"Display Name", saveLabel:"Save", email:"Email",
     emailChangeNote:"Email changes require re-verification. Contact support to update.",
-    marketingOptIn:"Email me about product updates and tips",
+    marketingOptIn:"Product updates and tips",
     plan:"Plan", freePlan:"Free Plan", renewsOn:"Renews {date}",
     activeSubscription:"Active subscription",
     upgradeBlurb:"Upgrade for unlimited Nova, Vega credits and more",
@@ -222,6 +222,11 @@ const T:Record<Lang,Record<string,string>> = {
     vegaLowWarning:"Vega running low — you've used {pct}% of your credits this period.",
     syncBehind:"Saved on this device, but not yet backed up to your account. This will retry on its own.",
     allCategories:"All Categories",
+    deleteAccount:"Delete Account",
+    deleteAccountWarn:"This permanently deletes your account, every task, routine and conversation, and cancels any active subscription. It cannot be undone.",
+    deleteAccountConfirm:"Type {email} to confirm",
+    deleteAccountCta:"Permanently delete my account",
+    deleting:"Deleting…", cancel2:"Cancel",
   },
   ar:{
     appName:"الدفتر", daily:"الروتين اليومي", allTasks:"جميع المهام",
@@ -309,10 +314,10 @@ const T:Record<Lang,Record<string,string>> = {
     subscription:"الاشتراك", widgetsShortcuts:"الأدوات والاختصارات",
     siriShortcuts:"سيري والاختصارات", helpFeedback:"المساعدة والملاحظات",
     privacyPermissions:"الخصوصية والأذونات", termsConditions:"الشروط والأحكام",
-    signOut:"تسجيل الخروج", switchToLight:"التبديل إلى الوضع الفاتح", switchToDark:"التبديل إلى الوضع الداكن",
+    switchToLight:"التبديل إلى الوضع الفاتح", switchToDark:"التبديل إلى الوضع الداكن",
     account:"الحساب", displayName:"الاسم المعروض", saveLabel:"حفظ", email:"البريد الإلكتروني",
     emailChangeNote:"تغيير البريد الإلكتروني يتطلب إعادة تحقق. تواصل مع الدعم للتحديث.",
-    marketingOptIn:"أرسل لي تحديثات المنتج والنصائح",
+    marketingOptIn:"تحديثات المنتج والنصائح",
     plan:"الخطة", freePlan:"الخطة المجانية", renewsOn:"يتجدد في {date}",
     activeSubscription:"اشتراك نشط",
     upgradeBlurb:"قم بالترقية للحصول على Nova غير محدود ورصيد Vega والمزيد",
@@ -346,6 +351,11 @@ const T:Record<Lang,Record<string,string>> = {
     vegaLowWarning:"رصيد Vega على وشك النفاد — استخدمت {pct}٪ من رصيدك هذه الفترة.",
     syncBehind:"محفوظ على هذا الجهاز، لكن لم يُنسخ إلى حسابك بعد. ستتم إعادة المحاولة تلقائيًا.",
     allCategories:"جميع الفئات",
+    deleteAccount:"حذف الحساب",
+    deleteAccountWarn:"سيؤدي هذا إلى حذف حسابك وجميع المهام والروتينات والمحادثات نهائيًا، وإلغاء أي اشتراك نشط. لا يمكن التراجع عن ذلك.",
+    deleteAccountConfirm:"اكتب {email} للتأكيد",
+    deleteAccountCta:"احذف حسابي نهائيًا",
+    deleting:"جاري الحذف…", cancel2:"إلغاء",
   },
   fr:{
     appName:"The Docket", daily:"Routine Quotidienne", allTasks:"Toutes les Tâches",
@@ -433,10 +443,10 @@ const T:Record<Lang,Record<string,string>> = {
     subscription:"Abonnement", widgetsShortcuts:"Widgets et raccourcis",
     siriShortcuts:"Siri et raccourcis", helpFeedback:"Aide et commentaires",
     privacyPermissions:"Confidentialité et autorisations", termsConditions:"Conditions générales",
-    signOut:"Se déconnecter", switchToLight:"Passer au mode clair", switchToDark:"Passer au mode sombre",
+    switchToLight:"Passer au mode clair", switchToDark:"Passer au mode sombre",
     account:"Compte", displayName:"Nom affiché", saveLabel:"Enregistrer", email:"E-mail",
     emailChangeNote:"Changer d'e-mail nécessite une nouvelle vérification. Contactez le support.",
-    marketingOptIn:"M'envoyer les nouveautés et conseils par e-mail",
+    marketingOptIn:"Nouveautés et conseils",
     plan:"Formule", freePlan:"Formule gratuite", renewsOn:"Renouvellement le {date}",
     activeSubscription:"Abonnement actif",
     upgradeBlurb:"Passez à la version supérieure pour Nova illimité, des crédits Vega et plus",
@@ -470,6 +480,11 @@ const T:Record<Lang,Record<string,string>> = {
     vegaLowWarning:"Crédits Vega bientôt épuisés — vous avez utilisé {pct} % de vos crédits cette période.",
     syncBehind:"Enregistré sur cet appareil, mais pas encore sauvegardé sur votre compte. Une nouvelle tentative aura lieu automatiquement.",
     allCategories:"Toutes les catégories",
+    deleteAccount:"Supprimer le compte",
+    deleteAccountWarn:"Cela supprime définitivement votre compte, toutes vos tâches, routines et conversations, et annule tout abonnement actif. C'est irréversible.",
+    deleteAccountConfirm:"Saisissez {email} pour confirmer",
+    deleteAccountCta:"Supprimer définitivement mon compte",
+    deleting:"Suppression…", cancel2:"Annuler",
   },
   tr:{
     appName:"The Docket", daily:"Günlük Rutin", allTasks:"Tüm Görevler",
@@ -557,10 +572,10 @@ const T:Record<Lang,Record<string,string>> = {
     subscription:"Abonelik", widgetsShortcuts:"Widget'lar ve Kısayollar",
     siriShortcuts:"Siri ve Kısayollar", helpFeedback:"Yardım ve Geri Bildirim",
     privacyPermissions:"Gizlilik ve İzinler", termsConditions:"Şartlar ve Koşullar",
-    signOut:"Çıkış yap", switchToLight:"Açık moda geç", switchToDark:"Koyu moda geç",
+    switchToLight:"Açık moda geç", switchToDark:"Koyu moda geç",
     account:"Hesap", displayName:"Görünen Ad", saveLabel:"Kaydet", email:"E-posta",
     emailChangeNote:"E-posta değişikliği yeniden doğrulama gerektirir. Güncellemek için destekle iletişime geçin.",
-    marketingOptIn:"Ürün güncellemeleri ve ipuçlarını e-posta ile gönder",
+    marketingOptIn:"Ürün güncellemeleri ve ipuçları",
     plan:"Plan", freePlan:"Ücretsiz Plan", renewsOn:"{date} tarihinde yenilenir",
     activeSubscription:"Etkin abonelik",
     upgradeBlurb:"Sınırsız Nova, Vega kredileri ve daha fazlası için yükseltin",
@@ -594,6 +609,11 @@ const T:Record<Lang,Record<string,string>> = {
     vegaLowWarning:"Vega krediniz azalıyor — bu dönemde kredinizin %{pct}'ini kullandınız.",
     syncBehind:"Bu cihaza kaydedildi, ancak henüz hesabınıza yedeklenmedi. Otomatik olarak yeniden denenecek.",
     allCategories:"Tüm Kategoriler",
+    deleteAccount:"Hesabı Sil",
+    deleteAccountWarn:"Bu işlem hesabınızı, tüm görevlerinizi, rutinlerinizi ve sohbetlerinizi kalıcı olarak siler ve etkin aboneliği iptal eder. Geri alınamaz.",
+    deleteAccountConfirm:"Onaylamak için {email} yazın",
+    deleteAccountCta:"Hesabımı kalıcı olarak sil",
+    deleting:"Siliniyor…", cancel2:"İptal",
   },
   ur:{
     appName:"The Docket", daily:"روزانہ معمول", allTasks:"تمام کام",
@@ -681,10 +701,10 @@ const T:Record<Lang,Record<string,string>> = {
     subscription:"سبسکرپشن", widgetsShortcuts:"ویجٹس اور شارٹ کٹس",
     siriShortcuts:"سری اور شارٹ کٹس", helpFeedback:"مدد اور رائے",
     privacyPermissions:"رازداری اور اجازتیں", termsConditions:"شرائط و ضوابط",
-    signOut:"سائن آؤٹ", switchToLight:"روشن موڈ پر جائیں", switchToDark:"تاریک موڈ پر جائیں",
+    switchToLight:"روشن موڈ پر جائیں", switchToDark:"تاریک موڈ پر جائیں",
     account:"اکاؤنٹ", displayName:"ظاہر ہونے والا نام", saveLabel:"محفوظ کریں", email:"ای میل",
     emailChangeNote:"ای میل کی تبدیلی کے لیے دوبارہ تصدیق ضروری ہے۔ اپ ڈیٹ کے لیے سپورٹ سے رابطہ کریں۔",
-    marketingOptIn:"مجھے پروڈکٹ اپ ڈیٹس اور مشورے ای میل کریں",
+    marketingOptIn:"پروڈکٹ اپ ڈیٹس اور مشورے",
     plan:"پلان", freePlan:"مفت پلان", renewsOn:"{date} کو تجدید ہوگی",
     activeSubscription:"فعال سبسکرپشن",
     upgradeBlurb:"لامحدود Nova، Vega کریڈٹ اور مزید کے لیے اپ گریڈ کریں",
@@ -718,6 +738,11 @@ const T:Record<Lang,Record<string,string>> = {
     vegaLowWarning:"Vega کریڈٹ کم ہو رہے ہیں — آپ نے اس مدت میں اپنے {pct}٪ کریڈٹ استعمال کر لیے ہیں۔",
     syncBehind:"اس ڈیوائس پر محفوظ ہے، مگر ابھی آپ کے اکاؤنٹ میں بیک اپ نہیں ہوا۔ خودبخود دوبارہ کوشش ہوگی۔",
     allCategories:"تمام زمرے",
+    deleteAccount:"اکاؤنٹ حذف کریں",
+    deleteAccountWarn:"یہ آپ کا اکاؤنٹ، تمام کام، معمولات اور گفتگو مستقل طور پر حذف کر دے گا اور فعال سبسکرپشن منسوخ کر دے گا۔ اسے واپس نہیں کیا جا سکتا۔",
+    deleteAccountConfirm:"تصدیق کے لیے {email} لکھیں",
+    deleteAccountCta:"میرا اکاؤنٹ مستقل طور پر حذف کریں",
+    deleting:"حذف ہو رہا ہے…", cancel2:"منسوخ",
   },
   bn:{
     appName:"The Docket", daily:"দৈনিক রুটিন", allTasks:"সব কাজ",
@@ -805,10 +830,10 @@ const T:Record<Lang,Record<string,string>> = {
     subscription:"সাবস্ক্রিপশন", widgetsShortcuts:"উইজেট ও শর্টকাট",
     siriShortcuts:"সিরি ও শর্টকাট", helpFeedback:"সহায়তা ও মতামত",
     privacyPermissions:"গোপনীয়তা ও অনুমতি", termsConditions:"শর্তাবলি",
-    signOut:"সাইন আউট", switchToLight:"হালকা মোডে যান", switchToDark:"ডার্ক মোডে যান",
+    switchToLight:"হালকা মোডে যান", switchToDark:"ডার্ক মোডে যান",
     account:"অ্যাকাউন্ট", displayName:"প্রদর্শিত নাম", saveLabel:"সংরক্ষণ", email:"ইমেইল",
     emailChangeNote:"ইমেইল পরিবর্তনে পুনরায় যাচাই প্রয়োজন। হালনাগাদ করতে সহায়তায় যোগাযোগ করুন।",
-    marketingOptIn:"পণ্যের হালনাগাদ ও পরামর্শ ইমেইলে পাঠান",
+    marketingOptIn:"পণ্যের হালনাগাদ ও পরামর্শ",
     plan:"প্ল্যান", freePlan:"ফ্রি প্ল্যান", renewsOn:"{date} তারিখে নবায়ন হবে",
     activeSubscription:"সক্রিয় সাবস্ক্রিপশন",
     upgradeBlurb:"সীমাহীন Nova, Vega ক্রেডিট ও আরও কিছুর জন্য আপগ্রেড করুন",
@@ -842,6 +867,11 @@ const T:Record<Lang,Record<string,string>> = {
     vegaLowWarning:"Vega ক্রেডিট ফুরিয়ে আসছে — এই মেয়াদে আপনি আপনার {pct}% ক্রেডিট ব্যবহার করেছেন।",
     syncBehind:"এই ডিভাইসে সংরক্ষিত, তবে এখনও আপনার অ্যাকাউন্টে ব্যাকআপ হয়নি। স্বয়ংক্রিয়ভাবে আবার চেষ্টা করা হবে।",
     allCategories:"সব বিভাগ",
+    deleteAccount:"অ্যাকাউন্ট মুছুন",
+    deleteAccountWarn:"এটি আপনার অ্যাকাউন্ট, সমস্ত কাজ, রুটিন ও কথোপকথন স্থায়ীভাবে মুছে দেবে এবং সক্রিয় সাবস্ক্রিপশন বাতিল করবে। এটি ফেরানো যাবে না।",
+    deleteAccountConfirm:"নিশ্চিত করতে {email} লিখুন",
+    deleteAccountCta:"আমার অ্যাকাউন্ট স্থায়ীভাবে মুছুন",
+    deleting:"মুছে ফেলা হচ্ছে…", cancel2:"বাতিল",
   },
   es:{
     appName:"The Docket", daily:"Rutina Diaria", allTasks:"Todas las Tareas",
@@ -929,10 +959,10 @@ const T:Record<Lang,Record<string,string>> = {
     subscription:"Suscripción", widgetsShortcuts:"Widgets y accesos directos",
     siriShortcuts:"Siri y accesos directos", helpFeedback:"Ayuda y comentarios",
     privacyPermissions:"Privacidad y permisos", termsConditions:"Términos y Condiciones",
-    signOut:"Cerrar sesión", switchToLight:"Cambiar a modo claro", switchToDark:"Cambiar a modo oscuro",
+    switchToLight:"Cambiar a modo claro", switchToDark:"Cambiar a modo oscuro",
     account:"Cuenta", displayName:"Nombre visible", saveLabel:"Guardar", email:"Correo electrónico",
     emailChangeNote:"Cambiar el correo requiere volver a verificarlo. Contacta con soporte para actualizarlo.",
-    marketingOptIn:"Enviarme novedades y consejos por correo",
+    marketingOptIn:"Novedades y consejos",
     plan:"Plan", freePlan:"Plan gratuito", renewsOn:"Se renueva el {date}",
     activeSubscription:"Suscripción activa",
     upgradeBlurb:"Mejora tu plan para Nova ilimitado, créditos Vega y más",
@@ -966,6 +996,11 @@ const T:Record<Lang,Record<string,string>> = {
     vegaLowWarning:"Créditos Vega casi agotados: has usado el {pct} % de tus créditos este periodo.",
     syncBehind:"Guardado en este dispositivo, pero aún no en tu cuenta. Se reintentará automáticamente.",
     allCategories:"Todas las categorías",
+    deleteAccount:"Eliminar cuenta",
+    deleteAccountWarn:"Esto elimina permanentemente tu cuenta, todas tus tareas, rutinas y conversaciones, y cancela cualquier suscripción activa. No se puede deshacer.",
+    deleteAccountConfirm:"Escribe {email} para confirmar",
+    deleteAccountCta:"Eliminar mi cuenta permanentemente",
+    deleting:"Eliminando…", cancel2:"Cancelar",
   },
   hi:{
     appName:"The Docket", daily:"दैनिक दिनचर्या", allTasks:"सभी कार्य",
@@ -1053,10 +1088,10 @@ const T:Record<Lang,Record<string,string>> = {
     subscription:"सदस्यता", widgetsShortcuts:"विजेट और शॉर्टकट",
     siriShortcuts:"सिरी और शॉर्टकट", helpFeedback:"सहायता और प्रतिक्रिया",
     privacyPermissions:"गोपनीयता और अनुमतियाँ", termsConditions:"नियम और शर्तें",
-    signOut:"साइन आउट", switchToLight:"लाइट मोड पर जाएँ", switchToDark:"डार्क मोड पर जाएँ",
+    switchToLight:"लाइट मोड पर जाएँ", switchToDark:"डार्क मोड पर जाएँ",
     account:"खाता", displayName:"प्रदर्शित नाम", saveLabel:"सहेजें", email:"ईमेल",
     emailChangeNote:"ईमेल बदलने पर पुनः सत्यापन आवश्यक है। अपडेट के लिए सहायता से संपर्क करें।",
-    marketingOptIn:"मुझे उत्पाद अपडेट और सुझाव ईमेल करें",
+    marketingOptIn:"उत्पाद अपडेट और सुझाव",
     plan:"योजना", freePlan:"निःशुल्क योजना", renewsOn:"{date} को नवीनीकरण",
     activeSubscription:"सक्रिय सदस्यता",
     upgradeBlurb:"असीमित Nova, Vega क्रेडिट और अधिक के लिए अपग्रेड करें",
@@ -1090,6 +1125,11 @@ const T:Record<Lang,Record<string,string>> = {
     vegaLowWarning:"Vega क्रेडिट कम हो रहे हैं — आपने इस अवधि में अपने {pct}% क्रेडिट उपयोग कर लिए हैं।",
     syncBehind:"इस डिवाइस पर सहेजा गया, लेकिन अभी तक आपके खाते में बैकअप नहीं हुआ। यह अपने आप पुनः प्रयास करेगा।",
     allCategories:"सभी श्रेणियाँ",
+    deleteAccount:"खाता हटाएँ",
+    deleteAccountWarn:"इससे आपका खाता, सभी कार्य, दिनचर्याएँ और बातचीत स्थायी रूप से हट जाएँगी और कोई भी सक्रिय सदस्यता रद्द हो जाएगी। इसे पूर्ववत नहीं किया जा सकता।",
+    deleteAccountConfirm:"पुष्टि के लिए {email} लिखें",
+    deleteAccountCta:"मेरा खाता स्थायी रूप से हटाएँ",
+    deleting:"हटाया जा रहा है…", cancel2:"रद्द करें",
   },
   pt:{
     appName:"The Docket", daily:"Rotina Diária", allTasks:"Todas as Tarefas",
@@ -1177,10 +1217,10 @@ const T:Record<Lang,Record<string,string>> = {
     subscription:"Assinatura", widgetsShortcuts:"Widgets e atalhos",
     siriShortcuts:"Siri e atalhos", helpFeedback:"Ajuda e comentários",
     privacyPermissions:"Privacidade e permissões", termsConditions:"Termos e Condições",
-    signOut:"Sair", switchToLight:"Mudar para o modo claro", switchToDark:"Mudar para o modo escuro",
+    switchToLight:"Mudar para o modo claro", switchToDark:"Mudar para o modo escuro",
     account:"Conta", displayName:"Nome de exibição", saveLabel:"Salvar", email:"E-mail",
     emailChangeNote:"Alterar o e-mail exige nova verificação. Fale com o suporte para atualizar.",
-    marketingOptIn:"Enviar novidades e dicas por e-mail",
+    marketingOptIn:"Novidades e dicas",
     plan:"Plano", freePlan:"Plano gratuito", renewsOn:"Renova em {date}",
     activeSubscription:"Assinatura ativa",
     upgradeBlurb:"Faça upgrade para Nova ilimitado, créditos Vega e mais",
@@ -1214,6 +1254,11 @@ const T:Record<Lang,Record<string,string>> = {
     vegaLowWarning:"Créditos Vega quase esgotados — você usou {pct}% dos seus créditos neste período.",
     syncBehind:"Salvo neste dispositivo, mas ainda não na sua conta. Vai tentar novamente sozinho.",
     allCategories:"Todas as categorias",
+    deleteAccount:"Excluir conta",
+    deleteAccountWarn:"Isto exclui permanentemente sua conta, todas as tarefas, rotinas e conversas, e cancela qualquer assinatura ativa. Não pode ser desfeito.",
+    deleteAccountConfirm:"Digite {email} para confirmar",
+    deleteAccountCta:"Excluir minha conta permanentemente",
+    deleting:"Excluindo…", cancel2:"Cancelar",
   },
   ru:{
     appName:"The Docket", daily:"Ежедневный распорядок", allTasks:"Все задачи",
@@ -1301,10 +1346,10 @@ const T:Record<Lang,Record<string,string>> = {
     subscription:"Подписка", widgetsShortcuts:"Виджеты и быстрые команды",
     siriShortcuts:"Siri и быстрые команды", helpFeedback:"Помощь и отзывы",
     privacyPermissions:"Конфиденциальность и разрешения", termsConditions:"Условия использования",
-    signOut:"Выйти", switchToLight:"Переключить на светлую тему", switchToDark:"Переключить на тёмную тему",
+    switchToLight:"Переключить на светлую тему", switchToDark:"Переключить на тёмную тему",
     account:"Аккаунт", displayName:"Отображаемое имя", saveLabel:"Сохранить", email:"Эл. почта",
     emailChangeNote:"Смена почты требует повторного подтверждения. Обратитесь в поддержку.",
-    marketingOptIn:"Присылать новости о продукте и советы",
+    marketingOptIn:"Новости о продукте и советы",
     plan:"Тариф", freePlan:"Бесплатный тариф", renewsOn:"Продление {date}",
     activeSubscription:"Активная подписка",
     upgradeBlurb:"Перейдите на платный тариф: безлимитный Nova, кредиты Vega и не только",
@@ -1338,6 +1383,11 @@ const T:Record<Lang,Record<string,string>> = {
     vegaLowWarning:"Кредиты Vega на исходе — вы использовали {pct}% кредитов за период.",
     syncBehind:"Сохранено на этом устройстве, но ещё не выгружено в аккаунт. Повтор произойдёт автоматически.",
     allCategories:"Все категории",
+    deleteAccount:"Удалить аккаунт",
+    deleteAccountWarn:"Это безвозвратно удалит аккаунт, все задачи, распорядки и беседы, а также отменит активную подписку. Отменить это нельзя.",
+    deleteAccountConfirm:"Введите {email} для подтверждения",
+    deleteAccountCta:"Удалить мой аккаунт навсегда",
+    deleting:"Удаление…", cancel2:"Отмена",
   },
   zh:{
     appName:"The Docket", daily:"每日例程", allTasks:"全部任务",
@@ -1425,10 +1475,10 @@ const T:Record<Lang,Record<string,string>> = {
     subscription:"订阅", widgetsShortcuts:"小组件与快捷指令",
     siriShortcuts:"Siri 与快捷指令", helpFeedback:"帮助与反馈",
     privacyPermissions:"隐私与权限", termsConditions:"条款与条件",
-    signOut:"退出登录", switchToLight:"切换到浅色模式", switchToDark:"切换到深色模式",
+    switchToLight:"切换到浅色模式", switchToDark:"切换到深色模式",
     account:"账户", displayName:"显示名称", saveLabel:"保存", email:"电子邮件",
     emailChangeNote:"更改电子邮件需要重新验证。如需更新请联系支持。",
-    marketingOptIn:"通过邮件接收产品更新与使用技巧",
+    marketingOptIn:"产品更新与使用技巧",
     plan:"方案", freePlan:"免费方案", renewsOn:"{date} 续订",
     activeSubscription:"订阅生效中",
     upgradeBlurb:"升级以获得无限 Nova、Vega 额度及更多功能",
@@ -1462,6 +1512,11 @@ const T:Record<Lang,Record<string,string>> = {
     vegaLowWarning:"Vega 额度即将用完 — 本期你已使用 {pct}% 的额度。",
     syncBehind:"已保存在此设备，但尚未备份到你的账户。稍后会自动重试。",
     allCategories:"全部分类",
+    deleteAccount:"删除账户",
+    deleteAccountWarn:"这将永久删除你的账户、全部任务、例程与对话，并取消任何有效订阅。此操作无法撤销。",
+    deleteAccountConfirm:"输入 {email} 以确认",
+    deleteAccountCta:"永久删除我的账户",
+    deleting:"删除中…", cancel2:"取消",
   },
 };
 
@@ -3749,11 +3804,58 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
     setAuthStatus("success");
   }
 
-  async function handleSignOut(){
-    const sb=await getSupabaseClient();
-    if(sb) await sb.auth.signOut();
-    onUserChange(null);
-    onClose();
+  // ── Account deletion ──────────────────────────────────────────────────────
+  // Two-step, and the second step is typing your own address rather than
+  // pressing a second button. A confirm dialog is dismissed by reflex; an
+  // exact-match field cannot be completed by accident, and it is the
+  // convention for this action across the tools people already use.
+  //
+  // The check here is a courtesy that shapes the UI. The route performs the
+  // same comparison against the token's own email, because a client-side gate
+  // is a suggestion.
+  const[deleteOpen,setDeleteOpen]=useState(false);
+  const[deleteConfirm,setDeleteConfirm]=useState("");
+  const[deleting,setDeleting]=useState(false);
+  const[deleteError,setDeleteError]=useState<string|null>(null);
+  const deleteArmed=!!user?.email&&deleteConfirm.trim().toLowerCase()===user.email.toLowerCase();
+
+  async function handleDeleteAccount(){
+    if(!deleteArmed||deleting)return;
+    setDeleting(true);
+    setDeleteError(null);
+    try{
+      const authHeaders=await getAuthHeader();
+      const res=await fetch("/api/account/delete",{
+        method:"POST",
+        headers:{"Content-Type":"application/json",...authHeaders},
+        body:JSON.stringify({confirmEmail:deleteConfirm.trim()}),
+      });
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok){
+        // Every failure path on the route leaves the account intact and says
+        // what to do, so show its message rather than a generic one.
+        setDeleteError(data?.error??"Could not delete your account.");
+        setDeleting(false);
+        return;
+      }
+      // The account is gone server-side. Clear this device too, or the sync
+      // effects would keep pushing a deleted user's tasks at a dead account.
+      // Preferences (theme, language) are deliberately left — they are not
+      // account data and the next person to use this browser may want them.
+      try{
+        localStorage.removeItem(STORAGE_TASKS);
+        localStorage.removeItem(STORAGE_ROUTINES);
+        localStorage.removeItem("docket-onboarded");
+        localStorage.removeItem("docket-user-name");
+      }catch{}
+      const sb=await getSupabaseClient();
+      if(sb) await sb.auth.signOut();
+      onUserChange(null);
+      onClose();
+    }catch(e:any){
+      setDeleteError(e?.message??"Could not delete your account.");
+      setDeleting(false);
+    }
   }
 
   // ── Logged-in profile view ────────────────────────────────────────────────
@@ -3867,13 +3969,15 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
             <p style={{fontSize:10,fontWeight:700,letterSpacing:"1.5px",color:C.muted2,
               textTransform:"uppercase",marginBottom:14}}>{t("plan")}</p>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
-              <div style={{width:40,height:40,borderRadius:11,flexShrink:0,
-                background:isPro?"linear-gradient(145deg,#F5B342,#D98E1F)":C.surface,
-                border:isPro?"none":`1px solid ${C.border}`,
-                display:"flex",alignItems:"center",justifyContent:"center",
-                boxShadow:isPro?"0 4px 14px rgba(217,158,31,0.4)":"none"}}>
+              {/* Bare glyph, no tile. The orange gradient square only ever
+                  showed for subscribers, which made the Plan card look like a
+                  different component depending on who was reading it. C.sage
+                  rather than a new lime: it is the palette's existing positive
+                  colour and it is theme-aware, which a raw hex would not be. */}
+              <div style={{width:40,height:40,flexShrink:0,
+                display:"flex",alignItems:"center",justifyContent:"center"}}>
                 <i className={`ti ${isPro?"ti-crown":"ti-user"}`}
-                  style={{fontSize:19,color:isPro?"white":C.muted}} aria-hidden="true"/>
+                  style={{fontSize:26,color:isPro?C.sage:C.muted}} aria-hidden="true"/>
               </div>
               <div>
                 <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:16,color:C.navy}}>
@@ -3915,7 +4019,7 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
                 style={{display:"flex",width:"100%",alignItems:"center",justifyContent:"center",gap:8,
                   padding:"12px 14px",borderRadius:12,border:`1px solid ${C.border}`,
                   background:C.surface2,color:C.navy,fontSize:13,fontWeight:600}}>
-                <i className="ti ti-settings" style={{fontSize:16,color:"#C9A84C"}} aria-hidden="true"/>
+                <i className="ti ti-settings" style={{fontSize:16,color:C.sage}} aria-hidden="true"/>
                 {t("manageSubscription")}
               </button>
             ) : (
@@ -4066,16 +4170,68 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
             )}
           </div>
 
-          {/* ── Sign out ──────────────────────────────────────────────────── */}
+          {/* ── Danger zone ───────────────────────────────────────────────────
+              Last in the card and visually separated, because nothing else here
+              is irreversible. Collapsed until asked for: a delete control that
+              is one tap from armed does not belong beside everyday settings. */}
           <div style={{height:1,background:C.border,marginBottom:14}}/>
-          <button className="sq-btn" onClick={handleSignOut}
-            style={{display:"flex",width:"100%",alignItems:"center",gap:10,padding:"12px 14px",
-              borderRadius:12,border:`1px solid rgba(217,79,61,0.25)`,
-              background:"rgba(217,79,61,0.06)",
-              color:C.urgent,fontSize:13,fontWeight:600}}>
-            <i className="ti ti-logout" style={{fontSize:16}} aria-hidden="true"/>
-            {tf("signOutOf",{email:user.email},t)}
-          </button>
+          {!deleteOpen?(
+            <button onClick={()=>{setDeleteOpen(true);setDeleteConfirm("");setDeleteError(null);}}
+              style={{display:"flex",width:"100%",alignItems:"center",gap:10,padding:"12px 14px",
+                borderRadius:12,border:`1px solid rgba(217,79,61,0.25)`,
+                background:"rgba(217,79,61,0.06)",cursor:"pointer",
+                color:C.urgent,fontSize:13,fontWeight:600,fontFamily:"inherit",textAlign:"start"}}>
+              <i className="ti ti-trash" style={{fontSize:16,flexShrink:0}} aria-hidden="true"/>
+              {t("deleteAccount")}
+            </button>
+          ):(
+            <div style={{padding:"14px",borderRadius:12,
+              border:`1px solid rgba(217,79,61,0.35)`,background:"rgba(217,79,61,0.06)"}}>
+              <p style={{fontSize:12,lineHeight:1.5,color:C.navy,marginBottom:12}}>
+                {t("deleteAccountWarn")}
+              </p>
+              {/* The address is the confirmation, so it has to be visible to
+                  type. <bdi> keeps a Latin address from reordering the sentence
+                  around it in Arabic or Urdu. */}
+              <p style={{fontSize:11,color:C.muted,marginBottom:6}}>
+                {(()=>{
+                  const[before,after=""]=t("deleteAccountConfirm").split("{email}");
+                  return<>{before}<bdi style={{fontWeight:700,color:C.navy}}>{user.email}</bdi>{after}</>;
+                })()}
+              </p>
+              <input value={deleteConfirm} onChange={e=>setDeleteConfirm(e.target.value)}
+                autoComplete="off" autoCapitalize="none" spellCheck={false}
+                disabled={deleting}
+                style={{width:"100%",padding:"10px 12px",borderRadius:10,fontSize:13,
+                  border:`1.5px solid ${deleteArmed?C.urgent:C.border}`,
+                  background:dark?"#13151f":"#FFFFFF",color:C.navy,
+                  outline:"none",fontFamily:"inherit",marginBottom:10}}/>
+              {deleteError&&(
+                <p style={{fontSize:11.5,lineHeight:1.45,color:C.urgent,marginBottom:10}}>
+                  {deleteError}
+                </p>
+              )}
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>{setDeleteOpen(false);setDeleteConfirm("");setDeleteError(null);}}
+                  disabled={deleting}
+                  style={{flex:1,padding:"10px",borderRadius:10,fontSize:12.5,fontWeight:700,
+                    border:`1px solid ${C.border}`,background:"transparent",color:C.muted,
+                    cursor:deleting?"default":"pointer",fontFamily:"inherit"}}>
+                  {t("cancel2")}
+                </button>
+                {/* Stays disabled until the address matches exactly, so the
+                    destructive action cannot be reached by a stray tap. */}
+                <button onClick={handleDeleteAccount} disabled={!deleteArmed||deleting}
+                  style={{flex:2,padding:"10px",borderRadius:10,fontSize:12.5,fontWeight:700,
+                    border:"none",color:"white",fontFamily:"inherit",
+                    background:deleteArmed?C.urgent:C.border,
+                    opacity:deleting?0.7:1,
+                    cursor:deleteArmed&&!deleting?"pointer":"not-allowed"}}>
+                  {deleting?t("deleting"):t("deleteAccountCta")}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -8270,9 +8426,17 @@ export default function Home(){
                 drawer used. */}
             {user?.id&&(<>
               <div style={{height:1,background:C.border}}/>
-              <button onClick={handleCardSignOut} style={{...cardRowStyle,color:C.urgent}}>
-                <i className="ti ti-logout" style={{...cardIconStyle,color:C.urgent}} aria-hidden="true"/>
-                {t("signOut")}
+              {/* The one sign-out in the app. There used to be a second at the
+                  bottom of the profile modal, one tap deeper, which is a poor
+                  place for an action this consequential to hide. Its label was
+                  the better of the two — naming the account matters to anyone
+                  who has had more than one — so that came here with it. */}
+              <button onClick={handleCardSignOut}
+                style={{...cardRowStyle,color:C.urgent,alignItems:"flex-start"}}>
+                <i className="ti ti-logout" style={{...cardIconStyle,color:C.urgent,marginTop:2}} aria-hidden="true"/>
+                <span style={{flex:1,minWidth:0,wordBreak:"break-word"}}>
+                  {tf("signOutOf",{email:user.email},t)}
+                </span>
               </button>
             </>)}
           </div>
