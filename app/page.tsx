@@ -227,6 +227,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"Type {email} to confirm",
     deleteAccountCta:"Permanently delete my account",
     deleting:"Deleting…", cancel2:"Cancel",
+    onboardSignedIn:"You're signed in, {name}", onboardSignedInAs:"You're signed in as {email}.",
   },
   ar:{
     appName:"الدفتر", daily:"الروتين اليومي", allTasks:"جميع المهام",
@@ -356,6 +357,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"اكتب {email} للتأكيد",
     deleteAccountCta:"احذف حسابي نهائيًا",
     deleting:"جاري الحذف…", cancel2:"إلغاء",
+    onboardSignedIn:"تم تسجيل دخولك، {name}", onboardSignedInAs:"لقد سجّلت الدخول باسم {email}.",
   },
   fr:{
     appName:"The Docket", daily:"Routine Quotidienne", allTasks:"Toutes les Tâches",
@@ -485,6 +487,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"Saisissez {email} pour confirmer",
     deleteAccountCta:"Supprimer définitivement mon compte",
     deleting:"Suppression…", cancel2:"Annuler",
+    onboardSignedIn:"Vous êtes connecté, {name}", onboardSignedInAs:"Vous êtes connecté en tant que {email}.",
   },
   tr:{
     appName:"The Docket", daily:"Günlük Rutin", allTasks:"Tüm Görevler",
@@ -614,6 +617,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"Onaylamak için {email} yazın",
     deleteAccountCta:"Hesabımı kalıcı olarak sil",
     deleting:"Siliniyor…", cancel2:"İptal",
+    onboardSignedIn:"Giriş yaptınız, {name}", onboardSignedInAs:"{email} olarak giriş yaptınız.",
   },
   ur:{
     appName:"The Docket", daily:"روزانہ معمول", allTasks:"تمام کام",
@@ -743,6 +747,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"تصدیق کے لیے {email} لکھیں",
     deleteAccountCta:"میرا اکاؤنٹ مستقل طور پر حذف کریں",
     deleting:"حذف ہو رہا ہے…", cancel2:"منسوخ",
+    onboardSignedIn:"آپ سائن ان ہیں، {name}", onboardSignedInAs:"آپ {email} کے طور پر سائن ان ہیں۔",
   },
   bn:{
     appName:"The Docket", daily:"দৈনিক রুটিন", allTasks:"সব কাজ",
@@ -872,6 +877,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"নিশ্চিত করতে {email} লিখুন",
     deleteAccountCta:"আমার অ্যাকাউন্ট স্থায়ীভাবে মুছুন",
     deleting:"মুছে ফেলা হচ্ছে…", cancel2:"বাতিল",
+    onboardSignedIn:"আপনি সাইন ইন করেছেন, {name}", onboardSignedInAs:"আপনি {email} হিসেবে সাইন ইন করেছেন।",
   },
   es:{
     appName:"The Docket", daily:"Rutina Diaria", allTasks:"Todas las Tareas",
@@ -1001,6 +1007,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"Escribe {email} para confirmar",
     deleteAccountCta:"Eliminar mi cuenta permanentemente",
     deleting:"Eliminando…", cancel2:"Cancelar",
+    onboardSignedIn:"Has iniciado sesión, {name}", onboardSignedInAs:"Has iniciado sesión como {email}.",
   },
   hi:{
     appName:"The Docket", daily:"दैनिक दिनचर्या", allTasks:"सभी कार्य",
@@ -1130,6 +1137,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"पुष्टि के लिए {email} लिखें",
     deleteAccountCta:"मेरा खाता स्थायी रूप से हटाएँ",
     deleting:"हटाया जा रहा है…", cancel2:"रद्द करें",
+    onboardSignedIn:"आप साइन इन हैं, {name}", onboardSignedInAs:"आप {email} के रूप में साइन इन हैं।",
   },
   pt:{
     appName:"The Docket", daily:"Rotina Diária", allTasks:"Todas as Tarefas",
@@ -1259,6 +1267,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"Digite {email} para confirmar",
     deleteAccountCta:"Excluir minha conta permanentemente",
     deleting:"Excluindo…", cancel2:"Cancelar",
+    onboardSignedIn:"Você está conectado, {name}", onboardSignedInAs:"Você está conectado como {email}.",
   },
   ru:{
     appName:"The Docket", daily:"Ежедневный распорядок", allTasks:"Все задачи",
@@ -1388,6 +1397,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"Введите {email} для подтверждения",
     deleteAccountCta:"Удалить мой аккаунт навсегда",
     deleting:"Удаление…", cancel2:"Отмена",
+    onboardSignedIn:"Вы вошли в систему, {name}", onboardSignedInAs:"Вы вошли как {email}.",
   },
   zh:{
     appName:"The Docket", daily:"每日例程", allTasks:"全部任务",
@@ -1517,6 +1527,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"输入 {email} 以确认",
     deleteAccountCta:"永久删除我的账户",
     deleting:"删除中…", cancel2:"取消",
+    onboardSignedIn:"你已登录，{name}", onboardSignedInAs:"你已使用 {email} 登录。",
   },
 };
 
@@ -1867,6 +1878,14 @@ const CAT_STYLE_DEFAULT=CAT_STYLES.other;
 
 const STORAGE_TASKS="docket-tasks-v2";
 const STORAGE_ROUTINES="docket-routines-v1";
+// Both keys are scoped by account. Unscoped, a single browser held one
+// shared cache regardless of who was signed in — so a brand-new account's
+// very first cloud sync could silently inherit and push whatever the LAST
+// signed-in account on this device had cached, including demo content that
+// account never should have had either. Scoping the key so each account only
+// ever reads and writes its own makes that cross-account read structurally
+// impossible, rather than something to detect and clean up after the fact.
+function scopedKey(base:string,userId:string):string{ return `${base}-${userId}`; }
 
 function todayISO(){return new Date().toISOString().slice(0,10);}
 function todayDayKey(){return ["sun","mon","tue","wed","thu","fri","sat"][new Date().getDay()];}
@@ -3843,8 +3862,10 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
       // Preferences (theme, language) are deliberately left — they are not
       // account data and the next person to use this browser may want them.
       try{
-        localStorage.removeItem(STORAGE_TASKS);
-        localStorage.removeItem(STORAGE_ROUTINES);
+        if(user?.id){
+          localStorage.removeItem(scopedKey(STORAGE_TASKS,user.id));
+          localStorage.removeItem(scopedKey(STORAGE_ROUTINES,user.id));
+        }
         localStorage.removeItem("docket-onboarded");
         localStorage.removeItem("docket-user-name");
       }catch{}
@@ -6884,6 +6905,7 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
   user:{name:string;email:string;avatar?:string;id?:string}|null;
   onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
 }){
+  const{t}=useApp();
   const C=getC(dark);
   const[step,setStep]=useState(0);
   const[goals,setGoals]=useState<string[]>([]);
@@ -6934,12 +6956,20 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
               ?<img src={user.avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
               :<i className="ti ti-check" style={{fontSize:32,color:"white"}} aria-hidden="true"/>}
           </div>
+          {/* Deliberately not "Welcome back" — reaching this step signed in
+              means onboarding never completed on this device, which is true
+              for a brand-new account and for a returning one alike (the one
+              edge case: a returning user whose onboarding_complete flag
+              silently failed to save also lands here, on a new device, and
+              would be told "welcome back" incorrectly). Neutral confirmation
+              of identity is the only claim that holds in every case that
+              reaches this branch. */}
           <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:28,fontWeight:800,
             color:C.navy,letterSpacing:"-0.5px",marginBottom:8,lineHeight:1.2}}>
-            Welcome back, {user.name.split(" ")[0]}
+            {tf("onboardSignedIn",{name:user.name.split(" ")[0]},t)}
           </h1>
           <p style={{fontSize:14,color:C.muted,lineHeight:1.6,marginBottom:28}}>
-            You're signed in as {user.email}.
+            {tf("onboardSignedInAs",{email:user.email},t)}
           </p>
           <button className="pill-btn" onClick={next}
             style={{background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
@@ -7338,8 +7368,13 @@ export default function Home(){
   useEffect(()=>{
     // Tabler Icons CSS now loads via a <link> in app/layout.tsx's <head>
     // instead of being injected here — see that file for why.
-    const t=localStorage.getItem(STORAGE_TASKS);
-    const r=localStorage.getItem(STORAGE_ROUTINES);
+    // No unscoped read here any more — see scopedKey above. tasks/routines
+    // stay at their [] default until a user_id is known (below, in the effect
+    // that also triggers loadCloudData), which is also the earliest point a
+    // per-account key can even be built. There is no guest mode, so nothing
+    // legitimate would have been shown from an eager read anyway — the
+    // top-level auth gate blocks the task/routine UI until user?.id exists,
+    // regardless of what tasks/routines happened to hold before that.
     const urlParams=new URLSearchParams(window.location.search);
     // Debug console (Eruda) — only ever loads with ?debug=1 in the URL, e.g.
     // for diagnosing mobile-only issues (like the iOS Safari mic bug) without
@@ -7411,20 +7446,21 @@ export default function Home(){
               setUser(null);
               setShowWelcome(false);
               // Sign-out only ends the Supabase session — tasks/routines are
-              // local React state mirrored into localStorage, neither of
-              // which auth touches on its own. Without this, the previous
-              // account's data stays fully visible after signing out, since
-              // the UI renders from this state, not from localStorage
-              // directly (localStorage is only ever read once, on initial
-              // mount). Device-level preferences (theme, language,
-              // notifications, onboarding-complete) are deliberately left
-              // alone — they aren't "whose data is this," and clearing
-              // docket-onboarded would force a returning user through the
-              // whole onboarding wizard again.
+              // local React state, which auth does not touch on its own.
+              // Without this, the previous account's data stays fully
+              // visible after signing out, since the UI renders from this
+              // state, not from localStorage directly. Device-level
+              // preferences (theme, language, notifications,
+              // onboarding-complete) are deliberately left alone — they
+              // aren't "whose data is this."
+              //
+              // The persisted cache is NOT removed any more. Now that the key
+              // is scoped per account, this account's cache does no harm
+              // sitting under its own key — and deleting it would just force
+              // a needless cloud re-fetch if this same account signs back in
+              // on this device later, instead of an instant local repaint.
               setTasks([]);
               setRoutines([]);
-              localStorage.removeItem(STORAGE_TASKS);
-              localStorage.removeItem(STORAGE_ROUTINES);
             }
           });
         }catch(e){ console.log("Supabase session check failed",e); setAuthChecked(true); }
@@ -7432,13 +7468,14 @@ export default function Home(){
     }else{
       setAuthChecked(true);
     }
-    setTasks(t?JSON.parse(t):defaultTasks());
-    setRoutines(r?JSON.parse(r):defaultRoutines());
     setIsLoaded(true);
     if(!visited) setOnboarding(true);
   },[]);
-  useEffect(()=>{if(isLoaded)localStorage.setItem(STORAGE_TASKS,JSON.stringify(tasks));},[tasks,isLoaded]);
-  useEffect(()=>{if(isLoaded)localStorage.setItem(STORAGE_ROUTINES,JSON.stringify(routines));},[routines,isLoaded]);
+  // Gated on user?.id now, not just isLoaded: with a scoped key there is no
+  // valid unscoped destination to write to, and there is no guest mode for
+  // this to legitimately serve anyway.
+  useEffect(()=>{if(isLoaded&&user?.id)localStorage.setItem(scopedKey(STORAGE_TASKS,user.id),JSON.stringify(tasks));},[tasks,isLoaded,user?.id]);
+  useEffect(()=>{if(isLoaded&&user?.id)localStorage.setItem(scopedKey(STORAGE_ROUTINES,user.id),JSON.stringify(routines));},[routines,isLoaded,user?.id]);
 
   // ── Cloud sync (Supabase) — only for real signed-in accounts, not guests ──
   // Every cloud write reports through here. Silence is what let the id
@@ -7461,7 +7498,13 @@ export default function Home(){
   const cloudSyncingRef=React.useRef(false); // guard: true while pulling cloud data down, to skip the immediate echo-push back up
   const prevRoutineIdsRef=React.useRef<number[]>([]);
 
-  async function loadCloudData(userId:string){
+  // localTasks/localRoutines are passed in rather than read from the outer
+  // tasks/routines state, which this used to close over. They come from the
+  // per-account localStorage read that happens immediately before this is
+  // called (see the effect below) — passing them as parameters means the
+  // "first sync" decision below acts on exactly what was just read for THIS
+  // account, with no dependency on React state having re-rendered in between.
+  async function loadCloudData(userId:string,localTasks:Task[],localRoutines:Routine[]){
     const sb=await getSupabaseClient();
     if(!sb)return;
     const[{data:cloudTasks},{data:cloudRoutines}]=await Promise.all([
@@ -7480,15 +7523,18 @@ export default function Home(){
         prevRoutineIdsRef.current=mapped.map(r=>r.id);
       }
     }else{
-      // First time this account has synced — push whatever's on this device up
-      if(tasks.length>0){
-        const{error}=await sb.from("tasks").upsert(tasks.map(t=>taskToRow(t,userId)),{onConflict:"user_id,id"});
-        noteSync("tasks","first-sync upsert",userId,tasks.length,error);
+      // First time this account has synced — push whatever's on this device up.
+      // localTasks/localRoutines, not the outer tasks/routines state: this is
+      // exactly the decision that used to trust whatever was in memory
+      // regardless of whose it actually was.
+      if(localTasks.length>0){
+        const{error}=await sb.from("tasks").upsert(localTasks.map(t=>taskToRow(t,userId)),{onConflict:"user_id,id"});
+        noteSync("tasks","first-sync upsert",userId,localTasks.length,error);
       }
-      if(routines.length>0){
-        const{error}=await sb.from("routines").upsert(routines.map(r=>routineToRow(r,userId)),{onConflict:"user_id,id"});
-        noteSync("routines","first-sync upsert",userId,routines.length,error);
-        prevRoutineIdsRef.current=routines.map(r=>r.id);
+      if(localRoutines.length>0){
+        const{error}=await sb.from("routines").upsert(localRoutines.map(r=>routineToRow(r,userId)),{onConflict:"user_id,id"});
+        noteSync("routines","first-sync upsert",userId,localRoutines.length,error);
+        prevRoutineIdsRef.current=localRoutines.map(r=>r.id);
       }
     }
     setTimeout(()=>{cloudSyncingRef.current=false;},300);
@@ -7500,7 +7546,23 @@ export default function Home(){
   const[cloudPullDone,setCloudPullDone]=useState(false);
   useEffect(()=>{
     if(!isLoaded) return;
-    if(user?.id){ loadCloudData(user.id).finally(()=>setCloudPullDone(true)); return; }
+    if(user?.id){
+      // Hydrated here, synchronously, and handed straight to loadCloudData as
+      // parameters — not left for it to read back out of tasks/routines
+      // state a moment later. Two separate effects racing on the same
+      // user?.id becoming available would risk loadCloudData's "first sync"
+      // check running before this account's own cached data had actually
+      // landed in state, since a setState from one effect isn't visible to a
+      // sibling effect's closure within the same pass.
+      const cachedTasks=localStorage.getItem(scopedKey(STORAGE_TASKS,user.id));
+      const cachedRoutines=localStorage.getItem(scopedKey(STORAGE_ROUTINES,user.id));
+      const localTasks=cachedTasks?JSON.parse(cachedTasks):defaultTasks();
+      const localRoutines=cachedRoutines?JSON.parse(cachedRoutines):defaultRoutines();
+      setTasks(localTasks);
+      setRoutines(localRoutines);
+      loadCloudData(user.id,localTasks,localRoutines).finally(()=>setCloudPullDone(true));
+      return;
+    }
     // Auth resolved with no session: nothing is coming, so it is safe already.
     if(authChecked) setCloudPullDone(true);
   },[user?.id,isLoaded,authChecked]);
