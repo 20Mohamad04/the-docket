@@ -3644,7 +3644,7 @@ Questions about these Terms can be sent to:
 **[legal@thedocket.app](mailto:legal@thedocket.app)**`;
 
 // ── Info Modal ───────────────────────────────────────────────────────────────
-function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPeriodEnd,subTier}:{
+function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPeriodEnd,subTier,embedded,onBeforeCheckout}:{
   modal:string;onClose:()=>void;dark:boolean;
   user:{name:string;email:string;avatar?:string;id?:string}|null;
   onUserChange:(u:{name:string;email:string;avatar?:string;id?:string}|null)=>void;
@@ -3652,6 +3652,14 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
   isPro?:boolean;
   subPeriodEnd?:string|null;
   subTier?:string|null;
+  // Drops the position:fixed backdrop/centering wrapper and renders just the
+  // panel content in-flow — for the subscription carousel, reused inside
+  // OnboardingScreen's own card rather than popping a modal over a modal.
+  embedded?:boolean;
+  // Runs right before a Pro/Max checkout redirect, ahead of the fetch to
+  // /api/stripe/checkout. Only OnboardingScreen passes this (to mark
+  // onboarding complete first — see handleSubCheckout above).
+  onBeforeCheckout?:()=>void;
 }){
   const{lang,t,dir}=useApp();
   const locale=localeFor(lang);
@@ -4284,6 +4292,11 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
       // without a real signed-in user, but this stays as a defensive guard
       // for the edge case of a sign-out happening while it's open.
       if(!user?.id){onClose();setTimeout(()=>onNavigate?.("login"),100);return;}
+      // Lets an embedded caller (OnboardingScreen) finish its own setup
+      // before the full-page redirect to Stripe, so the user lands back in
+      // the real app afterwards regardless of how checkout resolves — not
+      // stuck back in the wizard because it never got marked complete.
+      onBeforeCheckout?.();
       try{
         const authHeaders=await getAuthHeader();
         const res=await fetch("/api/stripe/checkout",{
@@ -4397,23 +4410,13 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
     ];
 
     const centerIdx=plans.findIndex(p=>p.id===selectedTier);
-    return(
-    // No overflowY here. The backdrop used to scroll as well as the panel,
-    // which meant two nested scrollers fighting over the same gesture.
-    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
-      background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",
-      display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      {/* maxHeight + overflowY stay purely as an overflow valve for very short
-          viewports. The carousel itself never needs them: it shows one card at
-          a time instead of stacking three to scroll through. */}
-      <div onClick={e=>e.stopPropagation()}
-        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:560,
-          // overflowX pinned explicitly: with overflowY:auto, leaving
-          // overflow-x at its default `visible` makes CSS compute it to
-          // `auto`, which is where the stray horizontal scrollbar came from.
-          maxHeight:"90vh",overflowY:"auto",overflowX:"hidden",position:"relative",
-          boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,
-          padding:"22px 20px 18px"}}>
+
+    // Shared between the standalone modal and the embedded (onboarding)
+    // render — only the wrapper around this differs. The close button, the
+    // carousel stage and its tap-to-center/blur math are all self-positioned
+    // against the `position:relative` stage/wrapper immediately around them,
+    // not against the fixed backdrop, so they render identically either way.
+    const content=(<>
         {/* Plain close button on the panel itself — the gradient header that
             used to carry it is gone, so this matches the Privacy/Terms
             modals and the avatar card instead. */}
@@ -4546,6 +4549,32 @@ function InfoModal({modal,onClose,dark,user,onUserChange,onNavigate,isPro,subPer
           Cancel anytime before day 7 and you won't be charged · Secure payment via Stripe
           <i className="ti ti-lock" style={{fontSize:10.5,color:C.muted2}} aria-hidden="true"/>
         </p>
+    </>);
+
+    if(embedded) return(
+      <div style={{position:"relative"}}>
+        {content}
+      </div>
+    );
+
+    return(
+    // No overflowY here. The backdrop used to scroll as well as the panel,
+    // which meant two nested scrollers fighting over the same gesture.
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
+      background:"rgba(0,0,0,0.65)",backdropFilter:"blur(10px)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      {/* maxHeight + overflowY stay purely as an overflow valve for very short
+          viewports. The carousel itself never needs them: it shows one card at
+          a time instead of stacking three to scroll through. */}
+      <div onClick={e=>e.stopPropagation()}
+        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:28,width:"100%",maxWidth:560,
+          // overflowX pinned explicitly: with overflowY:auto, leaving
+          // overflow-x at its default `visible` makes CSS compute it to
+          // `auto`, which is where the stray horizontal scrollbar came from.
+          maxHeight:"90vh",overflowY:"auto",overflowX:"hidden",position:"relative",
+          boxShadow:"0 40px 120px rgba(0,0,0,0.5)",border:`1px solid ${C.border}`,
+          padding:"22px 20px 18px"}}>
+        {content}
       </div>
     </div>
     );
@@ -6923,23 +6952,6 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
   function toggleGoal(id:string){
     setGoals(g=>g.includes(id)?g.filter(x=>x!==id):[...g,id]);
   }
-  async function handleCheckout(tier:"pro"|"max"){
-    // Complete onboarding first (seed goal tasks, mark docket-onboarded) so
-    // the user always lands back in the real app after checkout — whether
-    // they finish the Stripe flow, cancel, or just close that tab.
-    onComplete(goals);
-    try{
-      const authHeaders=await getAuthHeader();
-      const res=await fetch("/api/stripe/checkout",{
-        method:"POST",
-        headers:{"Content-Type":"application/json",...authHeaders},
-        body:JSON.stringify({tier})
-      });
-      const data=await res.json();
-      if(data.url) window.location.href=data.url;
-      else alert("Payment error: "+data.error);
-    }catch(e:any){alert("Something went wrong: "+e.message);}
-  }
 
   const steps=[
     // Step 0: Sign in / register — required before continuing. Once `user`
@@ -7053,78 +7065,16 @@ function OnboardingScreen({onComplete,dark,onOpenModal,user,onUserChange}:{
         Start free or unlock the full Docket experience.
       </p>
 
-      {/* Pro option */}
-      <button onClick={()=>handleCheckout("pro")}
-        style={{width:"100%",padding:"18px 20px",borderRadius:16,cursor:"pointer",
-          border:"2px solid #4C5FD5",
-          background:"linear-gradient(135deg,rgba(76,95,213,0.08),rgba(134,112,232,0.05))",
-          marginBottom:8,textAlign:"left",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:0,right:0,background:"linear-gradient(135deg,#4C5FD5,#8670E8)",
-          padding:"4px 12px",borderRadius:"0 14px 0 10px",
-          fontSize:10,fontWeight:700,color:"white",letterSpacing:"0.5px"}}>MOST POPULAR</div>
-        <div style={{display:"flex",alignItems:"center",gap:14}}>
-          <div style={{width:44,height:44,borderRadius:12,
-            background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
-            display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
-            boxShadow:"0 4px 14px rgba(76,95,213,0.4)"}}>
-            <i className="ti ti-crown" style={{fontSize:22,color:"white"}} aria-hidden="true"/>
-          </div>
-          <div style={{textAlign:"left"}}>
-            <p style={{fontWeight:700,fontSize:15,color:C.primary,marginBottom:2}}>Try Pro free for 7 days</p>
-            <p style={{fontSize:12,color:C.muted,lineHeight:1.4}}>
-              Then £4.99/mo (16p a day) · 50 Vega credits/mo · Sync everywhere · Cancel anytime
-            </p>
-          </div>
-        </div>
-        <div style={{marginTop:12,display:"flex",gap:6,flexWrap:"wrap"}}>
-          {["Everything in free","Unlimited Nova messages","Sync across devices","Prayer time auto-update","Advanced analytics","Priority support"].map(f=>(
-            <span key={f} style={{fontSize:10,fontWeight:600,padding:"3px 9px",borderRadius:50,
-              background:"rgba(76,95,213,0.1)",border:"1px solid rgba(76,95,213,0.2)",
-              color:C.primary}}>{f}</span>
-          ))}
-        </div>
-      </button>
-      <p style={{fontSize:11,color:C.muted2,marginTop:8,marginBottom:16}}>
-        7 days free, then £4.99/mo · Renews automatically until cancelled
-      </p>
-
-      {/* Max option */}
-      <button onClick={()=>handleCheckout("max")}
-        style={{width:"100%",padding:"18px 20px",borderRadius:16,cursor:"pointer",
-          border:"2px solid #8670E8",
-          background:"linear-gradient(135deg,rgba(134,112,232,0.08),rgba(167,139,250,0.05))",
-          marginBottom:8,textAlign:"left",position:"relative",overflow:"hidden"}}>
-        <div style={{display:"flex",alignItems:"center",gap:14}}>
-          <div style={{width:44,height:44,borderRadius:12,
-            background:"linear-gradient(145deg,#A78BFA,#8670E8)",
-            display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
-            boxShadow:"0 4px 14px rgba(134,112,232,0.4)"}}>
-            <i className="ti ti-bolt" style={{fontSize:22,color:"white"}} aria-hidden="true"/>
-          </div>
-          <div style={{textAlign:"left"}}>
-            <p style={{fontWeight:700,fontSize:15,color:"#8670E8",marginBottom:2}}>Go further with Max</p>
-            <p style={{fontSize:12,color:C.muted,lineHeight:1.4}}>
-              £14.99/mo · Unlimited Nova + 120 Vega credits/mo · Priority support
-            </p>
-          </div>
-        </div>
-        <div style={{marginTop:12,display:"flex",gap:6,flexWrap:"wrap"}}>
-          {["Everything in Pro","Unlimited Nova messages","120 Vega credits/mo","Priority support","Early access"].map(f=>(
-            <span key={f} style={{fontSize:10,fontWeight:600,padding:"3px 9px",borderRadius:50,
-              background:"rgba(134,112,232,0.1)",border:"1px solid rgba(134,112,232,0.2)",
-              color:"#8670E8"}}>{f}</span>
-          ))}
-        </div>
-      </button>
-      <p style={{fontSize:11,color:C.muted2,marginTop:8,marginBottom:16}}>
-        7 days free, then £14.99/mo · Renews automatically until cancelled
-      </p>
-
-      <p onClick={next}
-        style={{fontSize:12,color:C.muted,marginTop:18,fontWeight:600,
-          textDecoration:"underline",cursor:"pointer"}}>
-        Skip trial, continue with Free
-      </p>
+      {/* Same carousel used for the Subscription modal everywhere else in the
+          app — see InfoModal's `embedded` prop. isPro/subPeriodEnd/subTier
+          are hardcoded to the signed-out shape since nobody reaching this
+          step has a subscription yet. onClose doubles as "skip": it's wired
+          to the X button and the Free-tier card's own CTA, both of which
+          should just advance onboarding like the old skip link did. */}
+      <InfoModal modal="subscription" embedded
+        dark={dark} user={user} onUserChange={onUserChange}
+        isPro={false} subPeriodEnd={null} subTier={null}
+        onClose={next} onBeforeCheckout={()=>onComplete(goals)}/>
     </div>,
 
     // Step 3: AI intro
