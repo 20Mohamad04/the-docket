@@ -24,9 +24,6 @@ exists but has never been exercised/observed) · **Done** (evidence attached).
 | G0-4 | Upgrade Supabase to the paid plan (backups, more compute) | Mo | Not started | | Gate 1 |
 | G0-5 | Check Mo's MSB Solicitors employment contract for IP ownership / outside-work clauses; check LJMU IP policy | Mo | Not started | | IP assignment (Gate 2) |
 | G0-6 | Decide company name availability (Docket Ltd) and director/registered-office address | Mo | Not started | | Gate 2 |
-| G0-7 | Form Docket Ltd (check current Companies House fee) | Mo / Professional | Not started | | Gate 2 |
-| G0-8 | Open the company bank account | Mo | Not started | | Gate 2 |
-| G0-9 | Start the D-U-N-S number application for Apple organisation enrolment (can take weeks) | Mo | Not started | | Gate 4 |
 
 ---
 
@@ -78,20 +75,30 @@ exists but has never been exercised/observed) · **Done** (evidence attached).
 
 ## GATE 2 — Safe to take real payments
 
+G2-1 through G2-3 were originally filed under Gate 0 ("now"). Moved here
+deliberately: forming the company, opening its bank account, and starting the
+D-U-N-S application are real-money/real-paperwork commitments that only need
+to exist by the time Gate 2 is reached (real payments, company-owned
+accounts), not before testers are even invited. Deferred on purpose, not
+dropped.
+
 | ID | Description | Owner | Status | Evidence | Blocks |
 |---|---|---|---|---|---|
-| G2-1 | Sign the IP assignment (Mo → Docket Ltd): code, "The Docket" name and logo, domain, written content; agree consideration/tax treatment with an accountant | Professional | Not started | | Gate 2 |
-| G2-2 | Move the domain, Vercel, Supabase, Anthropic, Groq and the GitHub repo into the company's name | Mo | Not started | | Gate 2 |
-| G2-3 | Create Stripe in the company's name (live keys, live webhook endpoint); confirm the bank account is the company's | Mo | Not started | | Gate 2 |
-| G2-4 | Test the 14-day manual refund process end to end | Mo | Not started | | Gate 2 |
-| G2-5 | Confirm the Terms refund wording matches the 14-day decision | Claude Code | **Done** | `app/page.tsx:3500-3508` (Terms markdown): *"Docket Ltd gives you a 14-day refund period beginning on the date of your first subscription charge... If you cancel your subscription and request a refund within 14 calendar days of that first charge, we will refund that charge."* Already folded into the rewrite — no further action needed unless the business decision itself changes. | Gate 2 |
-| G2-6 | Add the company number and registered office to the policies and site | Claude Code | Not started | Blocked on G0-6/G0-7 (company doesn't exist yet to have a number). | Gate 2 |
-| G2-7 | Accountant: VAT registration, corporation tax, reimbursing Mo's pre-formation costs (director's loan or reimbursement) | Professional | Not started | | Gate 2 |
-| G2-8 | Ask someone qualified: does the ICO data protection fee apply, and at what tier? | Professional | Not started | | Gate 2 |
-| G2-9 | Ask someone qualified: what must a UK company website display? | Professional | Not started | | Gate 2 |
-| G2-10 | Confirm data processing terms with Supabase, Stripe, Anthropic, Groq and Vercel | Mo | Not started | | Gate 2 |
-| G2-11 | Verify the policy's claims about AI providers (training/retention) and the international transfer mechanisms | Mo / Professional | Not started | Cannot verify from the repo: this is fact-checking the Privacy Policy's claims against each provider's actual (and changing) terms, not reading the text itself. | Gate 2 |
-| G2-12 | Decide whether to build a data-export feature (the policy lists portability), and set up a process for access/deletion requests | Mo | Not started | | Gate 2 |
+| G2-1 | *(moved from Gate 0, deliberately deferred)* Form Docket Ltd (check current Companies House fee) | Mo / Professional | Not started | | Gate 2 |
+| G2-2 | *(moved from Gate 0, deliberately deferred)* Open the company bank account | Mo | Not started | | Gate 2 |
+| G2-3 | *(moved from Gate 0, deliberately deferred)* Start the D-U-N-S number application for Apple organisation enrolment (can take weeks) | Mo | Not started | | Gate 4 |
+| G2-4 | Sign the IP assignment (Mo → Docket Ltd): code, "The Docket" name and logo, domain, written content; agree consideration/tax treatment with an accountant | Professional | Not started | | Gate 2 |
+| G2-5 | Move the domain, Vercel, Supabase, Anthropic, Groq and the GitHub repo into the company's name | Mo | Not started | | Gate 2 |
+| G2-6 | Create Stripe in the company's name (live keys, live webhook endpoint); confirm the bank account is the company's | Mo | Not started | | Gate 2 |
+| G2-7 | Test the 14-day manual refund process end to end | Mo | Not started | | Gate 2 |
+| G2-8 | Confirm the Terms refund wording matches the 14-day decision | Claude Code | **Done** | `app/page.tsx:3500-3508` (Terms markdown): *"Docket Ltd gives you a 14-day refund period beginning on the date of your first subscription charge... If you cancel your subscription and request a refund within 14 calendar days of that first charge, we will refund that charge."* Already folded into the rewrite — no further action needed unless the business decision itself changes. | Gate 2 |
+| G2-9 | Add the company number and registered office to the policies and site | Claude Code | Not started | Blocked on G0-6 and G2-1 (company doesn't exist yet to have a number). | Gate 2 |
+| G2-10 | Accountant: VAT registration, corporation tax, reimbursing Mo's pre-formation costs (director's loan or reimbursement) | Professional | Not started | | Gate 2 |
+| G2-11 | Ask someone qualified: does the ICO data protection fee apply, and at what tier? | Professional | Not started | | Gate 2 |
+| G2-12 | Ask someone qualified: what must a UK company website display? | Professional | Not started | | Gate 2 |
+| G2-13 | Confirm data processing terms with Supabase, Stripe, Anthropic, Groq and Vercel | Mo | Not started | | Gate 2 |
+| G2-14 | Verify the policy's claims about AI providers (training/retention) and the international transfer mechanisms | Mo / Professional | Not started | Cannot verify from the repo: this is fact-checking the Privacy Policy's claims against each provider's actual (and changing) terms, not reading the text itself. | Gate 2 |
+| G2-15 | Decide whether to build a data-export feature (the policy lists portability), and set up a process for access/deletion requests | Mo | Not started | | Gate 2 |
 
 ---
 
@@ -134,7 +141,7 @@ exists but has never been exercised/observed) · **Done** (evidence attached).
 
 | ID | Description | Owner | Status | Evidence | Blocks |
 |---|---|---|---|---|---|
-| G4-1 | Apple Developer organisation account (needs D-U-N-S, see G0-9), Google Play organisation account, and a Mac | Mo | Not started | | Gate 4 |
+| G4-1 | Apple Developer organisation account (needs D-U-N-S, see G2-3), Google Play organisation account, and a Mac | Mo | Not started | | Gate 4 |
 | G4-2 | In-App Purchase via RevenueCat or StoreKit, with restore purchases | Claude Code | Not started | No native wrapper project exists in this repo yet (no `/ios`, `/android`, Capacitor or Expo config). | Gate 4 |
 | G4-3 | Check the current Apple and Google payment rules before designing checkout | Mo | Not started | | Gate 4 |
 | G4-4 | Sign in with Apple | Claude Code | Not started | | Gate 4 |
@@ -180,8 +187,9 @@ records them being exercised against a live/deployed instance:
 - **G1-17** — RLS/`pg_policies`, storage bucket visibility (live Supabase project)
 - **G1-27** — Supabase Auth dashboard settings (email confirmation, password rules, redirect allowlist)
 - **G1-19** (partially) — whether any *unused* `NEXT_PUBLIC_` vars exist in the live Vercel project beyond what the code references
-- **G0-3 / G0-4 / G0-5 / G0-6 / G0-7 / G0-8 / G0-9** — all external facts (account state, a named individual's contract, company-formation specifics, banking, a government ID application)
-- **G2-1, G2-2, G2-3, G2-7, G2-8, G2-9, G2-10, G2-11** — ownership/legal/accounting facts that live with Mo, an accountant, or third-party providers, not in this codebase
+- **G0-3 / G0-4 / G0-5 / G0-6** — all external facts (account state, a named individual's contract, company-formation specifics)
+- **G2-1, G2-2, G2-3** — company-formation specifics, banking, and a government ID application; moved from Gate 0, still external facts
+- **G2-4, G2-5, G2-6, G2-10, G2-11, G2-12, G2-13, G2-14** — ownership/legal/accounting facts that live with Mo, an accountant, or third-party providers, not in this codebase
 - **G3-2** — licence terms of the CDN-hosted background image (provenance, not just presence, is the open question)
 - **G3-3** — trademark register search results
 - **G4-1, G4-3, G4-5, G4-10** — Apple/Google platform policy and account state
