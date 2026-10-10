@@ -557,9 +557,28 @@ const DOCKET_RESPONSE_TOOL = {
   },
 };
 
-// Narrow defense-in-depth: strips a stray trailing JSON-envelope fragment the model's reply text sometimes leaves in, without touching a reply that's genuinely discussing braces/JSON.
+// Narrow defense-in-depth: strips a stray trailing JSON-envelope fragment the
+// model's reply text sometimes leaves in, without touching a reply that's
+// genuinely discussing braces/JSON — anything containing `{` is left alone
+// entirely, by every branch below.
 function stripStrayJsonTail(reply: string): string {
-  return reply.includes("{") ? reply : reply.replace(/"\}\}?\s*$/, "");
+  if (reply.includes("{")) return reply;
+
+  // A stray `"}` or `"}}` — the original leak this function was written for.
+  const withoutBraceQuote = reply.replace(/"\}\}?\s*$/, "");
+  if (withoutBraceQuote !== reply) return withoutBraceQuote;
+
+  // A lone trailing `"` with no matching partner anywhere else in the reply
+  // (an odd total count means exactly one quote is unpaired) — the same
+  // envelope leak, just missing its closing brace. A reply quoting things
+  // normally always has an even count, so this never touches those.
+  if (/"\s*$/.test(reply)) {
+    const quoteCount = (reply.match(/"/g) ?? []).length;
+    return quoteCount % 2 === 1 ? reply.replace(/"\s*$/, "") : reply;
+  }
+
+  // A lone trailing `}` with nothing else JSON-like around it.
+  return reply.replace(/\}\s*$/, "");
 }
 
 // ── Groq fallback only ───────────────────────────────────────────────────
