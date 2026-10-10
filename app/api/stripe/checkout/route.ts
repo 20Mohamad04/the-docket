@@ -53,7 +53,13 @@ export async function POST(req: Request) {
     const { tier } = await req.json();
     const resolvedTier = tier === "max" ? "max" : "pro";
     const priceId = resolvedTier === "max" ? process.env.STRIPE_PRICE_ID_MAX : process.env.STRIPE_PRICE_ID;
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://planner-docket-git-main-mohamad0420.vercel.app";
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    if (!siteUrl) {
+      // No hardcoded fallback — a missing site URL must fail loudly, not
+      // silently redirect a real paying customer to an unrelated domain.
+      console.error("Stripe checkout error: NEXT_PUBLIC_SITE_URL is not configured");
+      return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+    }
 
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",

@@ -79,9 +79,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No Stripe customer found for this account" }, { status: 404 });
     }
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    if (!siteUrl) {
+      // No hardcoded fallback — a missing site URL must fail loudly, not
+      // silently return a user to an unrelated domain after managing billing.
+      console.error("Stripe portal error: NEXT_PUBLIC_SITE_URL is not configured");
+      return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+    }
+
     const session = await getStripe().billingPortal.sessions.create({
       customer: data.stripe_customer_id,
-      return_url: process.env.NEXT_PUBLIC_SITE_URL || "https://planner-docket-git-main-mohamad0420.vercel.app",
+      return_url: siteUrl,
     });
 
     return NextResponse.json({ url: session.url });
