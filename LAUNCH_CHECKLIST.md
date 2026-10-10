@@ -10,7 +10,9 @@ Built from `NOTES.md`, `git log --oneline -80`, and a grep of the codebase for
 > not that the feature works. Evidence is blank until that proof exists.
 
 Status values: **Not started** · **In progress** · **Built-unverified** (code
-exists but has never been exercised/observed) · **Done** (evidence attached).
+exists but has never been exercised/observed) · **Mostly verified** (strong
+live evidence collected, one specific remaining check named) · **Done**
+(evidence attached).
 
 ---
 
@@ -59,7 +61,7 @@ exists but has never been exercised/observed) · **Done** (evidence attached).
 
 | ID | Description | Owner | Status | Evidence | Blocks |
 |---|---|---|---|---|---|
-| G1-17 | Run the `pg_policies` and `pg_tables` queries; check RLS on `conversations`, `chat_messages`, `user_memories`, `usage`, `subscriptions`; check chat-image storage bucket visibility | Mo / Claude Code | Cannot verify from repo | Lives entirely in the live Supabase project; no SQL/policy files in the repo. | Gate 1 |
+| G1-17 | Run the `pg_policies` and `pg_tables` queries; check RLS on `conversations`, `chat_messages`, `user_memories`, `usage`, `subscriptions`; check chat-image storage bucket visibility | Mo / Claude Code | **Done** | Verified live, 8 Oct 2026: RLS is on for all seven tables; no policy uses a bare `true` (no open policies); `subscriptions` and `usage` have SELECT-only user policies; the `chat-images` bucket is private. | Gate 1 |
 | G1-18 | Secrets scan of full git history (gitleaks/trufflehog); rotate anything found | Claude Code | Not started | Neither tool is in the repo/deps; history has not been scanned during this pass. | Gate 1 |
 | G1-19 | Confirm only intended variables carry `NEXT_PUBLIC_` | Mo | Built-unverified | Grepped all source: only `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL` are referenced — all three are meant to be public. Can't rule out an unused public var sitting in the live Vercel project that the code never reads. | Gate 1 |
 | G1-20 | Stripe webhook signature check on the raw body | Claude Code | Built-unverified | Confirmed in code: `app/api/stripe/webhook/route.ts:50-61` reads `req.text()` (raw body) and calls `stripe.webhooks.constructEvent(body, sig, STRIPE_WEBHOOK_SECRET)`. Never exercised against a live/test webhook delivery. | Gate 1 |
@@ -67,9 +69,29 @@ exists but has never been exercised/observed) · **Done** (evidence attached).
 | G1-22 | Check what stops prompt-injected content steering AI actions (`add_task` / `remove_routine` / `update_routine`) | Claude Code | Not started | Grepped `app/api/ask/_prompt.ts` for injection/untrusted-content handling language — none found. | Gate 1 |
 | G1-23 | Rate-limit `/api/ask` | Claude Code | Not started | Grepped `app/api/ask/route.ts` for rate-limit logic — none found. | Gate 1 |
 | G1-24 | Review the `?debug=1` Eruda loader | Claude Code | Not started | Still present and unconditional: any visitor who appends `?debug=1` gets a live JS console injected into production (`app/page.tsx` ~7395-7408). | Gate 1 |
-| G1-25 | `npm audit` | Claude Code | Not started | Deliberately not run during this pass — out of scope for a documentation-only task. | Gate 1 |
+| G1-25 | `npm audit` (S-01: `next` critical/high vulnerabilities — see `SECURITY_AUDIT.md`) | Claude Code | **Done** | Fixed in `089d6a0` — `next` upgraded 16.2.10 → 16.3.8 (lowest patched 16.x version, no major-version jump needed). `npm audit --omit=dev` now shows 0 Critical, 0 High. Deployed, and all five manual checks (typecheck, `check:i18n`, `next build`, pre-fix audit, post-fix audit) passed on 10 Oct 2026. | Gate 1 |
 | G1-26 | Security headers (CSP etc.) | Claude Code | Not started | `next.config.ts` has no headers config at all — confirmed by reading the file. | Gate 1 |
 | G1-27 | Supabase auth settings: email confirmation, password rules, redirect allowlist | Mo | Cannot verify from repo | Lives in the Supabase Auth dashboard, not the codebase. | Gate 1 |
+| G1-28 | S-02: Nova/Vega usage cap is an atomic reservation (`reserve_usage`/`release_usage`), not a check-then-act race — see `SECURITY_AUDIT.md` | Claude Code | **Mostly verified** | Fixed in `bbbabaf`. Rollback tests `t t f` and `t 1 0` passed. Live counts observed rising 0→2→3→4→5 on 10 Oct 2026. Two real Anthropic requests then failed (out of credit) and correctly left the count unchanged at 5 — confirms `release_usage` fires on a real failure. **Outstanding:** one clean Claude-served run after credit is topped up, confirming the count rises by exactly one on success. | Gate 1 |
+
+### Found during live verification (10 Oct 2026)
+
+Fallout from testing the S-01/S-02 fixes live, including an Anthropic account
+running out of credit mid-session.
+
+| ID | Description | Owner | Status | Evidence | Blocks |
+|---|---|---|---|---|---|
+| G1-29 | Stray JSON tail (trailing `"}`, lone `"`, or lone `}`) in AI replies | Mo | Built-unverified | Fixed in `fa8c8e9` (strips `"}`/`"}}`) and `a7c6673` (extended to a lone trailing `"` or `}`). Likely root cause: the artifact was first observed while Anthropic credit was out and the Groq fallback was serving replies — the stripping is a defensive guard against the model's own output, not a fix to Groq's malformed-JSON recovery itself. Not yet re-observed live after the fix; needs confirming on both a Groq-served and a Claude-served reply. | Gate 1 |
+| G1-30 | Nova/Vega identity wording in the system prompt (assistant must not flatly deny being Nova, and must not confirm or deny which model answered) | Mo | Built-unverified | Added in `fb6130e`. Not yet tested live — test prompts: "are you Nova?", "what model are you?", "what's the difference between Nova and Vega?" | Gate 1 |
+| G1-31 | Anthropic account ran out of credit mid-testing on 10 Oct 2026 — add a billing alert, auto-reload, and a spend limit before launch | Mo | Not started | Directly observed during the G1-28 live verification: two real requests failed on an out-of-credit error with nothing having alerted anyone beforehand. | Gate 1 |
+| G1-32 | Users see the same generic "Something went wrong" message for any provider failure (Anthropic/Groq error, missing key) — consider a clearer message, at least distinguishing an outage/credit issue from a one-off hiccup | Claude Code | Not started | Confirmed in code: `app/api/ask/route.ts`'s outer catch returns one fixed string regardless of cause. Surfaced directly by the Anthropic credit outage during G1-28's live testing. | Gate 1 |
+| G1-33 | No log line records which provider (Anthropic vs Groq) served a request — add one | Claude Code | Not started | Confirmed in code: the only provider-tagged log lines ("Claude error", "Groq error") fire on failure only; nothing logs which provider served a successful reply. | Gate 1 |
+| G1-34 | Trim `ANTHROPIC_API_KEY` before the truthiness check — a whitespace-only value is truthy in JS and would misroute into a failing Anthropic call instead of cleanly falling back to Groq | Claude Code | Not started | Confirmed in code: `apiKey` is read (`process.env.ANTHROPIC_API_KEY`) and used with no `.trim()` anywhere. | Gate 1 |
+| G1-35 | The Groq-fallback comment in `route.ts` is misleading — it says Groq is used on "Claude API outage or misconfiguration", but Groq only runs when `ANTHROPIC_API_KEY` is unset/empty; a genuine Claude API error throws straight to the generic failure message and never reaches Groq | Claude Code | Not started | Confirmed by tracing the control flow: both throw sites inside the Anthropic branch unwind to the outer catch, never to the `if(groqKey)` block below it. | Gate 1 |
+| G1-36 | Free-tier Nova now fails closed on a database/RPC error (the S-02 fix), but shows the same "You've hit today's limit of 10 free messages" wording as a genuine over-limit case — misleading during an infra hiccup (low priority) | Claude Code | Not started | Deliberate trade-off made when fixing S-02 (fail closed instead of the old fail-open behavior); the user-facing message wasn't split out for the two cases. | Gate 1 |
+| G1-37 | Pro/Max `sonnet_count` no longer increments (the old post-call tracking was removed as part of the S-02 fix); confirm no screen still displays it as if it were a live/incrementing count | Mo / Claude Code | Not started | Confirmed in code: the post-call `trackSonnetUsage` call for subscribers was removed in `bbbabaf`. Not yet confirmed whether the subscription carousel's "Nova messages" count (a plain, previously-uncapped count for subscribers) is still shown anywhere as if it were current. | Gate 1 |
+| G1-38 | Dev-dependency `npm audit` findings in `eslint-config-next`'s own tooling (`brace-expansion`, `braces`, `browserslist`, `js-yaml` — 8 high, 1 moderate) — dev-only, never shipped to production (low priority) | Claude Code | Not started | Confirmed via plain `npm audit` (not `--omit=dev`) after the S-01 fix — every flagged package is a transitive dev dependency of `eslint-config-next`. | Gate 1 |
+| G1-39 | System prompt should give the exact unsubscribe path (avatar card → Subscription → Stripe billing portal) so the assistant answers "how do I cancel?" correctly instead of vaguely | Claude Code | Not started | | Gate 1 |
 
 ---
 
@@ -184,7 +206,6 @@ records them being exercised against a live/deployed instance:
 ## Could not verify from the repo alone
 
 - **G1-11** — indexes on `user_id` (needs a live `pg_indexes` query)
-- **G1-17** — RLS/`pg_policies`, storage bucket visibility (live Supabase project)
 - **G1-27** — Supabase Auth dashboard settings (email confirmation, password rules, redirect allowlist)
 - **G1-19** (partially) — whether any *unused* `NEXT_PUBLIC_` vars exist in the live Vercel project beyond what the code references
 - **G0-3 / G0-4 / G0-5 / G0-6** — all external facts (account state, a named individual's contract, company-formation specifics)
