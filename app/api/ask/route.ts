@@ -90,80 +90,64 @@ function isEntitledStatus(status: string | null): boolean {
   return status === "active" || status === "trialing";
 }
 
-async function getUsageRow(sb: any, userId: string) {
-  const { data, error } = await sb
-    .from("usage")
-    .select("period_end, sonnet_count, opus_count")
-    .eq("user_id", userId)
-    .maybeSingle();
+// ── Atomic usage reservation (S-02 fix) ─────────────────────────────────
+// Replaces the old read-then-write flow (read the count, compare to the
+// limit, write count+1 as a separate step) — a classic check-then-act race:
+// concurrent requests could all read the same stale count, all pass the same
+// eligibility check, and all proceed, letting a user exceed their Nova/Vega
+// cap just by firing requests concurrently. reserve_usage (a Postgres
+// function, callable only by the service role) does the check-and-increment
+// as a single atomic database operation instead, so there is no window
+// between "is there room" and "take the room" for a second request to land
+// in. It creates or rolls the row over to the given period itself; callers
+// no longer read the row at all.
+//
+// Reserved BEFORE the Anthropic call, not after — release_usage undoes a
+// reservation if the call then fails, so a failed request still costs
+// nothing, same as before, but a successful one is now counted exactly once
+// with no race.
+async function reserveUsage(
+  sb: any,
+  userId: string,
+  periodEnd: string,
+  field: "sonnet_count" | "opus_count",
+  limit: number
+): Promise<boolean> {
+  const { data, error } = await sb.rpc("reserve_usage", {
+    p_user_id: userId,
+    p_period_end: periodEnd,
+    p_field: field,
+    p_limit: limit,
+  });
   if (error) {
-    console.error("Failed to load usage row:", error);
-    return null;
+    // Fail closed: an RPC failure must never be treated as "room available" —
+    // see the callers below, which both treat this identically to a genuine
+    // over-limit result rather than letting the request through unmetered.
+    console.error(`reserve_usage RPC failed (${field}):`, error);
+    return false;
   }
-  return data as { period_end: string; sonnet_count: number; opus_count: number } | null;
+  return data === true;
 }
 
-// Writes a bump to sonnet_count or opus_count for the given billing period.
-// On a new period (row missing, or its period_end doesn't match the current
-// one), both counters reset — the field being bumped starts at 1, the other
-// at 0. On an existing-period row, only the given field increments; the
-// other is simply omitted from the payload, which leaves it unchanged.
-async function bumpUsage(
+// Releases one previously-made reservation. Never throws — this is called
+// from failure paths that are themselves about to report an error to the
+// user, and a release failure must not replace that error or crash the
+// response.
+async function releaseUsage(
   sb: any,
   userId: string,
   periodEnd: string,
   field: "sonnet_count" | "opus_count"
-) {
-  const usage = await getUsageRow(sb, userId);
-  const isNewPeriod = !usage || usage.period_end !== periodEnd;
-  const otherField = field === "sonnet_count" ? "opus_count" : "sonnet_count";
-  const nextCount = isNewPeriod ? 1 : (usage![field] ?? 0) + 1;
-
-  const { error } = await sb.from("usage").upsert(
-    {
-      user_id: userId,
-      period_end: periodEnd,
-      [field]: nextCount,
-      ...(isNewPeriod ? { [otherField]: 0 } : {}),
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id" }
-  );
-  if (error) console.error(`Usage tracking: failed to write usage row (${field}):`, error);
-}
-
-// Tracks Sonnet usage per user per period — a real subscription's monthly
-// billing period for Pro/Max, or today's UTC date for a free-tier user (see
-// resolveSonnetPeriod below, shared with resolveSonnetEligibility so the two
-// always agree on what "the current period" is). Free-tier users used to be
-// skipped here entirely (no subscription row meant no periodEnd to key
-// against) — now that this count is actually enforced by
-// resolveSonnetEligibility, it has to be tracked for them too, not just
-// Pro/Max. Must never throw: a tracking failure should never break the
-// actual chat response, so every error path here just logs.
-async function trackSonnetUsage(userId: string) {
+): Promise<void> {
   try {
-    const sb = getSupabaseAdmin();
-    if (!sb) {
-      console.error("Usage tracking skipped — Supabase admin client unavailable");
-      return;
-    }
-    const { periodEnd } = await resolveSonnetPeriod(sb, userId);
-    await bumpUsage(sb, userId, periodEnd, "sonnet_count");
+    const { error } = await sb.rpc("release_usage", {
+      p_user_id: userId,
+      p_period_end: periodEnd,
+      p_field: field,
+    });
+    if (error) console.error(`release_usage RPC failed (${field}):`, error);
   } catch (err) {
-    console.error("Usage tracking threw:", err);
-  }
-}
-
-// Phase 2: increments opus_count for a period we already resolved during
-// the eligibility check below. Same never-throw contract as trackSonnetUsage.
-async function trackOpusUsage(userId: string, periodEnd: string) {
-  try {
-    const sb = getSupabaseAdmin();
-    if (!sb) return;
-    await bumpUsage(sb, userId, periodEnd, "opus_count");
-  } catch (err) {
-    console.error("Opus usage tracking threw:", err);
+    console.error(`release_usage RPC threw (${field}):`, err);
   }
 }
 
@@ -171,7 +155,7 @@ async function trackOpusUsage(userId: string, periodEnd: string) {
 // Best-effort, like usage tracking above — a persistence failure must never
 // break the actual chat response, so every error path here just logs.
 // Uses the same service-role client as the rest of this route (see
-// trackSonnetUsage etc.), with userId taken from the verified token rather
+// reserveUsage etc.), with userId taken from the verified token rather
 // than RLS: ownership is enforced manually below instead. The four
 // /api/conversations routes
 // take the opposite approach (a user-scoped client so Postgres RLS on
@@ -449,33 +433,43 @@ async function persistMemories(
 
 // Phase 2: server-side Opus eligibility check. CRITICAL — never trust a
 // client-sent isPro/useOpus claim; that can be spoofed via devtools. This
-// independently re-verifies subscription status against Supabase. Any
-// failure (missing config, DB error, thrown exception) fails closed to
-// "use Sonnet, no special flag" — identical to a genuine non-Pro user, so a
-// transient error here can never grant free Opus access or produce a
-// confusing fallback message for something that isn't actually a limit.
+// independently re-verifies subscription status against Supabase. A missing
+// subscription (not entitled) fails closed to "use Sonnet, no special flag" —
+// identical to a genuine non-Pro user. Reserving via reserve_usage (not a
+// separate read-then-compare) also closes the race condition a concurrent
+// burst of requests used to be able to exploit to exceed the Vega cap — see
+// reserveUsage above.
 async function resolveOpusEligibility(
   userId: string
-): Promise<{ allowed: boolean; periodEnd: string | null; overLimit: boolean }> {
+): Promise<{
+  allowed: boolean;
+  overLimit: boolean;
+  reservation: { periodEnd: string; field: "opus_count" } | null;
+}> {
   try {
     const sb = getSupabaseAdmin();
-    if (!sb) return { allowed: false, periodEnd: null, overLimit: false };
+    if (!sb) return { allowed: false, overLimit: false, reservation: null };
 
     const { status, periodEnd, tier } = await getSubscription(sb, userId);
     if (!isEntitledStatus(status) || !periodEnd) {
-      return { allowed: false, periodEnd: null, overLimit: false };
+      return { allowed: false, overLimit: false, reservation: null };
     }
 
-    const usage = await getUsageRow(sb, userId);
-    const currentOpusCount = usage && usage.period_end === periodEnd ? usage.opus_count ?? 0 : 0;
-
-    if (currentOpusCount >= opusLimitForTier(tier)) {
-      return { allowed: false, periodEnd, overLimit: true };
+    // reserve_usage atomically increments opus_count only if still under the
+    // cap — this is both the limit check and the write, with no window for a
+    // concurrent request to slip through on a stale count. A false result
+    // means either the cap is genuinely reached, or the RPC itself failed
+    // (logged inside reserveUsage) — both are treated identically as "over
+    // limit" so an infra hiccup can never let an unmetered Opus call through;
+    // it just degrades to Sonnet exactly like a real spent allowance would.
+    const reserved = await reserveUsage(sb, userId, periodEnd, "opus_count", opusLimitForTier(tier));
+    if (!reserved) {
+      return { allowed: false, overLimit: true, reservation: null };
     }
-    return { allowed: true, periodEnd, overLimit: false };
+    return { allowed: true, overLimit: false, reservation: { periodEnd, field: "opus_count" } };
   } catch (err) {
     console.error("Opus eligibility check threw — falling back to Sonnet:", err);
-    return { allowed: false, periodEnd: null, overLimit: false };
+    return { allowed: false, overLimit: false, reservation: null };
   }
 }
 
@@ -483,10 +477,10 @@ async function resolveOpusEligibility(
 // resolveOpusEligibility's periodEnd verbatim: that reset is tied to a real
 // subscription's monthly current_period_end, and a free-tier user has no
 // subscription row at all to key against. What IS reused is the underlying
-// mechanism bumpUsage/getUsageRow already implement — an opaque "period"
-// marker stored alongside a count, reset to zero the moment the marker no
-// longer matches "now" — just with today's UTC calendar date standing in
-// as that marker for a free user, instead of a billing period end. Active
+// mechanism reserve_usage already implements — an opaque "period" marker
+// stored alongside a count, reset to zero the moment the marker no longer
+// matches "now" — just with today's UTC calendar date standing in as that
+// marker for a free user, instead of a billing period end. Active
 // subscribers (Pro or Max) never touch this: Sonnet is unlimited for them,
 // exactly as advertised.
 const FREE_SONNET_DAILY_LIMIT = 10;
@@ -495,7 +489,7 @@ function todayUTC(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-// Shared by the eligibility check below and trackSonnetUsage's own bump, so
+// Shared by the eligibility check below and its own reservation call, so
 // both always agree on what "the current period" is for this user.
 async function resolveSonnetPeriod(
   sb: any,
@@ -506,22 +500,31 @@ async function resolveSonnetPeriod(
   return { periodEnd: todayUTC(), isActiveSubscriber: false };
 }
 
-// Unlike Opus (a scarce, costly perk worth being strict about), Sonnet is
-// this app's core chat feature — failure here fails OPEN (allows the
-// message through) rather than closed, so a transient DB hiccup can never
-// be the reason a legitimate free user is locked out of basic chat.
-async function resolveSonnetEligibility(userId: string): Promise<{ allowed: boolean }> {
+// Reserves (not reads-then-compares) the free-tier daily Nova allowance —
+// same race-condition fix as resolveOpusEligibility above. Active
+// subscribers skip this entirely: Sonnet is unlimited for them, no
+// reservation needed, same as before.
+//
+// This now fails CLOSED on an RPC error (treated as "no room"), not open.
+// The old read-then-compare version failed open on a transient DB hiccup so
+// a legitimate free user was never locked out of basic chat by infra
+// trouble — but "fail open" is exactly the kind of gap that let a metering
+// failure through unmetered, which is what this whole fix removes.
+async function resolveSonnetEligibility(userId: string): Promise<{
+  allowed: boolean;
+  reservation: { periodEnd: string; field: "sonnet_count" } | null;
+}> {
   try {
     const sb = getSupabaseAdmin();
-    if (!sb) return { allowed: true };
+    if (!sb) return { allowed: false, reservation: null };
     const { periodEnd, isActiveSubscriber } = await resolveSonnetPeriod(sb, userId);
-    if (isActiveSubscriber) return { allowed: true };
-    const usage = await getUsageRow(sb, userId);
-    const currentCount = usage && usage.period_end === periodEnd ? usage.sonnet_count ?? 0 : 0;
-    return { allowed: currentCount < FREE_SONNET_DAILY_LIMIT };
+    if (isActiveSubscriber) return { allowed: true, reservation: null };
+    const reserved = await reserveUsage(sb, userId, periodEnd, "sonnet_count", FREE_SONNET_DAILY_LIMIT);
+    if (!reserved) return { allowed: false, reservation: null };
+    return { allowed: true, reservation: { periodEnd, field: "sonnet_count" } };
   } catch (err) {
-    console.error("Sonnet eligibility check threw — failing open:", err);
-    return { allowed: true };
+    console.error("Sonnet eligibility check threw — failing closed:", err);
+    return { allowed: false, reservation: null };
   }
 }
 
@@ -647,6 +650,31 @@ function parseGroqResponse(raw: string): { actions: any[]; reply: string } {
 }
 
 export async function POST(req: Request) {
+  // Declared outside the try below, not inside it — a function declared
+  // inside a try{} block is scoped to that block and invisible from the
+  // catch{} block, which also needs to call this on failure. userId lives
+  // on the reservation record itself (rather than being captured from an
+  // outer binding) for the same reason: nothing above this line has it yet.
+  //
+  // At most one of the eligibility checks below ever actually reserves — a
+  // free user reserves sonnet_count (Pro/Max skip it, Sonnet is unlimited
+  // for them); a subscriber requesting Opus separately reserves opus_count
+  // (only reachable once already confirmed entitled, so a free user can
+  // never also reach that branch). Tracked here so any failure path below
+  // can release whichever one actually happened, exactly once, and never
+  // when none was made.
+  let activeReservation:
+    | { userId: string; periodEnd: string; field: "sonnet_count" | "opus_count" }
+    | null = null;
+  async function releasePendingReservation(): Promise<void> {
+    if (!activeReservation) return;
+    const { userId, periodEnd, field } = activeReservation;
+    activeReservation = null;
+    const sb = getSupabaseAdmin();
+    if (!sb) return;
+    await releaseUsage(sb, userId, periodEnd, field);
+  }
+
   try {
     const authedUserId = await authenticateRequest(req);
     if (!authedUserId) {
@@ -702,14 +730,15 @@ export async function POST(req: Request) {
       await persistMemories(sb, userId, actions, existingMemories, autoMemoryEnabled);
     }
 
-    // Free-tier daily Sonnet cap — checked unconditionally before any model
+    // Free-tier daily Sonnet cap — reserved unconditionally before any model
     // call, including when useOpus was requested but the user isn't
     // actually eligible for it and would otherwise silently fall back to
     // Sonnet below, since that fallback is still subject to the same cap.
-    // Active subscribers always pass immediately (see
+    // Active subscribers always pass immediately with no reservation (see
     // resolveSonnetEligibility).
     {
       const sonnetEligibility = await resolveSonnetEligibility(userId);
+      if (sonnetEligibility.reservation) activeReservation = { userId, ...sonnetEligibility.reservation };
       if (!sonnetEligibility.allowed) {
         return NextResponse.json({
           actions: [],
@@ -728,14 +757,13 @@ export async function POST(req: Request) {
       let model = "claude-sonnet-5";
       let maxTokens = 4096;
       let opusFallback = false;
-      let opusPeriodEnd: string | null = null;
 
       if (useOpus) {
         const eligibility = await resolveOpusEligibility(userId);
+        if (eligibility.reservation) activeReservation = { userId, ...eligibility.reservation };
         if (eligibility.allowed) {
           model = "claude-opus-4-8";
           maxTokens = 8192;
-          opusPeriodEnd = eligibility.periodEnd;
         } else if (eligibility.overLimit) {
           // Genuinely Pro, but this period's Opus credits are spent. Falling
           // back to Sonnet is the INTENDED behaviour, not a gap to be closed
@@ -820,15 +848,10 @@ export async function POST(req: Request) {
         toolUseBlock.input?.reply ?? "I had trouble processing that — could you try rephrasing?";
       const reply = rawReply.replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n");
 
-      if (model === "claude-opus-4-8" && opusPeriodEnd) {
-        await trackOpusUsage(userId, opusPeriodEnd);
-      } else {
-        // Sonnet's usage tracking stays exactly as it was in Phase 1 —
-        // track only, no enforcement — whether we ended up on Sonnet
-        // because useOpus was never set, because the caller wasn't
-        // genuinely Pro, or because of an Opus-limit fallback.
-        await trackSonnetUsage(userId);
-      }
+      // No post-call increment here anymore — reserveUsage already counted
+      // this request, before the fetch above, exactly once. Nothing further
+      // to do on success; a failure path (above or in the outer catch) is
+      // what calls releasePendingReservation instead.
 
       const persistedConversationId = await persistIfPossible(reply);
       await persistMemoriesIfPossible(actions);
@@ -849,6 +872,14 @@ export async function POST(req: Request) {
     // Anthropic's tool_choice syntax, so this stays prompt-based — recovered
     // into the same {actions, reply} shape via parseGroqResponse above.
     if (groqKey) {
+      // Groq never counted against Nova/Vega usage even before this fix
+      // (see the comment above this branch) — but the Sonnet reservation
+      // above runs unconditionally, before either model branch is chosen, so
+      // a free user's reservation must be released here before anything
+      // else, or a Groq-served reply would silently cost them one of their
+      // free messages for the first time.
+      await releasePendingReservation();
+
       // llama-3.3-70b-versatile isn't vision-capable, and Groq's API doesn't
       // understand Anthropic's image content-block shape anyway — flatten any
       // multimodal message down to its text (plus a placeholder for the
@@ -890,6 +921,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ actions, reply, conversationId: persistedConversationId });
     }
 
+    // Neither model is reachable — no AI call will ever happen for this
+    // request, so any reservation made above must not stand.
+    await releasePendingReservation();
     return NextResponse.json(
       {
         actions: [],
@@ -899,6 +933,10 @@ export async function POST(req: Request) {
     );
   } catch (err: any) {
     console.error("Ask route error:", err);
+    // Covers every throw above (Claude non-OK response, missing tool_use
+    // block, Groq error) — a failed request must cost nothing, so release
+    // whatever reservation was made before reporting the failure.
+    await releasePendingReservation();
     return NextResponse.json(
       {
         actions: [],
