@@ -11,8 +11,10 @@ Built from `NOTES.md`, `git log --oneline -80`, and a grep of the codebase for
 
 Status values: **Not started** · **In progress** · **Built-unverified** (code
 exists but has never been exercised/observed) · **Mostly verified** (strong
-live evidence collected, one specific remaining check named) · **Done**
-(evidence attached).
+live evidence collected, one specific remaining check named) ·
+**Recorded, no action** (an Info-severity finding with no fix proposed —
+logged for awareness, not tracked toward any gate) · **Done** (evidence
+attached).
 
 ---
 
@@ -55,7 +57,7 @@ live evidence collected, one specific remaining check named) · **Done**
 | G1-13 | Schedule database exports | Mo | Not started | Overlaps with G0-4 (paid plan unlocks built-in backups). | Gate 1 |
 | G1-14 | Load-test with about 10,000 users' worth of fake rows | Mo / Claude Code | Not started | | Gate 1 |
 | G1-15 | *(found by scan)* No automated test suite or CI pipeline exists | Claude Code | Not started | No test framework in `package.json` (no Jest/Vitest/Playwright); no `.github/workflows`. `lint` / `check:i18n` / `tsc --noEmit` are run manually, not gated anywhere. | Gate 1 |
-| G1-16 | *(found by scan)* Stripe checkout/portal fall back to a hardcoded personal preview URL if `NEXT_PUBLIC_SITE_URL` is unset | Claude Code | Not started | `app/api/stripe/checkout/route.ts:56` and `app/api/stripe/portal/route.ts:84` both fall back to `https://planner-docket-git-main-mohamad0420.vercel.app`. If the env var is ever missing in prod, Stripe return/redirect sends real customers to a dev preview URL. | Gate 1 |
+| G1-16 | S-07: Stripe checkout/portal fall back to a hardcoded personal preview URL if `NEXT_PUBLIC_SITE_URL` is unset | Claude Code | **Done** | Fixed in `280f49d` — hardcoded fallback removed from both routes; a missing `NEXT_PUBLIC_SITE_URL` now fails closed with a generic 500 instead of silently redirecting. Turned out not to be hypothetical: the variable was genuinely unset in the live Vercel project, so the old fallback had been handling every real checkout in production. Now set for both Production and Preview. Verified live, 10 Oct 2026: before the variable was set, checkout returned "Server not configured"; after, a real Pro checkout reached Stripe test mode and cancelling returned to `https://planner-docket.vercel.app/?subscription=cancelled`. | Gate 1 |
 
 ### Security audit (read-only, then fixes one at a time)
 
@@ -68,11 +70,18 @@ live evidence collected, one specific remaining check named) · **Done**
 | G1-21 | Review `/api/account/delete` | Claude Code | In progress | Read in full during this scan (`app/api/account/delete/route.ts`) — ordering (Stripe cancel → rows → auth user), confirm-email re-check server-side, and failure logging all look sound. Not independently signed off by anyone else. | Gate 1 |
 | G1-22 | Check what stops prompt-injected content steering AI actions (`add_task` / `remove_routine` / `update_routine`) | Claude Code | Not started | Grepped `app/api/ask/_prompt.ts` for injection/untrusted-content handling language — none found. | Gate 1 |
 | G1-23 | Rate-limit `/api/ask` | Claude Code | Not started | Grepped `app/api/ask/route.ts` for rate-limit logic — none found. | Gate 1 |
-| G1-24 | Review the `?debug=1` Eruda loader | Claude Code | Not started | Still present and unconditional: any visitor who appends `?debug=1` gets a live JS console injected into production (`app/page.tsx` ~7395-7408). | Gate 1 |
+| G1-24 | S-05: Review the `?debug=1` Eruda loader | Claude Code | **Done** | Fixed in `f482364` — gated behind `process.env.NODE_ENV==="development"` in addition to `?debug=1`; Next.js statically strips this at build time, so it's removed from the production bundle entirely, not just logically disabled. Confirmed by `grep -rl "eruda" .next/static` returning nothing after a production build. Verified live, 10 Oct 2026: visiting `https://planner-docket.vercel.app/?debug=1` and typing `eruda` in the browser console gave `ReferenceError: eruda is not defined`. | Gate 1 |
 | G1-25 | `npm audit` (S-01: `next` critical/high vulnerabilities — see `SECURITY_AUDIT.md`) | Claude Code | **Done** | Fixed in `089d6a0` — `next` upgraded 16.2.10 → 16.3.8 (lowest patched 16.x version, no major-version jump needed). `npm audit --omit=dev` now shows 0 Critical, 0 High. Deployed, and all five manual checks (typecheck, `check:i18n`, `next build`, pre-fix audit, post-fix audit) passed on 10 Oct 2026. | Gate 1 |
-| G1-26 | Security headers (CSP etc.) | Claude Code | Not started | `next.config.ts` has no headers config at all — confirmed by reading the file. | Gate 1 |
+| G1-26 | S-10: Security headers (CSP etc.) | Claude Code | Not started | `next.config.ts` has no headers config at all — confirmed by reading the file. | Gate 1 |
 | G1-27 | Supabase auth settings: email confirmation, password rules, redirect allowlist | Mo | Cannot verify from repo | Lives in the Supabase Auth dashboard, not the codebase. | Gate 1 |
 | G1-28 | S-02: Nova/Vega usage cap is an atomic reservation (`reserve_usage`/`release_usage`), not a check-then-act race — see `SECURITY_AUDIT.md` | Claude Code | **Mostly verified** | Fixed in `bbbabaf`. Rollback tests `t t f` and `t 1 0` passed. Live counts observed rising 0→2→3→4→5 on 10 Oct 2026. Two real Anthropic requests then failed (out of credit) and correctly left the count unchanged at 5 — confirms `release_usage` fires on a real failure. **Outstanding:** one clean Claude-served run after credit is topped up, confirming the count rises by exactly one on success. | Gate 1 |
+| G1-40 | S-06: `/api/speak` has no input-size cap, rate limit, or usage accounting on an authenticated paid TTS passthrough — see `SECURITY_AUDIT.md` | Claude Code | Not started | | Gate 1 |
+| G1-41 | S-08: raw upstream error text (Stripe, ElevenLabs) returned to the client in 3 routes — see `SECURITY_AUDIT.md` | Claude Code | Not started | | Gate 1 |
+| G1-42 | S-09: `/api/ask`'s user-facing reply names the missing env var and hosting provider on misconfiguration — see `SECURITY_AUDIT.md` | Claude Code | Not started | | Gate 1 |
+| G1-43 | S-11: `update_task`/`update_routine` spread model-supplied fields with no allowlist — see `SECURITY_AUDIT.md` | Claude Code | Not started | | Gate 1 |
+| G1-44 | S-12: task/routine free text (titles/notes) cached in plaintext in `localStorage` — see `SECURITY_AUDIT.md` | Claude Code | Recorded, no action | Inherent to the app's local-first architecture; the audit proposed no fix, only noted it for awareness. | — |
+| G1-45 | S-13: no explicit event-id idempotency guard on the Stripe webhook (currently safe by construction only) — see `SECURITY_AUDIT.md` | Claude Code | Recorded, no action | Every handler is a pure upsert/update, not an increment, so a replayed event can't currently double-apply; logged as defense-in-depth context only. | — |
+| G1-46 | S-14: Supabase session token pair lives in `localStorage` by default (no XSS found to exploit it) — see `SECURITY_AUDIT.md` | Claude Code | Recorded, no action | Standard Supabase SPA behavior; only exploitable in combination with an XSS vulnerability, and none was found in this codebase. | — |
 
 ### Found during live verification (10 Oct 2026)
 
@@ -92,6 +101,7 @@ running out of credit mid-session.
 | G1-37 | Pro/Max `sonnet_count` no longer increments (the old post-call tracking was removed as part of the S-02 fix); confirm no screen still displays it as if it were a live/incrementing count | Mo / Claude Code | Not started | Confirmed in code: the post-call `trackSonnetUsage` call for subscribers was removed in `bbbabaf`. Not yet confirmed whether the subscription carousel's "Nova messages" count (a plain, previously-uncapped count for subscribers) is still shown anywhere as if it were current. | Gate 1 |
 | G1-38 | Dev-dependency `npm audit` findings in `eslint-config-next`'s own tooling (`brace-expansion`, `braces`, `browserslist`, `js-yaml` — 8 high, 1 moderate) — dev-only, never shipped to production (low priority) | Claude Code | Not started | Confirmed via plain `npm audit` (not `--omit=dev`) after the S-01 fix — every flagged package is a transitive dev dependency of `eslint-config-next`. | Gate 1 |
 | G1-39 | System prompt should give the exact unsubscribe path (avatar card → Subscription → Stripe billing portal) so the assistant answers "how do I cancel?" correctly instead of vaguely | Claude Code | Not started | | Gate 1 |
+| G1-47 | *(low priority)* The Tabler icon font is preloaded but not used within seconds of load, triggering a browser console warning — check the preload's `as` attribute or remove the preload | Claude Code | Not started | Observed as a browser console warning during live testing, 10 Oct 2026. | Gate 1 |
 
 ---
 
