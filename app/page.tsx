@@ -5593,7 +5593,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
       const authHeaders=await getAuthHeader();
       const res=await fetch("/api/speak",{method:"POST",
         headers:{"Content-Type":"application/json",...authHeaders},
-        body:JSON.stringify({text})});
+        body:JSON.stringify({text:text.slice(0,2000)})});
       if(!res.ok){
         const errText=await res.text().catch(()=>"");
         console.error("Voice API returned an error status:",res.status,errText.slice(0,500));
