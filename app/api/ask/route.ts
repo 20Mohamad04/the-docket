@@ -557,6 +557,11 @@ const DOCKET_RESPONSE_TOOL = {
   },
 };
 
+// Narrow defense-in-depth: strips a stray trailing JSON-envelope fragment the model's reply text sometimes leaves in, without touching a reply that's genuinely discussing braces/JSON.
+function stripStrayJsonTail(reply: string): string {
+  return reply.includes("{") ? reply : reply.replace(/"\}\}?\s*$/, "");
+}
+
 // ── Groq fallback only ───────────────────────────────────────────────────
 // Groq doesn't support Anthropic's tool_choice syntax, so that branch stays
 // prompt-based. This recovery logic used to live client-side in page.tsx;
@@ -846,7 +851,7 @@ export async function POST(req: Request) {
       // literal backslash-n.
       const rawReply: string =
         toolUseBlock.input?.reply ?? "I had trouble processing that — could you try rephrasing?";
-      const reply = rawReply.replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n");
+      const reply = stripStrayJsonTail(rawReply.replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n"));
 
       // No post-call increment here anymore — reserveUsage already counted
       // this request, before the fetch above, exactly once. Nothing further
@@ -915,7 +920,8 @@ export async function POST(req: Request) {
         console.error("Groq error:", data);
         throw new Error(data.error?.message ?? "Groq API error");
       }
-      const { actions, reply } = parseGroqResponse(data.choices[0].message.content);
+      const { actions, reply: rawGroqReply } = parseGroqResponse(data.choices[0].message.content);
+      const reply = stripStrayJsonTail(rawGroqReply);
       const persistedConversationId = await persistIfPossible(reply);
       await persistMemoriesIfPossible(actions);
       return NextResponse.json({ actions, reply, conversationId: persistedConversationId });

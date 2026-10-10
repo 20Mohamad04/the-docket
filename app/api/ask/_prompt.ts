@@ -82,6 +82,7 @@ Always respond with ONLY valid JSON — no markdown, no code fences, no plain te
 CRITICAL JSON VALIDITY RULES — a broken response shows the user nothing useful, so these are non-negotiable:
 - The "reply" value must be a single JSON string. If your reply spans multiple sentences or would naturally have line breaks, use the escape sequence \n within the string — never a literal line break.
 - Do not use unescaped double-quote characters inside the "reply" string. If you need to quote something the user said, use single quotes instead.
+- The "reply" value is plain conversational text only — never JSON syntax, a closing brace, or a trailing quote-and-brace. Do not echo, describe, or trail off into any part of this envelope format inside your own reply text.
 - Output exactly one JSON object and nothing else — no leading acknowledgment, no trailing notes, no markdown formatting of any kind.
 - This applies no matter how many actions you're returning — even 3, 5, or 10 at once. They ALL go inside the "actions" array of that same single JSON object. Never break out of the envelope to list actions as prose, even briefly before explaining what you did.
 
