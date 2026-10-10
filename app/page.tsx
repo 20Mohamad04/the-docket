@@ -97,6 +97,50 @@ interface Routine {
   notes:string; completions:Record<string,boolean>;
 }
 
+// ── S-11: field allowlist for AI update_task/update_routine ────────────────
+// handleAiActions used to spread a.changes (raw, model-supplied JSON) straight
+// onto the matching Task/Routine with no allowlist — a stray id/done/deleted/
+// completions/checklist in there would silently overwrite fields that are
+// never meant to be settable this way (done/deleted have their own
+// complete_task/reopen_task/remove_task actions; checklist has add_step/
+// toggle_step/remove_step; completions has mark_routine_done; id is never
+// settable at all). This restricts a merge to a named set of plain content
+// fields, and only when each value is already the right primitive shape —
+// anything else in a.changes is dropped silently, never reaching state.
+type FieldType="string"|"number"|"boolean"|"string[]";
+function matchesFieldType(value:unknown,type:FieldType):boolean{
+  if(type==="string[]") return Array.isArray(value)&&value.every(v=>typeof v==="string");
+  return typeof value===type;
+}
+function pickAllowed(changes:unknown,allowlist:Record<string,FieldType>):Record<string,unknown>{
+  const picked:Record<string,unknown>={};
+  if(!changes||typeof changes!=="object") return picked;
+  for(const key of Object.keys(allowlist)){
+    if(key in (changes as object) && matchesFieldType((changes as any)[key],allowlist[key])){
+      picked[key]=(changes as any)[key];
+    }
+  }
+  return picked;
+}
+// Every Task field except id (never settable), done/deleted (own actions),
+// and checklist (own actions) — the rest are plain user-editable content.
+const TASK_CHANGE_FIELDS:Record<string,FieldType>={
+  title:"string",category:"string",priority:"string",type:"string",
+  date:"string",time:"string",recurring:"string",notes:"string",
+};
+// Every Routine field except id (never settable) and completions (its own
+// mark_routine_done action) — the rest are plain user-editable content.
+const ROUTINE_CHANGE_FIELDS:Record<string,FieldType>={
+  label:"string",category:"string",days:"string[]",time:"string",
+  duration:"number",intensity:"string",notes:"string",
+};
+function pickTaskChanges(changes:unknown):Partial<Task>{
+  return pickAllowed(changes,TASK_CHANGE_FIELDS) as Partial<Task>;
+}
+function pickRoutineChanges(changes:unknown):Partial<Routine>{
+  return pickAllowed(changes,ROUTINE_CHANGE_FIELDS) as Partial<Routine>;
+}
+
 // ── Translations ──────────────────────────────────────────────────────────────
 const T:Record<Lang,Record<string,string>> = {
   en:{
@@ -7806,7 +7850,7 @@ export default function Home(){
       if(a.type==="undo"){undoLast();return;}
       if(a.type==="add_task")addTask({title:a.task?.title??"Untitled",category:a.task?.category??"study",priority:a.task?.priority??"medium",type:a.task?.type??"milestone",date:a.task?.date??"",time:a.task?.time??"",recurring:a.task?.recurring??"",notes:a.task?.notes??""});
       else if(a.type==="remove_task")deleteTask(a.id);
-      else if(a.type==="update_task")updateTask(a.id,a.changes??{});
+      else if(a.type==="update_task")updateTask(a.id,pickTaskChanges(a.changes));
       else if(a.type==="complete_task")updateTask(a.id,{done:true});
       else if(a.type==="reopen_task")updateTask(a.id,{done:false,deleted:false});
       else if(a.type==="add_step")addStep(a.task_id,a.text??"Step");
@@ -7828,7 +7872,7 @@ export default function Home(){
         }]);
       }
       else if(a.type==="update_routine"){
-        setRoutines(prev=>prev.map((r:Routine)=>r.id===a.id?{...r,...(a.changes??{})}:r));
+        setRoutines(prev=>prev.map((r:Routine)=>r.id===a.id?{...r,...pickRoutineChanges(a.changes)}:r));
       }
       else if(a.type==="remove_routine"){
         setRoutines(prev=>prev.filter((r:Routine)=>r.id!==a.id));
