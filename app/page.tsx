@@ -7326,10 +7326,14 @@ export default function Home(){
     // top-level auth gate blocks the task/routine UI until user?.id exists,
     // regardless of what tasks/routines happened to hold before that.
     const urlParams=new URLSearchParams(window.location.search);
-    // Debug console (Eruda) — only ever loads with ?debug=1 in the URL, e.g.
-    // for diagnosing mobile-only issues (like the iOS Safari mic bug) without
-    // a Mac to plug into. Never loads for normal users.
-    if(urlParams.get("debug")==="1"&&!document.querySelector('[data-eruda]')){
+    // Debug console (Eruda) — for diagnosing mobile-only issues (like the iOS
+    // Safari mic bug) without a Mac to plug into. Gated behind NODE_ENV, not
+    // just ?debug=1: an unauthenticated query param alone let anyone craft a
+    // link that loaded a third-party script (no SRI pin) into any visitor's
+    // authenticated session. Next.js statically replaces NODE_ENV at build
+    // time, so this entire block is removed from the production bundle —
+    // it only ever exists in a local dev build.
+    if(process.env.NODE_ENV==="development"&&urlParams.get("debug")==="1"&&!document.querySelector('[data-eruda]')){
       const script=document.createElement('script');
       script.src='https://cdn.jsdelivr.net/npm/eruda';
       script.setAttribute('data-eruda','1');
