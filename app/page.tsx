@@ -271,6 +271,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"Type {email} to confirm",
     deleteAccountCta:"Permanently delete my account",
     deleting:"Deleting…", cancel2:"Cancel",
+    confirmDeleteRoutineTitle:"Delete routine \"{label}\"?", confirmDeleteYes:"Delete", confirmDeleteNo:"Cancel",
     onboardSignedIn:"You're signed in, {name}", onboardSignedInAs:"You're signed in as {email}.",
   },
   ar:{
@@ -401,6 +402,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"اكتب {email} للتأكيد",
     deleteAccountCta:"احذف حسابي نهائيًا",
     deleting:"جاري الحذف…", cancel2:"إلغاء",
+    confirmDeleteRoutineTitle:"حذف الروتين \"{label}\"؟", confirmDeleteYes:"حذف", confirmDeleteNo:"إلغاء",
     onboardSignedIn:"تم تسجيل دخولك، {name}", onboardSignedInAs:"لقد سجّلت الدخول باسم {email}.",
   },
   fr:{
@@ -531,6 +533,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"Saisissez {email} pour confirmer",
     deleteAccountCta:"Supprimer définitivement mon compte",
     deleting:"Suppression…", cancel2:"Annuler",
+    confirmDeleteRoutineTitle:"Supprimer la routine « {label} » ?", confirmDeleteYes:"Supprimer", confirmDeleteNo:"Annuler",
     onboardSignedIn:"Vous êtes connecté, {name}", onboardSignedInAs:"Vous êtes connecté en tant que {email}.",
   },
   tr:{
@@ -661,6 +664,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"Onaylamak için {email} yazın",
     deleteAccountCta:"Hesabımı kalıcı olarak sil",
     deleting:"Siliniyor…", cancel2:"İptal",
+    confirmDeleteRoutineTitle:"\"{label}\" rutini silinsin mi?", confirmDeleteYes:"Sil", confirmDeleteNo:"İptal",
     onboardSignedIn:"Giriş yaptınız, {name}", onboardSignedInAs:"{email} olarak giriş yaptınız.",
   },
   ur:{
@@ -791,6 +795,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"تصدیق کے لیے {email} لکھیں",
     deleteAccountCta:"میرا اکاؤنٹ مستقل طور پر حذف کریں",
     deleting:"حذف ہو رہا ہے…", cancel2:"منسوخ",
+    confirmDeleteRoutineTitle:"روٹین \"{label}\" حذف کریں؟", confirmDeleteYes:"حذف کریں", confirmDeleteNo:"منسوخ",
     onboardSignedIn:"آپ سائن ان ہیں، {name}", onboardSignedInAs:"آپ {email} کے طور پر سائن ان ہیں۔",
   },
   bn:{
@@ -921,6 +926,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"নিশ্চিত করতে {email} লিখুন",
     deleteAccountCta:"আমার অ্যাকাউন্ট স্থায়ীভাবে মুছুন",
     deleting:"মুছে ফেলা হচ্ছে…", cancel2:"বাতিল",
+    confirmDeleteRoutineTitle:"রুটিন \"{label}\" মুছবেন?", confirmDeleteYes:"মুছুন", confirmDeleteNo:"বাতিল",
     onboardSignedIn:"আপনি সাইন ইন করেছেন, {name}", onboardSignedInAs:"আপনি {email} হিসেবে সাইন ইন করেছেন।",
   },
   es:{
@@ -1051,6 +1057,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"Escribe {email} para confirmar",
     deleteAccountCta:"Eliminar mi cuenta permanentemente",
     deleting:"Eliminando…", cancel2:"Cancelar",
+    confirmDeleteRoutineTitle:"¿Eliminar la rutina \"{label}\"?", confirmDeleteYes:"Eliminar", confirmDeleteNo:"Cancelar",
     onboardSignedIn:"Has iniciado sesión, {name}", onboardSignedInAs:"Has iniciado sesión como {email}.",
   },
   hi:{
@@ -1181,6 +1188,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"पुष्टि के लिए {email} लिखें",
     deleteAccountCta:"मेरा खाता स्थायी रूप से हटाएँ",
     deleting:"हटाया जा रहा है…", cancel2:"रद्द करें",
+    confirmDeleteRoutineTitle:"रूटीन \"{label}\" हटाएं?", confirmDeleteYes:"हटाएं", confirmDeleteNo:"रद्द करें",
     onboardSignedIn:"आप साइन इन हैं, {name}", onboardSignedInAs:"आप {email} के रूप में साइन इन हैं।",
   },
   pt:{
@@ -1311,6 +1319,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"Digite {email} para confirmar",
     deleteAccountCta:"Excluir minha conta permanentemente",
     deleting:"Excluindo…", cancel2:"Cancelar",
+    confirmDeleteRoutineTitle:"Excluir a rotina \"{label}\"?", confirmDeleteYes:"Excluir", confirmDeleteNo:"Cancelar",
     onboardSignedIn:"Você está conectado, {name}", onboardSignedInAs:"Você está conectado como {email}.",
   },
   ru:{
@@ -1441,6 +1450,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"Введите {email} для подтверждения",
     deleteAccountCta:"Удалить мой аккаунт навсегда",
     deleting:"Удаление…", cancel2:"Отмена",
+    confirmDeleteRoutineTitle:"Удалить распорядок «{label}»?", confirmDeleteYes:"Удалить", confirmDeleteNo:"Отмена",
     onboardSignedIn:"Вы вошли в систему, {name}", onboardSignedInAs:"Вы вошли как {email}.",
   },
   zh:{
@@ -1571,6 +1581,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountConfirm:"输入 {email} 以确认",
     deleteAccountCta:"永久删除我的账户",
     deleting:"删除中…", cancel2:"取消",
+    confirmDeleteRoutineTitle:"删除例程“{label}”？", confirmDeleteYes:"删除", confirmDeleteNo:"取消",
     onboardSignedIn:"你已登录，{name}", onboardSignedInAs:"你已使用 {email} 登录。",
   },
 };
@@ -5212,6 +5223,43 @@ function buildApiMessages(msgs:{role:"user"|"assistant";content:string;imageData
 
 const CHATBOT_GREETING="Hi! I'm your Docket assistant. Tell me what you need — I'll find the best slot in your schedule and confirm before adding anything.";
 
+// S-03: confirm/cancel card for an AI-proposed destructive action that has
+// no recycle bin of its own (today, only remove_routine). Deliberately a
+// small standalone component — not inlined into Chatbot's render — so a
+// future routine editor's own delete flow can reuse the exact same card
+// instead of growing a second one-off confirm UI. Styled to match the
+// Danger Zone card in InfoModal's account-deletion flow (same colours,
+// radius, fonts); label goes through <bdi> for the same reason that card
+// wraps the account email in one — an embedded Latin/foreign-script
+// fragment must not get reordered by the surrounding RTL sentence.
+function ConfirmDeleteCard({label,onConfirm,onCancel}:{label:string;onConfirm:()=>void;onCancel:()=>void;}){
+  const{dark,t}=useApp();
+  const C=getC(dark);
+  const[before,after=""]=t("confirmDeleteRoutineTitle").split("{label}");
+  return(
+    <div style={{padding:"14px",borderRadius:12,marginBottom:8,
+      border:`1px solid rgba(217,79,61,0.35)`,background:"rgba(217,79,61,0.06)"}}>
+      <p style={{fontSize:12.5,lineHeight:1.5,color:C.navy,marginBottom:10}}>
+        {before}<bdi style={{fontWeight:700,color:C.navy}}>{label}</bdi>{after}
+      </p>
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={onCancel}
+          style={{flex:1,padding:"10px",borderRadius:10,fontSize:12.5,fontWeight:700,
+            border:`1px solid ${C.border}`,background:"transparent",color:C.muted,
+            cursor:"pointer",fontFamily:"inherit"}}>
+          {t("confirmDeleteNo")}
+        </button>
+        <button onClick={onConfirm}
+          style={{flex:1,padding:"10px",borderRadius:10,fontSize:12.5,fontWeight:700,
+            border:"none",color:"white",fontFamily:"inherit",
+            background:C.urgent,cursor:"pointer"}}>
+          {t("confirmDeleteYes")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Every authenticated API route (/api/ask, /api/speak, /api/conversations,
 // /api/memories, /api/stripe/checkout, /api/stripe/portal) verifies this
 // same bearer token server-side rather than trusting a client-sent userId —
@@ -5254,9 +5302,15 @@ function formatConversationTime(iso:string,locale:string="en-GB"):string{
   return date.toLocaleDateString(locale,{day:"numeric",month:"short",...(sameYear?{}:{year:"numeric"})});
 }
 
-function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrentView,onAddTask}:{tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
+function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrentView,onAddTask,
+  pendingRoutineDeletes,onConfirmRoutineDelete,onCancelRoutineDelete,onClearPendingRoutineDeletes}:{
+  tasks:Task[];routines:Routine[];onAction:(a:any[])=>void;
   user?:{id?:string}|null;isPro?:boolean;tier?:string|null;
-  currentView:View;setCurrentView:(v:View)=>void;onAddTask:()=>void;}){
+  currentView:View;setCurrentView:(v:View)=>void;onAddTask:()=>void;
+  pendingRoutineDeletes:{id:number;label:string}[];
+  onConfirmRoutineDelete:(id:number)=>void;
+  onCancelRoutineDelete:(id:number)=>void;
+  onClearPendingRoutineDeletes:()=>void;}){
   const{dark,t,lang}=useApp();
   const locale=localeFor(lang);
   const C=getC(dark);
@@ -5940,6 +5994,7 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
     setMessages([{role:"assistant",content:CHATBOT_GREETING}]);
     setConversationId(null);
     setHistoryOpen(false);
+    onClearPendingRoutineDeletes();
   }
 
   async function openConversation(id:string){
@@ -6455,6 +6510,11 @@ function Chatbot({tasks,routines,onAction,user,isPro,tier,currentView,setCurrent
                   useful once this stopped being its own translucent layer. */}
               <div style={{padding:"12px 16px 16px",
                 background:"transparent",flexShrink:0}}>
+                {pendingRoutineDeletes.map(p=>(
+                  <ConfirmDeleteCard key={p.id} label={p.label}
+                    onConfirm={()=>onConfirmRoutineDelete(p.id)}
+                    onCancel={()=>onCancelRoutineDelete(p.id)}/>
+                ))}
                 {pendingImage&&(
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,
                     padding:"6px 10px",borderRadius:12,
@@ -7263,6 +7323,13 @@ export default function Home(){
   // Read only through setUndoStack's functional updater (see undoLast), so
   // the value binding itself is deliberately not taken.
   const[,setUndoStack]=useState<{tasks:Task[];routines:Routine[]}[]>([]);
+  // S-03: an AI-proposed remove_routine no longer executes immediately —
+  // it waits here, rendered as a confirm/cancel card in the chat panel,
+  // until the user explicitly confirms it (see handleAiActions and
+  // confirmRoutineDelete/cancelRoutineDelete below). Routines have no
+  // soft-delete/recycle-bin unlike tasks, so this is the only undo a
+  // mistaken or injected delete would otherwise get.
+  const[pendingRoutineDeletes,setPendingRoutineDeletes]=useState<{id:number;label:string}[]>([]);
   // One status per outcome rather than a single "error". The old shape forced
   // every failure — denial, timeout, no fix available, a dead network, an
   // Aladhan outage — through one string that told the user to check browser
@@ -7459,6 +7526,7 @@ export default function Home(){
               // on this device later, instead of an instant local repaint.
               setTasks([]);
               setRoutines([]);
+              setPendingRoutineDeletes([]);
             }
           });
         }catch(e){ console.log("Supabase session check failed",e); setAuthChecked(true); }
@@ -7875,13 +7943,36 @@ export default function Home(){
         setRoutines(prev=>prev.map((r:Routine)=>r.id===a.id?{...r,...pickRoutineChanges(a.changes)}:r));
       }
       else if(a.type==="remove_routine"){
-        setRoutines(prev=>prev.filter((r:Routine)=>r.id!==a.id));
+        // S-03: no hard delete here any more — look the routine up in
+        // current state and, if it exists, queue it for the user's own
+        // explicit confirmation instead (see ConfirmDeleteCard below). An
+        // id that doesn't match anything is still a silent no-op, same as
+        // before. De-duplicated so the same routine proposed twice in one
+        // reply (or across replies) doesn't stack two identical cards.
+        const match=routines.find((r:Routine)=>r.id===a.id);
+        if(match){
+          setPendingRoutineDeletes(prev=>prev.some(p=>p.id===match.id)?prev:[...prev,{id:match.id,label:match.label}]);
+        }
       }
       else if(a.type==="mark_routine_done"){
         setRoutines(prev=>prev.map((r:Routine)=>r.id===a.routine_id?{...r,completions:{...r.completions,[a.date]:true}}:r));
       }
     });
   },[addTask,deleteTask,updateTask,addStep,toggleStep,removeStep,setRoutines,tasks,routines,undoLast]);
+
+  // Runs the actual hard delete only once the user taps Delete on the
+  // confirm card — not when the AI first proposed it. The undo snapshot is
+  // pushed here, at the moment of mutation, using current state: time may
+  // have passed (and other actions may have run) since the card appeared,
+  // so snapshotting any earlier would risk undo reverting to a stale state.
+  const confirmRoutineDelete=useCallback((id:number)=>{
+    setUndoStack(s=>[...s.slice(-9),{tasks:[...tasks],routines:[...routines]}]);
+    setRoutines(prev=>prev.filter(r=>r.id!==id));
+    setPendingRoutineDeletes(prev=>prev.filter(p=>p.id!==id));
+  },[tasks,routines]);
+  const cancelRoutineDelete=useCallback((id:number)=>{
+    setPendingRoutineDeletes(prev=>prev.filter(p=>p.id!==id));
+  },[]);
 
   async function toggleNotifications(){
     const next=!notifEnabled;
@@ -8719,7 +8810,11 @@ export default function Home(){
           no separate floating add-task button any more. */}
       <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions} user={user} isPro={isPro} tier={subTier}
         currentView={currentView} setCurrentView={setCurrentView}
-        onAddTask={()=>setIsAddingTask(true)}/>
+        onAddTask={()=>setIsAddingTask(true)}
+        pendingRoutineDeletes={pendingRoutineDeletes}
+        onConfirmRoutineDelete={confirmRoutineDelete}
+        onCancelRoutineDelete={cancelRoutineDelete}
+        onClearPendingRoutineDeletes={()=>setPendingRoutineDeletes([])}/>
 
       {isAddingTask&&<TaskModal onClose={()=>setIsAddingTask(false)} onSave={addTask}/>}
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
