@@ -6,6 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // sides sharing one definition is what stops the context shape drifting.
 import type { ChatContext } from "./api/ask/_prompt";
 import ReactMarkdown from "react-markdown";
+import { taskOccursOn } from "./lib/recurrence";
 
 type Category = "study"|"legal"|"trading"|"finance"|"business"|"career"|"health"|"driving"|"admin"|"property"|"content"|"personal"|"family"|"faith"|"fitness"|"nutrition"|"mental"|"travel"|"technology"|"creative"|"social"|"volunteering"|"language"|"reading"|"music"|"sports"|"cooking"|"shopping"|"events"|"medical"|"insurance"|"tax"|"debt"|"savings"|"investment"|"side_hustle"|"networking"|"interview"|"project"|"research"|"writing"|"design"|"marketing"|"sales"|"customer"|"hr"|"legal_work"|"compliance"|"environment"|"community"|"charity"|"education"|"childcare"|"pets"|"home"|"vehicle"|"utilities"|"subscriptions"|"other";
 type Priority = "urgent"|"high"|"medium";
@@ -90,6 +91,9 @@ interface Task {
   id:number; title:string; category:Category; priority:Priority;
   type:TaskType; date:string; time:string; recurring:string;
   notes:string; done:boolean; deleted:boolean; checklist:Step[];
+  // Optional — old rows (localStorage or Supabase, pre-migration) won't have
+  // either. Every read site uses ?./?? rather than assuming presence.
+  completions?:Record<string,boolean>; createdAt?:string;
 }
 interface Routine {
   id:number; label:string; category:Category; days:string[];
@@ -272,6 +276,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountCta:"Permanently delete my account",
     deleting:"Deleting…", cancel2:"Cancel",
     confirmDeleteRoutineTitle:"Delete routine \"{label}\"?", confirmDeleteYes:"Delete", confirmDeleteNo:"Cancel",
+    taskTag:"Task", routineTag:"Routine",
     onboardSignedIn:"You're signed in, {name}", onboardSignedInAs:"You're signed in as {email}.",
   },
   ar:{
@@ -403,6 +408,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountCta:"احذف حسابي نهائيًا",
     deleting:"جاري الحذف…", cancel2:"إلغاء",
     confirmDeleteRoutineTitle:"حذف الروتين \"{label}\"؟", confirmDeleteYes:"حذف", confirmDeleteNo:"إلغاء",
+    taskTag:"مهمة", routineTag:"روتين",
     onboardSignedIn:"تم تسجيل دخولك، {name}", onboardSignedInAs:"لقد سجّلت الدخول باسم {email}.",
   },
   fr:{
@@ -534,6 +540,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountCta:"Supprimer définitivement mon compte",
     deleting:"Suppression…", cancel2:"Annuler",
     confirmDeleteRoutineTitle:"Supprimer la routine « {label} » ?", confirmDeleteYes:"Supprimer", confirmDeleteNo:"Annuler",
+    taskTag:"Tâche", routineTag:"Routine",
     onboardSignedIn:"Vous êtes connecté, {name}", onboardSignedInAs:"Vous êtes connecté en tant que {email}.",
   },
   tr:{
@@ -665,6 +672,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountCta:"Hesabımı kalıcı olarak sil",
     deleting:"Siliniyor…", cancel2:"İptal",
     confirmDeleteRoutineTitle:"\"{label}\" rutini silinsin mi?", confirmDeleteYes:"Sil", confirmDeleteNo:"İptal",
+    taskTag:"Görev", routineTag:"Rutin",
     onboardSignedIn:"Giriş yaptınız, {name}", onboardSignedInAs:"{email} olarak giriş yaptınız.",
   },
   ur:{
@@ -796,6 +804,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountCta:"میرا اکاؤنٹ مستقل طور پر حذف کریں",
     deleting:"حذف ہو رہا ہے…", cancel2:"منسوخ",
     confirmDeleteRoutineTitle:"روٹین \"{label}\" حذف کریں؟", confirmDeleteYes:"حذف کریں", confirmDeleteNo:"منسوخ",
+    taskTag:"کام", routineTag:"معمول",
     onboardSignedIn:"آپ سائن ان ہیں، {name}", onboardSignedInAs:"آپ {email} کے طور پر سائن ان ہیں۔",
   },
   bn:{
@@ -927,6 +936,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountCta:"আমার অ্যাকাউন্ট স্থায়ীভাবে মুছুন",
     deleting:"মুছে ফেলা হচ্ছে…", cancel2:"বাতিল",
     confirmDeleteRoutineTitle:"রুটিন \"{label}\" মুছবেন?", confirmDeleteYes:"মুছুন", confirmDeleteNo:"বাতিল",
+    taskTag:"কাজ", routineTag:"রুটিন",
     onboardSignedIn:"আপনি সাইন ইন করেছেন, {name}", onboardSignedInAs:"আপনি {email} হিসেবে সাইন ইন করেছেন।",
   },
   es:{
@@ -1058,6 +1068,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountCta:"Eliminar mi cuenta permanentemente",
     deleting:"Eliminando…", cancel2:"Cancelar",
     confirmDeleteRoutineTitle:"¿Eliminar la rutina \"{label}\"?", confirmDeleteYes:"Eliminar", confirmDeleteNo:"Cancelar",
+    taskTag:"Tarea", routineTag:"Rutina",
     onboardSignedIn:"Has iniciado sesión, {name}", onboardSignedInAs:"Has iniciado sesión como {email}.",
   },
   hi:{
@@ -1189,6 +1200,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountCta:"मेरा खाता स्थायी रूप से हटाएँ",
     deleting:"हटाया जा रहा है…", cancel2:"रद्द करें",
     confirmDeleteRoutineTitle:"रूटीन \"{label}\" हटाएं?", confirmDeleteYes:"हटाएं", confirmDeleteNo:"रद्द करें",
+    taskTag:"कार्य", routineTag:"रूटीन",
     onboardSignedIn:"आप साइन इन हैं, {name}", onboardSignedInAs:"आप {email} के रूप में साइन इन हैं।",
   },
   pt:{
@@ -1320,6 +1332,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountCta:"Excluir minha conta permanentemente",
     deleting:"Excluindo…", cancel2:"Cancelar",
     confirmDeleteRoutineTitle:"Excluir a rotina \"{label}\"?", confirmDeleteYes:"Excluir", confirmDeleteNo:"Cancelar",
+    taskTag:"Tarefa", routineTag:"Rotina",
     onboardSignedIn:"Você está conectado, {name}", onboardSignedInAs:"Você está conectado como {email}.",
   },
   ru:{
@@ -1451,6 +1464,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountCta:"Удалить мой аккаунт навсегда",
     deleting:"Удаление…", cancel2:"Отмена",
     confirmDeleteRoutineTitle:"Удалить распорядок «{label}»?", confirmDeleteYes:"Удалить", confirmDeleteNo:"Отмена",
+    taskTag:"Задача", routineTag:"Распорядок",
     onboardSignedIn:"Вы вошли в систему, {name}", onboardSignedInAs:"Вы вошли как {email}.",
   },
   zh:{
@@ -1582,6 +1596,7 @@ const T:Record<Lang,Record<string,string>> = {
     deleteAccountCta:"永久删除我的账户",
     deleting:"删除中…", cancel2:"取消",
     confirmDeleteRoutineTitle:"删除例程“{label}”？", confirmDeleteYes:"删除", confirmDeleteNo:"取消",
+    taskTag:"任务", routineTag:"例程",
     onboardSignedIn:"你已登录，{name}", onboardSignedInAs:"你已使用 {email} 登录。",
   },
 };
@@ -1993,6 +2008,7 @@ function taskToRow(t:Task,userId:string){
     id:t.id,user_id:userId,title:t.title,category:t.category,priority:t.priority,
     type:t.type,date:t.date||null,time:t.time||null,recurring:t.recurring||null,
     notes:t.notes||null,done:t.done,deleted:t.deleted,checklist:t.checklist,
+    completions:t.completions??{},created_at:t.createdAt||null,
   };
 }
 function rowToTask(r:any):Task{
@@ -2000,6 +2016,7 @@ function rowToTask(r:any):Task{
     id:r.id,title:r.title,category:r.category,priority:r.priority,type:r.type,
     date:r.date||"",time:r.time||"",recurring:r.recurring||"",notes:r.notes||"",
     done:!!r.done,deleted:!!r.deleted,checklist:r.checklist||[],
+    completions:r.completions||{},createdAt:r.created_at||"",
   };
 }
 function routineToRow(r:Routine,userId:string){
@@ -4934,10 +4951,10 @@ function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFil
 
 // ── Timeline Row ─────────────────────────────────────────────────────────────
 function TimelineRow({item,onCheck}:{
-  item:{time:string;label:string;category:string;done:boolean;streak:number;conflict:boolean;};
+  item:{time:string;label:string;category:string;done:boolean;streak:number;conflict:boolean;kind:"task"|"routine";};
   onCheck:()=>void;
 }){
-  const{dark,lang}=useApp();
+  const{dark,lang,t}=useApp();
   const locale=localeFor(lang);
   const C=getC(dark);
   return(
@@ -4951,6 +4968,14 @@ function TimelineRow({item,onCheck}:{
       <div style={{flex:1}}>
         <CatPill category={item.category} done={item.done}/>
         {" "}
+        {/* Only incidental tells (the streak flame, the clash badge) existed
+            before to distinguish a routine row from a task row — this is the
+            first deliberate one. marginInlineEnd (not marginRight) so it sits
+            correctly before the label in RTL too. */}
+        <span style={{fontSize:9.5,fontWeight:700,padding:"2px 6px",borderRadius:6,
+          background:C.border,color:C.muted2,marginInlineEnd:4}}>
+          {item.kind==="routine"?t("routineTag"):t("taskTag")}
+        </span>
         <span style={{fontSize:13.5,fontWeight:600,color:C.navy,
           textDecoration:item.done?"line-through":"none"}}>{item.label}</span>
       </div>
@@ -7841,13 +7866,21 @@ export default function Home(){
   },[isLoaded,cloudPullDone]);
 
   const addTask=useCallback((data:Omit<Task,"id"|"done"|"deleted"|"checklist">)=>{
-    setTasks(p=>[...p,{id:nextId(p),...data,done:false,deleted:false,checklist:[]}]);
+    setTasks(p=>[...p,{id:nextId(p),...data,done:false,deleted:false,checklist:[],
+      completions:{},createdAt:new Date().toISOString()}]);
   },[]);
   const updateTask=useCallback((id:number,changes:Partial<Task>)=>{
     setTasks(p=>p.map(t=>t.id===id?{...t,...changes}:t));
   },[]);
   const toggleTask=useCallback((id:number)=>{
     setTasks(p=>p.map(t=>t.id===id?{...t,done:!t.done}:t));
+  },[]);
+  // Per-day completion for a recurring task — mirrors toggleRoutineDate.
+  // Only ever called for a task that has a recurrence (see the timeline
+  // checkbox below); a one-off task keeps using the plain toggleTask above.
+  const toggleTaskDate=useCallback((id:number,dateISO:string)=>{
+    setTasks(p=>p.map(t=>t.id!==id?t:{...t,
+      completions:{...(t.completions??{}),[dateISO]:!(t.completions?.[dateISO])}}));
   },[]);
   const deleteTask=useCallback((id:number)=>{
     setTasks(p=>p.map(t=>t.id===id?{...t,deleted:true}:t));
@@ -7919,7 +7952,22 @@ export default function Home(){
       if(a.type==="add_task")addTask({title:a.task?.title??"Untitled",category:a.task?.category??"study",priority:a.task?.priority??"medium",type:a.task?.type??"milestone",date:a.task?.date??"",time:a.task?.time??"",recurring:a.task?.recurring??"",notes:a.task?.notes??""});
       else if(a.type==="remove_task")deleteTask(a.id);
       else if(a.type==="update_task")updateTask(a.id,pickTaskChanges(a.changes));
-      else if(a.type==="complete_task")updateTask(a.id,{done:true});
+      else if(a.type==="complete_task"){
+        // A recurring task has no single permanent "done" — completing it
+        // means completing TODAY's occurrence, the same per-day completion
+        // the timeline checkbox itself writes (see toggleTaskDate). The
+        // global done flag is left alone, same as every other read site
+        // (All Tasks, archive, the chat context) that still treats it as
+        // "not done" — correct for something that recurs, not a gap.
+        const match=tasks.find(tk=>tk.id===a.id);
+        if(match?.recurring){
+          const today=todayISO();
+          setTasks(prev=>prev.map(tk=>tk.id===a.id?{...tk,
+            completions:{...(tk.completions??{}),[today]:true}}:tk));
+        }else{
+          updateTask(a.id,{done:true});
+        }
+      }
       else if(a.type==="reopen_task")updateTask(a.id,{done:false,deleted:false});
       else if(a.type==="add_step")addStep(a.task_id,a.text??"Step");
       else if(a.type==="toggle_step")toggleStep(a.task_id,a.step_id);
@@ -7958,7 +8006,7 @@ export default function Home(){
         setRoutines(prev=>prev.map((r:Routine)=>r.id===a.routine_id?{...r,completions:{...r.completions,[a.date]:true}}:r));
       }
     });
-  },[addTask,deleteTask,updateTask,addStep,toggleStep,removeStep,setRoutines,tasks,routines,undoLast]);
+  },[addTask,deleteTask,updateTask,addStep,toggleStep,removeStep,setRoutines,setTasks,tasks,routines,undoLast]);
 
   // Runs the actual hard delete only once the user taps Delete on the
   // confirm card — not when the AI first proposed it. The undo snapshot is
@@ -8095,28 +8143,31 @@ export default function Home(){
   const dayTrackRef=React.useRef<HTMLDivElement|null>(null);
   const dayDragRef=React.useRef<{startX:number;startLeft:number;max:number;range:number}|null>(null);
   const[dayScrollMetrics,setDayScrollMetrics]=useState({left:0,max:1,client:1});
-  // Seeded with today rather than null so the label under the strip can never
-  // render a wrong date, not even for the frame before the effect below takes
-  // its first scroll reading.
-  const[viewedDate,setViewedDate]=useState<string|null>(todayISO());
 
-  // Drives both the slider thumb and the "where am I" date label from the
-  // day-picker's actual scroll position. Deliberately NOT a native "scroll"
-  // event listener: verified via a standalone repro that setting scrollLeft
-  // programmatically (as the slider drag below does) — and scrolling more
-  // generally — doesn't reliably dispatch a "scroll" event promptly in
-  // every browser context (iOS Safari in particular is documented to fire
-  // "scroll" only sparsely during momentum touch-scrolling). Relying on
-  // that event left the thumb stuck at its initial default forever, which
-  // is exactly what happened on real-device testing. Polling scrollLeft on
-  // every animation frame instead sidesteps the question of whether/when a
-  // "scroll" event fires — it just reads the live value directly — and
-  // only calls setState when a value actually changed, so it costs a few
-  // property reads on frames where nothing moved, not a re-render.
+  // Drives the slider thumb from the day-picker's actual scroll position.
+  // Deliberately NOT a native "scroll" event listener: verified via a
+  // standalone repro that setting scrollLeft programmatically (as the slider
+  // drag below does) — and scrolling more generally — doesn't reliably
+  // dispatch a "scroll" event promptly in every browser context (iOS Safari
+  // in particular is documented to fire "scroll" only sparsely during
+  // momentum touch-scrolling). Relying on that event left the thumb stuck at
+  // its initial default forever, which is exactly what happened on
+  // real-device testing. Polling scrollLeft on every animation frame instead
+  // sidesteps the question of whether/when a "scroll" event fires — it just
+  // reads the live value directly — and only calls setState when a value
+  // actually changed, so it costs a few property reads on frames where
+  // nothing moved, not a re-render.
+  //
+  // This used to also derive a "where am I" date label from the same scroll
+  // position (a viewedDate/viewedDay pair, computed via the strip's leftmost
+  // visible chip) — removed because it meant the label under the strip could
+  // disagree with whichever day was actually selected: tapping a chip doesn't
+  // move the scroll position at all. The label now reads straight off selDay
+  // (the tapped day) below instead, so this effect is scroll-thumb-only.
   React.useLayoutEffect(()=>{
     if(currentView!=="daily")return;
     let raf=0;
-    let lastLeft=-1,lastMax=-1,lastClient=-1,lastIdx=-1;
+    let lastLeft=-1,lastMax=-1,lastClient=-1;
     const measure=()=>{
       const el=dayScrollElRef.current;
       if(!el)return;
@@ -8128,19 +8179,6 @@ export default function Home(){
       if(left!==lastLeft||max!==lastMax||client!==lastClient){
         lastLeft=left;lastMax=max;lastClient=client;
         setDayScrollMetrics({left,max,client});
-      }
-      const step=Math.max(1,el.scrollWidth/Math.max(1,weekDates.length));
-      // Measured at the strip's LEFT edge, not its centre. The scroll above
-      // uses inline:"start", which parks today at the left edge, so a
-      // centre-of-viewport reading named a day about eight chips further
-      // along — the label said "18 Sept" while today, and the leftmost chip,
-      // were the 10th. Reading the same edge the scroll aligns to makes the
-      // label name the day the strip is actually parked on.
-      const idx=Math.min(weekDates.length-1,Math.max(0,
-        Math.round(left/step)));
-      if(idx!==lastIdx){
-        lastIdx=idx;
-        setViewedDate(weekDates[idx]?.date??null);
       }
     };
     const tick=()=>{measure();raf=requestAnimationFrame(tick);};
@@ -8174,22 +8212,30 @@ export default function Home(){
   function dayTrackPointerEnd(){dayDragRef.current=null;}
 
   function getDayItems(dateISO:string,dayKey:string){
-    const items:{time:string;label:string;category:string;done:boolean;streak:number;conflict:boolean;routineId?:number;taskId?:number}[]=[];
+    const items:{time:string;label:string;category:string;done:boolean;streak:number;conflict:boolean;
+      routineId?:number;taskId?:number;kind:"task"|"routine";recurs?:boolean}[]=[];
     routines.filter(r=>(r.days??[]).includes(dayKey)).forEach(r=>{
       const highOnDay=routines.filter(r2=>r2.id!==r.id&&r2.intensity==="high"&&(r2.days??[]).includes(dayKey));
       items.push({time:r.time??"",label:r.label,category:r.category,
         done:!!r.completions?.[dateISO],streak:computeStreak(r),
-        conflict:r.intensity==="high"&&highOnDay.length>0,routineId:r.id});
+        conflict:r.intensity==="high"&&highOnDay.length>0,routineId:r.id,kind:"routine"});
     });
-    tasks.filter(t=>!t.deleted&&t.date===dateISO).forEach(t=>{
+    // taskOccursOn (app/lib/recurrence.ts) replaces the old bare
+    // `t.date===dateISO` check — a recurring task now occurs on every
+    // matching day, not just the one literal date stored on the row.
+    tasks.filter(t=>taskOccursOn(t,dateISO)).forEach(t=>{
+      const recurs=!!t.recurring;
+      // A recurring task's "done" is per-day (completions[dateISO]), same as
+      // a routine's — it has no single permanent done state. A plain
+      // one-off task keeps using its own global done flag, unchanged.
       items.push({time:t.time??"",label:t.title,category:t.category,
-        done:t.done,streak:0,conflict:false,taskId:t.id});
+        done:recurs?!!t.completions?.[dateISO]:t.done,streak:0,conflict:false,
+        taskId:t.id,kind:"task",recurs});
     });
     return items.sort((a,b)=>(a.time||"zz").localeCompare(b.time||"zz"));
   }
 
   const selDay=weekDates.find(d=>d.date===selectedDate)||weekDates.find(d=>d.key===selectedWeekDay);
-  const viewedDay=weekDates.find(d=>d.date===viewedDate)||selDay;
   const selectedDayItems=getDayItems(selectedDate,selectedWeekDay);
 
   // Shared row/control styling for the avatar card's items.
@@ -8701,12 +8747,15 @@ export default function Home(){
             </div>
             <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,
               color:C.muted,marginBottom:10}}>
-              {viewedDay?.label||(clientToday?clientToday.toLocaleDateString(locale,{weekday:"long",day:"numeric",month:"long"}):"")}
+              {selDay?.label||(clientToday?clientToday.toLocaleDateString(locale,{weekday:"long",day:"numeric",month:"long"}):"")}
             </p>
 
             {(()=>{
-              const ov=tasks.filter(t=>!t.done&&!t.deleted&&t.date&&(daysUntil(t.date)??0)<0);
-              const og=tasks.filter(t=>t.type==="ongoing"&&!t.done&&!t.deleted);
+              // A recurring task now has a real home in the timeline on its
+              // matching days, so it drops out of both chip lists here —
+              // appearing in both would double-show it.
+              const ov=tasks.filter(t=>!t.done&&!t.deleted&&!t.recurring&&t.date&&(daysUntil(t.date)??0)<0);
+              const og=tasks.filter(t=>t.type==="ongoing"&&!t.recurring&&!t.done&&!t.deleted);
               return(ov.length||og.length)?(<div style={{display:"flex",flexWrap:"wrap",gap:7,marginBottom:14}}>
                 {ov.map(t=><span key={t.id} style={{fontSize:11,fontWeight:600,
                   padding:"5px 10px",borderRadius:20,background:C.urgentSoft,color:C.urgent}}>
@@ -8721,7 +8770,10 @@ export default function Home(){
                 <TimelineRow key={i} item={it} onCheck={()=>{
                   const dayDate=selDay?.date??todayISO();
                   if(it.routineId)toggleRoutineDate(it.routineId,dayDate);
-                  else if(it.taskId)toggleTask(it.taskId);
+                  else if(it.taskId){
+                    if(it.recurs)toggleTaskDate(it.taskId,dayDate);
+                    else toggleTask(it.taskId);
+                  }
                 }}/>
               )):<p style={{textAlign:"center",color:C.muted2,padding:"40px 0",
                 fontFamily:"'Space Grotesk',sans-serif",fontWeight:600}}>{t("nothingToday")}</p>}
