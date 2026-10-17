@@ -8305,10 +8305,21 @@ export default function Home(){
     // Ids are assigned inside the updater below, against the array being
     // built, so these carry none of their own.
     const welcomeTasks:Omit<Task,"id">[]=[];
-    if(goals.includes("health")) welcomeTasks.push({title:"Start a daily exercise habit",category:"fitness",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
-    if(goals.includes("study")) welcomeTasks.push({title:"Set a daily study goal",category:"study",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
+    // Shared by every recurring seed below rather than called per-push —
+    // they're all created at this same conceptual moment (onboarding
+    // completion), so one timestamp/anchor-date is more correct than several
+    // near-identical ones. A recurring task with date:"" and no createdAt
+    // has no anchor at all for taskOccursOn (app/lib/recurrence.ts) and
+    // silently never appears — these two fields are what addTask itself
+    // already sets for a normal recurring task created through the chat or
+    // TaskModal; these seeds bypass addTask (pushed straight into state
+    // below), so they need the same fields set explicitly here instead.
+    const seedDate=localDateISO();
+    const seedCreatedAt=new Date().toISOString();
+    if(goals.includes("health")) welcomeTasks.push({title:"Start a daily exercise habit",category:"fitness",priority:"medium",type:"ongoing",date:seedDate,time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[],completions:{},createdAt:seedCreatedAt});
+    if(goals.includes("study")) welcomeTasks.push({title:"Set a daily study goal",category:"study",priority:"medium",type:"ongoing",date:seedDate,time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[],completions:{},createdAt:seedCreatedAt});
     if(goals.includes("finance")) welcomeTasks.push({title:"Review my finances this week",category:"finance",priority:"medium",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]});
-    if(goals.includes("faith")) welcomeTasks.push({title:"Establish a daily prayer routine",category:"faith",priority:"medium",type:"ongoing",date:"",time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[]});
+    if(goals.includes("faith")) welcomeTasks.push({title:"Establish a daily prayer routine",category:"faith",priority:"medium",type:"ongoing",date:seedDate,time:"",recurring:"daily",notes:"",done:false,deleted:false,checklist:[],completions:{},createdAt:seedCreatedAt});
     if(goals.includes("business")) welcomeTasks.push({title:"Define my top business priority this week",category:"business",priority:"high",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]});
     if(goals.includes("work")) welcomeTasks.push({title:"Set this week's career goal",category:"career",priority:"medium",type:"milestone",date:"",time:"",recurring:"",notes:"",done:false,deleted:false,checklist:[]});
     if(welcomeTasks.length>0){
