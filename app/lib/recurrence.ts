@@ -2,9 +2,14 @@
 // so this can be imported from both app/page.tsx and a plain Node test
 // script (scripts/check-recurrence.mjs) with nothing else dragged in.
 //
-// All date arithmetic works on "YYYY-MM-DD" strings parsed as UTC midnight,
-// never via local-time Date math — that drifts across DST boundaries and
-// across users in different timezones comparing the same stored string.
+// Once an anchor "YYYY-MM-DD" string exists, all arithmetic on it is done in
+// UTC (parsed as UTC midnight, never local-time Date math) — that part never
+// drifts across DST boundaries or between users in different timezones
+// comparing the same stored string. The one exception is deriving that
+// anchor from a task's createdAt timestamp in the first place (see
+// localDateOf below) — that conversion is deliberately LOCAL, because it has
+// to match the calendar date the user's own clock was showing at the moment
+// the task was created, not whatever UTC happened to read.
 
 export interface RecurrenceTask {
   date: string;
@@ -15,6 +20,22 @@ export interface RecurrenceTask {
 
 function toUTCDate(dateISO: string): Date {
   return new Date(dateISO + "T00:00:00Z");
+}
+
+// Converts a createdAt timestamp (always UTC, e.g. new Date().toISOString())
+// to the LOCAL calendar date it fell on, using local getters — not
+// toISOString().slice(0,10), which reads the UTC date instead and can land a
+// full day before the user's own day (e.g. 00:30 BST on the 12th is still
+// 23:30 UTC on the 11th). In the browser "local" is the user's own system
+// timezone; in a Node process it's whatever TZ that process is running
+// under (see scripts/check-recurrence.mjs for a test that sets TZ
+// explicitly).
+function localDateOf(isoTimestamp: string): string {
+  const d = new Date(isoTimestamp);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function daysBetween(aISO: string, bISO: string): number {
@@ -48,7 +69,7 @@ export function taskOccursOn(task: RecurrenceTask, dateISO: string): boolean {
     return task.date === dateISO;
   }
 
-  const anchor = task.date || (task.createdAt ? task.createdAt.slice(0, 10) : "");
+  const anchor = task.date || (task.createdAt ? localDateOf(task.createdAt) : "");
   if (!anchor) {
     // Recurrence set, but nothing to anchor it to — fall back to the
     // same one-off behaviour rather than matching every day or none

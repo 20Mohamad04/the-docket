@@ -128,5 +128,24 @@ function check(label, actual, expected) {
   check("deleted task never occurs", taskOccursOn(task, "2024-01-01"), false);
 }
 
+// ── createdAt anchor uses the LOCAL date, not a UTC date-slice ───────────
+// Placed last and sets TZ itself, so no earlier test (all of which only
+// exercise the UTC-parsed arithmetic, unaffected by TZ) is put at risk by
+// this process-wide mutation. Node resolves the timezone per Date call,
+// not once at process start, so this takes effect for every Date
+// constructed from this line on.
+//
+// 2026-10-11T23:30:00.000Z is 00:30 BST on 2026-10-12 local time (BST is
+// still in effect — it doesn't end until the last Sunday of October) — i.e.
+// the user's own clock had already turned over to the 12th. The anchor must
+// be the 12th; slicing the UTC string instead would wrongly anchor on the
+// 11th, a full day earlier than the user's own day.
+process.env.TZ = "Europe/London";
+{
+  const task = { date: "", recurring: "every_2_days", deleted: false, createdAt: "2026-10-11T23:30:00.000Z" };
+  check("TZ anchor: Oct 12 is the anchor day itself (diff 0)", taskOccursOn(task, "2026-10-12"), true);
+  check("TZ anchor: Oct 13 is one day after the anchor (diff 1, odd)", taskOccursOn(task, "2026-10-13"), false);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail > 0) process.exitCode = 1;

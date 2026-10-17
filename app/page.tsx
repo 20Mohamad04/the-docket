@@ -1957,8 +1957,24 @@ const STORAGE_ROUTINES="docket-routines-v1";
 // impossible, rather than something to detect and clean up after the fact.
 function scopedKey(base:string,userId:string):string{ return `${base}-${userId}`; }
 
+// UTC, not local — deliberately, since its one caller (resolveSonnetPeriod's
+// client-side mirror / the free-tier daily-cap display) has to agree with
+// the server's own todayUTC() in app/api/ask/route.ts. NOT what a recurring
+// task's anchor date should use — see localDateISO below.
 function todayISO(){return new Date().toISOString().slice(0,10);}
 function todayDayKey(){return ["sun","mon","tue","wed","thu","fri","sat"][new Date().getDay()];}
+// The user's own local calendar date, built from local getters rather than
+// toISOString() (which is always UTC). Used for a recurring task's anchor
+// date so it matches what the user's own clock calls "today" — slicing a UTC
+// timestamp instead can land a full day earlier for anyone west of UTC
+// shortly after their local midnight but before UTC midnight (e.g. 00:30
+// BST is still 23:30 UTC the previous day).
+function localDateISO(d:Date=new Date()):string{
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,"0");
+  const day=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
 function daysUntil(d:string){
   if(!d)return null;
   return Math.round((new Date(d).getTime()-new Date(todayISO()).getTime())/86400000);
@@ -7866,7 +7882,14 @@ export default function Home(){
   },[isLoaded,cloudPullDone]);
 
   const addTask=useCallback((data:Omit<Task,"id"|"done"|"deleted"|"checklist">)=>{
-    setTasks(p=>[...p,{id:nextId(p),...data,done:false,deleted:false,checklist:[],
+    // A recurring task with no date would otherwise anchor off createdAt in
+    // taskOccursOn (app/lib/recurrence.ts) — giving it an explicit local-date
+    // date here instead makes the anchor unambiguous from the moment the
+    // task exists, rather than relying on a UTC-timestamp fallback. Only
+    // recurring, dateless tasks are touched; a one-off task's date (present
+    // or still blank) is never overridden.
+    const date=(!data.date&&data.recurring)?localDateISO():data.date;
+    setTasks(p=>[...p,{id:nextId(p),...data,date,done:false,deleted:false,checklist:[],
       completions:{},createdAt:new Date().toISOString()}]);
   },[]);
   const updateTask=useCallback((id:number,changes:Partial<Task>)=>{
