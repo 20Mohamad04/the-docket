@@ -7893,7 +7893,25 @@ export default function Home(){
       completions:{},createdAt:new Date().toISOString()}]);
   },[]);
   const updateTask=useCallback((id:number,changes:Partial<Task>)=>{
-    setTasks(p=>p.map(t=>t.id===id?{...t,...changes}:t));
+    setTasks(p=>p.map(t=>{
+      if(t.id!==id)return t;
+      const merged={...t,...changes};
+      // Mirrors addTask's own anchor-backfill, for the one path addTask
+      // can't cover: editing an existing task (via TaskModal's edit save, or
+      // the AI's update_task action — both go through updateTask). Without
+      // this, a task saved before createdAt existed, or one just turned
+      // recurring via this very edit, would have no anchor at all for
+      // taskOccursOn (app/lib/recurrence.ts) and silently never appear in
+      // the timeline. Checked on the MERGED result (changes already
+      // applied), so turning a one-off task recurring in this same edit
+      // counts too — and only fields still missing are filled; an existing
+      // date/createdAt is never overridden, and a non-recurring task is
+      // left alone entirely.
+      if(!merged.recurring)return merged;
+      return{...merged,
+        date:merged.date||localDateISO(),
+        createdAt:merged.createdAt||new Date().toISOString()};
+    }));
   },[]);
   const toggleTask=useCallback((id:number)=>{
     setTasks(p=>p.map(t=>t.id===id?{...t,done:!t.done}:t));
