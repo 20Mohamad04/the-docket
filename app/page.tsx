@@ -286,6 +286,7 @@ const T:Record<Lang,Record<string,string>> = {
     errLabelRequired:"Give the routine a name", errDaysRequired:"Pick at least one day",
     errTimeRequired:"Choose a time", errDurationRange:"Duration must be between 5 and 1440 minutes",
     dayMon:"Mon", dayTue:"Tue", dayWed:"Wed", dayThu:"Thu", dayFri:"Fri", daySat:"Sat", daySun:"Sun",
+    routineDeleted:"Routine deleted", undoAction:"Undo",
     onboardSignedIn:"You're signed in, {name}", onboardSignedInAs:"You're signed in as {email}.",
   },
   ar:{
@@ -427,6 +428,7 @@ const T:Record<Lang,Record<string,string>> = {
     errLabelRequired:"أعطِ الروتين اسمًا", errDaysRequired:"اختر يومًا واحدًا على الأقل",
     errTimeRequired:"اختر وقتًا", errDurationRange:"يجب أن تكون المدة بين 5 و1440 دقيقة",
     dayMon:"الإثنين", dayTue:"الثلاثاء", dayWed:"الأربعاء", dayThu:"الخميس", dayFri:"الجمعة", daySat:"السبت", daySun:"الأحد",
+    routineDeleted:"تم حذف الروتين", undoAction:"تراجع",
     onboardSignedIn:"تم تسجيل دخولك، {name}", onboardSignedInAs:"لقد سجّلت الدخول باسم {email}.",
   },
   fr:{
@@ -568,6 +570,7 @@ const T:Record<Lang,Record<string,string>> = {
     errLabelRequired:"Donnez un nom à la routine", errDaysRequired:"Choisissez au moins un jour",
     errTimeRequired:"Choisissez une heure", errDurationRange:"La durée doit être comprise entre 5 et 1440 minutes",
     dayMon:"Lun", dayTue:"Mar", dayWed:"Mer", dayThu:"Jeu", dayFri:"Ven", daySat:"Sam", daySun:"Dim",
+    routineDeleted:"Routine supprimée", undoAction:"Annuler",
     onboardSignedIn:"Vous êtes connecté, {name}", onboardSignedInAs:"Vous êtes connecté en tant que {email}.",
   },
   tr:{
@@ -709,6 +712,7 @@ const T:Record<Lang,Record<string,string>> = {
     errLabelRequired:"Rutine bir ad verin", errDaysRequired:"En az bir gün seçin",
     errTimeRequired:"Bir saat seçin", errDurationRange:"Süre 5 ile 1440 dakika arasında olmalı",
     dayMon:"Pzt", dayTue:"Sal", dayWed:"Çar", dayThu:"Per", dayFri:"Cum", daySat:"Cmt", daySun:"Paz",
+    routineDeleted:"Rutin silindi", undoAction:"Geri al",
     onboardSignedIn:"Giriş yaptınız, {name}", onboardSignedInAs:"{email} olarak giriş yaptınız.",
   },
   ur:{
@@ -850,6 +854,7 @@ const T:Record<Lang,Record<string,string>> = {
     errLabelRequired:"معمول کو ایک نام دیں", errDaysRequired:"کم از کم ایک دن منتخب کریں",
     errTimeRequired:"ایک وقت منتخب کریں", errDurationRange:"دورانیہ 5 سے 1440 منٹ کے درمیان ہونا چاہیے",
     dayMon:"پیر", dayTue:"منگل", dayWed:"بدھ", dayThu:"جمعرات", dayFri:"جمعہ", daySat:"ہفتہ", daySun:"اتوار",
+    routineDeleted:"معمول حذف کر دیا گیا", undoAction:"واپس کریں",
     onboardSignedIn:"آپ سائن ان ہیں، {name}", onboardSignedInAs:"آپ {email} کے طور پر سائن ان ہیں۔",
   },
   bn:{
@@ -991,6 +996,7 @@ const T:Record<Lang,Record<string,string>> = {
     errLabelRequired:"রুটিনের একটি নাম দিন", errDaysRequired:"কমপক্ষে একটি দিন নির্বাচন করুন",
     errTimeRequired:"একটি সময় নির্বাচন করুন", errDurationRange:"সময়কাল ৫ থেকে ১৪৪০ মিনিটের মধ্যে হতে হবে",
     dayMon:"সোম", dayTue:"মঙ্গল", dayWed:"বুধ", dayThu:"বৃহস্পতি", dayFri:"শুক্র", daySat:"শনি", daySun:"রবি",
+    routineDeleted:"রুটিন মুছে ফেলা হয়েছে", undoAction:"পূর্বাবস্থায় ফেরান",
     onboardSignedIn:"আপনি সাইন ইন করেছেন, {name}", onboardSignedInAs:"আপনি {email} হিসেবে সাইন ইন করেছেন।",
   },
   es:{
@@ -1132,6 +1138,7 @@ const T:Record<Lang,Record<string,string>> = {
     errLabelRequired:"Dale un nombre a la rutina", errDaysRequired:"Elige al menos un día",
     errTimeRequired:"Elige una hora", errDurationRange:"La duración debe estar entre 5 y 1440 minutos",
     dayMon:"Lun", dayTue:"Mar", dayWed:"Mié", dayThu:"Jue", dayFri:"Vie", daySat:"Sáb", daySun:"Dom",
+    routineDeleted:"Rutina eliminada", undoAction:"Deshacer",
     onboardSignedIn:"Has iniciado sesión, {name}", onboardSignedInAs:"Has iniciado sesión como {email}.",
   },
   hi:{
@@ -1273,6 +1280,7 @@ const T:Record<Lang,Record<string,string>> = {
     errLabelRequired:"रूटीन को एक नाम दें", errDaysRequired:"कम से कम एक दिन चुनें",
     errTimeRequired:"एक समय चुनें", errDurationRange:"अवधि 5 से 1440 मिनट के बीच होनी चाहिए",
     dayMon:"सोम", dayTue:"मंगल", dayWed:"बुध", dayThu:"गुरु", dayFri:"शुक्र", daySat:"शनि", daySun:"रवि",
+    routineDeleted:"रूटीन हटाई गई", undoAction:"पूर्ववत करें",
     onboardSignedIn:"आप साइन इन हैं, {name}", onboardSignedInAs:"आप {email} के रूप में साइन इन हैं।",
   },
   pt:{
@@ -1414,6 +1422,7 @@ const T:Record<Lang,Record<string,string>> = {
     errLabelRequired:"Dê um nome à rotina", errDaysRequired:"Escolha pelo menos um dia",
     errTimeRequired:"Escolha um horário", errDurationRange:"A duração deve ser entre 5 e 1440 minutos",
     dayMon:"Seg", dayTue:"Ter", dayWed:"Qua", dayThu:"Qui", dayFri:"Sex", daySat:"Sáb", daySun:"Dom",
+    routineDeleted:"Rotina excluída", undoAction:"Desfazer",
     onboardSignedIn:"Você está conectado, {name}", onboardSignedInAs:"Você está conectado como {email}.",
   },
   ru:{
@@ -1555,6 +1564,7 @@ const T:Record<Lang,Record<string,string>> = {
     errLabelRequired:"Дайте распорядку название", errDaysRequired:"Выберите хотя бы один день",
     errTimeRequired:"Выберите время", errDurationRange:"Длительность должна быть от 5 до 1440 минут",
     dayMon:"Пн", dayTue:"Вт", dayWed:"Ср", dayThu:"Чт", dayFri:"Пт", daySat:"Сб", daySun:"Вс",
+    routineDeleted:"Распорядок удалён", undoAction:"Отменить",
     onboardSignedIn:"Вы вошли в систему, {name}", onboardSignedInAs:"Вы вошли как {email}.",
   },
   zh:{
@@ -1696,6 +1706,7 @@ const T:Record<Lang,Record<string,string>> = {
     errLabelRequired:"请为例程命名", errDaysRequired:"请至少选择一天",
     errTimeRequired:"请选择时间", errDurationRange:"时长必须在 5 到 1440 分钟之间",
     dayMon:"周一", dayTue:"周二", dayWed:"周三", dayThu:"周四", dayFri:"周五", daySat:"周六", daySun:"周日",
+    routineDeleted:"例程已删除", undoAction:"撤销",
     onboardSignedIn:"你已登录，{name}", onboardSignedInAs:"你已使用 {email} 登录。",
   },
 };
@@ -2188,7 +2199,7 @@ function Checkbox({checked,onClick,small}:{checked:boolean;onClick:()=>void;smal
   const C=getC(dark);
   const sz=small?16:20;
   return(
-    <button onClick={onClick} style={{width:sz,height:sz,borderRadius:small?5:6,
+    <button onClick={e=>{e.stopPropagation();onClick();}} style={{width:sz,height:sz,borderRadius:small?5:6,
       border:`2px solid ${checked?C.sage:C.border}`,background:checked?C.sage:"white",
       display:"flex",alignItems:"center",justifyContent:"center",
       flexShrink:0,cursor:"pointer",transition:"all 0.15s"}}>
@@ -2665,7 +2676,7 @@ function RoutineModal({initial,onClose,onSave,onDelete}:{
   const[duration,setDuration]=useState(initial?.duration??60);
   const[intensity,setIntensity]=useState<"normal"|"high">(initial?.intensity??"normal");
   const[notes,setNotes]=useState(initial?.notes??"");
-  const[error,setError]=useState("");
+  const[errors,setErrors]=useState<{label?:string;days?:string;time?:string;duration?:string}>({});
   const[confirmingDelete,setConfirmingDelete]=useState(false);
 
   const dayOpts:{v:string;label:string}[]=[
@@ -2679,7 +2690,7 @@ function RoutineModal({initial,onClose,onSave,onDelete}:{
 
   function toggleDay(v:string){
     setDays(p=>p.includes(v)?p.filter(d=>d!==v):[...p,v]);
-    setError("");
+    setErrors(p=>({...p,days:undefined}));
   }
 
   const inp:React.CSSProperties={
@@ -2689,20 +2700,22 @@ function RoutineModal({initial,onClose,onSave,onDelete}:{
     color:C.navy,outline:"none",fontFamily:"inherit",
     transition:"border-color 0.2s",
   };
+  const errStyle:React.CSSProperties={fontSize:12,fontWeight:600,color:C.urgent,marginTop:6};
 
-  // Checked in this order so the first failing rule is the one shown — a
-  // name is the most basic requirement, then what/when/how-long.
-  function validate():string{
-    if(!label.trim()) return t("errLabelRequired");
-    if(days.length===0) return t("errDaysRequired");
-    if(!time) return t("errTimeRequired");
-    if(duration<5||duration>1440) return t("errDurationRange");
-    return "";
+  // Every rule is checked, not just the first that fails — each field shows
+  // its own message at once, rather than one at a time across repeated saves.
+  function validateAll():{label?:string;days?:string;time?:string;duration?:string}{
+    const next:{label?:string;days?:string;time?:string;duration?:string}={};
+    if(!label.trim()) next.label=t("errLabelRequired");
+    if(days.length===0) next.days=t("errDaysRequired");
+    if(!time) next.time=t("errTimeRequired");
+    if(duration<5||duration>1440) next.duration=t("errDurationRange");
+    return next;
   }
 
   function handleSave(){
-    const err=validate();
-    if(err){setError(err);return;}
+    const next=validateAll();
+    if(Object.keys(next).length>0){setErrors(next);return;}
     onSave({label:label.trim().slice(0,80),category,days,time,duration,intensity,
       notes:notes.slice(0,500)});
     onClose();
@@ -2752,7 +2765,7 @@ function RoutineModal({initial,onClose,onSave,onDelete}:{
           <div style={{marginBottom:16}}>
             <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
               textTransform:"uppercase",marginBottom:8}}>{t("routineName")}</p>
-            <input value={label} onChange={e=>{setLabel(e.target.value);setError("");}}
+            <input value={label} onChange={e=>{setLabel(e.target.value);setErrors(p=>({...p,label:undefined}));}}
               placeholder={t("routineNamePlaceholder")}
               maxLength={80}
               autoFocus
@@ -2760,6 +2773,7 @@ function RoutineModal({initial,onClose,onSave,onDelete}:{
               onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
               onBlur={e=>(e.target.style.borderColor=C.border)}
               onKeyDown={e=>e.key==="Enter"&&handleSave()}/>
+            {errors.label&&<p style={errStyle}>{errors.label}</p>}
           </div>
 
           {/* Category */}
@@ -2786,6 +2800,7 @@ function RoutineModal({initial,onClose,onSave,onDelete}:{
                 </button>
               ))}
             </div>
+            {errors.days&&<p style={errStyle}>{errors.days}</p>}
           </div>
 
           {/* Time + Duration */}
@@ -2794,19 +2809,21 @@ function RoutineModal({initial,onClose,onSave,onDelete}:{
               <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
                 textTransform:"uppercase",marginBottom:8}}>{t("timeLabel")}</p>
               <input type="time" value={time}
-                onChange={e=>{setTime(e.target.value);setError("");}}
+                onChange={e=>{setTime(e.target.value);setErrors(p=>({...p,time:undefined}));}}
                 style={inp}
                 onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
                 onBlur={e=>(e.target.style.borderColor=C.border)}/>
+              {errors.time&&<p style={errStyle}>{errors.time}</p>}
             </div>
             <div style={{flex:1}}>
               <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
                 textTransform:"uppercase",marginBottom:8}}>{t("durationLabel")}</p>
               <input type="number" min={5} max={1440} value={duration}
-                onChange={e=>{setDuration(parseInt(e.target.value,10)||0);setError("");}}
+                onChange={e=>{setDuration(parseInt(e.target.value,10)||0);setErrors(p=>({...p,duration:undefined}));}}
                 style={inp}
                 onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
                 onBlur={e=>(e.target.style.borderColor=C.border)}/>
+              {errors.duration&&<p style={errStyle}>{errors.duration}</p>}
             </div>
           </div>
 
@@ -2839,10 +2856,6 @@ function RoutineModal({initial,onClose,onSave,onDelete}:{
               onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
               onBlur={e=>(e.target.style.borderColor=C.border)}/>
           </div>
-
-          {error&&(
-            <p style={{fontSize:12,fontWeight:600,color:C.urgent,marginTop:8}}>{error}</p>
-          )}
         </div>
 
         {/* Footer buttons */}
@@ -7754,6 +7767,13 @@ export default function Home(){
   // soft-delete/recycle-bin unlike tasks, so this is the only undo a
   // mistaken or injected delete would otherwise get.
   const[pendingRoutineDeletes,setPendingRoutineDeletes]=useState<{id:number;label:string}[]>([]);
+  // Visible undo toast for a just-confirmed routine delete (from either
+  // RoutineModal's own Delete button or the AI confirm card — both funnel
+  // through confirmRoutineDelete below). The ref (not state) holds the timer
+  // id so a second delete arriving before the first toast times out can
+  // clear the old timer without a stale closure over it.
+  const[routineDeleteToast,setRoutineDeleteToast]=useState(false);
+  const routineDeleteToastTimerRef=React.useRef<ReturnType<typeof setTimeout>|null>(null);
   // One status per outcome rather than a single "error". The old shape forced
   // every failure — denial, timeout, no fix available, a dead network, an
   // Aladhan outage — through one string that told the user to check browser
@@ -8450,9 +8470,19 @@ export default function Home(){
     setUndoStack(s=>[...s.slice(-9),{tasks:[...tasks],routines:[...routines]}]);
     setRoutines(prev=>prev.filter(r=>r.id!==id));
     setPendingRoutineDeletes(prev=>prev.filter(p=>p.id!==id));
+    if(routineDeleteToastTimerRef.current)clearTimeout(routineDeleteToastTimerRef.current);
+    setRoutineDeleteToast(true);
+    routineDeleteToastTimerRef.current=setTimeout(()=>setRoutineDeleteToast(false),6000);
   },[tasks,routines]);
   const cancelRoutineDelete=useCallback((id:number)=>{
     setPendingRoutineDeletes(prev=>prev.filter(p=>p.id!==id));
+  },[]);
+  const dismissRoutineDeleteToast=useCallback(()=>{
+    if(routineDeleteToastTimerRef.current){clearTimeout(routineDeleteToastTimerRef.current);routineDeleteToastTimerRef.current=null;}
+    setRoutineDeleteToast(false);
+  },[]);
+  useEffect(()=>()=>{
+    if(routineDeleteToastTimerRef.current)clearTimeout(routineDeleteToastTimerRef.current);
   },[]);
 
   async function toggleNotifications(){
@@ -9331,6 +9361,25 @@ export default function Home(){
       {editingRoutine&&<RoutineModal initial={editingRoutine} onClose={()=>setEditingRoutine(null)}
         onSave={data=>{updateRoutine(editingRoutine.id,data);setEditingRoutine(null);}}
         onDelete={()=>confirmRoutineDelete(editingRoutine.id)}/>}
+      {routineDeleteToast&&(
+        <div style={{position:"fixed",bottom:92,left:"50%",transform:"translateX(-50%)",
+          zIndex:61,display:"flex",alignItems:"center",gap:14,
+          background:dark?"#1E2043":"#16192A",color:"white",
+          padding:"12px 18px",borderRadius:14,boxShadow:"0 8px 30px rgba(0,0,0,0.35)",
+          maxWidth:"90vw"}}>
+          <span style={{fontSize:13,fontWeight:600,whiteSpace:"nowrap"}}>{t("routineDeleted")}</span>
+          <button onClick={()=>{dismissRoutineDeleteToast();undoLast();}}
+            style={{background:"none",border:"none",color:"#8FA6FF",fontWeight:700,
+              fontSize:13,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+            {t("undoAction")}
+          </button>
+          <button onClick={dismissRoutineDeleteToast} aria-label={t("close")}
+            style={{background:"none",border:"none",color:"rgba(255,255,255,0.6)",
+              cursor:"pointer",display:"flex",alignItems:"center",flexShrink:0}}>
+            <i className="ti ti-x" style={{fontSize:16}} aria-hidden="true"/>
+          </button>
+        </div>
+      )}
     </div>
       {activeModal&&<InfoModal modal={activeModal} onClose={()=>setActiveModal(null)} dark={dark} user={user} onUserChange={setUser} onNavigate={setActiveModal} isPro={isPro} subPeriodEnd={subPeriodEnd} subTier={subTier}/>}
     </AppCtx.Provider>
