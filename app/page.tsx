@@ -277,6 +277,15 @@ const T:Record<Lang,Record<string,string>> = {
     deleting:"Deleting…", cancel2:"Cancel",
     confirmDeleteRoutineTitle:"Delete routine \"{label}\"?", confirmDeleteYes:"Delete", confirmDeleteNo:"Cancel",
     taskTag:"Task", routineTag:"Routine",
+    newRoutine:"New Routine", editRoutine:"Edit Routine",
+    addChoiceTitle:"What would you like to add?", addChoiceTask:"Task", addChoiceRoutine:"Routine",
+    routineName:"Routine name", routineNamePlaceholder:"e.g. Morning run",
+    daysLabel:"Days", timeLabel:"Time", durationLabel:"Duration (minutes)",
+    intensityLabel:"Intensity", intensityNormal:"Normal", intensityHigh:"High",
+    saveRoutine:"Save routine", deleteRoutine:"Delete routine",
+    errLabelRequired:"Give the routine a name", errDaysRequired:"Pick at least one day",
+    errTimeRequired:"Choose a time", errDurationRange:"Duration must be between 5 and 1440 minutes",
+    dayMon:"Mon", dayTue:"Tue", dayWed:"Wed", dayThu:"Thu", dayFri:"Fri", daySat:"Sat", daySun:"Sun",
     onboardSignedIn:"You're signed in, {name}", onboardSignedInAs:"You're signed in as {email}.",
   },
   ar:{
@@ -409,6 +418,15 @@ const T:Record<Lang,Record<string,string>> = {
     deleting:"جاري الحذف…", cancel2:"إلغاء",
     confirmDeleteRoutineTitle:"حذف الروتين \"{label}\"؟", confirmDeleteYes:"حذف", confirmDeleteNo:"إلغاء",
     taskTag:"مهمة", routineTag:"روتين",
+    newRoutine:"روتين جديد", editRoutine:"تعديل الروتين",
+    addChoiceTitle:"ماذا تريد أن تضيف؟", addChoiceTask:"مهمة", addChoiceRoutine:"روتين",
+    routineName:"اسم الروتين", routineNamePlaceholder:"مثال: الجري الصباحي",
+    daysLabel:"الأيام", timeLabel:"الوقت", durationLabel:"المدة (بالدقائق)",
+    intensityLabel:"الشدة", intensityNormal:"عادية", intensityHigh:"مرتفعة",
+    saveRoutine:"حفظ الروتين", deleteRoutine:"حذف الروتين",
+    errLabelRequired:"أعطِ الروتين اسمًا", errDaysRequired:"اختر يومًا واحدًا على الأقل",
+    errTimeRequired:"اختر وقتًا", errDurationRange:"يجب أن تكون المدة بين 5 و1440 دقيقة",
+    dayMon:"الإثنين", dayTue:"الثلاثاء", dayWed:"الأربعاء", dayThu:"الخميس", dayFri:"الجمعة", daySat:"السبت", daySun:"الأحد",
     onboardSignedIn:"تم تسجيل دخولك، {name}", onboardSignedInAs:"لقد سجّلت الدخول باسم {email}.",
   },
   fr:{
@@ -541,6 +559,15 @@ const T:Record<Lang,Record<string,string>> = {
     deleting:"Suppression…", cancel2:"Annuler",
     confirmDeleteRoutineTitle:"Supprimer la routine « {label} » ?", confirmDeleteYes:"Supprimer", confirmDeleteNo:"Annuler",
     taskTag:"Tâche", routineTag:"Routine",
+    newRoutine:"Nouvelle routine", editRoutine:"Modifier la routine",
+    addChoiceTitle:"Que souhaitez-vous ajouter ?", addChoiceTask:"Tâche", addChoiceRoutine:"Routine",
+    routineName:"Nom de la routine", routineNamePlaceholder:"ex. Course du matin",
+    daysLabel:"Jours", timeLabel:"Heure", durationLabel:"Durée (minutes)",
+    intensityLabel:"Intensité", intensityNormal:"Normale", intensityHigh:"Élevée",
+    saveRoutine:"Enregistrer la routine", deleteRoutine:"Supprimer la routine",
+    errLabelRequired:"Donnez un nom à la routine", errDaysRequired:"Choisissez au moins un jour",
+    errTimeRequired:"Choisissez une heure", errDurationRange:"La durée doit être comprise entre 5 et 1440 minutes",
+    dayMon:"Lun", dayTue:"Mar", dayWed:"Mer", dayThu:"Jeu", dayFri:"Ven", daySat:"Sam", daySun:"Dim",
     onboardSignedIn:"Vous êtes connecté, {name}", onboardSignedInAs:"Vous êtes connecté en tant que {email}.",
   },
   tr:{
@@ -673,6 +700,15 @@ const T:Record<Lang,Record<string,string>> = {
     deleting:"Siliniyor…", cancel2:"İptal",
     confirmDeleteRoutineTitle:"\"{label}\" rutini silinsin mi?", confirmDeleteYes:"Sil", confirmDeleteNo:"İptal",
     taskTag:"Görev", routineTag:"Rutin",
+    newRoutine:"Yeni Rutin", editRoutine:"Rutini Düzenle",
+    addChoiceTitle:"Ne eklemek istersiniz?", addChoiceTask:"Görev", addChoiceRoutine:"Rutin",
+    routineName:"Rutin adı", routineNamePlaceholder:"ör. Sabah koşusu",
+    daysLabel:"Günler", timeLabel:"Saat", durationLabel:"Süre (dakika)",
+    intensityLabel:"Yoğunluk", intensityNormal:"Normal", intensityHigh:"Yüksek",
+    saveRoutine:"Rutini kaydet", deleteRoutine:"Rutini sil",
+    errLabelRequired:"Rutine bir ad verin", errDaysRequired:"En az bir gün seçin",
+    errTimeRequired:"Bir saat seçin", errDurationRange:"Süre 5 ile 1440 dakika arasında olmalı",
+    dayMon:"Pzt", dayTue:"Sal", dayWed:"Çar", dayThu:"Per", dayFri:"Cum", daySat:"Cmt", daySun:"Paz",
     onboardSignedIn:"Giriş yaptınız, {name}", onboardSignedInAs:"{email} olarak giriş yaptınız.",
   },
   ur:{
@@ -805,6 +841,15 @@ const T:Record<Lang,Record<string,string>> = {
     deleting:"حذف ہو رہا ہے…", cancel2:"منسوخ",
     confirmDeleteRoutineTitle:"روٹین \"{label}\" حذف کریں؟", confirmDeleteYes:"حذف کریں", confirmDeleteNo:"منسوخ",
     taskTag:"کام", routineTag:"معمول",
+    newRoutine:"نیا معمول", editRoutine:"معمول میں ترمیم",
+    addChoiceTitle:"آپ کیا شامل کرنا چاہتے ہیں؟", addChoiceTask:"کام", addChoiceRoutine:"معمول",
+    routineName:"معمول کا نام", routineNamePlaceholder:"مثلاً صبح کی دوڑ",
+    daysLabel:"دن", timeLabel:"وقت", durationLabel:"دورانیہ (منٹ)",
+    intensityLabel:"شدت", intensityNormal:"عام", intensityHigh:"زیادہ",
+    saveRoutine:"معمول محفوظ کریں", deleteRoutine:"معمول حذف کریں",
+    errLabelRequired:"معمول کو ایک نام دیں", errDaysRequired:"کم از کم ایک دن منتخب کریں",
+    errTimeRequired:"ایک وقت منتخب کریں", errDurationRange:"دورانیہ 5 سے 1440 منٹ کے درمیان ہونا چاہیے",
+    dayMon:"پیر", dayTue:"منگل", dayWed:"بدھ", dayThu:"جمعرات", dayFri:"جمعہ", daySat:"ہفتہ", daySun:"اتوار",
     onboardSignedIn:"آپ سائن ان ہیں، {name}", onboardSignedInAs:"آپ {email} کے طور پر سائن ان ہیں۔",
   },
   bn:{
@@ -937,6 +982,15 @@ const T:Record<Lang,Record<string,string>> = {
     deleting:"মুছে ফেলা হচ্ছে…", cancel2:"বাতিল",
     confirmDeleteRoutineTitle:"রুটিন \"{label}\" মুছবেন?", confirmDeleteYes:"মুছুন", confirmDeleteNo:"বাতিল",
     taskTag:"কাজ", routineTag:"রুটিন",
+    newRoutine:"নতুন রুটিন", editRoutine:"রুটিন সম্পাদনা",
+    addChoiceTitle:"আপনি কী যোগ করতে চান?", addChoiceTask:"কাজ", addChoiceRoutine:"রুটিন",
+    routineName:"রুটিনের নাম", routineNamePlaceholder:"যেমন সকালের দৌড়",
+    daysLabel:"দিন", timeLabel:"সময়", durationLabel:"সময়কাল (মিনিট)",
+    intensityLabel:"তীব্রতা", intensityNormal:"স্বাভাবিক", intensityHigh:"উচ্চ",
+    saveRoutine:"রুটিন সংরক্ষণ করুন", deleteRoutine:"রুটিন মুছুন",
+    errLabelRequired:"রুটিনের একটি নাম দিন", errDaysRequired:"কমপক্ষে একটি দিন নির্বাচন করুন",
+    errTimeRequired:"একটি সময় নির্বাচন করুন", errDurationRange:"সময়কাল ৫ থেকে ১৪৪০ মিনিটের মধ্যে হতে হবে",
+    dayMon:"সোম", dayTue:"মঙ্গল", dayWed:"বুধ", dayThu:"বৃহস্পতি", dayFri:"শুক্র", daySat:"শনি", daySun:"রবি",
     onboardSignedIn:"আপনি সাইন ইন করেছেন, {name}", onboardSignedInAs:"আপনি {email} হিসেবে সাইন ইন করেছেন।",
   },
   es:{
@@ -1069,6 +1123,15 @@ const T:Record<Lang,Record<string,string>> = {
     deleting:"Eliminando…", cancel2:"Cancelar",
     confirmDeleteRoutineTitle:"¿Eliminar la rutina \"{label}\"?", confirmDeleteYes:"Eliminar", confirmDeleteNo:"Cancelar",
     taskTag:"Tarea", routineTag:"Rutina",
+    newRoutine:"Nueva rutina", editRoutine:"Editar rutina",
+    addChoiceTitle:"¿Qué te gustaría añadir?", addChoiceTask:"Tarea", addChoiceRoutine:"Rutina",
+    routineName:"Nombre de la rutina", routineNamePlaceholder:"ej. Carrera matutina",
+    daysLabel:"Días", timeLabel:"Hora", durationLabel:"Duración (minutos)",
+    intensityLabel:"Intensidad", intensityNormal:"Normal", intensityHigh:"Alta",
+    saveRoutine:"Guardar rutina", deleteRoutine:"Eliminar rutina",
+    errLabelRequired:"Dale un nombre a la rutina", errDaysRequired:"Elige al menos un día",
+    errTimeRequired:"Elige una hora", errDurationRange:"La duración debe estar entre 5 y 1440 minutos",
+    dayMon:"Lun", dayTue:"Mar", dayWed:"Mié", dayThu:"Jue", dayFri:"Vie", daySat:"Sáb", daySun:"Dom",
     onboardSignedIn:"Has iniciado sesión, {name}", onboardSignedInAs:"Has iniciado sesión como {email}.",
   },
   hi:{
@@ -1201,6 +1264,15 @@ const T:Record<Lang,Record<string,string>> = {
     deleting:"हटाया जा रहा है…", cancel2:"रद्द करें",
     confirmDeleteRoutineTitle:"रूटीन \"{label}\" हटाएं?", confirmDeleteYes:"हटाएं", confirmDeleteNo:"रद्द करें",
     taskTag:"कार्य", routineTag:"रूटीन",
+    newRoutine:"नई रूटीन", editRoutine:"रूटीन संपादित करें",
+    addChoiceTitle:"आप क्या जोड़ना चाहेंगे?", addChoiceTask:"कार्य", addChoiceRoutine:"रूटीन",
+    routineName:"रूटीन का नाम", routineNamePlaceholder:"जैसे सुबह की दौड़",
+    daysLabel:"दिन", timeLabel:"समय", durationLabel:"अवधि (मिनट)",
+    intensityLabel:"तीव्रता", intensityNormal:"सामान्य", intensityHigh:"उच्च",
+    saveRoutine:"रूटीन सहेजें", deleteRoutine:"रूटीन हटाएं",
+    errLabelRequired:"रूटीन को एक नाम दें", errDaysRequired:"कम से कम एक दिन चुनें",
+    errTimeRequired:"एक समय चुनें", errDurationRange:"अवधि 5 से 1440 मिनट के बीच होनी चाहिए",
+    dayMon:"सोम", dayTue:"मंगल", dayWed:"बुध", dayThu:"गुरु", dayFri:"शुक्र", daySat:"शनि", daySun:"रवि",
     onboardSignedIn:"आप साइन इन हैं, {name}", onboardSignedInAs:"आप {email} के रूप में साइन इन हैं।",
   },
   pt:{
@@ -1333,6 +1405,15 @@ const T:Record<Lang,Record<string,string>> = {
     deleting:"Excluindo…", cancel2:"Cancelar",
     confirmDeleteRoutineTitle:"Excluir a rotina \"{label}\"?", confirmDeleteYes:"Excluir", confirmDeleteNo:"Cancelar",
     taskTag:"Tarefa", routineTag:"Rotina",
+    newRoutine:"Nova rotina", editRoutine:"Editar rotina",
+    addChoiceTitle:"O que você gostaria de adicionar?", addChoiceTask:"Tarefa", addChoiceRoutine:"Rotina",
+    routineName:"Nome da rotina", routineNamePlaceholder:"ex. Corrida matinal",
+    daysLabel:"Dias", timeLabel:"Horário", durationLabel:"Duração (minutos)",
+    intensityLabel:"Intensidade", intensityNormal:"Normal", intensityHigh:"Alta",
+    saveRoutine:"Salvar rotina", deleteRoutine:"Excluir rotina",
+    errLabelRequired:"Dê um nome à rotina", errDaysRequired:"Escolha pelo menos um dia",
+    errTimeRequired:"Escolha um horário", errDurationRange:"A duração deve ser entre 5 e 1440 minutos",
+    dayMon:"Seg", dayTue:"Ter", dayWed:"Qua", dayThu:"Qui", dayFri:"Sex", daySat:"Sáb", daySun:"Dom",
     onboardSignedIn:"Você está conectado, {name}", onboardSignedInAs:"Você está conectado como {email}.",
   },
   ru:{
@@ -1465,6 +1546,15 @@ const T:Record<Lang,Record<string,string>> = {
     deleting:"Удаление…", cancel2:"Отмена",
     confirmDeleteRoutineTitle:"Удалить распорядок «{label}»?", confirmDeleteYes:"Удалить", confirmDeleteNo:"Отмена",
     taskTag:"Задача", routineTag:"Распорядок",
+    newRoutine:"Новый распорядок", editRoutine:"Изменить распорядок",
+    addChoiceTitle:"Что вы хотите добавить?", addChoiceTask:"Задача", addChoiceRoutine:"Распорядок",
+    routineName:"Название распорядка", routineNamePlaceholder:"напр. Утренняя пробежка",
+    daysLabel:"Дни", timeLabel:"Время", durationLabel:"Длительность (минуты)",
+    intensityLabel:"Интенсивность", intensityNormal:"Обычная", intensityHigh:"Высокая",
+    saveRoutine:"Сохранить распорядок", deleteRoutine:"Удалить распорядок",
+    errLabelRequired:"Дайте распорядку название", errDaysRequired:"Выберите хотя бы один день",
+    errTimeRequired:"Выберите время", errDurationRange:"Длительность должна быть от 5 до 1440 минут",
+    dayMon:"Пн", dayTue:"Вт", dayWed:"Ср", dayThu:"Чт", dayFri:"Пт", daySat:"Сб", daySun:"Вс",
     onboardSignedIn:"Вы вошли в систему, {name}", onboardSignedInAs:"Вы вошли как {email}.",
   },
   zh:{
@@ -1597,6 +1687,15 @@ const T:Record<Lang,Record<string,string>> = {
     deleting:"删除中…", cancel2:"取消",
     confirmDeleteRoutineTitle:"删除例程“{label}”？", confirmDeleteYes:"删除", confirmDeleteNo:"取消",
     taskTag:"任务", routineTag:"例程",
+    newRoutine:"新建例程", editRoutine:"编辑例程",
+    addChoiceTitle:"您想添加什么？", addChoiceTask:"任务", addChoiceRoutine:"例程",
+    routineName:"例程名称", routineNamePlaceholder:"例如：晨跑",
+    daysLabel:"日期", timeLabel:"时间", durationLabel:"时长（分钟）",
+    intensityLabel:"强度", intensityNormal:"普通", intensityHigh:"高",
+    saveRoutine:"保存例程", deleteRoutine:"删除例程",
+    errLabelRequired:"请为例程命名", errDaysRequired:"请至少选择一天",
+    errTimeRequired:"请选择时间", errDurationRange:"时长必须在 5 到 1440 分钟之间",
+    dayMon:"周一", dayTue:"周二", dayWed:"周三", dayThu:"周四", dayFri:"周五", daySat:"周六", daySun:"周日",
     onboardSignedIn:"你已登录，{name}", onboardSignedInAs:"你已使用 {email} 登录。",
   },
 };
@@ -2501,6 +2600,284 @@ function TaskModal({initial,onClose,onSave}:{
             {initial?.id?t("saveChanges"):t("addTask")}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Add-choice sheet (bottom bar's + button: Task or Routine) ──────────────
+function AddChoiceSheet({onClose,onChooseTask,onChooseRoutine}:{
+  onClose:()=>void;onChooseTask:()=>void;onChooseRoutine:()=>void;
+}){
+  const{dark,t}=useApp();
+  const C=getC(dark);
+  const choiceBtn:React.CSSProperties={
+    display:"flex",alignItems:"center",gap:12,padding:"14px 16px",
+    borderRadius:14,border:`1.5px solid ${C.border}`,background:"transparent",
+    cursor:"pointer",textAlign:"start",fontFamily:"inherit",width:"100%",
+  };
+  return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
+      background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()}
+        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,width:"100%",maxWidth:360,
+          boxShadow:"0 40px 100px rgba(0,0,0,0.45)",border:`1px solid ${C.border}`,
+          overflow:"hidden"}}>
+        <div style={{padding:"20px 24px 16px",borderBottom:`1px solid ${C.border}`,
+          display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
+            fontSize:17,color:C.navy}}>{t("addChoiceTitle")}</p>
+          <button onClick={onClose} style={{background:"none",border:"none",
+            cursor:"pointer",color:C.muted}}>
+            <i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/>
+          </button>
+        </div>
+        <div style={{padding:20,display:"flex",flexDirection:"column",gap:10}}>
+          <button onClick={onChooseTask} style={choiceBtn}>
+            <i className="ti ti-checkbox" style={{fontSize:20,color:C.primary,flexShrink:0}} aria-hidden="true"/>
+            <span style={{fontSize:14,fontWeight:700,color:C.navy}}>{t("addChoiceTask")}</span>
+          </button>
+          <button onClick={onChooseRoutine} style={choiceBtn}>
+            <i className="ti ti-repeat" style={{fontSize:20,color:C.primary,flexShrink:0}} aria-hidden="true"/>
+            <span style={{fontSize:14,fontWeight:700,color:C.navy}}>{t("addChoiceRoutine")}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Routine Modal ────────────────────────────────────────────────────────────
+// Deliberately duplicates TaskModal's backdrop/card/header/footer scaffolding
+// rather than factoring out a shared shell.
+function RoutineModal({initial,onClose,onSave,onDelete}:{
+  initial?:Routine;onClose:()=>void;
+  onSave:(data:Omit<Routine,"id"|"completions">)=>void;
+  onDelete?:()=>void;
+}){
+  const{dark,t}=useApp();
+  const C=getC(dark);
+  const[label,setLabel]=useState(initial?.label??"");
+  const[category,setCategory]=useState<Category>(initial?.category??"health");
+  const[days,setDays]=useState<string[]>(initial?.days??[]);
+  const[time,setTime]=useState(initial?.time??"");
+  const[duration,setDuration]=useState(initial?.duration??60);
+  const[intensity,setIntensity]=useState<"normal"|"high">(initial?.intensity??"normal");
+  const[notes,setNotes]=useState(initial?.notes??"");
+  const[error,setError]=useState("");
+  const[confirmingDelete,setConfirmingDelete]=useState(false);
+
+  const dayOpts:{v:string;label:string}[]=[
+    {v:"mon",label:t("dayMon")},{v:"tue",label:t("dayTue")},{v:"wed",label:t("dayWed")},
+    {v:"thu",label:t("dayThu")},{v:"fri",label:t("dayFri")},{v:"sat",label:t("daySat")},
+    {v:"sun",label:t("daySun")},
+  ];
+  const intensityOpts:{v:"normal"|"high";label:string}[]=[
+    {v:"normal",label:t("intensityNormal")},{v:"high",label:t("intensityHigh")},
+  ];
+
+  function toggleDay(v:string){
+    setDays(p=>p.includes(v)?p.filter(d=>d!==v):[...p,v]);
+    setError("");
+  }
+
+  const inp:React.CSSProperties={
+    width:"100%",padding:"12px 14px",borderRadius:12,
+    border:`1.5px solid ${C.border}`,fontSize:14,
+    background:dark?"#1A1D2E":"#F8F7FE",
+    color:C.navy,outline:"none",fontFamily:"inherit",
+    transition:"border-color 0.2s",
+  };
+
+  // Checked in this order so the first failing rule is the one shown — a
+  // name is the most basic requirement, then what/when/how-long.
+  function validate():string{
+    if(!label.trim()) return t("errLabelRequired");
+    if(days.length===0) return t("errDaysRequired");
+    if(!time) return t("errTimeRequired");
+    if(duration<5||duration>1440) return t("errDurationRange");
+    return "";
+  }
+
+  function handleSave(){
+    const err=validate();
+    if(err){setError(err);return;}
+    onSave({label:label.trim().slice(0,80),category,days,time,duration,intensity,
+      notes:notes.slice(0,500)});
+    onClose();
+  }
+
+  return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:200,
+      background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()}
+        style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,width:"100%",maxWidth:460,
+          maxHeight:"90vh",display:"flex",flexDirection:"column",
+          boxShadow:"0 40px 100px rgba(0,0,0,0.45)",border:`1px solid ${C.border}`,
+          overflow:"hidden"}}>
+        {/* Header */}
+        <div style={{padding:"20px 24px 16px",borderBottom:`1px solid ${C.border}`,
+          display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:36,height:36,borderRadius:10,
+              background:"linear-gradient(145deg,#6677E8,#4C5FD5)",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <i className={`ti ${initial?.id?"ti-pencil":"ti-plus"}`}
+                style={{fontSize:17,color:"white"}} aria-hidden="true"/>
+            </div>
+            <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
+              fontSize:17,color:C.navy}}>
+              {initial?.id?t("editRoutine"):t("newRoutine")}
+            </p>
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"none",
+            cursor:"pointer",color:C.muted}}>
+            <i className="ti ti-x" style={{fontSize:20}} aria-hidden="true"/>
+          </button>
+        </div>
+
+        {confirmingDelete&&onDelete?(
+          <div style={{padding:"20px 24px"}}>
+            <ConfirmDeleteCard label={label}
+              onCancel={()=>setConfirmingDelete(false)}
+              onConfirm={()=>{onDelete();onClose();}}/>
+          </div>
+        ):(
+        <>
+        {/* Scrollable form */}
+        <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
+          {/* Routine name */}
+          <div style={{marginBottom:16}}>
+            <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
+              textTransform:"uppercase",marginBottom:8}}>{t("routineName")}</p>
+            <input value={label} onChange={e=>{setLabel(e.target.value);setError("");}}
+              placeholder={t("routineNamePlaceholder")}
+              maxLength={80}
+              autoFocus
+              style={inp}
+              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+              onBlur={e=>(e.target.style.borderColor=C.border)}
+              onKeyDown={e=>e.key==="Enter"&&handleSave()}/>
+          </div>
+
+          {/* Category */}
+          <div style={{marginBottom:16}}>
+            <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
+              textTransform:"uppercase",marginBottom:8}}>{t("category")}</p>
+            <CategoryPicker value={category} onChange={setCategory}/>
+          </div>
+
+          {/* Days */}
+          <div style={{marginBottom:16}}>
+            <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
+              textTransform:"uppercase",marginBottom:8}}>{t("daysLabel")}</p>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              {dayOpts.map(d=>(
+                <button key={d.v} onClick={()=>toggleDay(d.v)}
+                  style={{flex:"1 1 12%",padding:"10px 4px",borderRadius:10,cursor:"pointer",
+                    border:`2px solid ${days.includes(d.v)?C.primary:C.border}`,
+                    background:days.includes(d.v)?"rgba(76,95,213,0.08)":"transparent",
+                    fontSize:12,fontWeight:700,
+                    color:days.includes(d.v)?C.primary:C.muted,
+                    transition:"all 0.15s"}}>
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Time + Duration */}
+          <div style={{display:"flex",gap:12,marginBottom:16}}>
+            <div style={{flex:1}}>
+              <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
+                textTransform:"uppercase",marginBottom:8}}>{t("timeLabel")}</p>
+              <input type="time" value={time}
+                onChange={e=>{setTime(e.target.value);setError("");}}
+                style={inp}
+                onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+                onBlur={e=>(e.target.style.borderColor=C.border)}/>
+            </div>
+            <div style={{flex:1}}>
+              <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
+                textTransform:"uppercase",marginBottom:8}}>{t("durationLabel")}</p>
+              <input type="number" min={5} max={1440} value={duration}
+                onChange={e=>{setDuration(parseInt(e.target.value,10)||0);setError("");}}
+                style={inp}
+                onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+                onBlur={e=>(e.target.style.borderColor=C.border)}/>
+            </div>
+          </div>
+
+          {/* Intensity */}
+          <div style={{marginBottom:16}}>
+            <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
+              textTransform:"uppercase",marginBottom:8}}>{t("intensityLabel")}</p>
+            <div style={{display:"flex",gap:8}}>
+              {intensityOpts.map(o=>(
+                <button key={o.v} onClick={()=>setIntensity(o.v)}
+                  style={{flex:1,padding:"10px 8px",borderRadius:12,cursor:"pointer",
+                    border:`2px solid ${intensity===o.v?C.primary:C.border}`,
+                    background:intensity===o.v?"rgba(76,95,213,0.08)":"transparent",
+                    fontSize:13,fontWeight:700,
+                    color:intensity===o.v?C.primary:C.muted,
+                    transition:"all 0.15s"}}>
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div style={{marginBottom:4}}>
+            <p style={{fontSize:11,fontWeight:700,color:C.muted2,letterSpacing:"1px",
+              textTransform:"uppercase",marginBottom:8}}>{t("notes")} <span style={{fontWeight:400,textTransform:"none",letterSpacing:0}}>{t("optional")}</span></p>
+            <textarea value={notes} onChange={e=>setNotes(e.target.value.slice(0,500))} rows={2}
+              maxLength={500}
+              style={{...inp,resize:"vertical"}}
+              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+              onBlur={e=>(e.target.style.borderColor=C.border)}/>
+          </div>
+
+          {error&&(
+            <p style={{fontSize:12,fontWeight:600,color:C.urgent,marginTop:8}}>{error}</p>
+          )}
+        </div>
+
+        {/* Footer buttons */}
+        <div style={{padding:"14px 24px 20px",borderTop:`1px solid ${C.border}`,
+          display:"flex",flexDirection:"column",gap:10,flexShrink:0}}>
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={onClose}
+              style={{flex:1,padding:"12px",borderRadius:12,
+                border:`1.5px solid ${C.border}`,fontSize:13,fontWeight:700,
+                color:C.muted,background:"transparent",cursor:"pointer",
+                transition:"all 0.15s"}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=C.primary;e.currentTarget.style.color=C.primary;}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.muted;}}>
+              {t("cancel")}
+            </button>
+            <button onClick={handleSave}
+              className="pill-btn"
+              style={{flex:2,padding:"12px",
+                background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
+                color:"white",border:"none",fontSize:13,fontWeight:700,cursor:"pointer",
+                boxShadow:"0 6px 20px rgba(76,95,213,0.4)"}}>
+              <i className="ti ti-check" style={{fontSize:14,marginInlineEnd:6}} aria-hidden="true"/>
+              {t("saveRoutine")}
+            </button>
+          </div>
+          {initial?.id&&onDelete&&(
+            <button onClick={()=>setConfirmingDelete(true)}
+              style={{padding:"10px",borderRadius:12,border:"none",background:"transparent",
+                color:C.urgent,fontSize:12.5,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+              {t("deleteRoutine")}
+            </button>
+          )}
+        </div>
+        </>
+        )}
       </div>
     </div>
   );
@@ -4966,9 +5343,9 @@ function TaskSidebar({tasks,filter,setFilter}:{tasks:Task[];filter:Filter;setFil
 }
 
 // ── Timeline Row ─────────────────────────────────────────────────────────────
-function TimelineRow({item,onCheck}:{
+function TimelineRow({item,onCheck,onEdit}:{
   item:{time:string;label:string;category:string;done:boolean;streak:number;conflict:boolean;kind:"task"|"routine";};
-  onCheck:()=>void;
+  onCheck:()=>void;onEdit?:()=>void;
 }){
   const{dark,lang,t}=useApp();
   const locale=localeFor(lang);
@@ -4981,7 +5358,10 @@ function TimelineRow({item,onCheck}:{
         {item.time?localeNum(item.time,locale):"—"}
       </span>
       <Checkbox checked={item.done} onClick={onCheck} small/>
-      <div style={{flex:1}}>
+      {/* onEdit lives only on this label wrapper, a sibling of the Checkbox
+          above — never a parent of it — so tapping the checkbox can't also
+          bubble into opening the editor. */}
+      <div style={{flex:1,cursor:onEdit?"pointer":undefined}} onClick={onEdit}>
         <CatPill category={item.category} done={item.done}/>
         {" "}
         {/* Only incidental tells (the streak flame, the clash badge) existed
@@ -7355,6 +7735,9 @@ export default function Home(){
   const[taskFilter,setTaskFilter]=useState<Filter>("all");
   const[editingTask,setEditingTask]=useState<Task|null>(null);
   const[isAddingTask,setIsAddingTask]=useState(false);
+  const[showAddChoice,setShowAddChoice]=useState(false);
+  const[isAddingRoutine,setIsAddingRoutine]=useState(false);
+  const[editingRoutine,setEditingRoutine]=useState<Routine|null>(null);
   const[selectedWeekDay,setSelectedWeekDay]=useState(todayDayKey());
   const[selectedDate,setSelectedDate]=useState(todayISO());
   const[tasks,setTasks]=useState<Task[]>([]);
@@ -7972,6 +8355,15 @@ export default function Home(){
   },[]);
   const toggleRoutineDate=useCallback((routineId:number,dateISO:string)=>{
     setRoutines(p=>p.map(r=>r.id!==routineId?r:{...r,completions:{...r.completions,[dateISO]:!r.completions?.[dateISO]}}));
+  },[]);
+  // RoutineModal's own form validation (label/days/time/duration) is the only
+  // gate here — this is a direct user edit, not the AI's update_routine
+  // action, so it never goes through ROUTINE_CHANGE_FIELDS/pickRoutineChanges.
+  const addRoutine=useCallback((data:Omit<Routine,"id"|"completions">)=>{
+    setRoutines(p=>[...p,{id:nextId(p),...data,completions:{}}]);
+  },[]);
+  const updateRoutine=useCallback((id:number,data:Omit<Routine,"id"|"completions">)=>{
+    setRoutines(p=>p.map(r=>r.id!==id?r:{...r,...data}));
   },[]);
 
   const undoLast=useCallback(()=>{
@@ -8826,6 +9218,15 @@ export default function Home(){
                     if(it.recurs)toggleTaskDate(it.taskId,dayDate);
                     else toggleTask(it.taskId);
                   }
+                }}
+                onEdit={()=>{
+                  if(it.routineId){
+                    const r=routines.find(r=>r.id===it.routineId);
+                    if(r)setEditingRoutine(r);
+                  }else if(it.taskId){
+                    const tk=tasks.find(tk=>tk.id===it.taskId);
+                    if(tk)setEditingTask(tk);
+                  }
                 }}/>
               )):<p style={{textAlign:"center",color:C.muted2,padding:"40px 0",
                 fontFamily:"'Space Grotesk',sans-serif",fontWeight:600}}>{t("nothingToday")}</p>}
@@ -8914,15 +9315,22 @@ export default function Home(){
           no separate floating add-task button any more. */}
       <Chatbot tasks={tasks} routines={routines} onAction={handleAiActions} user={user} isPro={isPro} tier={subTier}
         currentView={currentView} setCurrentView={setCurrentView}
-        onAddTask={()=>setIsAddingTask(true)}
+        onAddTask={()=>setShowAddChoice(true)}
         pendingRoutineDeletes={pendingRoutineDeletes}
         onConfirmRoutineDelete={confirmRoutineDelete}
         onCancelRoutineDelete={cancelRoutineDelete}
         onClearPendingRoutineDeletes={()=>setPendingRoutineDeletes([])}/>
 
+      {showAddChoice&&<AddChoiceSheet onClose={()=>setShowAddChoice(false)}
+        onChooseTask={()=>{setShowAddChoice(false);setIsAddingTask(true);}}
+        onChooseRoutine={()=>{setShowAddChoice(false);setIsAddingRoutine(true);}}/>}
       {isAddingTask&&<TaskModal onClose={()=>setIsAddingTask(false)} onSave={addTask}/>}
       {editingTask&&<TaskModal initial={editingTask} onClose={()=>setEditingTask(null)}
         onSave={data=>{updateTask(editingTask.id,data);setEditingTask(null);}}/>}
+      {isAddingRoutine&&<RoutineModal onClose={()=>setIsAddingRoutine(false)} onSave={addRoutine}/>}
+      {editingRoutine&&<RoutineModal initial={editingRoutine} onClose={()=>setEditingRoutine(null)}
+        onSave={data=>{updateRoutine(editingRoutine.id,data);setEditingRoutine(null);}}
+        onDelete={()=>confirmRoutineDelete(editingRoutine.id)}/>}
     </div>
       {activeModal&&<InfoModal modal={activeModal} onClose={()=>setActiveModal(null)} dark={dark} user={user} onUserChange={setUser} onNavigate={setActiveModal} isPro={isPro} subPeriodEnd={subPeriodEnd} subTier={subTier}/>}
     </AppCtx.Provider>
