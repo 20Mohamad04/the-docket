@@ -95,6 +95,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ url: session.url });
   } catch (error: any) {
     console.error("Stripe portal error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Could not open the billing portal. Please try again." }, { status: 500 });
   }
 }
