@@ -948,11 +948,12 @@ export async function POST(req: Request) {
 
     // Neither model is reachable — no AI call will ever happen for this
     // request, so any reservation made above must not stand.
+    console.error("Ask route: no AI provider key configured (ANTHROPIC_API_KEY and GROQ_API_KEY both unset)");
     await releasePendingReservation();
     return NextResponse.json(
       {
         actions: [],
-        reply: "No AI API key configured. Add ANTHROPIC_API_KEY in Vercel environment variables.",
+        reply: "The assistant is unavailable right now. Please try again later.",
       },
       { status: 200 }
     );
