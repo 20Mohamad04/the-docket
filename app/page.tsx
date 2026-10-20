@@ -7971,6 +7971,12 @@ export default function Home(){
               setTasks([]);
               setRoutines([]);
               setPendingRoutineDeletes([]);
+              // Wipe the routine-delete baseline and confirmed-delete set
+              // together with the data itself — otherwise a stale id from
+              // this very session could survive into whichever account signs
+              // in next and be misread as "the user deleted this."
+              prevRoutineIdsRef.current=[];
+              explicitRoutineDeletesRef.current.clear();
             }
           });
         }catch(e){ console.log("Supabase session check failed",e); setAuthChecked(true); }
@@ -8007,6 +8013,12 @@ export default function Home(){
 
   const cloudSyncingRef=React.useRef(false); // guard: true while pulling cloud data down, to skip the immediate echo-push back up
   const prevRoutineIdsRef=React.useRef<number[]>([]);
+  // Ids the user EXPLICITLY confirmed deleting — confirmRoutineDelete below is
+  // the only writer. An id merely missing from `routines` (a sign-out clear,
+  // an account switch, or a fresh per-account hydration racing a cloud pull)
+  // is not proof of a real deletion; the routines sync effect below may only
+  // issue a remote delete for an id that's both missing AND in this set.
+  const explicitRoutineDeletesRef=React.useRef<Set<number>>(new Set());
 
   // localTasks/localRoutines are passed in rather than read from the outer
   // tasks/routines state, which this used to close over. They come from the
@@ -8015,39 +8027,56 @@ export default function Home(){
   // "first sync" decision below acts on exactly what was just read for THIS
   // account, with no dependency on React state having re-rendered in between.
   async function loadCloudData(userId:string,localTasks:Task[],localRoutines:Routine[]){
-    const sb=await getSupabaseClient();
-    if(!sb)return;
-    const[{data:cloudTasks},{data:cloudRoutines}]=await Promise.all([
-      sb.from("tasks").select("*").eq("user_id",userId),
-      sb.from("routines").select("*").eq("user_id",userId),
-    ]);
+    // Set synchronously, before the first await — not after the Promise.all
+    // below, where it used to sit. That left a real gap, from the moment the
+    // caller's setRoutines(localRoutines) committed to the moment this
+    // function's own network round-trip landed, during which the routines
+    // sync effect could run completely unguarded against a routines array
+    // that had nothing to do with the cloud yet (the mass-delete bug this
+    // closes).
     cloudSyncingRef.current=true;
-    const hasCloudTasks=!!cloudTasks&&cloudTasks.length>0;
-    const hasCloudRoutines=!!cloudRoutines&&cloudRoutines.length>0;
-    if(hasCloudTasks||hasCloudRoutines){
-      // Account already has cloud data (e.g. signing in on a second device) — cloud wins
-      if(hasCloudTasks)setTasks(cloudTasks!.map(rowToTask));
-      if(hasCloudRoutines){
-        const mapped=cloudRoutines!.map(rowToRoutine);
-        setRoutines(mapped);
-        prevRoutineIdsRef.current=mapped.map(r=>r.id);
+    try{
+      const sb=await getSupabaseClient();
+      if(!sb){cloudSyncingRef.current=false;return;}
+      const[{data:cloudTasks},{data:cloudRoutines}]=await Promise.all([
+        sb.from("tasks").select("*").eq("user_id",userId),
+        sb.from("routines").select("*").eq("user_id",userId),
+      ]);
+      const hasCloudTasks=!!cloudTasks&&cloudTasks.length>0;
+      const hasCloudRoutines=!!cloudRoutines&&cloudRoutines.length>0;
+      if(hasCloudTasks||hasCloudRoutines){
+        // Account already has cloud data (e.g. signing in on a second device) — cloud wins
+        if(hasCloudTasks)setTasks(cloudTasks!.map(rowToTask));
+        if(hasCloudRoutines){
+          const mapped=cloudRoutines!.map(rowToRoutine);
+          setRoutines(mapped);
+          prevRoutineIdsRef.current=mapped.map(r=>r.id);
+        }
+      }else{
+        // First time this account has synced — push whatever's on this device up.
+        // localTasks/localRoutines, not the outer tasks/routines state: this is
+        // exactly the decision that used to trust whatever was in memory
+        // regardless of whose it actually was.
+        if(localTasks.length>0){
+          const{error}=await sb.from("tasks").upsert(localTasks.map(t=>taskToRow(t,userId)),{onConflict:"user_id,id"});
+          noteSync("tasks","first-sync upsert",userId,localTasks.length,error);
+        }
+        if(localRoutines.length>0){
+          const{error}=await sb.from("routines").upsert(localRoutines.map(r=>routineToRow(r,userId)),{onConflict:"user_id,id"});
+          noteSync("routines","first-sync upsert",userId,localRoutines.length,error);
+          prevRoutineIdsRef.current=localRoutines.map(r=>r.id);
+        }
       }
-    }else{
-      // First time this account has synced — push whatever's on this device up.
-      // localTasks/localRoutines, not the outer tasks/routines state: this is
-      // exactly the decision that used to trust whatever was in memory
-      // regardless of whose it actually was.
-      if(localTasks.length>0){
-        const{error}=await sb.from("tasks").upsert(localTasks.map(t=>taskToRow(t,userId)),{onConflict:"user_id,id"});
-        noteSync("tasks","first-sync upsert",userId,localTasks.length,error);
-      }
-      if(localRoutines.length>0){
-        const{error}=await sb.from("routines").upsert(localRoutines.map(r=>routineToRow(r,userId)),{onConflict:"user_id,id"});
-        noteSync("routines","first-sync upsert",userId,localRoutines.length,error);
-        prevRoutineIdsRef.current=localRoutines.map(r=>r.id);
-      }
+      setTimeout(()=>{cloudSyncingRef.current=false;},300);
+    }catch(err){
+      // A genuine failure leaves nothing pulled down to echo-protect against,
+      // so there's no reason to wait out the 300ms meant for a successful
+      // pull's own re-render to settle — clear the guard immediately instead
+      // of leaving it stuck true forever.
+      console.error("loadCloudData failed:",err);
+      cloudSyncingRef.current=false;
+      throw err;
     }
-    setTimeout(()=>{cloudSyncingRef.current=false;},300);
   }
 
   // Whether anything that could still overwrite `routines` from elsewhere has
@@ -8057,6 +8086,15 @@ export default function Home(){
   useEffect(()=>{
     if(!isLoaded) return;
     if(user?.id){
+      // Re-anchor the routine-delete baseline to THIS account the moment its
+      // id becomes current — covers both switching straight from one account
+      // to another on the same device, and sign-in itself (sign-out already
+      // does the same reset directly, in onAuthStateChange below). Without
+      // this, a stale id left over from whichever account/session came
+      // before could be misread as "the user deleted this" the instant this
+      // account's own (possibly empty) routines first render.
+      prevRoutineIdsRef.current=[];
+      explicitRoutineDeletesRef.current.clear();
       // Hydrated here, synchronously, and handed straight to loadCloudData as
       // parameters — not left for it to read back out of tasks/routines
       // state a moment later. Two separate effects racing on the same
@@ -8128,17 +8166,28 @@ export default function Home(){
       }
       const currentIds=routines.map(r=>r.id);
       const removed=prevRoutineIdsRef.current.filter(id=>!currentIds.includes(id));
+      // An id missing from `routines` is not, by itself, proof the user
+      // deleted it — it's exactly what a sign-out clear, an account switch,
+      // or a hydration racing the cloud pull also looks like. Only an id
+      // confirmRoutineDelete itself put in explicitRoutineDeletesRef is
+      // actually safe to delete remotely; anything else in `removed` is
+      // dropped from the baseline below with no delete call at all.
+      const confirmedRemoved=removed.filter(id=>explicitRoutineDeletesRef.current.has(id));
       // Scoped to the owner rather than leaning on RLS to filter it. Two
       // reasons: ids are only unique per account now, and after the composite
       // key there is no index led by id alone, so an unscoped .in() would fall
       // back to a sequential scan.
-      if(removed.length>0){
-        const{error}=await sb.from("routines").delete().eq("user_id",uid).in("id",removed);
-        noteSync("routines","delete",uid,removed.length,error);
+      if(confirmedRemoved.length>0){
+        const{error}=await sb.from("routines").delete().eq("user_id",uid).in("id",confirmedRemoved);
+        noteSync("routines","delete",uid,confirmedRemoved.length,error);
         // Only advance the baseline once the delete actually landed. Moving it
         // regardless would forget which ids still need removing, and they would
         // never be retried.
         if(error)return;
+        // Only clear ids that were actually just deleted — a failed delete
+        // (handled by the return above) must leave its ids in the set so the
+        // next pass retries exactly them, same as prevRoutineIdsRef itself.
+        for(const id of confirmedRemoved) explicitRoutineDeletesRef.current.delete(id);
       }
       prevRoutineIdsRef.current=currentIds;
     })();
@@ -8392,6 +8441,12 @@ export default function Home(){
       const prev=stack[stack.length-1];
       setTasks(prev.tasks);
       setRoutines(prev.routines);
+      // A routine coming back via undo must no longer be treated as an
+      // explicit, user-confirmed delete — otherwise the next routines sync
+      // effect run would immediately re-delete it remotely the moment local
+      // state settles back to a shape where it's "missing" again. Harmless
+      // no-op for any id that was never in the set to begin with.
+      for(const r of prev.routines) explicitRoutineDeletesRef.current.delete(r.id);
       return stack.slice(0,-1);
     });
   },[]);
@@ -8468,6 +8523,9 @@ export default function Home(){
   // so snapshotting any earlier would risk undo reverting to a stale state.
   const confirmRoutineDelete=useCallback((id:number)=>{
     setUndoStack(s=>[...s.slice(-9),{tasks:[...tasks],routines:[...routines]}]);
+    // The ONLY place that adds to this set — see the routines sync effect,
+    // which refuses to delete a routine remotely unless its id is in here.
+    explicitRoutineDeletesRef.current.add(id);
     setRoutines(prev=>prev.filter(r=>r.id!==id));
     setPendingRoutineDeletes(prev=>prev.filter(p=>p.id!==id));
     if(routineDeleteToastTimerRef.current)clearTimeout(routineDeleteToastTimerRef.current);
