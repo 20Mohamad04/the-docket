@@ -14,6 +14,25 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "geolocation=(self), microphone=(self), camera=(), payment=(), usb=()",
           },
+          {
+            // Note: script-src includes 'unsafe-inline' for now because
+            // Next.js injects inline bootstrap scripts; we will tighten it
+            // after reading the violations. Report-only, not enforcing.
+            key: "Content-Security-Policy-Report-Only",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com data:",
+              "img-src 'self' data: blob: https:",
+              "media-src 'self' blob:",
+              "connect-src 'self' https://ayzmjfaisyhgymqmgdvo.supabase.co https://api.aladhan.com",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "object-src 'none'",
+            ].join("; "),
+          },
         ],
       },
     ];
