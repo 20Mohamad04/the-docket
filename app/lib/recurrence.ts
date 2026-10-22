@@ -16,6 +16,7 @@ export interface RecurrenceTask {
   recurring: string;
   deleted: boolean;
   createdAt?: string;
+  done?: boolean;
 }
 
 function toUTCDate(dateISO: string): Date {
@@ -65,9 +66,25 @@ export function taskOccursOn(task: RecurrenceTask, dateISO: string): boolean {
   if (!recurring) {
     // No recurrence: current behaviour, unchanged. An Ongoing task with no
     // recurrence has no date at all, so this never matches anything — it
-    // stays chip-only, exactly as today.
+    // stays chip-only, exactly as today. Deliberately NOT gated on `done`
+    // here — a one-off task ticked done on the timeline today is meant to
+    // keep showing there (struck through, checked), not vanish immediately.
+    // Only a recurring task's `done` is treated as "finished, stop
+    // recurring" below, because only a recurring task is the kind that gets
+    // archived into "Finished & Deleted" while still carrying a `date`/
+    // `recurring` that would otherwise make it keep reappearing.
     return task.date === dateISO;
   }
+
+  // A recurring task has no single ongoing "done" state any more — per-day
+  // completion lives in `completions` (see toggleTaskDate in page.tsx). This
+  // `done` flag predates that: a recurring task finished under the OLD
+  // global-done model (or completed via an older AI complete_task call)
+  // still carries done:true on the row itself, and that is exactly what
+  // today's "Finished & Deleted" archive view already shows it under. A
+  // finished task is archived, not still running — it must stop occurring
+  // here rather than keep reappearing in the timeline on every matching day.
+  if (task.done) return false;
 
   const anchor = task.date || (task.createdAt ? localDateOf(task.createdAt) : "");
   if (!anchor) {

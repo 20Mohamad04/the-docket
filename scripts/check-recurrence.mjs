@@ -128,6 +128,26 @@ function check(label, actual, expected) {
   check("deleted task never occurs", taskOccursOn(task, "2024-01-01"), false);
 }
 
+// ── finished recurring tasks stop occurring; one-off is unaffected ──────
+{
+  const recurringDone = { date: "2024-01-01", recurring: "daily", deleted: false, done: true };
+  check("recurring + done:true never occurs (anchor day)", taskOccursOn(recurringDone, "2024-01-01"), false);
+  check("recurring + done:true never occurs (later day)", taskOccursOn(recurringDone, "2024-01-05"), false);
+
+  const recurringNotDone = { date: "2024-01-01", recurring: "daily", deleted: false, done: false };
+  check("recurring + done:false occurs on a matching day", taskOccursOn(recurringNotDone, "2024-01-03"), true);
+
+  const recurringNoDoneField = { date: "2024-01-01", recurring: "daily", deleted: false };
+  check("recurring + done omitted occurs (treated as not done)", taskOccursOn(recurringNoDoneField, "2024-01-03"), true);
+
+  // One-off behaviour is deliberately unchanged: ticking a one-off task done
+  // keeps it visible on its own date (struck through, checked) rather than
+  // removing it from the timeline outright.
+  const oneOffDone = { date: "2024-03-15", recurring: "", deleted: false, done: true };
+  check("one-off + done:true still occurs on its own date", taskOccursOn(oneOffDone, "2024-03-15"), true);
+  check("one-off + done:true still doesn't match a different date", taskOccursOn(oneOffDone, "2024-03-16"), false);
+}
+
 // ── createdAt anchor uses the LOCAL date, not a UTC date-slice ───────────
 // Placed last and sets TZ itself, so no earlier test (all of which only
 // exercise the UTC-parsed arithmetic, unaffected by TZ) is put at risk by
