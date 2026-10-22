@@ -17,8 +17,8 @@ const nextConfig: NextConfig = {
           {
             // Note: script-src includes 'unsafe-inline' for now because
             // Next.js injects inline bootstrap scripts; we will tighten it
-            // after reading the violations. Report-only, not enforcing.
-            key: "Content-Security-Policy-Report-Only",
+            // after reading the violations. Enforcing.
+            key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline'",
