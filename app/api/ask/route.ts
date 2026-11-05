@@ -767,7 +767,7 @@ export async function POST(req: Request) {
         return NextResponse.json({
           actions: [],
           reply:
-            "You've hit today's limit of 10 free messages — it resets tomorrow, or upgrade to Pro for unlimited Sonnet messages any time.",
+            "You've hit today's limit of 10 free messages — it resets tomorrow, or upgrade to Pro for unlimited Nova messages any time.",
           conversationId: null,
         });
       }
