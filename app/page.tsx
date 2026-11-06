@@ -254,6 +254,9 @@ const T:Record<Lang,Record<string,string>> = {
     msgResendSent:"Confirmation email resent to {email}",
     resetTitle:"Reset your password",
     resetBlurb:"Enter your email and we will send you a link to reset your password.",
+    setNewPasswordTitle:"Set a new password", setNewPasswordBlurb:"Choose a new password for your account to finish resetting it.",
+    setNewPasswordCta:"Set new password", msgPasswordUpdated:"Password updated",
+    errPasswordUpdateFailed:"Could not update your password. Please try again.",
     yourEmailAddress:"Your email address", sending:"Sending…", sendResetLink:"Send Reset Link",
     continueGoogle:"Continue with Google", continueApple:"Continue with Apple", orUseEmail:"or use email",
     welcomeHeading:"Welcome", joinHeading:"Join The Docket",
@@ -396,6 +399,9 @@ const T:Record<Lang,Record<string,string>> = {
     msgResendSent:"تمت إعادة إرسال بريد التأكيد إلى {email}",
     resetTitle:"إعادة تعيين كلمة المرور",
     resetBlurb:"أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.",
+    setNewPasswordTitle:"تعيين كلمة مرور جديدة", setNewPasswordBlurb:"اختر كلمة مرور جديدة لحسابك لإكمال إعادة تعيينها.",
+    setNewPasswordCta:"تعيين كلمة المرور الجديدة", msgPasswordUpdated:"تم تحديث كلمة المرور",
+    errPasswordUpdateFailed:"تعذّر تحديث كلمة مرورك. حاول مرة أخرى.",
     yourEmailAddress:"بريدك الإلكتروني", sending:"جاري الإرسال…", sendResetLink:"إرسال رابط إعادة التعيين",
     continueGoogle:"المتابعة باستخدام Google", continueApple:"المتابعة باستخدام Apple", orUseEmail:"أو استخدم البريد الإلكتروني",
     welcomeHeading:"مرحبًا", joinHeading:"انضم إلى The Docket",
@@ -538,6 +544,9 @@ const T:Record<Lang,Record<string,string>> = {
     msgResendSent:"E-mail de confirmation renvoyé à {email}",
     resetTitle:"Réinitialiser votre mot de passe",
     resetBlurb:"Saisissez votre e-mail et nous vous enverrons un lien de réinitialisation.",
+    setNewPasswordTitle:"Définir un nouveau mot de passe", setNewPasswordBlurb:"Choisissez un nouveau mot de passe pour votre compte afin de terminer la réinitialisation.",
+    setNewPasswordCta:"Définir le nouveau mot de passe", msgPasswordUpdated:"Mot de passe mis à jour",
+    errPasswordUpdateFailed:"Impossible de mettre à jour votre mot de passe. Veuillez réessayer.",
     yourEmailAddress:"Votre adresse e-mail", sending:"Envoi…", sendResetLink:"Envoyer le lien",
     continueGoogle:"Continuer avec Google", continueApple:"Continuer avec Apple", orUseEmail:"ou par e-mail",
     welcomeHeading:"Bienvenue", joinHeading:"Rejoindre The Docket",
@@ -680,6 +689,9 @@ const T:Record<Lang,Record<string,string>> = {
     msgResendSent:"Onay e-postası {email} adresine tekrar gönderildi",
     resetTitle:"Parolanızı sıfırlayın",
     resetBlurb:"E-postanızı girin, size bir sıfırlama bağlantısı gönderelim.",
+    setNewPasswordTitle:"Yeni bir parola belirleyin", setNewPasswordBlurb:"Sıfırlama işlemini tamamlamak için hesabınız için yeni bir parola seçin.",
+    setNewPasswordCta:"Yeni parolayı kaydet", msgPasswordUpdated:"Parola güncellendi",
+    errPasswordUpdateFailed:"Parolanız güncellenemedi. Lütfen tekrar deneyin.",
     yourEmailAddress:"E-posta adresiniz", sending:"Gönderiliyor…", sendResetLink:"Sıfırlama Bağlantısı Gönder",
     continueGoogle:"Google ile devam et", continueApple:"Apple ile devam et", orUseEmail:"veya e-posta kullan",
     welcomeHeading:"Hoş geldiniz", joinHeading:"The Docket'e katılın",
@@ -822,6 +834,9 @@ const T:Record<Lang,Record<string,string>> = {
     msgResendSent:"تصدیقی ای میل دوبارہ {email} پر بھیجا گیا",
     resetTitle:"اپنا پاس ورڈ ری سیٹ کریں",
     resetBlurb:"اپنا ای میل درج کریں، ہم آپ کو ری سیٹ لنک بھیجیں گے۔",
+    setNewPasswordTitle:"نیا پاس ورڈ مرتب کریں", setNewPasswordBlurb:"ری سیٹ مکمل کرنے کے لیے اپنے اکاؤنٹ کے لیے نیا پاس ورڈ منتخب کریں۔",
+    setNewPasswordCta:"نیا پاس ورڈ محفوظ کریں", msgPasswordUpdated:"پاس ورڈ اپڈیٹ ہو گیا",
+    errPasswordUpdateFailed:"آپ کا پاس ورڈ اپڈیٹ نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
     yourEmailAddress:"آپ کا ای میل پتہ", sending:"بھیجا جا رہا ہے…", sendResetLink:"ری سیٹ لنک بھیجیں",
     continueGoogle:"Google کے ساتھ جاری رکھیں", continueApple:"Apple کے ساتھ جاری رکھیں", orUseEmail:"یا ای میل استعمال کریں",
     welcomeHeading:"خوش آمدید", joinHeading:"The Docket میں شامل ہوں",
@@ -964,6 +979,9 @@ const T:Record<Lang,Record<string,string>> = {
     msgResendSent:"নিশ্চিতকরণ ইমেইল আবার {email} ঠিকানায় পাঠানো হয়েছে",
     resetTitle:"আপনার পাসওয়ার্ড রিসেট করুন",
     resetBlurb:"আপনার ইমেইল দিন, আমরা রিসেট লিঙ্ক পাঠাব।",
+    setNewPasswordTitle:"নতুন পাসওয়ার্ড সেট করুন", setNewPasswordBlurb:"রিসেট সম্পন্ন করতে আপনার অ্যাকাউন্টের জন্য একটি নতুন পাসওয়ার্ড বেছে নিন।",
+    setNewPasswordCta:"নতুন পাসওয়ার্ড সংরক্ষণ করুন", msgPasswordUpdated:"পাসওয়ার্ড আপডেট হয়েছে",
+    errPasswordUpdateFailed:"আপনার পাসওয়ার্ড আপডেট করা যায়নি। আবার চেষ্টা করুন।",
     yourEmailAddress:"আপনার ইমেইল ঠিকানা", sending:"পাঠানো হচ্ছে…", sendResetLink:"রিসেট লিঙ্ক পাঠান",
     continueGoogle:"Google দিয়ে চালিয়ে যান", continueApple:"Apple দিয়ে চালিয়ে যান", orUseEmail:"অথবা ইমেইল ব্যবহার করুন",
     welcomeHeading:"স্বাগতম", joinHeading:"The Docket-এ যোগ দিন",
@@ -1106,6 +1124,9 @@ const T:Record<Lang,Record<string,string>> = {
     msgResendSent:"Correo de confirmación reenviado a {email}",
     resetTitle:"Restablece tu contraseña",
     resetBlurb:"Introduce tu correo y te enviaremos un enlace para restablecer la contraseña.",
+    setNewPasswordTitle:"Establece una nueva contraseña", setNewPasswordBlurb:"Elige una nueva contraseña para tu cuenta para terminar de restablecerla.",
+    setNewPasswordCta:"Guardar nueva contraseña", msgPasswordUpdated:"Contraseña actualizada",
+    errPasswordUpdateFailed:"No se pudo actualizar tu contraseña. Inténtalo de nuevo.",
     yourEmailAddress:"Tu correo electrónico", sending:"Enviando…", sendResetLink:"Enviar enlace",
     continueGoogle:"Continuar con Google", continueApple:"Continuar con Apple", orUseEmail:"o usa el correo",
     welcomeHeading:"Bienvenido", joinHeading:"Únete a The Docket",
@@ -1248,6 +1269,9 @@ const T:Record<Lang,Record<string,string>> = {
     msgResendSent:"पुष्टिकरण ईमेल पुनः {email} पर भेजा गया",
     resetTitle:"अपना पासवर्ड रीसेट करें",
     resetBlurb:"अपना ईमेल दर्ज करें, हम आपको रीसेट लिंक भेजेंगे।",
+    setNewPasswordTitle:"नया पासवर्ड सेट करें", setNewPasswordBlurb:"रीसेट पूरा करने के लिए अपने खाते के लिए एक नया पासवर्ड चुनें।",
+    setNewPasswordCta:"नया पासवर्ड सहेजें", msgPasswordUpdated:"पासवर्ड अपडेट हो गया",
+    errPasswordUpdateFailed:"आपका पासवर्ड अपडेट नहीं हो सका। कृपया पुनः प्रयास करें।",
     yourEmailAddress:"आपका ईमेल पता", sending:"भेजा जा रहा है…", sendResetLink:"रीसेट लिंक भेजें",
     continueGoogle:"Google से जारी रखें", continueApple:"Apple से जारी रखें", orUseEmail:"या ईमेल का उपयोग करें",
     welcomeHeading:"स्वागत है", joinHeading:"The Docket से जुड़ें",
@@ -1390,6 +1414,9 @@ const T:Record<Lang,Record<string,string>> = {
     msgResendSent:"E-mail de confirmação reenviado para {email}",
     resetTitle:"Redefina sua senha",
     resetBlurb:"Digite seu e-mail e enviaremos um link para redefinir sua senha.",
+    setNewPasswordTitle:"Defina uma nova senha", setNewPasswordBlurb:"Escolha uma nova senha para sua conta para concluir a redefinição.",
+    setNewPasswordCta:"Salvar nova senha", msgPasswordUpdated:"Senha atualizada",
+    errPasswordUpdateFailed:"Não foi possível atualizar sua senha. Tente novamente.",
     yourEmailAddress:"Seu e-mail", sending:"Enviando…", sendResetLink:"Enviar link",
     continueGoogle:"Continuar com Google", continueApple:"Continuar com Apple", orUseEmail:"ou use o e-mail",
     welcomeHeading:"Bem-vindo", joinHeading:"Entre no The Docket",
@@ -1532,6 +1559,9 @@ const T:Record<Lang,Record<string,string>> = {
     msgResendSent:"Письмо с подтверждением повторно отправлено на {email}",
     resetTitle:"Сброс пароля",
     resetBlurb:"Введите адрес почты, и мы отправим ссылку для сброса пароля.",
+    setNewPasswordTitle:"Задайте новый пароль", setNewPasswordBlurb:"Выберите новый пароль для своей учётной записи, чтобы завершить сброс.",
+    setNewPasswordCta:"Сохранить новый пароль", msgPasswordUpdated:"Пароль обновлён",
+    errPasswordUpdateFailed:"Не удалось обновить пароль. Попробуйте снова.",
     yourEmailAddress:"Ваш адрес эл. почты", sending:"Отправка…", sendResetLink:"Отправить ссылку",
     continueGoogle:"Продолжить с Google", continueApple:"Продолжить с Apple", orUseEmail:"или через почту",
     welcomeHeading:"Добро пожаловать", joinHeading:"Присоединяйтесь к The Docket",
@@ -1674,6 +1704,9 @@ const T:Record<Lang,Record<string,string>> = {
     msgResendSent:"确认邮件已重新发送至 {email}",
     resetTitle:"重置密码",
     resetBlurb:"输入你的邮箱，我们会发送重置密码的链接。",
+    setNewPasswordTitle:"设置新密码", setNewPasswordBlurb:"为您的账户选择一个新密码以完成重置。",
+    setNewPasswordCta:"保存新密码", msgPasswordUpdated:"密码已更新",
+    errPasswordUpdateFailed:"无法更新您的密码，请重试。",
     yourEmailAddress:"你的邮箱地址", sending:"发送中…", sendResetLink:"发送重置链接",
     continueGoogle:"使用 Google 继续", continueApple:"使用 Apple 继续", orUseEmail:"或使用邮箱",
     welcomeHeading:"欢迎", joinHeading:"加入 The Docket",
@@ -2896,6 +2929,110 @@ function RoutineModal({initial,onClose,onSave,onDelete}:{
   );
 }
 
+// ── Set New Password Modal (password-recovery flow) ────────────────────────
+// Shown when onAuthStateChange fires PASSWORD_RECOVERY — the Supabase reset
+// link signs the user straight into a real session with no "set a new
+// password" step of its own, so without this the user lands in the app
+// fully authenticated with their OLD password still active. Deliberately
+// has no backdrop-dismiss and no close button: submitting a new password is
+// the only way out, since leaving this screen without one would strand the
+// user signed in with no obvious way back to it.
+function SetPasswordModal({onDone}:{onDone:()=>void}){
+  const{dark,t}=useApp();
+  const C=getC(dark);
+  const[password,setPassword]=useState("");
+  const[confirmPassword,setConfirmPassword]=useState("");
+  const[errors,setErrors]=useState<{password?:string;confirmPassword?:string}>({});
+  const[status,setStatus]=useState<"idle"|"loading"|"done"|"error">("idle");
+
+  const inp:React.CSSProperties={
+    width:"100%",padding:"13px 16px",borderRadius:12,
+    border:`1.5px solid ${C.border}`,fontSize:14,
+    background:dark?"#1A1D2E":"#F8F7FE",
+    color:C.navy,outline:"none",fontFamily:"inherit",
+    transition:"border-color 0.2s",
+  };
+  const errStyle:React.CSSProperties={fontSize:12,fontWeight:600,color:C.urgent,marginTop:6};
+
+  async function handleSubmit(){
+    const next:{password?:string;confirmPassword?:string}={};
+    if(password.length<6) next.password=t("errPasswordShort");
+    if(password!==confirmPassword) next.confirmPassword=t("errPasswordMismatch");
+    if(Object.keys(next).length>0){setErrors(next);return;}
+    setStatus("loading");
+    const sb=await getSupabaseClient();
+    if(!sb){setStatus("error");return;}
+    const{error}=await sb.auth.updateUser({password});
+    if(error){
+      // Never show error.message here — it's Supabase/GoTrue's raw internal
+      // text, same reasoning as the generic Stripe/AI error responses
+      // elsewhere in this app (S-08/S-09). The real error is still visible
+      // to whoever has console access.
+      console.error("updateUser(password) failed:",error);
+      setStatus("error");
+      return;
+    }
+    setStatus("done");
+    setTimeout(onDone,1800);
+  }
+
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:200,
+      background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",
+      display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{background:dark?"#16192A":"#FFFFFF",borderRadius:24,width:"100%",maxWidth:420,
+        boxShadow:"0 40px 100px rgba(0,0,0,0.45)",border:`1px solid ${C.border}`,
+        overflow:"hidden"}}>
+        <div style={{padding:"24px 24px 16px"}}>
+          <p style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,
+            fontSize:17,color:C.navy,marginBottom:8}}>{t("setNewPasswordTitle")}</p>
+          <p style={{fontSize:13,color:C.muted,lineHeight:1.5}}>{t("setNewPasswordBlurb")}</p>
+        </div>
+        {status==="done"?(
+          <div style={{padding:"0 24px 24px"}}>
+            <p style={{fontSize:13.5,fontWeight:600,color:C.sage}}>✓ {t("msgPasswordUpdated")}</p>
+          </div>
+        ):(
+        <div style={{padding:"0 24px 24px"}}>
+          <div style={{marginBottom:14}}>
+            <input id="new-password" name="password" type="password" autoComplete="new-password"
+              value={password}
+              onChange={e=>{setPassword(e.target.value);setErrors(p=>({...p,password:undefined}));}}
+              placeholder={t("passwordMin")}
+              style={inp}
+              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+              onBlur={e=>(e.target.style.borderColor=C.border)}/>
+            {errors.password&&<p style={errStyle}>{errors.password}</p>}
+          </div>
+          <div style={{marginBottom:14}}>
+            <input id="confirm-new-password" name="confirmPassword" type="password" autoComplete="new-password"
+              value={confirmPassword}
+              onChange={e=>{setConfirmPassword(e.target.value);setErrors(p=>({...p,confirmPassword:undefined}));}}
+              placeholder={t("confirmPassword")}
+              style={inp}
+              onFocus={e=>(e.target.style.borderColor="#4C5FD5")}
+              onBlur={e=>(e.target.style.borderColor=C.border)}
+              onKeyDown={e=>e.key==="Enter"&&handleSubmit()}/>
+            {errors.confirmPassword&&<p style={errStyle}>{errors.confirmPassword}</p>}
+          </div>
+          {status==="error"&&<p style={errStyle}>{t("errPasswordUpdateFailed")}</p>}
+          <button onClick={handleSubmit} disabled={status==="loading"}
+            className="pill-btn"
+            style={{width:"100%",padding:"13px",
+              background:"linear-gradient(145deg,#6677E8 0%,#4C5FD5 45%,#2A3699 100%)",
+              color:"white",border:"none",fontSize:14,fontWeight:700,
+              cursor:status==="loading"?"default":"pointer",
+              opacity:status==="loading"?0.7:1,
+              boxShadow:"0 6px 20px rgba(76,95,213,0.4)"}}>
+            {status==="loading"?t("pleaseWait"):t("setNewPasswordCta")}
+          </button>
+        </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Task Card ────────────────────────────────────────────────────────────────
 function TaskCard({task,onToggle,onDelete,onEdit,onAddStep,onToggleStep,onRemoveStep,isArchive,onRestore}:{
   task:Task;onToggle:()=>void;onDelete:()=>void;onEdit:()=>void;
@@ -3084,7 +3221,10 @@ function AuthForm({dark,onUserChange,onOpenLegal,onSuccess,onClose}:{
     const sb=await getSupabaseClient();
     if(!sb){setAuthStatus("error");return;}
     try{
-      const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:SITE_URL+"?reset=true"});
+      // No "?reset=true" query param — nothing in the app ever reads it; the
+      // PASSWORD_RECOVERY auth event itself (see onAuthStateChange) is what
+      // actually triggers the set-new-password screen.
+      const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:SITE_URL});
       if(error){setAuthMsg(error.message);setAuthStatus("error");return;}
       setAuthStatus("confirm");
       setAuthMsg("✓ "+tf("msgResetSent",{email},t));
@@ -7863,6 +8003,11 @@ export default function Home(){
   const[user,setUser]=useState<{name:string;email:string;avatar?:string;id?:string}|null>(null);
   const[showWelcome,setShowWelcome]=useState(false);
   const[welcomeMsg,setWelcomeMsg]=useState("");
+  // Set on the PASSWORD_RECOVERY auth event (see onAuthStateChange below) —
+  // the recovery link signs the user straight into a real session with no
+  // "set a new password" step of its own, so this is the only thing that
+  // actually prompts for one.
+  const[showSetPassword,setShowSetPassword]=useState(false);
 
   const C=getC(dark);
   const dir:("ltr"|"rtl")=RTL_LANGS.includes(lang)?"rtl":"ltr";
@@ -7944,7 +8089,16 @@ export default function Home(){
                 localStorage.setItem("docket-onboarded","true");
                 setOnboarding(false);
               }
-              // Only show welcome on explicit sign in, not on page load session restore
+              // The recovery link's session also satisfies session?.user above
+              // like any other sign-in, so without this branch it would fall
+              // straight through to the SIGNED_IN check below and silently
+              // sign the user in with their OLD password still active.
+              if(event==="PASSWORD_RECOVERY"){
+                setShowSetPassword(true);
+              }
+              // Only show welcome on explicit sign in, not on page load session
+              // restore, and not on a recovery login — event is checked for
+              // exact equality, so PASSWORD_RECOVERY never satisfies this.
               if(event==="SIGNED_IN"){
                 const firstName=displayName.split(" ")[0];
                 setWelcomeMsg(firstName);
@@ -9419,6 +9573,7 @@ export default function Home(){
       {editingRoutine&&<RoutineModal initial={editingRoutine} onClose={()=>setEditingRoutine(null)}
         onSave={data=>{updateRoutine(editingRoutine.id,data);setEditingRoutine(null);}}
         onDelete={()=>confirmRoutineDelete(editingRoutine.id)}/>}
+      {showSetPassword&&<SetPasswordModal onDone={()=>setShowSetPassword(false)}/>}
       {routineDeleteToast&&(
         <div style={{position:"fixed",bottom:92,left:"50%",transform:"translateX(-50%)",
           zIndex:61,display:"flex",alignItems:"center",gap:14,
